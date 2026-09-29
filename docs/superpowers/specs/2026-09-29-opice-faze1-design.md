@@ -276,12 +276,12 @@ Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic`:
 | `raised` | `#201E1C` | `#F6F5F2` |
 | `rule` | `#2C2926` | `#C9C7C0` |
 | `text` | `#EFEDE8` | `#131316` |
-| `muted` | `#8C8780` | `#6B6B70` |
+| `muted` | `#8C8780` | `#5E5E63` |
 | `accent` (výplně, CTA, „dnes“, aktuální uzel) | `#FF6B35` | `#FF6B35` |
 | `onAccent` | `#131316` | `#131316` |
-| `accentText` (akcent jako text) | `#FF6B35` | `#C2410C` |
+| `accentText` (akcent jako text) | `#FF6B35` | `#AE3A0B` |
 | `plate5 → plate25` | `#6B6660 → #2A2724`, světlý okraj `#3A3632` | `#A29E97 → #131316` |
-| `danger` / `success` | tlumené, jen pro sestup/postup v lize a chyby | stejné |
+| `danger` / `success` | `#E5484D` / `#46A758` (tlumené, jen liga a chyby) | `#B42328` / `#2A7E3B` |
 
 - Všechny kombinace textu a pozadí mají kontrast alespoň 4.5:1. `muted` se používá jen pro text 14 pt a větší.
 - Téma se řídí systémem (`userInterfaceStyle: automatic`). V Nastavení jde přepnout Systém / Světlý / Tmavý.
