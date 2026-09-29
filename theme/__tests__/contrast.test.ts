@@ -16,19 +16,10 @@ const contrast = (a: string, b: string) => {
 const TEXT_TOKENS = ['text', 'muted', 'accentText', 'danger'] as const;
 const BACKGROUNDS = ['base', 'surface', 'raised'] as const;
 
-// Otevřená výjimka čekající na rozhodnutí controlleru: dark danger #E5484D na raised = 4.25:1.
-// `it.failing` je zelený, dokud kontrast neprojde — po opravě barvy zčervená a výjimka se smaže.
-const KNOWN_FAILURES = new Set(['dark:danger:raised']);
-
-describe.each([['dark', dark as Colors], ['light', light]] as const)('%s paleta', (name, c) => {
-  for (const t of TEXT_TOKENS) {
-    for (const bg of BACKGROUNDS) {
-      const run = KNOWN_FAILURES.has(`${name}:${t}:${bg}`) ? it.failing : it;
-      run(`${t} na ${bg} má kontrast ≥ 4.5:1`, () => {
-        expect(contrast(c[t], c[bg])).toBeGreaterThanOrEqual(4.5);
-      });
-    }
-  }
+describe.each([['dark', dark as Colors], ['light', light]] as const)('%s paleta', (_name, c) => {
+  it.each(TEXT_TOKENS.flatMap((t) => BACKGROUNDS.map((bg) => [t, bg] as const)))('%s na %s má kontrast ≥ 4.5:1', (t, bg) => {
+    expect(contrast(c[t], c[bg])).toBeGreaterThanOrEqual(4.5);
+  });
   it('onAccent na accent má kontrast ≥ 4.5:1', () => {
     expect(contrast(c.onAccent, c.accent)).toBeGreaterThanOrEqual(4.5);
   });

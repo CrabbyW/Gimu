@@ -4,7 +4,7 @@ export const dark = {
   base: '#0E0D0C', surface: '#171615', raised: '#201E1C', rule: '#2C2926', text: '#EFEDE8', muted: '#8C8780',
   accent: '#FF6B35', onAccent: '#131316', accentText: '#FF6B35',
   plate5: '#6B6660', plate10: '#57534E', plate15: '#46423E', plate20: '#36332F', plate25: '#2A2724',
-  plateRim: '#3A3632', plateHighlight: 'rgba(255,255,255,0.10)', danger: '#E5484D', success: '#46A758',
+  plateRim: '#3A3632', plateHighlight: 'rgba(255,255,255,0.10)', danger: '#EB5E62', success: '#46A758',
 } as const;
 export const light: Record<keyof typeof dark, string> = {
   base: '#EFEEEA', surface: '#E5E4DF', raised: '#F6F5F2', rule: '#C9C7C0', text: '#131316', muted: '#5E5E63',
