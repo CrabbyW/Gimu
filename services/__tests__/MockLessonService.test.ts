@@ -16,3 +16,12 @@ test('onboarding → dokončení lekce → mapa ukáže další uzel jako curren
   await services.lessons.completeLesson('bc-1-1', 'att-1', new Date(2026, 8, 29, 10));
   expect(useDb.getState().profile!.activity).toHaveLength(1);
 });
+
+test('uzel mapy nese základní XP: lekce, boss, u dokončené opakování', async () => {
+  await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+  await services.lessons.completeLesson('bc-1-1', 'att-1', new Date(2026, 8, 29, 10));
+  const nodes = (await services.lessons.getPath('bodyControl', new Date(2026, 8, 29, 10))).sections[0]!.nodes;
+  expect(nodes.find((n) => n.lesson.id === 'bc-1-1')!.xp).toBe(10);
+  expect(nodes.find((n) => n.lesson.id === 'bc-1-2')!.xp).toBe(20);
+  expect(nodes.find((n) => n.lesson.isBoss)!.xp).toBe(40);
+});

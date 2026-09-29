@@ -20,7 +20,11 @@ export class MockLessonService implements LessonService {
       sections: meta.sections.map((s) => ({
         index: s.index, title: s.title,
         nodes: lessons.filter((l) => l.section === s.index).sort((a, b) => a.order - b.order)
-          .map((lesson) => ({ lesson, state: states.get(lesson.id) ?? 'locked', exerciseCount: lesson.exerciseIds.length })),
+          .map((lesson) => {
+            const state = states.get(lesson.id) ?? 'locked';
+            const xp = state === 'done' ? XP_RULES.replay : lesson.isBoss ? XP_RULES.boss : XP_RULES.lesson;
+            return { lesson, state, exerciseCount: lesson.exerciseIds.length, xp };
+          }),
       })),
     };
   }

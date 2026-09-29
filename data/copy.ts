@@ -50,6 +50,15 @@ export const copy = {
     sectionLabel: (n: number, title: string) => `SEKCE ${String(n).padStart(2, '0')} · ${title.toUpperCase()}`,
     start: 'Začít', replay: 'Zopakovat', locked: 'Nejdřív dokonči předchozí lekci.',
     exercises: (n: number) => (n >= 5 ? `${n} cviků` : `${n} cviky`), streak: 'STREAK', xp: 'XP', days: 'dní',
+    // Řádek v popoveru uzlu: „10 KG · 4 CVIKY · +20 XP“ (velká písmena dělá mono štítek).
+    nodeMeta: (kg: number, exercises: string, xp: number) => `${kg} kg · ${exercises} · +${xp} XP`,
+    boss: 'BOSS', kgUnit: 'KG', closePopover: 'Zavřít detail lekce',
+    nodeState: { locked: 'zamčená', current: 'aktuální', done: 'dokončená' },
+    nodeA11y: (order: number, title: string, kg: number, state: string) => `Lekce ${order}, ${title}, ${kg} kilogramů, ${state}`,
+    league: (tier: string) => `LIGA · ${tier}`,
+    streakA11y: (n: number) => `Streak ${n} dní`,
+    xpA11y: (n: number) => `${n} XP celkem`,
+    leagueA11y: (tier: string) => `Liga ${tier}`,
   },
   lesson: {
     reps: 'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',
@@ -63,20 +72,5 @@ export const copy = {
   mascot: {
     // Popisek pro čtečku obrazovky podle nálady.
     label: { idle: 'Tvoje opice', happy: 'Tvoje opice má radost', celebrate: 'Tvoje opice slaví', sad: 'Tvoje opice je smutná' },
-  },
-  // Dočasná náhledová obrazovka app/dev-preview.tsx, zmizí v Task 11.
-  devPreview: {
-    screenLabel: 'NÁHLED · MASKOT A\u00A0PRVKY',
-    mascotLabel: 'OPICE · STAGE 1',
-    sizeLabel: (name: string, pt: number) => `${name} · ${pt} PT`,
-    moodIdle: 'Klid', moodHappy: 'Radost',
-    formLabel: 'ONBOARDING · VÁHA',
-    milestoneExample: '10 shybů v\u00A0kuse',
-    statsLabel: 'STATISTIKY',
-    weekLabel: 'TENTO TÝDEN',
-    weightLabel: 'VÁHA',
-    buttonsLabel: 'TLAČÍTKA',
-    errorLabel: 'CHYBOVÝ STAV',
-    showError: 'Ukázat chybový stav',
   },
 } as const;
