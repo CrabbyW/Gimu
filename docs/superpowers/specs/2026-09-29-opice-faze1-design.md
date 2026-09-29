@@ -281,7 +281,7 @@ Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic`:
 | `onAccent` | `#131316` | `#131316` |
 | `accentText` (akcent jako text) | `#FF6B35` | `#AE3A0B` |
 | `plate5 → plate25` | `#6B6660 → #2A2724`, světlý okraj `#3A3632` | `#A29E97 → #131316` |
-| `danger` / `success` | `#E5484D` / `#46A758` (tlumené, jen liga a chyby) | `#B42328` / `#2A7E3B` |
+| `danger` / `success` | `#EB5E62` / `#46A758` (tlumené, jen liga a chyby) | `#B42328` / `#2A7E3B` |
 
 - Všechny kombinace textu a pozadí mají kontrast alespoň 4.5:1. `muted` se používá jen pro text 14 pt a větší.
 - Téma se řídí systémem (`userInterfaceStyle: automatic`). V Nastavení jde přepnout Systém / Světlý / Tmavý.
