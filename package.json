@@ -52,6 +52,7 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "globalSetup": "<rootDir>/jest.global-setup.ts",
     "setupFiles": [
       "<rootDir>/jest.setup.ts"
     ],
