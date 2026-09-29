@@ -1,5 +1,7 @@
 import type { MilestoneUnit } from '@/types';
 
+const MILESTONE_UNIT_SHORT = { reps: '×', seconds: 's', kg: 'kg' } as const;
+
 export const copy = {
   common: {
     continue: 'Pokračovat', back: 'Zpět', done: 'Hotovo', start: 'Start', pause: 'Pauza',
@@ -11,32 +13,36 @@ export const copy = {
   tabs: { training: 'Trénink' },
   onboarding: {
     stepLabel: (n: number, total: number) => `KROK ${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
-    path: { title: 'Vyber si cestu', lead: 'Cestu můžeš později změnit. Opice půjde s tebou.' },
+    path: { title: 'Vyber si cestu', lead: 'Cestu můžeš později změnit. Opice půjde s\u00A0tebou.' },
     dream: {
-      title: 'Jaké tělo chceš?', lead: 'Jedna nebo dvě věty. Tohle budeš vídat nahoře v Progresu.', placeholder: 'Chci udělat muscle-up a mít viditelný sixpack.',
+      title: 'Jaké tělo chceš?', lead: 'Jedna nebo dvě věty. Tohle budeš vídat nahoře v\u00A0Progresu.', placeholder: 'Chci udělat muscle-up a\u00A0mít viditelný sixpack.',
       counter: (n: number, max: number) => `${n} / ${max}`,
-      counterA11y: (n: number, max: number) => `${n} z ${max} znaků`,
+      counterA11y: (n: number, max: number) => `${n} z\u00A0${max} znaků`,
     },
     milestones: {
-      title: 'První milníky', lead: 'Vyber 2 až 3. Můžeš napsat i vlastní.', addCustom: 'Vlastní milník', customLabel: 'Název', customTarget: 'Cíl',
+      title: 'První milníky', lead: 'Vyber 2 až 3. Můžeš napsat i\u00A0vlastní.', addCustom: 'Vlastní milník', customLabel: 'Název', customTarget: 'Cíl',
       customPlaceholder: 'Stojka bez zdi', customUnit: 'Jednotka', customSubmit: 'Přidat milník', customCancel: 'Zrušit',
       customTargetError: 'Zadej celé číslo od 1 do 9999.',
       units: { reps: 'Počet', seconds: 'Sekundy', kg: 'kg', done: 'Splněno' },
+      // Jednotka u pole Cíl a v chipu; „splněno“ cíl nemá.
+      unitShort: MILESTONE_UNIT_SHORT,
+      targetPlaceholder: { reps: '15', seconds: '30', kg: '5' },
       // Popisek chipu vlastního milníku: „Shyby 15×“, „Stojka 30 s“, „Salto“.
       customChip: (label: string, target: number, unit: MilestoneUnit) => {
         if (unit === 'done') return label;
-        const amount = unit === 'reps' ? `${target}×` : `${target} ${unit === 'seconds' ? 's' : 'kg'}`;
+        // Opakování se píšou „15×“ bez mezery, ostatní jednotky s mezerou („30 s“, „5 kg“).
+        const amount = unit === 'reps' ? `${target}${MILESTONE_UNIT_SHORT.reps}` : `${target} ${MILESTONE_UNIT_SHORT[unit]}`;
         return `${label} ${amount}`;
       },
-      pickCount: (n: number) => `${n} / 3 vybráno`,
+      pickCount: (n: number, max: number) => `${n} / ${max} vybráno`,
     },
     weight: {
-      title: 'Cíl váhy', lead: 'Volitelné. Graf váhy uvidíš jen s cílem.', lose: 'Hubnutí', gain: 'Nabírání', none: 'Neřeším',
+      title: 'Cíl váhy', lead: 'Volitelné. Graf váhy uvidíš jen s\u00A0cílem.', lose: 'Hubnutí', gain: 'Nabírání', none: 'Neřeším',
       current: 'Aktuální váha', target: 'Cílová váha', unit: 'kg',
-      errors: { invalid: 'Zadej číslo mezi 30 a 250 kg.', loseDirection: 'Při hubnutí musí být cíl nižší než aktuální váha.', gainDirection: 'Při nabírání musí být cíl vyšší než aktuální váha.' },
+      errors: { invalid: 'Zadej číslo mezi 30 a\u00A0250 kg.', loseDirection: 'Při hubnutí musí být cíl nižší než aktuální váha.', gainDirection: 'Při nabírání musí být cíl vyšší než aktuální váha.' },
     },
     birth: {
-      title: 'Tohle je tvoje opice.', lead: 'Poroste s každou lekcí.', cta: 'Jdeme trénovat', bornLabel: (date: string) => `NAROZENA ${date}`,
+      title: 'Tohle je tvoje opice.', lead: 'Poroste s\u00A0každou lekcí.', cta: 'Jdeme trénovat', bornLabel: (date: string) => `NAROZENA ${date}`,
       saveError: 'Opici se nepodařilo uložit. Zkus to znovu.',
     },
   },
@@ -60,12 +66,12 @@ export const copy = {
   },
   // Dočasná náhledová obrazovka app/dev-preview.tsx, zmizí v Task 11.
   devPreview: {
-    screenLabel: 'NÁHLED · MASKOT A PRVKY',
+    screenLabel: 'NÁHLED · MASKOT A\u00A0PRVKY',
     mascotLabel: 'OPICE · STAGE 1',
     sizeLabel: (name: string, pt: number) => `${name} · ${pt} PT`,
     moodIdle: 'Klid', moodHappy: 'Radost',
     formLabel: 'ONBOARDING · VÁHA',
-    milestoneExample: '10 shybů v kuse',
+    milestoneExample: '10 shybů v\u00A0kuse',
     statsLabel: 'STATISTIKY',
     weekLabel: 'TENTO TÝDEN',
     weightLabel: 'VÁHA',

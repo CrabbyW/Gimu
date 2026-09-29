@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { TextInput, View, type TextInputProps } from 'react-native';
 import { typography, useTheme } from '@/theme';
+import { useRevealOnFocus } from './revealOnFocus';
 import { Text } from './Text';
 
 interface Props extends Omit<TextInputProps, 'style' | 'selectionColor' | 'placeholderTextColor'> {
@@ -14,15 +15,18 @@ interface Props extends Omit<TextInputProps, 'style' | 'selectionColor' | 'place
 export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Props) {
   const { c, space } = useTheme();
   const [focused, setFocused] = useState(false);
+  const reveal = useRevealOnFocus();
+  // Celý blok (štítek, pole, chyba), aby nad klávesnicí bylo vidět i chybové hlášení.
+  const block = useRef<View>(null);
   return (
-    <View style={{ gap: space.s }}>
+    <View ref={block} style={{ gap: space.s }}>
       <Text variant="label" tone="muted">{label}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s, borderBottomWidth: 1, borderBottomColor: focused ? c.accent : c.rule }}>
         <TextInput
           {...input}
           accessibilityLabel={input.accessibilityLabel ?? label}
-          onFocus={(e) => { setFocused(true); onFocus?.(e); }}
-          onBlur={(e) => { setFocused(false); onBlur?.(e); }}
+          onFocus={(e) => { setFocused(true); reveal?.focus(block.current); onFocus?.(e); }}
+          onBlur={(e) => { setFocused(false); reveal?.blur(block.current); onBlur?.(e); }}
           selectionColor={c.accent}
           cursorColor={c.accent}
           placeholderTextColor={c.muted}

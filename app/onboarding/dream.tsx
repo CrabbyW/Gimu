@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
+import { useRevealOnFocus } from '@/components/ui/revealOnFocus';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useOnboardingDraft } from '@/hooks/useOnboardingDraft';
@@ -15,6 +16,8 @@ export default function DreamStep() {
   const dreamBody = useOnboardingDraft((s) => s.dreamBody);
   const set = useOnboardingDraft((s) => s.set);
   const [focused, setFocused] = useState(false);
+  const reveal = useRevealOnFocus();
+  const block = useRef<View>(null);
 
   return (
     <OnboardingFrame
@@ -24,7 +27,7 @@ export default function DreamStep() {
       canContinue={isDreamValid(dreamBody)}
       onContinue={() => router.push('/onboarding/milestones')}
     >
-      <View style={{ gap: space.s }}>
+      <View ref={block} style={{ gap: space.s }}>
         {/* Stejný jazyk jako TextField: jediná spodní linka, při fokusu v akcentu. */}
         <View style={{ borderBottomWidth: 1, borderBottomColor: focused ? c.accent : c.rule }}>
           <TextInput
@@ -34,8 +37,8 @@ export default function DreamStep() {
             maxLength={DREAM_MAX_LENGTH}
             placeholder={t.placeholder}
             accessibilityLabel={t.title}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
+            onFocus={() => { setFocused(true); reveal?.focus(block.current); }}
+            onBlur={() => { setFocused(false); reveal?.blur(block.current); }}
             selectionColor={c.accent}
             cursorColor={c.accent}
             placeholderTextColor={c.muted}

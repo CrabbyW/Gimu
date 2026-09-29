@@ -9,8 +9,8 @@ export const MILESTONE_PRESETS: Record<PathId | 'general', MilestonePreset[]> = 
     { id: 'first-muscleup', label: 'První muscle-up', target: 1, unit: 'done' },
   ],
   bodyControl: [
-    { id: 'plank-60', label: '60 s plank', target: 60, unit: 'seconds' },
-    { id: 'first-handstand', label: 'První stojka u zdi', target: 1, unit: 'done' },
+    { id: 'plank-60', label: '60\u00A0s\u00A0plank', target: 60, unit: 'seconds' },
+    { id: 'first-handstand', label: 'První stojka u\u00A0zdi', target: 1, unit: 'done' },
     { id: 'lsit-10', label: 'L-sit 10 s', target: 10, unit: 'seconds' },
     { id: 'crow-15', label: 'Vrána 15 s', target: 15, unit: 'seconds' },
   ],

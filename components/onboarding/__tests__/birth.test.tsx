@@ -1,4 +1,5 @@
 import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
+import { BackHandler } from 'react-native';
 import BirthStep from '@/app/onboarding/birth';
 import { useOnboardingDraft } from '@/hooks/useOnboardingDraft';
 import type { Milestone, OnboardingInput } from '@/types';
@@ -44,6 +45,7 @@ afterEach(() => {
   act(() => { renderer?.unmount(); });
   renderer = null;
   jest.useRealTimers();
+  jest.restoreAllMocks();
 });
 
 test('dvojí tap na „Jdeme trénovat“ uloží profil jen jednou a přejde na mapu', async () => {
@@ -72,6 +74,14 @@ test('selhání uložení ukáže chybu a „Zkusit znovu“, druhý pokus projd
   await act(async () => { cta(root, 'Zkusit znovu').props.onPress(); });
   expect(mockComplete).toHaveBeenCalledTimes(2);
   expect(mockReplace).toHaveBeenCalledWith('/(tabs)');
+});
+
+test('hardwarové Zpět na Androidu oslavu nezavře', () => {
+  const add = jest.spyOn(BackHandler, 'addEventListener');
+  useOnboardingDraft.getState().set(validDraft);
+  render();
+  const handler = add.mock.calls.find(([event]) => event === 'hardwareBackPress')?.[1];
+  expect(handler?.({ type: 'hardwareBackPress', timeStamp: 0 })).toBe(true);
 });
 
 test('štítek narození nese datum a cestu', () => {

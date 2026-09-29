@@ -1,7 +1,7 @@
 import { Redirect, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { BackHandler, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/mascot';
@@ -30,10 +30,14 @@ const TEXT_AT = INFLATE_AT + 1400;
 const CTA_AT = INFLATE_AT + 1800;
 const BURST_MS = 220;
 const BURST_SCALE = 1.15;
-const CIRCLE_DIAMETER = 220;
-const MASCOT_SIZE = 200;
+// Kruh a opice v plné velikosti (Mascot XL); na nízkém displeji se zmenší do volného místa nad textem.
+const DISC_MAX = 300;
+const DISC_MIN = 160;
+const MASCOT_TO_DISC = 280 / DISC_MAX;
 const MASCOT_START = { scale: 0.6, y: 40 };
 const TEXT_RISE = 12;
+// Víc než výška lišty i se spodní safe area: před naběhnutím je celá pod okrajem obrazovky.
+const CTA_TRAVEL = 160;
 // Omezený pohyb (spec §6.7): místo pružin se konečný stav jen prolne.
 const REDUCED_FADE = { duration: 200 };
 
@@ -60,7 +64,14 @@ function BirthScene() {
   const [mood, setMood] = useState<Mood>(calm ? 'happy' : 'idle');
   const [ctaReady, setCtaReady] = useState(calm);
   const [failed, setFailed] = useState(false);
+  const [stageHeight, setStageHeight] = useState(0);
   const submitting = useRef(false);
+
+  // Oslava je konec onboardingu: hardwarové Zpět na Androidu nesmí vrátit doprostřed formuláře (swipe vypíná _layout).
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
 
   const circleScale = useSharedValue(0);
   const circleOpacity = useSharedValue(1);
@@ -69,7 +80,8 @@ function BirthScene() {
   const mascotScale = useSharedValue(MASCOT_START.scale);
   const mascotY = useSharedValue(MASCOT_START.y);
   const textOpacity = useSharedValue(0);
-  const ctaOpacity = useSharedValue(0);
+  // Lišta vyjede zespodu (0 → 1 = mimo obrazovku → na místě). Nezprůhledňuje se: poloprůhledný akcent by byl nový odstín.
+  const ctaIn = useSharedValue(0);
 
   useEffect(() => {
     if (!input) return;
@@ -82,7 +94,7 @@ function BirthScene() {
       mascotY.value = 0;
       mascotOpacity.value = withTiming(1, REDUCED_FADE);
       textOpacity.value = withTiming(1, REDUCED_FADE);
-      ctaOpacity.value = withTiming(1, REDUCED_FADE);
+      ctaIn.value = 1;
       haptics.success();
       return;
     }
@@ -101,10 +113,10 @@ function BirthScene() {
     });
     at(HAPPY_AT, () => setMood('happy'));
     textOpacity.value = withDelay(TEXT_AT, withTiming(1, motion.reveal));
-    ctaOpacity.value = withDelay(CTA_AT, withTiming(1, motion.ui));
+    ctaIn.value = withDelay(CTA_AT, withTiming(1, motion.reveal));
     at(CTA_AT, () => setCtaReady(true));
     return () => timers.forEach(clearTimeout);
-  }, [input, calm, circleScale, circleOpacity, holeScale, mascotOpacity, mascotScale, mascotY, textOpacity, ctaOpacity]);
+  }, [input, calm, circleScale, circleOpacity, holeScale, mascotOpacity, mascotScale, mascotY, textOpacity, ctaIn]);
 
   const circleStyle = useAnimatedStyle(() => ({ opacity: circleOpacity.value, transform: [{ scale: circleScale.value }] }));
   const holeStyle = useAnimatedStyle(() => ({ transform: [{ scale: holeScale.value }] }));
@@ -117,9 +129,11 @@ function BirthScene() {
     opacity: textOpacity.value,
     transform: [{ translateY: (1 - textOpacity.value) * textRise }],
   }));
-  const ctaStyle = useAnimatedStyle(() => ({ opacity: ctaOpacity.value }));
+  const ctaStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - ctaIn.value) * CTA_TRAVEL }] }));
 
   if (!input) return <Redirect href="/onboarding/path" />;
+  const disc = Math.round(Math.min(DISC_MAX, Math.max(DISC_MIN, stageHeight - space.xl - space.l)));
+  const onStageLayout = (e: LayoutChangeEvent) => setStageHeight(e.nativeEvent.layout.height);
   const pathName = paths.find((p) => p.id === input.path)?.name ?? '';
 
   const start = async () => {
@@ -139,20 +153,23 @@ function BirthScene() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
+    <View style={{ flex: 1, backgroundColor: c.base, overflow: 'hidden' }}>
       <StatusBar style="light" />
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ width: CIRCLE_DIAMETER, height: CIRCLE_DIAMETER, alignItems: 'center', justifyContent: 'center' }}>
-            <Animated.View
-              style={[circleStyle, { position: 'absolute', width: CIRCLE_DIAMETER, height: CIRCLE_DIAMETER, borderRadius: CIRCLE_DIAMETER / 2, backgroundColor: c.accent }]}
-            >
-              <Animated.View style={[holeStyle, { flex: 1, borderRadius: CIRCLE_DIAMETER / 2, backgroundColor: c.base }]} />
-            </Animated.View>
-            <Animated.View style={mascotStyle}>
-              <Mascot stage={1} cosmetics={{}} mood={mood} size={MASCOT_SIZE} />
-            </Animated.View>
-          </View>
+        {/* Opice stojí nad titulkem (space.xl), ne ve středu volné plochy: scéna a text tvoří jeden blok. */}
+        <View onLayout={onStageLayout} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: space.xl }}>
+          {stageHeight > 0 ? (
+            <View style={{ width: disc, height: disc, alignItems: 'center', justifyContent: 'center' }}>
+              <Animated.View
+                style={[circleStyle, { position: 'absolute', width: disc, height: disc, borderRadius: disc / 2, backgroundColor: c.accent }]}
+              >
+                <Animated.View style={[holeStyle, { flex: 1, borderRadius: disc / 2, backgroundColor: c.base }]} />
+              </Animated.View>
+              <Animated.View style={mascotStyle}>
+                <Mascot stage={1} cosmetics={{}} mood={mood} size={Math.round(disc * MASCOT_TO_DISC)} />
+              </Animated.View>
+            </View>
+          ) : null}
         </View>
         <Animated.View style={[textStyle, { paddingHorizontal: space.l, paddingBottom: space.xl, gap: space.s }]}>
           <Text variant="display" accessibilityRole="header">{t.title}</Text>
@@ -163,7 +180,12 @@ function BirthScene() {
           ) : null}
         </Animated.View>
       </SafeAreaView>
-      <Animated.View style={[ctaStyle, { pointerEvents: ctaReady ? 'auto' : 'none' }]} accessibilityElementsHidden={!ctaReady}>
+      {/* Než CTA naběhne, je skryté i pro čtečky (iOS i TalkBack). */}
+      <Animated.View
+        style={[ctaStyle, { pointerEvents: ctaReady ? 'auto' : 'none' }]}
+        accessibilityElementsHidden={!ctaReady}
+        importantForAccessibility={ctaReady ? 'auto' : 'no-hide-descendants'}
+      >
         <BigActionBar primary={{ label: failed ? copy.common.retry : t.cta, onPress: () => { void start(); } }} />
       </Animated.View>
     </View>

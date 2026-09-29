@@ -27,6 +27,7 @@ export default function MilestonesStep() {
   const { space } = useTheme();
   const path = useOnboardingDraft((s) => s.path);
   const selected = useOnboardingDraft((s) => s.milestones);
+  const customs = useOnboardingDraft((s) => s.customMilestones);
   const set = useOnboardingDraft((s) => s.set);
   const presets = useMilestonePresets(path);
   const [shakes, setShakes] = useState<Record<string, number>>({});
@@ -51,7 +52,7 @@ export default function MilestonesStep() {
 
   const chips: Milestone[] = [
     ...presets.map((p) => ({ ...p, current: 0, custom: false })),
-    ...selected.filter((m) => m.custom),
+    ...customs,
   ];
   const isSelected = (id: string) => selected.some((m) => m.id === id);
   const full = selected.length >= MILESTONES_MAX;
@@ -66,7 +67,7 @@ export default function MilestonesStep() {
     >
       <View style={{ gap: space.m }}>
         <Text variant="label" tone={limitHit > 0 ? 'accent' : 'muted'} accessibilityLiveRegion="polite">
-          {t.pickCount(selected.length)}
+          {t.pickCount(selected.length, MILESTONES_MAX)}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s }}>
           {chips.map((m) => (
@@ -81,7 +82,7 @@ export default function MilestonesStep() {
         </View>
         <CustomMilestone
           disabled={full}
-          onAdd={(m) => set({ milestones: [...selected, m] })}
+          onAdd={(m) => set({ customMilestones: [...customs, m], milestones: [...selected, m] })}
         />
       </View>
     </OnboardingFrame>
@@ -131,9 +132,11 @@ function CustomMilestone({ disabled, onAdd }: { disabled: boolean; onAdd(m: Mile
         <Text variant="label" tone="muted">{t.customUnit}</Text>
         <SegmentedControl<MilestoneUnit> options={UNIT_OPTIONS} value={unit} onChange={setUnit} />
       </View>
-      {needsTarget ? (
+      {unit !== 'done' ? (
         <TextField
           label={t.customTarget}
+          unit={t.unitShort[unit]}
+          placeholder={t.targetPlaceholder[unit]}
           value={target}
           onChangeText={(v) => { setTarget(v); setTargetError(false); }}
           onBlur={() => setTargetError(target.trim() !== '' && parsedTarget === null)}

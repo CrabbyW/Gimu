@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 import { fitsRoundCta, RoundCta, type CtaAction } from './RoundCta';
 import { Text } from './Text';
+import { useKeyboardVisible } from './useKeyboardVisible';
 
 interface Props { primary: CtaAction; secondary?: { label: string; onPress(): void } }
 
@@ -13,9 +14,11 @@ interface Props { primary: CtaAction; secondary?: { label: string; onPress(): vo
 export function BigActionBar({ primary, secondary }: Props) {
   const { c, space } = useTheme();
   const insets = useSafeAreaInsets();
+  // Nad klávesnicí (KeyboardAvoidingView) by spodní safe area byla jen mrtvý pruh.
+  const keyboardVisible = useKeyboardVisible();
   const primaryFlex = fitsRoundCta(primary.label) ? 1 : 2;
   return (
-    <View style={{ flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule, paddingBottom: insets.bottom, backgroundColor: c.base }}>
+    <View style={{ flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule, paddingBottom: keyboardVisible ? 0 : insets.bottom, backgroundColor: c.base }}>
       {secondary ? (
         <Pressable
           onPress={secondary.onPress}

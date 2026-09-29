@@ -6,7 +6,7 @@ const L = (order: number, title: string, plateKg: Lesson['plateKg'], exerciseIds
 export const BODY_CONTROL_LESSONS: Lesson[] = [
   L(1, 'Pevný střed', 5, ['plank', 'hollow-hold', 'glute-bridge']),
   L(2, 'Linie těla', 5, ['plank', 'superman', 'side-plank']),
-  L(3, 'Opora v dlaních', 10, ['incline-pushup', 'plank', 'pike-hold']),
+  L(3, 'Opora v\u00A0dlaních', 10, ['incline-pushup', 'plank', 'pike-hold']),
   L(4, 'Hollow', 10, ['hollow-hold', 'hollow-rock', 'superman', 'side-plank']),
   L(5, 'Nad hlavou', 15, ['pike-hold', 'pushup', 'hollow-hold', 'plank']),
   L(6, 'Stlač ramena', 15, ['tuck-lsit', 'bench-dip', 'hollow-rock', 'side-plank']),
