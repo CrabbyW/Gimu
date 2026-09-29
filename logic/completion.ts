@@ -18,10 +18,15 @@ interface Args {
 }
 
 export function applyLessonCompletion(a: Args): { profile: UserProfile; result: LessonResult } {
-  const prior = a.profile.activity.find((e) => e.id === a.attemptId);
-  const events = prior ? a.profile.activity.filter((e) => e.id !== a.attemptId) : a.profile.activity;
+  const priorIndex = a.profile.activity.findIndex((e) => e.id === a.attemptId);
+  const isRetry = priorIndex !== -1;
+  const prior = isRetry ? a.profile.activity[priorIndex] : undefined;
+  // Retry (stejné attemptId): přepočítej přesně ve stavu a čase originálního pokusu,
+  // ignoruj a.now i pokusy vložené po něm, ať je výsledek idempotentní.
+  const events = isRetry ? a.profile.activity.slice(0, priorIndex) : a.profile.activity;
+  const now = prior ? new Date(prior.at) : a.now;
+  const day = prior ? prior.day : toISODate(now);
 
-  const day = toISODate(a.now);
   const completedBefore = new Set(events.map((e) => e.lessonId));
   const isReplay = completedBefore.has(a.lesson.id);
   const isFirstToday = !events.some((e) => e.day === day);
@@ -43,7 +48,7 @@ export function applyLessonCompletion(a: Args): { profile: UserProfile; result: 
       .filter((l) => !l.isBoss && completedAfter.has(l.id)).map((l) => l.plateKg),
   };
 
-  if (prior) return { profile: a.profile, result: { ...result, xp: { ...xp, total: prior.xp } } };
-  const event = { id: a.attemptId, at: a.now.toISOString(), day, lessonId: a.lesson.id, xp: xp.total };
+  if (isRetry) return { profile: a.profile, result };
+  const event = { id: a.attemptId, at: now.toISOString(), day, lessonId: a.lesson.id, xp: xp.total };
   return { profile: { ...a.profile, activity: [...a.profile.activity, event] }, result };
 }

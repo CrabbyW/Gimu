@@ -4,6 +4,9 @@ test('parseWeight přijme čárku i tečku a odmítne nesmysly', () => {
   expect(parseWeight('72,5')).toBe(72.5); expect(parseWeight(' 80 ')).toBe(80);
   expect(parseWeight('')).toBeNull(); expect(parseWeight('abc')).toBeNull(); expect(parseWeight('7O')).toBeNull();
 });
+test('parseWeight odmítne dvě desetinná místa (mockWeightHistory zaokrouhluje na jedno)', () => {
+  expect(parseWeight('72,55')).toBeNull(); expect(parseWeight('72.5')).toBe(72.5);
+});
 test.each([
   ['lose', 80, 75, 'ok'], ['lose', 80, 85, 'loseDirection'], ['gain', 70, 75, 'ok'], ['gain', 70, 65, 'gainDirection'],
   ['lose', 20, 15, 'invalid'], ['gain', null, 75, 'invalid'], ['lose', 80, 80, 'loseDirection'],

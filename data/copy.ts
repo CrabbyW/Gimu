@@ -19,7 +19,7 @@ export const copy = {
   map: {
     sectionLabel: (n: number, title: string) => `SEKCE ${String(n).padStart(2, '0')} · ${title.toUpperCase()}`,
     start: 'Začít', replay: 'Zopakovat', locked: 'Nejdřív dokonči předchozí lekci.',
-    exercises: (n: number) => `${n} cviky`, streak: 'STREAK', xp: 'XP', days: 'dní',
+    exercises: (n: number) => (n >= 5 ? `${n} cviků` : `${n} cviky`), streak: 'STREAK', xp: 'XP', days: 'dní',
   },
   lesson: {
     reps: 'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',

@@ -38,6 +38,21 @@ test('lekce ve 23:59 a 00:01 jsou dva různé dny (streak 2, obě first-of-day)'
   const b = run(a.profile, 'bc-1-2', new Date(2026, 8, 30, 0, 1));
   expect(b.result.xp.firstOfDay).toBe(10); expect(b.result.streak).toBe(2);
 });
+test('retry s pozdějším now vrátí identický výsledek jako original attempt', () => {
+  const now = new Date(2026, 8, 29, 10);
+  const a = run(base(), 'bc-1-1', now, 'attempt-1');
+  const laterNow = new Date(2026, 8, 30, 9); // jiný den, jiný "now"
+  const b = run(a.profile, 'bc-1-1', laterNow, 'attempt-1');
+  expect(b.result).toEqual(a.result);
+  expect(b.profile).toEqual(a.profile);
+});
+test('retry po mezilehlém pokusu vrátí identický výsledek jako original attempt', () => {
+  const now = new Date(2026, 8, 29, 10);
+  const a = run(base(), 'bc-1-1', now, 'attempt-1');
+  const c = run(a.profile, 'bc-1-2', new Date(2026, 8, 29, 18), 'attempt-2');
+  const retry = run(c.profile, 'bc-1-1', new Date(2026, 8, 30, 9), 'attempt-1');
+  expect(retry.result).toEqual(a.result);
+});
 test('přechod stage se hlásí', () => {
   let p = base();
   p = { ...p, activity: [{ id: 'dev', at: new Date(2026, 8, 28).toISOString(), day: '2026-09-28', lessonId: 'dev-xp', xp: 480 }] };

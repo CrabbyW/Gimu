@@ -4,7 +4,7 @@ import { mulberry32 } from './random';
 
 export function parseWeight(raw: string): number | null {
   const s = raw.trim().replace(',', '.');
-  if (!/^\d{2,3}(\.\d{1,2})?$/.test(s)) return null;
+  if (!/^\d{2,3}(\.\d)?$/.test(s)) return null;
   return Number(s);
 }
 

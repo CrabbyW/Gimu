@@ -26,4 +26,7 @@ describe('dates', () => {
     expect(parseISODate('2026-09-29').getTime()).toBe(new Date(2026, 8, 29).getTime());
   });
   test('formatCzDate', () => { expect(formatCzDate('2026-09-29')).toBe('29. 9. 2026'); });
+  test('proces běží v Europe/Prague bez ohledu na to, jak byl jest spuštěn (TZ guard)', () => {
+    expect(new Date(2026, 8, 30, 0, 1).getUTCDate()).toBe(29);
+  });
 });
