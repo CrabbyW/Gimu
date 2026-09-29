@@ -150,7 +150,7 @@ interface UserService {
 interface LessonService {
   getPath(pathId: PathId, now: Date): Promise<LessonPathView>; // sekce + uzly se stavem locked|current|done
   getLesson(id: string): Promise<LessonDetail>;                // lekce + rozbalené cviky
-  completeLesson(id: string, now: Date): Promise<LessonResult>;
+  completeLesson(id: string, attemptId: string, now: Date): Promise<LessonResult>; // attemptId = idempotence proti dvojímu tapu
   // LessonResult: { xpGained, xpBreakdown, totalXp, stageBefore, stageAfter, unlockedLessonId | null, streak }
 }
 interface LeagueService { getCurrentWeek(now: Date): Promise<LeagueWeekView> }    // entries seřazené, tier, zóny, endsAt
