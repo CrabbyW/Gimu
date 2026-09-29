@@ -5,7 +5,8 @@ const { defineConfig } = require('eslint/config');
 const uiBoundaries = {
   patterns: [
     { group: ['@/store/*', '@/store'], message: 'UI čte data přes hooks/, ne ze store.' },
-    { group: ['@/data/*', '@/data', '!@/data/copy'], message: 'UI čte obsah přes services/, ne z data/ (výjimka: @/data/copy = UI texty).' },
+    // Regex místo gitignore glob: '@/data' vyloučí celý adresář a '!@/data/copy' už ho nedokáže vrátit.
+    { regex: '^@/data(/(?!copy$).*)?$', message: 'UI čte obsah přes services/, ne z data/ (výjimka: @/data/copy = UI texty).' },
     { group: ['@/services/mock/*'], message: 'Implementaci volí jen services/index.ts.' },
   ],
 };

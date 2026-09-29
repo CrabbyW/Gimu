@@ -3,7 +3,10 @@ export const copy = {
     continue: 'Pokračovat', back: 'Zpět', done: 'Hotovo', start: 'Start', pause: 'Pauza',
     resume: 'Pokračovat', retry: 'Zkusit znovu',
     loadError: (what: string) => `Nepodařilo se načíst ${what}.`,
+    // Předmět věty „Nepodařilo se načíst …“ (4. pád).
+    loadTarget: { profile: 'profil', path: 'cestu' },
   },
+  tabs: { training: 'Trénink' },
   onboarding: {
     stepLabel: (n: number, total: number) => `KROK ${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
     path: { title: 'Vyber si cestu', lead: 'Cestu můžeš později změnit. Opice půjde s tebou.' },

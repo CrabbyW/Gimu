@@ -1,0 +1,38 @@
+import { useState } from 'react';
+import { TextInput, View, type TextInputProps } from 'react-native';
+import { typography, useTheme } from '@/theme';
+import { Text } from './Text';
+
+interface Props extends Omit<TextInputProps, 'style' | 'selectionColor' | 'placeholderTextColor'> {
+  label: string;
+  /** Jednotka vpravo v poli (např. `kg`). */
+  unit?: string;
+  error?: string | null;
+}
+
+/** Pole s mono štítkem nad sebou a jedinou spodní linkou, která při fokusu přejde do akcentu. */
+export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Props) {
+  const { c, space } = useTheme();
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={{ gap: space.s }}>
+      <Text variant="label" tone="muted">{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s, borderBottomWidth: 1, borderBottomColor: focused ? c.accent : c.rule }}>
+        <TextInput
+          {...input}
+          accessibilityLabel={input.accessibilityLabel ?? label}
+          onFocus={(e) => { setFocused(true); onFocus?.(e); }}
+          onBlur={(e) => { setFocused(false); onBlur?.(e); }}
+          selectionColor={c.accent}
+          cursorColor={c.accent}
+          placeholderTextColor={c.muted}
+          style={{ ...typography.body, fontSize: 20, lineHeight: 28, color: c.text, flex: 1, minHeight: 48, paddingVertical: space.s }}
+        />
+        {unit ? <Text variant="caption" tone="muted">{unit}</Text> : null}
+      </View>
+      {error ? (
+        <Text variant="caption" style={{ color: c.danger }} accessibilityLiveRegion="polite">{error}</Text>
+      ) : null}
+    </View>
+  );
+}
