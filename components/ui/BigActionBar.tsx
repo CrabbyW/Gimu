@@ -1,16 +1,19 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { RoundCta, type CtaAction } from './RoundCta';
+import { fitsRoundCta, RoundCta, type CtaAction } from './RoundCta';
 import { Text } from './Text';
 
 interface Props { primary: CtaAction; secondary?: { label: string; onPress(): void } }
 
 /** Spodní akční lišta rozdělená na buňky (ref. 3): vlevo vedlejší akce, vpravo velké CTA.
- *  Sama odsazuje spodní safe area, obrazovka nad ní proto spodní hranu neodsazuje. */
+ *  Sama odsazuje spodní safe area, obrazovka nad ní proto spodní hranu neodsazuje.
+ *  Kulaté CTA sedí v polovině lišty; pilulka s delším popiskem („Jdeme trénovat“) dostane
+ *  dvě třetiny šířky, jinak by se popisek na telefonu šířky 360–390 pt uřízl. */
 export function BigActionBar({ primary, secondary }: Props) {
   const { c, space } = useTheme();
   const insets = useSafeAreaInsets();
+  const primaryFlex = fitsRoundCta(primary.label) ? 1 : 2;
   return (
     <View style={{ flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule, paddingBottom: insets.bottom, backgroundColor: c.base }}>
       {secondary ? (
@@ -27,7 +30,7 @@ export function BigActionBar({ primary, secondary }: Props) {
           <Text variant="label" tone="muted">{secondary.label}</Text>
         </Pressable>
       ) : <View style={{ flex: 1 }} />}
-      <View style={{ flex: 1, minHeight: 96, alignItems: 'center', justifyContent: 'center', paddingVertical: space.m, paddingHorizontal: space.m }}>
+      <View style={{ flex: primaryFlex, minHeight: 96, alignItems: 'center', justifyContent: 'center', paddingVertical: space.m, paddingHorizontal: space.m }}>
         <RoundCta {...primary} />
       </View>
     </View>

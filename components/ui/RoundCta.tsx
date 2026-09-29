@@ -11,11 +11,14 @@ const DIAMETER = 88;
 // (~62 pt) se do kruhu 88 pt vejde s okrajem, delší popisek by se dotýkal obvodu.
 const MAX_ROUND_CHARS = 7;
 
+/** Vejde se popisek do kulatého CTA? Delší popisek dostane pilulku (a v BigActionBar širší buňku). */
+export const fitsRoundCta = (label: string): boolean => label.length <= MAX_ROUND_CHARS;
+
 /** Hlavní CTA spodní lišty: kulaté 88 pt v akcentu; delší popisek → pilulka 64 pt na šířku buňky. */
 export function RoundCta({ label, onPress, disabled = false }: CtaAction) {
   const { c, space, radius } = useTheme();
   const feedback = usePressFeedback(0.96);
-  const round = label.length <= MAX_ROUND_CHARS;
+  const round = fitsRoundCta(label);
   return (
     <Animated.View style={[feedback.style, round ? null : { alignSelf: 'stretch' }]}>
       <Pressable
