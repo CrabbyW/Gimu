@@ -1,3 +1,5 @@
+import type { MilestoneUnit } from '@/types';
+
 export const copy = {
   common: {
     continue: 'Pokračovat', back: 'Zpět', done: 'Hotovo', start: 'Start', pause: 'Pauza',
@@ -10,14 +12,33 @@ export const copy = {
   onboarding: {
     stepLabel: (n: number, total: number) => `KROK ${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
     path: { title: 'Vyber si cestu', lead: 'Cestu můžeš později změnit. Opice půjde s tebou.' },
-    dream: { title: 'Jaké tělo chceš?', lead: 'Jedna nebo dvě věty. Tohle budeš vídat nahoře v Progresu.', placeholder: 'Chci udělat muscle-up a mít viditelný sixpack.' },
-    milestones: { title: 'První milníky', lead: 'Vyber 2 až 3. Můžeš napsat i vlastní.', addCustom: 'Vlastní milník', customLabel: 'Název', customTarget: 'Cíl', pickCount: (n: number) => `${n} / 3 vybráno` },
+    dream: {
+      title: 'Jaké tělo chceš?', lead: 'Jedna nebo dvě věty. Tohle budeš vídat nahoře v Progresu.', placeholder: 'Chci udělat muscle-up a mít viditelný sixpack.',
+      counter: (n: number, max: number) => `${n} / ${max}`,
+      counterA11y: (n: number, max: number) => `${n} z ${max} znaků`,
+    },
+    milestones: {
+      title: 'První milníky', lead: 'Vyber 2 až 3. Můžeš napsat i vlastní.', addCustom: 'Vlastní milník', customLabel: 'Název', customTarget: 'Cíl',
+      customPlaceholder: 'Stojka bez zdi', customUnit: 'Jednotka', customSubmit: 'Přidat milník', customCancel: 'Zrušit',
+      customTargetError: 'Zadej celé číslo od 1 do 9999.',
+      units: { reps: 'Počet', seconds: 'Sekundy', kg: 'kg', done: 'Splněno' },
+      // Popisek chipu vlastního milníku: „Shyby 15×“, „Stojka 30 s“, „Salto“.
+      customChip: (label: string, target: number, unit: MilestoneUnit) => {
+        if (unit === 'done') return label;
+        const amount = unit === 'reps' ? `${target}×` : `${target} ${unit === 'seconds' ? 's' : 'kg'}`;
+        return `${label} ${amount}`;
+      },
+      pickCount: (n: number) => `${n} / 3 vybráno`,
+    },
     weight: {
       title: 'Cíl váhy', lead: 'Volitelné. Graf váhy uvidíš jen s cílem.', lose: 'Hubnutí', gain: 'Nabírání', none: 'Neřeším',
       current: 'Aktuální váha', target: 'Cílová váha', unit: 'kg',
       errors: { invalid: 'Zadej číslo mezi 30 a 250 kg.', loseDirection: 'Při hubnutí musí být cíl nižší než aktuální váha.', gainDirection: 'Při nabírání musí být cíl vyšší než aktuální váha.' },
     },
-    birth: { title: 'Tohle je tvoje opice.', lead: 'Poroste s každou lekcí.', cta: 'Jdeme trénovat', bornLabel: (date: string) => `NAROZENA ${date}` },
+    birth: {
+      title: 'Tohle je tvoje opice.', lead: 'Poroste s každou lekcí.', cta: 'Jdeme trénovat', bornLabel: (date: string) => `NAROZENA ${date}`,
+      saveError: 'Opici se nepodařilo uložit. Zkus to znovu.',
+    },
   },
   map: {
     sectionLabel: (n: number, title: string) => `SEKCE ${String(n).padStart(2, '0')} · ${title.toUpperCase()}`,

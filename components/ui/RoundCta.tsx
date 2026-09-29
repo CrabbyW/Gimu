@@ -34,13 +34,13 @@ export function RoundCta({ label, onPress, disabled = false }: CtaAction) {
           height: round ? DIAMETER : 64,
           paddingHorizontal: round ? 0 : space.l,
           borderRadius: radius.full,
-          backgroundColor: c.accent,
+          // Neaktivní CTA nesmí zprůhlednit akcent (vznikl by nový odstín), přejde na neutrální plochu jako Button.
+          backgroundColor: disabled ? c.surface : c.accent,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: disabled ? 0.4 : 1,
         }}
       >
-        <Text variant="bodyStrong" tone="onAccent" numberOfLines={1}>{label}</Text>
+        <Text variant="bodyStrong" tone={disabled ? 'muted' : 'onAccent'} numberOfLines={1}>{label}</Text>
       </Pressable>
     </Animated.View>
   );
