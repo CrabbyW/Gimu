@@ -33,4 +33,23 @@ export const copy = {
     xpStreak: 'streak', cta: 'Pokračovat', replayTitle: 'Opakování dělá mistra.',
   },
   leagueTier: 'LIGA',
+  mascot: {
+    // Popisek pro čtečku obrazovky podle nálady.
+    label: { idle: 'Tvoje opice', happy: 'Tvoje opice má radost', celebrate: 'Tvoje opice slaví', sad: 'Tvoje opice je smutná' },
+  },
+  // Dočasná náhledová obrazovka app/dev-preview.tsx, zmizí v Task 11.
+  devPreview: {
+    screenLabel: 'NÁHLED · MASKOT A PRVKY',
+    mascotLabel: 'OPICE · STAGE 1',
+    sizeLabel: (name: string, pt: number) => `${name} · ${pt} PT`,
+    moodIdle: 'Klid', moodHappy: 'Radost',
+    formLabel: 'ONBOARDING · VÁHA',
+    milestoneExample: '10 shybů v kuse',
+    statsLabel: 'STATISTIKY',
+    weekLabel: 'TENTO TÝDEN',
+    weightLabel: 'VÁHA',
+    buttonsLabel: 'TLAČÍTKA',
+    errorLabel: 'CHYBOVÝ STAV',
+    showError: 'Ukázat chybový stav',
+  },
 } as const;
