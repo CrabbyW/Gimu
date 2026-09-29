@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Opice",
+    "slug": "opice",
+    "scheme": "opice",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": { "supportsTablet": false, "bundleIdentifier": "app.opice" },
+    "android": {
+      "package": "app.opice",
+      "adaptiveIcon": {
+        "backgroundColor": "#0E0D0C",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": { "favicon": "./assets/favicon.png", "output": "single" },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      ["expo-splash-screen", { "backgroundColor": "#0E0D0C", "image": "./assets/splash-icon.png", "imageWidth": 120 }],
+      "expo-notifications"
+    ],
+    "experiments": { "typedRoutes": true }
+  }
+}
