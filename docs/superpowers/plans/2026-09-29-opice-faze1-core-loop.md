@@ -25,7 +25,7 @@
 - Appka musí běžet v Expo Go. Žádný balíček vyžadující development build (Rive jen jako komentovaný stub, v plánu B).
 - TypeScript `strict: true` + `noUncheckedIndexedAccess: true`. Žádné `any`, žádné `// @ts-ignore`.
 - Importy přes alias `@/` (kořen projektu).
-- `app/**`, `components/**`, `hooks/**` nesmí importovat `@/store/*` s výjimkou `hooks/**`. Nesmí importovat `@/data/*` ani `@/services/mock/*`. Vynuceno v `eslint.config.js`.
+- `app/**` a `components/**` nesmí importovat `@/store/*`, `@/data/*` (výjimka `@/data/copy`) ani `@/services/mock/*`. `hooks/`, `theme/`, `lib/` a `services/` smí. Vynuceno v `eslint.config.js`.
 - `logic/**` neimportuje nic z `react`, `react-native`, `expo*`, `@/store`, `@/services`. Importovat smí jen `@/types`.
 - Veškerý čas jde přes `lib/clock.ts` (`now()`). Logika bere `now: Date` nebo `today: ISODate` parametrem.
 - UI texty v češtině, všechny v `data/copy.ts`.
@@ -99,6 +99,7 @@ npx expo install expo-router react-native-safe-area-context react-native-screens
   @react-native-async-storage/async-storage expo-haptics expo-font expo-splash-screen expo-notifications \
   @expo-google-fonts/bebas-neue @expo-google-fonts/inter @expo-google-fonts/jetbrains-mono lucide-react-native
 npm install zustand
+npx expo install react-dom react-native-web @expo/metro-runtime   # web build pro screenshoty design review
 npx expo install jest-expo jest @types/jest -- --save-dev
 npx expo lint   # vygeneruje eslint.config.js s eslint-config-expo
 ```
@@ -179,7 +180,7 @@ const { defineConfig } = require('eslint/config');
 const uiBoundaries = {
   patterns: [
     { group: ['@/store/*', '@/store'], message: 'UI čte data přes hooks/, ne ze store.' },
-    { group: ['@/data/*', '@/data'], message: 'UI čte obsah přes services/, ne z data/.' },
+    { group: ['@/data/*', '@/data', '!@/data/copy'], message: 'UI čte obsah přes services/, ne z data/ (výjimka: @/data/copy = UI texty).' },
     { group: ['@/services/mock/*'], message: 'Implementaci volí jen services/index.ts.' },
   ],
 };
@@ -1923,7 +1924,7 @@ Obrazovky smí importovat `@/logic/*` (čisté funkce, ne data). Hranice ESLint 
 ### Task 11: Mapa lekcí
 
 **Files:**
-- Create: `components/map/geometry.ts`, `Plate.tsx`, `PlateNode.tsx`, `BarbellBoss.tsx`, `PathLine.tsx`, `NodePopover.tsx`, `LessonMap.tsx`, `components/ui/TopBar.tsx`, `logic/__tests__/geometry.test.ts` (geometrie je čistá, proto test)
+- Create: `hooks/useTierName.ts` (čte `LEAGUE_TIERS`, vrací název úrovně), `components/map/geometry.ts`, `Plate.tsx`, `PlateNode.tsx`, `BarbellBoss.tsx`, `PathLine.tsx`, `NodePopover.tsx`, `LessonMap.tsx`, `components/ui/TopBar.tsx`, `logic/__tests__/geometry.test.ts` (geometrie je čistá, proto test)
 - Modify: `app/(tabs)/index.tsx`
 
 **Interfaces:**
