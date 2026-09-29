@@ -36,13 +36,14 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
           paddingHorizontal: space.l,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: variant === 'primary' ? c.accent : 'transparent',
+          backgroundColor: variant === 'primary' ? (disabled ? c.surface : c.accent) : 'transparent',
           borderWidth: variant === 'secondary' ? 1 : 0,
           borderColor: c.rule,
-          opacity: disabled ? 0.4 : 1,
+          // Neaktivní primární nesmí zprůhlednit akcent (vznikl by nový odstín), přejde na neutrální plochu.
+          opacity: disabled && variant !== 'primary' ? 0.4 : 1,
         }}
       >
-        <Text variant="bodyStrong" tone={labelTone[variant]} numberOfLines={1}>{label}</Text>
+        <Text variant="bodyStrong" tone={disabled && variant === 'primary' ? 'muted' : labelTone[variant]} numberOfLines={1}>{label}</Text>
       </Pressable>
     </Animated.View>
   );

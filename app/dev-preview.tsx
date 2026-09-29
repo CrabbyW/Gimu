@@ -54,7 +54,8 @@ export default function DevPreview() {
           <Text tone="muted">{copy.onboarding.birth.lead}</Text>
         </View>
 
-        <View style={{ alignItems: 'center', paddingTop: space.xl, paddingBottom: space.l, gap: space.xl }}>
+        <Text variant="label" tone="muted" style={{ marginTop: space.xl }}>{copy.devPreview.mascotLabel}</Text>
+        <View style={{ alignItems: 'center', paddingTop: space.l, paddingBottom: space.l, gap: space.xl }}>
           <SizeSample name="L" mood={mood} />
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.xl }}>
             <SizeSample name="M" mood={mood} />

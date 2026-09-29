@@ -2,7 +2,7 @@ import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
 import { Ellipse, Path, Svg } from 'react-native-svg';
 import { buildTheme, type Scheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
-import type { MascotStage, Mood } from '@/types';
+import type { Mood } from '@/types';
 import { Mascot, MASCOT_SIZES } from '..';
 import type { MascotProps } from '../types';
 
@@ -76,7 +76,7 @@ test('stage 2/3 zatím kreslí stage 1 a ve vývoji varuje jednou za mount', () 
 
   render({ stage: 2 });
   act(() => { renderer!.update(tree({ stage: 2, mood: 'happy' })); });
-  act(() => { renderer!.update(tree({ stage: 3 as MascotStage })); });
+  act(() => { renderer!.update(tree({ stage: 3 })); });
   expect(warn).toHaveBeenCalledTimes(1);
   expect(warn.mock.calls[0]?.[0]).toContain('stage 2');
 });

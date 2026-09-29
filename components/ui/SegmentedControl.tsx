@@ -12,7 +12,9 @@ interface Props<T extends string> { options: readonly SegmentOption<T>[]; value:
 const BORDER = 1;
 
 /** Přepínač se stejně širokými segmenty. Vybraný je inverzní (pozadí `text`, písmo `base`)
- *  a jeho pozadí se k novému výběru posune v UI timingu. */
+ *  a jeho pozadí se k novému výběru posune v UI timingu. Pozadí nese vlastní kopii popisků
+ *  v barvě `base`, posunutou proti němu: během posunu je každé písmeno ostré a kontrastní,
+ *  ať leží na pozadí výběru, nebo mimo něj. */
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   const { c, radius, space } = useTheme();
   const { reduced } = useMotionSafe();
@@ -31,6 +33,8 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
   }, [index, segment, reduced, x]);
 
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  const inverseLabels = useAnimatedStyle(() => ({ transform: [{ translateX: -x.value }] }));
+  const cell = { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s } as const;
 
   return (
     <View
@@ -38,11 +42,6 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
       onLayout={(e) => setWidth(e.nativeEvent.layout.width - BORDER * 2)}
       style={{ flexDirection: 'row', borderWidth: BORDER, borderColor: c.rule, borderRadius: radius.full, overflow: 'hidden' }}
     >
-      {index >= 0 && segment > 0 ? (
-        <Animated.View
-          style={[indicator, { pointerEvents: 'none', position: 'absolute', top: 0, bottom: 0, left: 0, width: segment, borderRadius: radius.full, backgroundColor: c.text }]}
-        />
-      ) : null}
       {options.map((o) => {
         const selected = o.value === value;
         return (
@@ -52,12 +51,28 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
             accessibilityRole="radio"
             accessibilityLabel={o.label}
             accessibilityState={{ selected, checked: selected }}
-            style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s }}
+            style={cell}
           >
-            <Text variant="bodyStrong" numberOfLines={1} style={{ color: selected ? c.base : c.muted }}>{o.label}</Text>
+            <Text variant="bodyStrong" tone="muted" numberOfLines={1}>{o.label}</Text>
           </Pressable>
         );
       })}
+      {index >= 0 && segment > 0 ? (
+        <Animated.View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          aria-hidden
+          style={[indicator, { pointerEvents: 'none', position: 'absolute', top: 0, bottom: 0, left: 0, width: segment, borderRadius: radius.full, backgroundColor: c.text, overflow: 'hidden' }]}
+        >
+          <Animated.View style={[inverseLabels, { position: 'absolute', top: 0, bottom: 0, left: 0, width, flexDirection: 'row' }]}>
+            {options.map((o) => (
+              <View key={o.value} style={cell}>
+                <Text variant="bodyStrong" numberOfLines={1} style={{ color: c.base }}>{o.label}</Text>
+              </View>
+            ))}
+          </Animated.View>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
