@@ -26,7 +26,10 @@ export const useDb = create<DbState>()(
       merge: (persisted, current) => ({ ...current, ...migrateDb(persisted, DB_VERSION) }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) console.warn('[db] hydratace selhala, začínám načisto', error);
-        useDb.setState({ hydrated: true });
+        // revision se musí zvýšit i tady: hooky mountnuté před dokončením hydratace
+        // zavolaly service s profile: null a bez tohohle bumpu by se po hydrataci
+        // nikdy znovu nenačetly (Review Focus 4).
+        useDb.setState((s) => ({ hydrated: true, revision: s.revision + 1 }));
       },
     },
   ),

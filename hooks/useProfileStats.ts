@@ -11,9 +11,11 @@ import type { MascotStage, UserProfile } from '@/types';
 export function useProfileStats(
   profile: UserProfile | null | undefined,
 ): { totalXp: number; streak: number; stage: MascotStage; streakBroken: boolean } | null {
+  // Mimo useMemo: mění se s reálným časem (půlnoc, dev offset), memo klíčované
+  // jen na [profile] by to jinak ignorovalo a vracelo zastaralé streak/streakBroken.
+  const today = toISODate(now());
   return useMemo(() => {
     if (!profile) return null;
-    const today = toISODate(now());
     const days = activeDays(profile.activity);
     const xp = totalXp(profile.activity);
     return {
@@ -22,5 +24,5 @@ export function useProfileStats(
       streakBroken: isStreakBroken(days, today),
       stage: stageForXp(xp, STAGE_THRESHOLDS),
     };
-  }, [profile]);
+  }, [profile, today]);
 }

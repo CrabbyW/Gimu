@@ -1,6 +1,6 @@
 import { buildInitialProfile } from '@/logic/onboarding';
 import { weekStart } from '@/logic/dates';
-import { now } from '@/lib/clock';
+import { now as clockNow } from '@/lib/clock';
 import { useDb } from '@/store/db';
 import type { UserService } from '../contracts';
 
@@ -13,7 +13,7 @@ const requireProfile = () => {
 export class MockUserService implements UserService {
   async getProfile() { return useDb.getState().profile; }
   async completeOnboarding(input: Parameters<UserService['completeOnboarding']>[0]) {
-    const profile = buildInitialProfile(input, now());
+    const profile = buildInitialProfile(input, clockNow());
     useDb.getState().setProfile(profile);
     return profile;
   }
