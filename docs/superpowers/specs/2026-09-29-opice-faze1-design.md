@@ -195,7 +195,7 @@ Všechny konstanty jsou v `data/xp.ts` a `data/leagues.ts`.
 **Streak (`streak.ts`)**
 - Streak = počet po sobě jdoucích místních dní s alespoň jednou aktivitou, končících dnes nebo včera.
 - Pokud chybí dnes i včera, streak je 0 a opice je ve stavu `sad`, dokud uživatel nedokončí lekci.
-- Vrací i `longestStreak` (pro recap) a `activeDates` (pro tečkovou mřížku).
+- Vrací i `longestStreak` (pro recap) a `activeDays` (pro tečkovou mřížku).
 
 **Mapa (`map.ts`)**
 - Uzel je `done`, když pro jeho lekci existuje aktivita.
@@ -204,7 +204,7 @@ Všechny konstanty jsou v `data/xp.ts` a `data/leagues.ts`.
 
 **Stage opice (`mascot.ts`)**
 - Prahy celkového XP: stage 2 od 500, stage 3 od 2000.
-- `stageForXp`, `didStageUp(before, after)`.
+- `stageForXp`, `stageProgress`; přechod stage hlásí `LessonResult.stageBefore` / `stageAfter`.
 
 **Liga (`league.ts`)**
 - Úrovně: **Dřevo → Kámen → Železo → Bronz → Stříbro → Zlato → Diamant**.
