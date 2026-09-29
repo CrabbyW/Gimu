@@ -17,11 +17,12 @@ import { ThemeProvider, useTheme } from '@/theme';
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ BebasNeue_400Regular, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
+  const [fontsLoaded, fontError] = useFonts({ BebasNeue_400Regular, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
   const hydrated = useHydrated();
   const season = useActiveSeason();
-  // Splash drží, dokud nejsou fonty i uložená data (spec §9).
-  const ready = fontsLoaded && hydrated;
+  useEffect(() => { if (fontError) console.warn('[fonts] načtení selhalo, pokračuji se systémovým písmem', fontError); }, [fontError]);
+  // Splash drží, dokud nejsou fonty i uložená data (spec §9). Chyba fontů splash neblokuje.
+  const ready = (fontsLoaded || fontError != null) && hydrated;
   useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => undefined); }, [ready]);
   if (!ready) return null;
   return (
