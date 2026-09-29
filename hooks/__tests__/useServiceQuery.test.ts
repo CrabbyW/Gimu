@@ -6,6 +6,7 @@ import { useServiceQuery, type Query } from '../useServiceQuery';
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- oficiální jest mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 
+beforeAll(async () => { await useDb.persist.rehydrate(); });
 beforeEach(() => useDb.setState({ profile: null, revision: 0 }));
 
 interface ProbeProps { fetcher: () => Promise<string>; deps: readonly unknown[]; onQuery: (q: Query<string>) => void }

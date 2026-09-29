@@ -6,7 +6,10 @@ import { useServiceQuery } from './useServiceQuery';
 /** Cesta z profilu: volající předá `pathId` (typicky `profile.path`). */
 export function useLessonPath(pathId: PathId | undefined) {
   return useServiceQuery(
-    () => services.lessons.getPath(pathId as PathId, now()),
+    () => {
+      if (!pathId) return Promise.reject(new Error('Chybí cesta'));
+      return services.lessons.getPath(pathId, now());
+    },
     [pathId],
     { enabled: pathId !== undefined },
   );
