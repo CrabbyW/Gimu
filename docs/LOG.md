@@ -64,3 +64,9 @@ Presety v `lib/motion.ts`, haptika v `lib/haptics.ts`, zvuk v `lib/sound.ts`. Ov
 - `MASCOT_COLORS` (`components/mascot/palette.ts`) přesunuty do `theme/tokens.ts` jako token `mascot` (srst/obličej jsou v obou režimech stejné, viz spec §8) a exportovány přes `theme/index.ts`; `palette.ts` je nyní jen re-export z tématu.
 - Grep `app/` a `components/` na raw hex/fontSize/spacing mimo theme: nalezeno navíc `DotSteps.tsx` (`gap: 6`) a `Barbell.tsx` (`Collar` `borderRadius: 2`) — ponecháno, jde o animační/geometrické konstanty motion-agenta (reanimated), ne o statický design token; mimo scope design-agenta.
 - `npm test` 200/200, `npx tsc --noEmit` čisté, `npx expo lint` čisté.
+
+## 2026-09-30 · qa-agent · krok 2 kolo 2
+- Znovu ověřeny problémy 1–5 z kola 1 (web flow `tools/flows/qa-r2.mjs`, light i dark), všechny jsou opravené: redirect onboardingu s profilem, doctor 21/21, zamčená lekce přes URL ukáže ErrorState, quit deep linkem vede na mapu, tokeny typografie.
+- Regrese celého flow je čistá: `npm test` 200, tsc, lint a doctor projdou.
+- Sám jsem nic neopravoval.
+- Verdikt SCHVÁLENO. Otevřené a neblokující: drobné SVG a Stat literály mimo theme (design) a kontrola na zařízení (uživatel). Detail je v `docs/QA.md`.

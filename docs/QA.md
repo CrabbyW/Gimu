@@ -1,73 +1,67 @@
-# QA — krok 2 (core loop), kolo 1
+# QA — krok 2 (core loop), kolo 2
 
-Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah spec §12 kroky 1–2 (+ plán task 14).
+Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah spec §12 kroky 1–2. Ověřené opravy: cbc9b83, e413bca, 77301b7.
 
-**Verdikt: NESCHVÁLENO** (2 blokující nálezy: ztráta dat opakovaným onboardingem, `expo-doctor` červený).
+**Verdikt: SCHVÁLENO**
 
 ## Build a nástroje
 
 | Kontrola | Výsledek |
 |---|---|
-| `npm test` | ✅ 25 suites, 198 testů (197 + 1 nový) |
-| `tsc --noEmit` | ✅ i bez vygenerovaných typed routes (`.expo/types`, `expo-env.d.ts` odsunuty) |
-| `expo lint` | ✅ čisto |
-| `npx expo-doctor` | ❌ 20/21 — chybí peer `expo-asset` pro `expo-audio` |
-| hranice `@/(store\|data\|services/mock)` v app/components | ✅ jen `@/data/copy` (Ruling R1) |
-| web build + flow | ✅ žádný pageerror / console.error |
+| `npm test` | ✅ 26 suites, 200 testů |
+| `tsc --noEmit` | ✅ |
+| `expo lint` | ✅ exit 0 |
+| `npx expo-doctor` | ✅ 21/21 |
+| web export + flow (light i dark) | ✅ žádný pageerror ani console.error |
 
-Výstupy příkazů: `docs/superpowers/plans/2026-09-29-opice-faze1-core-loop.review.md`.
+Flow skript: `.superpowers/sdd/2026-09-29-opice-faze1-core-loop/tools/flows/qa-r2.mjs`, snímky `tools/shots/qa-r2`.
 
-## Flow (web, light i dark)
+## Problémy z kola 1
 
-Čistý profil → onboarding → mapa → lekce 1 (reps + hold) → oslava → odemčení → reload.
+| # | Problém | Stav | Důkaz |
+|---|---|---|---|
+| 1 | Opakovaný onboarding smaže data | ✅ opraveno | `/onboarding/path`, `/weight`, `/birth` s profilem → `/`, `activity` zůstává 1; webové Zpět → `/`, cesta `power` beze změny. Service druhý onboarding odmítne (`MockUserService.test.ts`). |
+| 2 | `expo-doctor` chce `expo-asset` | ✅ opraveno | `21/21 checks passed`, `expo-asset ~57.0.18` v package.json a pluginech. |
+| 3 | Zamčená lekce přes URL se spustí | ✅ opraveno | `/lesson/pw-1-5` ukáže „Nejdřív dokonči předchozí lekci.“ a „Zpět na mapu“, žádné Start ani Hotovo (`dark-06-locked.png`). Tlačítko vede na `/`. Aktuální i dokončená lekce se dál otevřou. |
+| 4 | Ukončení lekce bez historie nic neudělá | ✅ opraveno | `/lesson/pw-1-2` přímo URL → Ukončit → potvrdit → `/`, nic se neuloží. |
+| 5 | Hardcoded typografie a `MASCOT_COLORS` | ✅ opraveno | Všech 5 míst z kola 1 bere hodnoty z tokenů, `MASCOT_COLORS` je re-export tokenu `theme.mascot`. Zbytky viz problém B. |
 
-- ✅ Čistý localStorage → `/onboarding/path`.
-- ✅ Onboarding uloží profil (`weightGoal lose 82.5→76`, 8 týdnů mock váhy, `activity` prázdná) → mapa, uzel 1 `aktuální`, uzel 2 `zamčená`.
-- ✅ Lekce 1 obsahuje reps i hold; odpočet, Start/Pauza fungují.
-- ✅ Oslava: +32 XP = lekce 20 + první dnes 10 + streak 2 (spec §4: +2/den). CTA zamčené ~1,6 s (R29).
-- ✅ Pokračovat → mapa, uzel 2 `aktuální`, sekvence odemčení.
-- ✅ Reload: uzel 1 `dokončená`, uzel 2 `aktuální`, TopBar 32 XP, streak 1 — persist drží.
-- ✅ Boss (8 hotových lekcí): +52 = boss 40 + 10 + 2, všech 8 kotoučů na ose, uzel bosse `dokončená`, 308 XP.
+## Regrese flow (web, light i dark)
 
-## Edge cases
+✅ Čistý profil → `/onboarding/path` → 4 kroky → zrození (`01-birth.png`) → „Jdeme trénovat“ (dvojklik) → mapa. Lekce 1 → oslava, +32 XP → Pokračovat → uzel 2 `aktuální` → reload: uzel 1 `dokončená`, uzel 2 `aktuální`.
 
-| Případ | Výsledek |
-|---|---|
-| Prázdná cesta / sen / milníky (0, 1) / váha | ✅ Pokračovat neaktivní; sen s mezerami nebo „ab“ neprojde |
-| Váha 0, abc, 999, 1e2, -80, 29 | ✅ „Zadej číslo mezi 30 a 250 kg.“, zůstává na kroku |
-| Váha špatný směr (hubnutí 80→90) | ✅ chyba směru u cílové váhy |
-| Dvojklik Hotovo / Pokračovat / Jdeme trénovat / Ukončit | ✅ jen 1 záznam v `activity`, jedna navigace |
-| Quit uprostřed (z mapy) | ✅ dialog, „Trénovat dál“ zůstane, potvrzení → mapa, nic se neuloží |
-| Quit v lekci otevřené přímo URL | ⚠️ potvrzení nic neudělá (`router.back()` bez historie), viz problém 4 |
-| Neznámé id lekce | ✅ „Nepodařilo se načíst lekci. Zkusit znovu“ |
-| Zamčená lekce přes URL / deep link | ❌→✅ šlo ji dokončit mimo pořadí (i bosse). **Opraveno** b006c93 (guard v `completeLesson` + test). UX zbývá, viz problém 3 |
-| Onboarding při existujícím profilu | ❌ `/onboarding/*` je dostupný (deep link, na webu Zpět), dokončení přepíše profil a smaže `activity`, viz problém 1 |
-| Ztráta streaku, konec sezóny, reset v dev menu | ⚠️ plán B |
+Zrození: `completeOnboarding` zvýší `revision`, takže nový redirect v `onboarding/_layout` se spustí souběžně s `router.replace('/(tabs)')` v `birth.tsx`. Obojí vede na stejnou obrazovku. Ověřeno bez dvojité navigace a bez chyb.
+
+## Diff scan
+
+- `getLesson` počítá stav uzlu v rámci cesty lekce. Lekce jiné cesty, než má profil, je tedy `locked`, což je správně.
+- `LessonDetail.state` je nové povinné pole kontraktu. Jiná implementace zatím není (fáze 2 ho musí doplnit).
+- Test count: LOG boss uvádí 201, skutečně je 200. Jen nepřesnost v zápisu.
 
 ## Spec bod po bodu (rozsah kroků 1–2)
 
 | Spec | Stav | Poznámka |
 |---|---|---|
 | §1 cíl a rozsah (core loop) | ✅ | |
-| §2 stack (Expo 57, router, reanimated, zustand, svg) | ⚠️ | doctor: chybí `expo-asset` (problém 2) |
+| §2 stack (Expo 57, router, reanimated, zustand, svg) | ✅ | doctor 21/21 |
 | §3.1 struktura složek | ✅ | |
 | §3.2 tok dat přes services, `now` jako parametr | ✅ | |
 | §3.3 typy | ✅ | názvy dle R9 |
 | §3.4 contracts | ✅ | služby plánu B `notImplemented` záměrně |
 | §4 XP rozpis | ✅ | testy + ověřeno v UI |
 | §4 streak (přelom dne/měsíce, mezera) | ✅ | testy |
-| §4 stavy uzlů mapy | ✅ | testy + UI; nově i guard při dokončení |
+| §4 stavy uzlů mapy | ✅ | testy + UI; guard při dokončení i při otevření |
 | §4 stage prahy | ✅ | testy |
 | §4 liga, comeback, cíl sezóny, graf váhy | ⚠️ plán B | |
 | §5 obsah (cesty, lekce, cviky) | ✅ | |
 | §6.1–6.2 směr, palety, kontrast | ✅ | contrast test |
 | §6.3 sezónní override | ⚠️ plán B | |
-| §6.4 typografie | ⚠️ | hardcoded velikosti mimo theme (problém 5) |
+| §6.4 typografie | ✅ | tokeny `input`, `inputLarge`, `counter`, `badgeLabel`; drobné zbytky viz problém B (nemá vliv na vzhled) |
 | §6.5 kotouče | ✅ | |
 | §6.6 tvary a spacing | ✅ | |
 | §6.7 motion | ✅ | pružiny jen na odměnách |
 | §6.8 výjimky skillu | ✅ | |
-| §7.1 onboarding (5 kroků, validace, zrození) | ❌ | funguje, ale není „jen při prvním spuštění“ (problém 1) |
+| §7.1 onboarding (5 kroků, validace, zrození) | ✅ | s profilem přesměruje na mapu; service druhý onboarding odmítne |
 | §7.2 mapa | ✅ | |
 | §7.3 lekce + oslava | ✅ | krok 8 stage-up → plán B |
 | §7.4–7.10 stage-up, liga, progres, sezóna, šatník, notifikace, dev menu | ⚠️ plán B | |
@@ -78,15 +72,8 @@ Výstupy příkazů: `docs/superpowers/plans/2026-09-29-opice-faze1-core-loop.re
 | §11 roadmapa TODO | ✅ | |
 | README | ⚠️ plán B | |
 
-## Opraveno v tomto kole
+## Otevřené problémy (neblokující)
 
-- `b006c93` fix: zamčenou lekci nejde dokončit (deep link) — `services/mock/MockLessonService.ts`, test v `services/__tests__/MockLessonService.test.ts`.
-
-## Otevřené problémy
-
-1. **[blokující] Opakovaný onboarding smaže data** — boss. Repro: mít profil s lekcemi → otevřít `/onboarding/path` (deep link; na webu Zpět z mapy) → projít onboarding → `activity` = []. Oprava: v `app/onboarding/_layout.tsx` přesměrovat na `/(tabs)`, když profil existuje (a/nebo `completeOnboarding` odmítne přepsat existující profil mimo dev reset).
-2. **[blokující] `expo-doctor` červený** — boss (dependency z motion kroku). `npx expo install expo-asset`, jinak hrozí pád mimo Expo Go.
-3. **Zamčená lekce přes URL** — boss. Data už jsou chráněná, ale obrazovka lekci normálně spustí a na konci selže (`Alert` „Nepodařilo se načíst výsledek lekce“, na webu nic). `app/lesson/[id].tsx` má zamčenou lekci vůbec nespustit (ErrorState nebo přesměrování na mapu).
-4. **Quit v lekci bez historie** — boss. `confirmQuit(() => router.back())` při otevření přes deep link nic neudělá. Použít `router.canGoBack() ? router.back() : router.replace('/(tabs)')`.
-5. **Hardcoded typografie mimo theme** — design. `app/onboarding/dream.tsx:46` (22/32), `components/ui/TextField.tsx:33` (20/28), `components/ui/TopBar.tsx:11` (32/32) a `:67` (10/12), `MASCOT_COLORS` v `components/mascot/palette.ts`. Přesunout do `theme/`.
-6. **K ruční kontrole na zařízení** — uživatel. Zvuk `click` v tichém režimu iOS, haptika, Android hardware Zpět v lekci/zrození.
+A. **K ruční kontrole na zařízení** — uživatel: zvuk `click` v tichém režimu iOS, haptika, Android hardware Zpět v lekci a na zrození, deep link na zamčenou lekci a na `/onboarding/path` s existujícím profilem (redirect bez probliknutí formuláře).
+B. **Drobné literály mimo theme** — design-agent: `components/map/BarbellBoss.tsx:67` (SVG `fontSize={11}`), `components/map/Plate.tsx:62` (`fontSize={22}` ve viewBoxu 100), `components/ui/Stat.tsx:13` (velikosti M/L/XL 56/88/120), `DotSteps.tsx` gap 6, `Barbell.tsx` radius 2. Vzhled to neovlivní, jde o úklid.
+C. Plán B (liga, sezóna, stage-up, dev menu, README) — ⚠️ podle plánu.
