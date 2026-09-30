@@ -359,7 +359,7 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
 2. **Dream body** (změna: rozhodnutí uživatele 2026-09-30):
    - Výběr z 6 karet vize podle zvolené cesty (`data/dreams.ts`, texty v `copy.onboarding.dream.options`). Karta má krátký titulek v Bebas, jeden řádek Inter a plochý geometrický glyf ze skládaných kruhů (jazyk glyfů cest).
    - Sedmá karta „Vlastní…“ odkryje textové pole (max 140 znaků).
-   - Vybraná je právě jedna karta. `dreamBody` ukládá titulek vybrané karty, nebo vlastní text; bez změny schématu.
+   - Vybraná je právě jedna karta. `dreamBody` ukládá větu vybrané karty ve tvaru „Titulek. Řádek“ (rozhodnutí R41, zobrazuje se nahoře v Progresu), nebo vlastní text; bez změny schématu.
    - Při změně cesty se předvolená vize vymaže, vlastní text zůstává.
 3. **Milestones** (změna: rozhodnutí uživatele 2026-09-30):
    - Aspoň 6 předvoleb na cestu plus obecné (`data/milestones.ts`), realistické cíle kalisteniky se správnou jednotkou.

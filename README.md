@@ -43,10 +43,10 @@ hodnocení v [`docs/RATING.md`](./docs/RATING.md).
 
 ## Stav
 
-Hotové a QA schválené kroky specifikace 1–2 (scaffolding, onboarding, mapa lekcí, lekce s cviky,
-oslava dokončení a odemykání). Rating kroku 2 je v přípravě. Další je plán B:
-[`docs/superpowers/plans/2026-09-30-opice-faze1-planB.md`](./docs/superpowers/plans/2026-09-30-opice-faze1-planB.md)
-(maskot stage 2–3, liga, progres, sezóna s recapem, šatník, notifikace, dev menu).
+- **Krok 1–2** (scaffolding, onboarding, mapa lekcí, lekce s cviky, oslava dokončení, odemykání): QA schváleno, rating 100/100.
+- **Krok 3** (maskot stage 2–3, nálady celebrate a sad, kotvy, kosmetické vrstvy, sezónní šála, Rive stub): hotovo a v hodnocení.
+- **Na přání uživatele:** `DotLoader` (nativní port loaderu Echo Ring z @dotmatrix) ve všech stavech načítání; onboarding s výběrem vize těla a širší nabídkou milníků (UX1); přepracovaný pohyb celé appky podle skillu brag, tón cinematic, se zvuky Kenney (UX2).
+- **Další:** plán B, kroky 4–6 ([`docs/superpowers/plans/2026-09-30-opice-faze1-planB.md`](./docs/superpowers/plans/2026-09-30-opice-faze1-planB.md)): liga, progres, sezóna s recapem, šatník, notifikace, dev menu.
 
 ## Zvuky
 Zvukové efekty v `assets/sounds/` (`plate-snap.wav`, `select.wav`, `unlock.wav`) pocházejí od [Kenney](https://kenney.nl/) (licence CC0, public domain), převzaté z SFX knihovny skillu brag a upravené přes ffmpeg (mix, lowpass, WAV 44.1 kHz mono). Zdroje jsou zapsané v `docs/LOG.md` (UX2).
