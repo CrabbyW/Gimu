@@ -1,15 +1,15 @@
-# RATING — krok 2 (spec §12 kroky 1–2), kolo 1
+# RATING — krok 2 (spec §12 kroky 1–2), kolo 2
 
-Datum: 2026-09-30 · rating-agent · větev `faze1/core-loop` @ 2e80585
-Rozsah: scaffolding, theme, typy, logika, onboarding, mapa lekcí, lekce, oslava dokončení, maskot stage 1. Body označené v `docs/QA.md` jako ⚠️ plán B se nepočítají jako chybějící.
+Datum: 2026-09-30 · rating-agent · větev `faze1/core-loop` @ b6bd977
+Rozsah: scaffolding, theme, typy, logika, onboarding, mapa lekcí, lekce, oslava dokončení, maskot stage 1. Body označené v `docs/QA.md` jako ⚠️ plán B se nepočítají jako chybějící. Hodnoceno znovu od nuly podle rubriky.
 
-## Skóre: 70/100
+## Skóre: 100/100
 
 | # | Kategorie | Max | Body | Stav |
 |---|---|---|---|---|
 | 1 | Funkčnost | 25 | 25 | ✅ |
-| 2 | Shoda se specifikací | 15 | 0 | ❌ |
-| 3 | Architektura a kód | 15 | 0 | ❌ |
+| 2 | Shoda se specifikací | 15 | 15 | ✅ |
+| 3 | Architektura a kód | 15 | 15 | ✅ |
 | 4 | Vizuální kvalita | 20 | 20 | ✅ |
 | 5 | Motion | 15 | 15 | ✅ |
 | 6 | Dokumentace | 10 | 10 | ✅ |
@@ -19,45 +19,27 @@ Rozsah: scaffolding, theme, typy, logika, onboarding, mapa lekcí, lekce, oslava
 - `npm test`: 26 sad, 200/200 ✅
 - `npx tsc --noEmit`: bez chyb ✅
 - `npx expo lint`: exit 0 ✅
-- `docs/QA.md`: verdikt SCHVÁLENO (kolo 2), všechny body kroků 1–2 ✅, zbytek ⚠️ plán B.
+- `docs/QA.md`: verdikt SCHVÁLENO (kolo 3), všechny body kroků 1–2 ✅, zbytek ⚠️ plán B.
 
 ## Nesplněná kritéria
 
-### 2. Shoda se specifikací (0/15)
-Kritérium: nic navíc nebylo přidáno bez zápisu v `docs/LOG.md`.
+Žádná.
 
-1. **`theme/tokens.ts:2`**: `space.xs_plus: 6` je mimo spacing škálu ze spec §6.6 (`4 8 16 24 40 64 104`). Přidal to commit 77301b7 („design: poslední literály do theme“) kvůli `components/ui/DotSteps.tsx:40`. V `docs/LOG.md` k tomu není žádný zápis. Poslední zápis design-agenta naopak tvrdí, že `gap: 6` „ponecháno“. Ruling v `progress.md` taky chybí. **Vlastník: design** (zápis do LOG / rozhodnutí: boss).
-2. **`theme/tokens.ts:3`**: `radius.xs: 2` je mimo radiusy ze spec §6.6 (8, 20, full). Zavedl ho stejný commit 77301b7 pro `components/lesson/Barbell.tsx:133` (objímka) a v LOG k tomu zápis není. **Vlastník: design** (zápis do LOG: boss).
-3. **`theme/tokens.ts:3`**: `radius.m: 12` je mimo spec §6.6 a v `app/`, `components/` ani `hooks/` se nikde nepoužívá. Je to token navíc bez zápisu v LOG a zároveň mrtvý kód. **Vlastník: design**.
+## Uzavření nálezů z kola 1
 
-Oprava: tokeny buď sladit se spec (6 → 4 nebo 8, 2 → 0 nebo 8, 12 odstranit), nebo odchylku zapsat jako rozhodnutí (Ruling) do `docs/LOG.md` a případně do spec §6.6.
-
-### 3. Architektura a kód (0/15)
-Kritérium: hodnoty jen z `theme/`. Kritérium mrtvého kódu viz bod 2.3.
-
-Rozměry dotykových ploch a prvků jsou v komponentách zapsané natvrdo místo tokenu v `theme/`. Minimum 44 pt ze spec §6.6 je navíc zduplikované ve třech souborech:
-1. `components/lesson/LessonProgress.tsx:10`: `const HIT = 44`
-2. `components/map/NodePopover.tsx:18`: `const CLOSE_HIT = 44`
-3. `components/map/PlateNode.tsx:19`: `const MIN_HIT = 56`
-4. `components/onboarding/MilestoneChip.tsx:43`: `minHeight: 44`
-5. `components/onboarding/PathCard.tsx:32`: `minHeight: 120`
-6. `components/ui/BigActionBar.tsx:28,36`: `minHeight: 96`
-7. `components/ui/Button.tsx:34`: `minHeight: 56`
-8. `components/ui/SegmentedControl.tsx:37`: `minHeight: 48`
-9. `components/ui/TextField.tsx:33`: `minHeight: 48`
-10. `components/ui/TopBar.tsx:52`: `height: 32`
-11. `theme/tokens.ts:3`: nepoužívaný `radius.m` (mrtvý kód, viz 2.3)
-
-**Vlastník: design** (primitiva a obrazovky). Oprava: přidat do `theme/tokens.ts` např. `size = { hit: 44, control: 48, button: 56, … }` a tyto literály nahradit.
-
-Poznámka: souřadnice uvnitř SVG viewBoxu (maskot, kotouče, osa, BarbellBoss) jsou geometrie kresby, ne designové tokeny, a za chybu je nepočítám. Animační konstanty v `lib/motion.ts` jsou v pořádku. `any` v kódu není. Všechny TODO odkazují na fázi (`services/contracts.ts:43,49`, `hooks/useServiceQuery.ts:20`, `store/migrate.ts:42`). Data jdou přes `services/` a logika je v `logic/`: grep na `@/data/*` mimo `copy` (R1) i na přímý AsyncStorage v UI je čistý.
+- **2.1 `space.xs_plus` (6)**: odstraněn, `DotSteps` používá `space.s` (8). `space` teď přesně odpovídá spec §6.6. Zápis je v LOG (design-agent, rating oprava kolo 1).
+- **2.2 `radius.xs` (2)**: odstraněn z `radius` a přesunut do `material.collarRadius`. Ruling „geometrie materiálu činky není UI radius §6.6“ je v LOG a odkazuje na něj komentář v `theme/tokens.ts`. `radius` = `{ s: 8, l: 20, full: 999 }` podle spec.
+- **2.3 / 3.11 `radius.m`**: odstraněn. Grep na `radius.m`, `radius.xs` a `xs_plus` je čistý.
+- **3.1–3.10 rozměrové literály**: nahrazeny tokeny `theme/tokens.ts` → `size` (exportováno přes `theme/index.ts` a `Theme.size`). Každý token se používá (hit 4×, hitLarge 3×, control 2×, actionBar 2×, pathCard 1×, topBarBadge 1×, collarRadius 1×), takže nic není mrtvý kód. Grep na číselné `width/height/minHeight/gap/padding/margin/borderRadius/fontSize` v `app/`, `components/` a `hooks/` nic nenašel. Hex barvy se vyskytují jen v komentáři a testu.
+- `any` v kódu není. Všechna TODO odkazují na fázi (`hooks/useServiceQuery.ts:20`, `services/contracts.ts:43,49`, `store/migrate.ts:42`). Data jdou přes `services/` a logika je v `logic/`, tady se od kola 1 nic nezměnilo.
 
 ## Splněné kategorie (stručně)
 
-- **Funkčnost**: SCHVÁLENO, 200 testů, tsc a lint čisté, všechny body kroků 1–2 ✅.
-- **Vizuál**: snímky `qa-r2` a `step2-design-r3` (light i dark) ukazují estetiku Chalk & Ember. Kotouče, činka, display číslice a mono štítky působí jako gym kultura, ne generický fitness. Je tu jasná hierarchie a všechny stavy: zamčený (`dark-06-locked`), dokončený, aktuální, chyba (`ErrorState`) a prázdný/načítání. Kontrast AA hlídá test (R12, R14, R24) a dotykové plochy jsou ≥ 44 pt.
-- **Motion**: oslava podle spec §7.3 a §6.7 (pád, `seat` pružina, Heavy + click při dopadu, +XP pop, opice + Success) a odemčení uzlu s Light. Reduce motion má variantu všude. Blokace CTA na ~1,6 s je rozhodnutí R29. Animace běží na UI vlákně a stav se ukládá před nimi.
-- **Dokumentace**: v LOG jsou zápisy boss, design, motion i qa a README je aktuální.
+- **Funkčnost**: SCHVÁLENO (kolo 3), testy, tsc i lint jsou čisté a všechny body kroků 1–2 jsou ✅.
+- **Shoda se specifikací**: tokeny odpovídají spec §6.6. Nové skupiny `size` a `material` jsou zapsané v LOG.
+- **Vizuál**: estetika Chalk & Ember a všechny stavy zůstávají stejné jako v kole 1. Jediná vizuální změna je mezera v `DotSteps` (6 → 8), kterou QA ověřila na snímcích `tools/shots/qa-step2-r3`. Minimum 44 pt má teď jediný zdroj, `size.hit`.
+- **Motion**: beze změny od kola 1 (spec §7.3 a §6.7, reduce motion, pružiny na UI vlákně).
+- **Dokumentace**: v LOG jsou zápisy boss, design, motion a qa, včetně oprav po ratingu. README je aktuální a v QA.md označené ✅.
 
 ## K ruční kontrole (na zařízení, bez vlivu na skóre)
 
@@ -65,11 +47,12 @@ Poznámka: souřadnice uvnitř SVG viewBoxu (maskot, kotouče, osa, BarbellBoss)
 2. Haptika: Heavy při dopadu, Success u opice (+420 ms), Light při odemčení uzlu, Medium na konci výdrže a Success při zrození.
 3. Hardwarové Zpět na Androidu: v lekci otevře dialog ukončení, na zrození je blokované (R21).
 4. Deep link na zamčenou lekci (ErrorState) a na `/onboarding/path` s existujícím profilem (redirect bez probliknutí formuláře).
-5. Plynulost pružin (`seat`, `rattle`, `hop`, `unlock`) na reálném zařízení a chování s reduce motion zapnutým v systému.
+5. Plynulost pružin (`seat`, `rattle`, `hop`, `unlock`) na reálném zařízení a chování se systémovým reduce motion.
 6. Odpočet výdrže při přechodu aplikace na pozadí a zpět (pauza).
 7. Čitelnost kotoučů a štítků na mapě na malém displeji a v light režimu na slunci.
+8. `DotSteps` s mezerou 8 pt na nejužším displeji (např. iPhone SE): řádek teček se nesmí zalomit ani přetéct.
 
 ## Doporučení (mimo skóre)
 
-- Rubrika nemá explicitní kritérium pro velikostní tokeny (rozměry prvků). Doporučuji ho v CLAUDE.md rozšířit na „barvy, fonty, spacing, radiusy a rozměry“, aby se to v dalších krocích nepletlo.
-- `docs/QA.md` označuje README jako ⚠️ plán B, přitom README je teď aktuální. Při příští QA ho stačí přepnout na ✅.
+- Rubrika i CLAUDE.md pořád zmiňují jen „barvy, fonty, spacing“. Doporučuji pravidlo rozšířit na „barvy, fonty, spacing, radiusy, rozměry“, protože `size` a `material` už v theme existují.
+- Ruling o `material` tokenech zapsal design-agent „podle rozhodnutí boss“. Pro dohledatelnost by bylo lepší, kdyby ho boss potvrdil vlastním zápisem v LOG.
