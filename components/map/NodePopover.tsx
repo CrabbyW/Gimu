@@ -57,7 +57,7 @@ export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above
       accessibilityViewIsModal
       onAccessibilityEscape={onClose}
       style={[
-        { position: 'absolute', left, width, transformOrigin: above ? 'bottom' : 'top' },
+        { position: 'absolute', zIndex: 3, left, width, transformOrigin: above ? 'bottom' : 'top' },
         above ? { bottom: mapHeight - edgeY } : { top: edgeY },
         style,
       ]}

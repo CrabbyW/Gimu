@@ -31,6 +31,8 @@ const ROTATE_MS = 420;
 const COLLAR_MS = 120;
 // Omezený pohyb (spec §6.7): místo pružin se konečný stav jen prolne.
 const REDUCED_FADE = { duration: 200 };
+// Opice (M = 120 pt) zarovnaná chodidly k účaří velkého čísla XP.
+const MASCOT_LIFT = 32;
 
 interface Props {
   result: LessonResult;
@@ -55,7 +57,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
 
   const [layout] = useState(() => {
     const { loaded, flying } = splitPlates(result.completedPlates, lesson.plateKg);
-    return barbellLayout(loaded, flying);
+    return barbellLayout(loaded, flying, (width - 2 * space.l) / 2);
   });
   const cheer: Mood = lesson.isBoss || result.stageAfter > result.stageBefore ? 'celebrate' : 'happy';
   const title = result.xp.baseKind === 'replay' ? t.replayTitle : t.title;
@@ -121,14 +123,17 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
           <Animated.View style={[{ paddingTop: space.xl }, titleStyle]}>
             <Text variant="display" accessibilityRole="header">{title}</Text>
           </Animated.View>
-          <View style={{ flex: 1, justifyContent: 'center' }}>
+          <View style={{ flex: 1, justifyContent: 'center', paddingBottom: space.xl }}>
             <Animated.View style={[{ marginBottom: space.xl }, shakeStyle]}>
               <Barbell width={width - 2 * space.l} layout={layout} motion={bar} />
             </Animated.View>
-            <XpPop total={result.xp.total} breakdown={xpBreakdownLabel(result.xp, XP_LABELS)} shown={xpShown} calm={calm} />
-          </View>
-          <View style={{ paddingBottom: space.l }}>
-            <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size="M" />
+            {/* Opice stojí vpravo u čísla, které právě vydřela: odměna a její svědek v jednom pohledu. */}
+            <View>
+              <View style={{ position: 'absolute', right: 0, top: -MASCOT_LIFT }}>
+                <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size="M" />
+              </View>
+              <XpPop total={result.xp.total} breakdown={xpBreakdownLabel(result.xp, XP_LABELS)} shown={xpShown} calm={calm} />
+            </View>
           </View>
         </Screen>
       </Animated.View>

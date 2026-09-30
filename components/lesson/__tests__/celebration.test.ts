@@ -20,6 +20,15 @@ test('plně naložená osa (boss) se vejde na polovinu úzkého telefonu', () =>
   expect(l.collarOffset + 14).toBeLessThanOrEqual((360 - 48) / 2);
 });
 
+test('s šířkou osy sedí kotouče na konci osy, ne u středu (není to jednoručka)', () => {
+  const few = barbellLayout([5], 10, 171);
+  expect(few.sleeveOffset).toBe(77);
+  expect(few.loaded[0]!.offset).toBe(83);
+  const boss = barbellLayout([5, 5, 10, 10, 15, 15, 20, 20], 25, 171);
+  expect(boss.collarOffset + 14 + 14).toBeLessThanOrEqual(171);
+  expect(boss.sleeveOffset).toBeGreaterThanOrEqual(4);
+});
+
 test('nová lekce: přilétá poslední kotouč', () => {
   expect(splitPlates([5, 5, 10], 10)).toEqual({ loaded: [5, 5], flying: 10 });
 });

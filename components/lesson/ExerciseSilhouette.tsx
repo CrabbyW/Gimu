@@ -6,13 +6,13 @@ import Svg, { Circle, Line } from 'react-native-svg';
 import { useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { SilhouetteId } from '@/types';
-import { BONES, GROUND_Y, HEAD_R, SILHOUETTES, VIEW_BOX } from './silhouettes';
+import { BONES, GROUND_Y, HEAD_R, poseFrame, SILHOUETTES } from './silhouettes';
 
 const AnimatedLine = Animated.createAnimatedComponent(Line);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 type P = readonly [number, number];
-const STROKE = 5;
+const STROKE = 4;
 const LOOP = { duration: 900, easing: Easing.inOut(Easing.quad) };
 
 function Bone({ a0, a1, b0, b1, t, color }: { a0: P; a1: P; b0: P; b1: P; t: SharedValue<number>; color: string }) {
@@ -45,9 +45,11 @@ export function ExerciseSilhouette({ id }: { id: SilhouetteId }) {
   }, [id, reduced, t]);
 
   const [a, b] = SILHOUETTES[id];
+  const vb = poseFrame(id);
+  // Zem drží spodní hranu karty; postava se zvětší, aby vyplnila výšku nebo šířku.
   return (
-    <Svg width="100%" height="100%" viewBox={`${VIEW_BOX.x} ${VIEW_BOX.y} ${VIEW_BOX.w} ${VIEW_BOX.h}`} accessible={false}>
-      <Line x1={4} y1={GROUND_Y + STROKE / 2} x2={116} y2={GROUND_Y + STROKE / 2} stroke={c.rule} strokeWidth={1.5} strokeLinecap="round" />
+    <Svg width="100%" height="100%" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMax meet" accessible={false}>
+      <Line x1={vb.x - 200} y1={GROUND_Y + STROKE / 2} x2={vb.x + vb.w + 200} y2={GROUND_Y + STROKE / 2} stroke={c.rule} strokeWidth={1.5} strokeLinecap="round" />
       {BONES.map(([from, to]) => (
         <Bone key={`${from}-${to}`} a0={a.joints[from]} a1={b.joints[from]} b0={a.joints[to]} b1={b.joints[to]} t={t} color={c.text} />
       ))}

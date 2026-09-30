@@ -46,7 +46,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean) => {
 };
 
 export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd }: Props) {
-  const { space, seasonal } = useTheme();
+  const { c, space, seasonal } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -191,7 +191,8 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
           accessibilityRole="button"
           accessibilityLabel={copy.map.closePopover}
           onPress={() => setSelected(null)}
-          style={{ position: 'absolute', left: 0, top: 0, width, height }}
+          // Závoj: popover je modální vrstva, sousední uzly a opice pod ním záměrně ustoupí.
+          style={{ position: 'absolute', left: 0, top: 0, width, height, backgroundColor: c.scrim, zIndex: 1 }}
         />
       ) : null}
 
@@ -221,7 +222,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
         const isPrev = pair?.prevId === n.lesson.id;
         const w = n.lesson.isBoss ? BOSS_SIZE.w : p.size;
         return (
-          <View key={n.lesson.id} style={{ position: 'absolute', left: p.x - w / 2, top: p.y - p.size / 2 }}>
+          <View key={n.lesson.id} style={{ position: 'absolute', left: p.x - w / 2, top: p.y - p.size / 2, zIndex: selected?.id === n.lesson.id ? 2 : 0 }}>
             {n.lesson.isBoss ? (
               <BarbellBoss
                 state={state} accessibilityLabel={label} onPress={() => onNodePress(n, state)}

@@ -1,9 +1,12 @@
+import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
-import Svg, { Rect } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useTheme } from '@/theme';
 import type { PlateKg } from '@/types';
-import { AXIS, BARBELL_H, COLLAR, type BarbellLayout, type PlacedPlate } from './celebration';
+import { AXIS, BARBELL_H, COLLAR, SLEEVE, type BarbellLayout, type PlacedPlate } from './celebration';
+
+const SHEEN = 'plateSheen';
 
 /** Přílet jednoho kotouče. `drop` jde pružinou 0 → 1 (1 = na ose); `x` a `rotate` jsou odchylky od cílové polohy. */
 export interface PlateFlight { drop: SharedValue<number>; x: SharedValue<number>; rotate: SharedValue<number> }
@@ -37,8 +40,22 @@ export function Barbell({ width, layout, motion }: Props) {
   return (
     <View style={{ width, height: BARBELL_H }}>
       <Svg width={width} height={BARBELL_H} style={StyleSheet.absoluteFill}>
-        <Rect x={0} y={AXIS.y} width={width} height={AXIS.h} fill={c.plateRim} />
-        <Rect x={0} y={AXIS.y} width={width} height={1} fill={c.plateHighlight} />
+        <SheenDefs />
+        {/* Úchop: tenká osa uprostřed; na koncích silnější objímky za vnitřním dorazem. */}
+        <Rect x={0} y={AXIS.mid - 3} width={width} height={6} rx={3} fill={c.plateRim} />
+        {([1, -1] as const).map((side) => {
+          const from = layout.sleeveOffset;
+          const len = cx - from;
+          const x = side === 1 ? cx + from : 0;
+          const stopX = side === 1 ? cx + from : cx - from - SLEEVE.stopW;
+          return (
+            <Fragment key={side}>
+              <Rect x={x} y={AXIS.mid - SLEEVE.h / 2} width={len} height={SLEEVE.h} rx={2} fill={c.plateRim} />
+              <Rect x={x} y={AXIS.mid - SLEEVE.h / 2} width={len} height={1} fill={c.plateHighlight} />
+              <Rect x={stopX} y={AXIS.mid - SLEEVE.stopH / 2} width={SLEEVE.stopW} height={SLEEVE.stopH} rx={2} fill={c.muted} />
+            </Fragment>
+          );
+        })}
         {layout.loaded.map((p) => plateRect(p, 1))}
         {layout.loaded.map((p) => plateRect(p, -1))}
       </Svg>
@@ -50,13 +67,28 @@ export function Barbell({ width, layout, motion }: Props) {
   );
 }
 
-/** Kotouč z boku v souřadnicích činky: zaoblený obdélník s 1px světlem na levé hraně. */
+/** Válcové stínování hrany kotouče: světlo vlevo nahoře, stín dole (gradient dělá hloubku, ne dekoraci). */
+function SheenDefs() {
+  const { c } = useTheme();
+  return (
+    <Defs>
+      <LinearGradient id={SHEEN} x1="0" y1="0" x2="0.35" y2="1">
+        <Stop offset="0" stopColor={c.plateHighlight} stopOpacity={1} />
+        <Stop offset="0.45" stopColor={c.plateHighlight} stopOpacity={0} />
+        <Stop offset="1" stopColor={c.plateShade} stopOpacity={1} />
+      </LinearGradient>
+    </Defs>
+  );
+}
+
+/** Kotouč z boku v souřadnicích činky: zaoblený obdélník, válcové světlo a 1px hrana vlevo. */
 function SidePlate({ kg, x, y, w, h }: { kg: PlateKg; x: number; y: number; w: number; h: number }) {
   const { c } = useTheme();
   return (
     <>
       <Rect x={x} y={y} width={w} height={h} rx={3} fill={c[`plate${kg}`]} />
-      <Rect x={x} y={y + 3} width={1} height={h - 6} fill={c.plateHighlight} />
+      <Rect x={x} y={y} width={w} height={h} rx={3} fill={`url(#${SHEEN})`} />
+      <Rect x={x + 1} y={y + 4} width={1} height={h - 8} fill={c.plateHighlight} />
     </>
   );
 }
@@ -75,6 +107,7 @@ function FlyingPlate({ kg, x, w, h, flight, opacity }: FlyingProps) {
   return (
     <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: x, top: AXIS.mid - h / 2, width: w, height: h }, style]}>
       <Svg width={w} height={h}>
+        <SheenDefs />
         <SidePlate kg={kg} x={0} y={0} w={w} h={h} />
       </Svg>
     </Animated.View>

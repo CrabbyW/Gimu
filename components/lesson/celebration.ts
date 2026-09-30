@@ -19,11 +19,22 @@ export const plateHeight = (kg: PlateKg) => Math.round(plateSize(kg) * 1.9);
 
 /** Kotouč na jedné straně osy: `offset` je vzdálenost jeho vnitřní hrany od středu. */
 export interface PlacedPlate { kg: PlateKg; offset: number; w: number; h: number }
-export interface BarbellLayout { loaded: PlacedPlate[]; flying: PlacedPlate; collarOffset: number }
+/** `sleeveOffset`: kde od středu začíná objímka osy (vnitřní doraz + silnější konec osy). */
+export interface BarbellLayout { loaded: PlacedPlate[]; flying: PlacedPlate; collarOffset: number; sleeveOffset: number }
 
-/** Nasazené kotouče od středu ven, přilétající hned za nimi, objímka těsně za ním. */
-export function barbellLayout(loaded: readonly PlateKg[], flyingKg: PlateKg): BarbellLayout {
-  let offset = INNER;
+/** Vnitřní doraz osy (tloušťka v pt) a kolik osy zbude za vnější objímkou. */
+export const SLEEVE = { stopW: 6, stopH: 34, h: 12, end: 14 } as const;
+/** Doraz sedí na ~45 % poloviny osy jako u skutečné olympijské osy (úchop uprostřed, kotouče na koncích). */
+const SLEEVE_AT = 0.45;
+
+/** Nasazené kotouče od dorazu ven, přilétající hned za nimi, objímka těsně za ním.
+ *  S `half` (polovina šířky osy) se doraz posune ke konci osy, dokud se kotouče vejdou. */
+export function barbellLayout(loaded: readonly PlateKg[], flyingKg: PlateKg, half?: number): BarbellLayout {
+  const stack = [...loaded, flyingKg].reduce((sum, kg) => sum + plateWidth(kg) + GAP, 0);
+  const sleeveOffset = half == null
+    ? INNER - SLEEVE.stopW
+    : Math.max(INNER - SLEEVE.stopW, Math.min(Math.round(half * SLEEVE_AT), half - SLEEVE.stopW - stack - COLLAR.w - SLEEVE.end));
+  let offset = sleeveOffset + SLEEVE.stopW;
   const place = (kg: PlateKg): PlacedPlate => {
     const p = { kg, offset, w: plateWidth(kg), h: plateHeight(kg) };
     offset += p.w + GAP;
@@ -31,7 +42,7 @@ export function barbellLayout(loaded: readonly PlateKg[], flyingKg: PlateKg): Ba
   };
   const placed = loaded.map(place);
   const flying = place(flyingKg);
-  return { loaded: placed, flying, collarOffset: offset };
+  return { loaded: placed, flying, collarOffset: offset, sleeveOffset };
 }
 
 /** Rozdělí kotouče sekce na nasazené a přilétající. Přilétá kotouč lekce; u nové lekce je to
