@@ -10,8 +10,9 @@ export interface StageGeometry {
   /** Offset uší od středu hlavy, vnitřek ucha má r/2. */
   ears: { dx: number; dy: number; r: number };
   torso: { x: number; y: number; w: number; h: number; rx: number };
-  /** Jen stage 3. */
-  shoulders: { x: number; y: number; w: number; h: number; rx: number } | null;
+  /** Jen stage 3: dva deltoidy (kruhy nad rameny paží, `dx` od osy) a trapéz, který od nich
+   *  šikmo stoupá ke krku pod hlavu (`trapY` = úpon u krku). Šikmá linka čte ramena, ne límec. */
+  shoulders: { dx: number; y: number; r: number; trapY: number } | null;
   armL: Limb;
   armR: Limb;
   legs: { y: number; dx: number; r: number };
@@ -32,7 +33,7 @@ export const STAGE_GEOMETRY: Record<MascotStage, StageGeometry> = {
   },
   3: { // široká ramena, výrazné paže
     head: { cx: 100, cy: 64, r: 40 }, ears: { dx: 40, dy: -2, r: 14 },
-    torso: { x: 70, y: 112, w: 60, h: 60, rx: 24 }, shoulders: { x: 50, y: 96, w: 100, h: 34, rx: 17 },
+    torso: { x: 70, y: 112, w: 60, h: 60, rx: 24 }, shoulders: { dx: 44, y: 120, r: 18, trapY: 92 },
     armL: { x: 54, y: 112, w: 22, h: 56, angle: 10 }, armR: { x: 146, y: 112, w: 22, h: 56, angle: 10 },
     legs: { y: 178, dx: 17, r: 15 },
   },

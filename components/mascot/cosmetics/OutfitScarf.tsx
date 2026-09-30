@@ -1,22 +1,22 @@
 import { G, Rect } from 'react-native-svg';
-import { SEASON_OVERRIDES } from '@/theme/seasons';
+import { SEASON_MATERIAL } from '@/theme/seasons';
 import { useTheme } from '@/theme';
 import { anchorTransform, type LayerProps } from './types';
 
 /** Tvar šály (kotva neck): smyčka kolem krku, cíp přes hruď se dvěma pruhy a třemi třásněmi.
- *  Modrošedé neutrály Winter Arc (spec §6.3), i když se šála nosí mimo sezónu. */
+ *  Ocelová modrošedá Winter Arc (`SEASON_MATERIAL`), i když se šála nosí mimo sezónu. */
 export function ScarfShape({ anchor }: LayerProps) {
   const { scheme } = useTheme();
-  const w = SEASON_OVERRIDES.winterArc[scheme];
+  const w = SEASON_MATERIAL.winterArc[scheme];
   return (
     <G transform={anchorTransform(anchor)}>
-      <Rect x={8} y={2} width={13} height={28} rx={3} fill={w.mapRule} />
-      <Rect x={8} y={12} width={13} height={2.5} fill={w.headerBase} />
-      <Rect x={8} y={19} width={13} height={2.5} fill={w.headerBase} />
-      <Rect x={9.5} y={30} width={2} height={5} fill={w.mapRule} />
-      <Rect x={13.5} y={30} width={2} height={5} fill={w.mapRule} />
-      <Rect x={17.5} y={30} width={2} height={5} fill={w.mapRule} />
-      <Rect x={-32} y={-7} width={64} height={15} rx={7.5} fill={w.mapRule} />
+      <Rect x={8} y={2} width={13} height={28} rx={3} fill={w.fabric} />
+      <Rect x={8} y={12} width={13} height={2.5} fill={w.stripe} />
+      <Rect x={8} y={19} width={13} height={2.5} fill={w.stripe} />
+      <Rect x={9.5} y={30} width={2} height={5} fill={w.fabric} />
+      <Rect x={13.5} y={30} width={2} height={5} fill={w.fabric} />
+      <Rect x={17.5} y={30} width={2} height={5} fill={w.fabric} />
+      <Rect x={-32} y={-7} width={64} height={15} rx={7.5} fill={w.fabric} />
     </G>
   );
 }

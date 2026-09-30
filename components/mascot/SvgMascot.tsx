@@ -9,7 +9,7 @@ import { useTheme } from '@/theme';
 import type { MascotStage, Mood } from '@/types';
 import { ANCHORS, type Anchor } from './anchors';
 import { ArmPoseContext, layerParts, SeasonScarf, type LayerPart } from './cosmetics';
-import { armPoint, STAGE_GEOMETRY, type Limb } from './geometry';
+import { armPoint, STAGE_GEOMETRY, type Limb, type StageGeometry } from './geometry';
 import { MASCOT_COLORS, mascotInk } from './palette';
 import { resolveMascotSize, type MascotProps } from './types';
 
@@ -62,6 +62,16 @@ const FACE_REF = { cx: 100, cy: 80, r: 54 };
 // Světlo shora: horní vrstva srsti je posunutá nahoru a spodní srpek zůstane ve stínu.
 const HEAD_LIGHT = 5;
 const BODY_LIGHT = 6;
+const DELT_LIGHT = 5;
+
+/** Trapéz stage 3: od vrcholu deltoidu šikmo nahoru ke krku (úpon schovaný pod hlavou), spodek zajede pod trup. */
+function trapPath(sh: NonNullable<StageGeometry['shoulders']>): string {
+  const top = sh.y - sh.r;
+  const l = 100 - sh.dx;
+  const r = 100 + sh.dx;
+  const neck = 20;
+  return `M ${l} ${top} Q ${100 - neck - 8} ${top - 1} ${100 - neck} ${sh.trapY} L ${100 + neck} ${sh.trapY} Q ${100 + neck + 8} ${top - 1} ${r} ${top} L ${r} ${sh.y} L ${l} ${sh.y} Z`;
+}
 // Stage 3: biceps v 40 % délky paže, poloměr 0.6 šířky paže.
 const BICEP_AT = 0.4;
 const BICEP_R = 0.6;
@@ -77,7 +87,7 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
   const ink = mascotInk(c);
   // ID ořezů musí být v dokumentu unikátní (na webu je víc opic v jednom DOM).
   const uid = useId().replace(/[^\w-]/g, '');
-  const clip = { body: `mascot-body-${uid}`, head: `mascot-head-${uid}`, shoulders: `mascot-shoulders-${uid}` };
+  const clip = { body: `mascot-body-${uid}`, head: `mascot-head-${uid}`, deltL: `mascot-delt-l-${uid}`, deltR: `mascot-delt-r-${uid}` };
   const g = STAGE_GEOMETRY[stage];
   const { head, ears, torso, shoulders, legs } = g;
   const faceScale = head.r / FACE_REF.r;
@@ -222,9 +232,10 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
             <Circle cx={head.cx} cy={head.cy} r={head.r} />
           </ClipPath>
           {shoulders && (
-            <ClipPath id={clip.shoulders}>
-              <Rect x={shoulders.x} y={shoulders.y} width={shoulders.w} height={shoulders.h} rx={shoulders.rx} />
-            </ClipPath>
+            <>
+              <ClipPath id={clip.deltL}><Circle cx={100 - shoulders.dx} cy={shoulders.y} r={shoulders.r} /></ClipPath>
+              <ClipPath id={clip.deltR}><Circle cx={100 + shoulders.dx} cy={shoulders.y} r={shoulders.r} /></ClipPath>
+            </>
           )}
         </Defs>
 
@@ -243,13 +254,20 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
         <ArmPoseContext.Provider value={{ raise: arms, upAngle: ARMS_UP_ANGLE[stage] }}>
           {renderLayers(pick('front', 'hands'), anchors.handL)}
         </ArmPoseContext.Provider>
+        {/* Stage 3: trapéz šikmo stoupá od deltoidů ke krku (ramena, ne vodorovný límec), deltoidy jsou
+            kulaté čepice nad pažemi se světlem shora jako hlava. */}
         {shoulders && (
           <>
-            <Rect x={shoulders.x} y={shoulders.y} width={shoulders.w} height={shoulders.h} rx={shoulders.rx} fill={MASCOT_COLORS.furShade} />
-            <Rect
-              x={shoulders.x} y={shoulders.y - shoulders.h / 2} width={shoulders.w} height={shoulders.h} rx={shoulders.rx}
-              fill={MASCOT_COLORS.fur} clipPath={`url(#${clip.shoulders})`}
-            />
+            <Path d={trapPath(shoulders)} fill={MASCOT_COLORS.fur} />
+            {([-1, 1] as const).map((side) => (
+              <G key={side}>
+                <Circle cx={100 + side * shoulders.dx} cy={shoulders.y} r={shoulders.r} fill={MASCOT_COLORS.furShade} />
+                <Circle
+                  cx={100 + side * shoulders.dx} cy={shoulders.y - DELT_LIGHT} r={shoulders.r}
+                  fill={MASCOT_COLORS.fur} clipPath={`url(#${side < 0 ? clip.deltL : clip.deltR})`}
+                />
+              </G>
+            ))}
           </>
         )}
         <Rect x={torso.x} y={torso.y} width={torso.w} height={torso.h} rx={torso.rx} fill={MASCOT_COLORS.furShade} />

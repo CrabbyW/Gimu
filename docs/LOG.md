@@ -158,3 +158,15 @@ Nálady celebrate a sad v `components/mascot/SvgMascot.tsx` (spec §8). Mapován
 - Doplněn test `stageForXp(-10)` → 1. Prahy 499/500/1999/2000 a `anchors.test.ts` pro stage 1–3 prochází.
 - Snímky (web, light a dark): 3 stage × 4 nálady × kosmetika, reduce motion, potítka v celebrate, DotLoader. Regresní smoke core loopu kroků 1–2 prošel.
 - Verdikt SCHVÁLENO. Otevřené pro rating: kontrast šály v dark režimu, ramenní pás stage 3, dopad `motion.hop`. Detail v `docs/QA.md`.
+
+## 2026-09-30 · design-agent · UX1 onboarding výběr
+- **R36 (vize těla):** volné pole nahrazeno výběrem. `data/dreams.ts` = 6 karet na cestu (id + glyf), texty v `copy.onboarding.dream.options`. Karty čte UI přes `useDreamOptions` (hranice UI ↛ data/). Sedmá karta „Vlastní…“ odkryje původní pole (max 140). `dreamBody` = titulek karty, nebo vlastní text; schéma beze změny. Při změně cesty se předvolená vize vymaže, vlastní text zůstává (`isDreamPreset`).
+- **Komponenty:** `ChoiceCard` (kompaktní sourozenec `PathCard`: odděluje jen pozadí `surface`, výběr = 2px akcentový proužek vlevo + glyf v akcentu, `accessibilityRole="radio"`), `DreamGlyph` (14 plochých tvarů ze skládaných kruhů, tokeny `text`/`accent`/`surface`; „Vlastní…“ = přerušovaný obrys).
+- **Tokeny:** `type.choiceTitle` (Bebas 26/28), `size.choiceCard` 80, `size.choiceGlyph` 40, `size.glyph` 48 (PathGlyph už nemá rozměr natvrdo).
+- **Copy:** řádek karty ≤ 34 znaků, aby se každá karta vešla na jeden řádek a seznam měl stejný rytmus (hlídá test).
+- **R37 (milníky):** 7 předvoleb na cestu + 2 obecné (−3 kg, +3 kg svalů). Pravidlo 2–3 a „+ vlastní“ beze změny.
+- **Opice stage 3:** vodorovný ramenní pás (četl se jako límec) nahrazen dvěma deltoidy (kruhy se světlem shora jako hlava) a trapézem, který od nich šikmo stoupá ke krku pod hlavu. Geometrie `shoulders: { dx, y, r, trapY }`.
+- **Šála Winter Arc:** nový token `SEASON_MATERIAL.winterArc` (dark látka `#6F8797` / pruh `#243039`, light `#5B7485` / `#BCC8CF`). Ocelová modrošedá zůstává v paletě sezóny, ale odlepí se od tmavého podkladu. Neutrály mapy (`SEASON_OVERRIDES`) beze změny.
+- SPEC §7.1 kroky 2 a 3 aktualizovány. Testy: `data/__tests__/onboardingChoices.test.ts`, `components/onboarding/__tests__/dream.test.tsx`.
+- Screenshoty: `.superpowers/sdd/planB/shots/ux1/r1–r3` (r3 finální). Dočasná route `mascot-preview` smazána.
+- Otevřené: animace se nedotýkal (proužek `ChoiceCard` je statický, háček `selected`); glyf „half“ (kupole) opticky sedí mírně níž než ostatní.

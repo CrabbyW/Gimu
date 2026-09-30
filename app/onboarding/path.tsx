@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { PathCard } from '@/components/onboarding/PathCard';
 import { copy } from '@/data/copy';
-import { useOnboardingDraft, usePathOptions } from '@/hooks/useOnboardingDraft';
+import { isDreamPreset, useOnboardingDraft, usePathOptions } from '@/hooks/useOnboardingDraft';
 import { haptics } from '@/lib/haptics';
 import { useTheme } from '@/theme';
 import type { PathId } from '@/types';
@@ -13,13 +13,14 @@ export default function PathStep() {
   const paths = usePathOptions();
   const path = useOnboardingDraft((s) => s.path);
   const milestones = useOnboardingDraft((s) => s.milestones);
+  const dreamBody = useOnboardingDraft((s) => s.dreamBody);
   const set = useOnboardingDraft((s) => s.set);
 
   const choose = (id: PathId) => {
     haptics.tick();
     if (id === path) return;
-    // Předvolby milníků patří k cestě; vlastní milníky jsou nezávislé a zůstávají.
-    set({ path: id, milestones: milestones.filter((m) => m.custom) });
+    // Předvolby milníků i vize patří k cestě; vlastní milníky a vlastní text vize zůstávají.
+    set({ path: id, milestones: milestones.filter((m) => m.custom), dreamBody: isDreamPreset(dreamBody) ? '' : dreamBody });
   };
 
   return (

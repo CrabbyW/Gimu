@@ -14,3 +14,13 @@ export const SEASON_OVERRIDES: Record<SeasonThemeId, { dark: SeasonalColors; lig
     light: { headerBase: '#F2EEE6', mapBase: '#F3EFE7', mapRule: '#D2C8B8', mapTexture: null },
   },
 };
+
+/** Materiál sezónních kosmetických vrstev (šála Winter Arc). Na rozdíl od neutrálů mapy musí
+ *  vystoupit z podkladu i ze srsti opice: světlejší ocelová modrošedá, pruhy v tmavém tónu sezóny. */
+export interface SeasonMaterial { fabric: string; stripe: string }
+export const SEASON_MATERIAL: Record<'winterArc', { dark: SeasonMaterial; light: SeasonMaterial }> = {
+  winterArc: {
+    dark: { fabric: '#6F8797', stripe: '#243039' },
+    light: { fabric: '#5B7485', stripe: '#BCC8CF' },
+  },
+};

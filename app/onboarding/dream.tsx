@@ -1,23 +1,29 @@
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { TextInput, View } from 'react-native';
+import { ChoiceCard } from '@/components/onboarding/ChoiceCard';
+import { DreamGlyph } from '@/components/onboarding/DreamGlyph';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { useRevealOnFocus } from '@/components/ui/revealOnFocus';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { useOnboardingDraft } from '@/hooks/useOnboardingDraft';
+import { isDreamPreset, useDreamOptions, useOnboardingDraft } from '@/hooks/useOnboardingDraft';
 import { DREAM_MAX_LENGTH, isDreamValid } from '@/logic/onboarding';
 import { typography, useTheme } from '@/theme';
 
 const t = copy.onboarding.dream;
 
+/** Krok 2 (R36): šest vizí podle cesty + „Vlastní…“, které odkryje textové pole. Vybraná je právě jedna. */
 export default function DreamStep() {
-  const { c, space } = useTheme();
+  const { space, size } = useTheme();
+  const path = useOnboardingDraft((s) => s.path);
   const dreamBody = useOnboardingDraft((s) => s.dreamBody);
   const set = useOnboardingDraft((s) => s.set);
-  const [focused, setFocused] = useState(false);
-  const reveal = useRevealOnFocus();
-  const block = useRef<View>(null);
+  const options = useDreamOptions(path);
+  // Při návratu na krok se vlastní režim obnoví z uloženého textu, který není titulkem karty.
+  const [custom, setCustom] = useState(() => dreamBody !== '' && !options.some((o) => o.title === dreamBody));
+  const selectedId = custom ? null : options.find((o) => o.title === dreamBody)?.id ?? null;
+  const glyph = size.choiceGlyph;
 
   return (
     <OnboardingFrame
@@ -27,29 +33,59 @@ export default function DreamStep() {
       canContinue={isDreamValid(dreamBody)}
       onContinue={() => router.push('/onboarding/milestones')}
     >
-      <View ref={block} style={{ gap: space.s }}>
-        {/* Stejný jazyk jako TextField: jediná spodní linka, při fokusu v akcentu. */}
-        <View style={{ borderBottomWidth: 1, borderBottomColor: focused ? c.accent : c.rule }}>
-          <TextInput
-            value={dreamBody}
-            onChangeText={(dreamBody) => set({ dreamBody })}
-            multiline
-            maxLength={DREAM_MAX_LENGTH}
-            placeholder={t.placeholder}
-            accessibilityLabel={t.title}
-            onFocus={() => { setFocused(true); reveal?.focus(block.current); }}
-            onBlur={() => { setFocused(false); reveal?.blur(block.current); }}
-            selectionColor={c.accent}
-            cursorColor={c.accent}
-            placeholderTextColor={c.muted}
-            textAlignVertical="top"
-            style={{ ...typography.inputLarge, color: c.text, minHeight: typography.inputLarge.lineHeight * 3 + space.m * 2, paddingVertical: space.m }}
+      <View accessibilityRole="radiogroup" style={{ gap: space.s }}>
+        {options.map((o) => (
+          <ChoiceCard
+            key={o.id}
+            title={o.title}
+            line={o.line}
+            selected={o.id === selectedId}
+            onPress={() => { setCustom(false); set({ dreamBody: o.title }); }}
+            renderGlyph={(color, bg) => <DreamGlyph glyph={o.glyph} color={color} bg={bg} size={glyph} />}
           />
-        </View>
-        <Text variant="label" tone="muted" style={{ alignSelf: 'flex-end' }} accessibilityLabel={t.counterA11y(dreamBody.length, DREAM_MAX_LENGTH)}>
-          {t.counter(dreamBody.length, DREAM_MAX_LENGTH)}
-        </Text>
+        ))}
+        <ChoiceCard
+          title={t.customTitle}
+          line={t.customLine}
+          selected={custom}
+          onPress={() => { if (!custom) { setCustom(true); if (isDreamPreset(dreamBody)) set({ dreamBody: '' }); } }}
+          renderGlyph={(color, bg) => <DreamGlyph glyph="custom" color={color} bg={bg} size={glyph} />}
+        />
+        {custom ? <CustomDream value={dreamBody} onChange={(dreamBody) => set({ dreamBody })} /> : null}
       </View>
     </OnboardingFrame>
+  );
+}
+
+/** Pole vlastní vize: jediná spodní linka (jazyk TextField), při fokusu v akcentu. */
+function CustomDream({ value, onChange }: { value: string; onChange(v: string): void }) {
+  const { c, space } = useTheme();
+  const [focused, setFocused] = useState(false);
+  const reveal = useRevealOnFocus();
+  const block = useRef<View>(null);
+  return (
+    <View ref={block} style={{ gap: space.s, marginTop: space.m }}>
+      <View style={{ borderBottomWidth: 1, borderBottomColor: focused ? c.accent : c.rule }}>
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          multiline
+          autoFocus
+          maxLength={DREAM_MAX_LENGTH}
+          placeholder={t.placeholder}
+          accessibilityLabel={t.customField}
+          onFocus={() => { setFocused(true); reveal?.focus(block.current); }}
+          onBlur={() => { setFocused(false); reveal?.blur(block.current); }}
+          selectionColor={c.accent}
+          cursorColor={c.accent}
+          placeholderTextColor={c.muted}
+          textAlignVertical="top"
+          style={{ ...typography.input, color: c.text, minHeight: typography.input.lineHeight * 2 + space.m * 2, paddingVertical: space.m }}
+        />
+      </View>
+      <Text variant="label" tone="muted" style={{ alignSelf: 'flex-end' }} accessibilityLabel={t.counterA11y(value.length, DREAM_MAX_LENGTH)}>
+        {t.counter(value.length, DREAM_MAX_LENGTH)}
+      </Text>
+    </View>
   );
 }

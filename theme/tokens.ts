@@ -5,6 +5,8 @@ export const radius = { s: 8, l: 20, full: 999 } as const;
 // minima 44 pt (dřív duplikované natvrdo ve třech komponentách).
 export const size = {
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
+  // Karta volby v onboardingu (vize těla, R36) a její glyf; glyf cesty je `glyph`.
+  choiceCard: 80, choiceGlyph: 40, glyph: 48,
   // DotLoader: rozměr mřížky a průměr tečky (uživatelské zadání size={32} dotSize={4}).
   loader: 32, loaderDot: 4,
 } as const;
@@ -20,6 +22,8 @@ export const type = {
   displayXL: { fontFamily: font.display, fontSize: 120, lineHeight: 108 },
   display: { fontFamily: font.display, fontSize: 56, lineHeight: 54 },
   title: { fontFamily: font.display, fontSize: 36, lineHeight: 38 },
+  // Titulek kompaktní karty volby (onboarding, vize těla): o stupeň pod `title`.
+  choiceTitle: { fontFamily: font.display, fontSize: 26, lineHeight: 28 },
   body: { fontFamily: font.body, fontSize: 16, lineHeight: 24 },
   bodyStrong: { fontFamily: font.bodyStrong, fontSize: 16, lineHeight: 24 },
   // letterSpacing 0.18em při 11 pt ≈ 2.

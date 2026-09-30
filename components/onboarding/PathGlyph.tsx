@@ -1,12 +1,14 @@
 import Svg, { Circle, Path } from 'react-native-svg';
+import { useTheme } from '@/theme';
 import type { PathId } from '@/types';
 
 interface Props { path: PathId; /** Barva tvaru (`text`, u vybrané karty `accent`). */ color: string; /** Barva podkladu karty, prosvítá otvorem kotouče. */ bg: string }
 
-const SIZE = 48;
+// Rozměr glyfu je token `size.glyph`.
 
 /** Geometrický glyf cesty ze skládaných kruhů (spec §7.1). Dekorativní: název cesty nese text karty. */
 export function PathGlyph({ path, color, bg }: Props) {
+  const SIZE = useTheme().size.glyph;
   return (
     <Svg width={SIZE} height={SIZE} viewBox="0 0 48 48" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {path === 'power' ? (

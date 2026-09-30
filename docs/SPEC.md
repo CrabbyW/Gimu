@@ -356,8 +356,13 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
    - Power: kruh s výsečí
    - Body control: dva vyvážené kruhy
    - Strength: plný těžký kruh
-2. **Dream body:** víceřádkové pole (max 140 znaků) s ukázkou vize v textu nápovědy.
-3. **Milestones:**
+2. **Dream body** (změna: rozhodnutí uživatele 2026-09-30):
+   - Výběr z 6 karet vize podle zvolené cesty (`data/dreams.ts`, texty v `copy.onboarding.dream.options`). Karta má krátký titulek v Bebas, jeden řádek Inter a plochý geometrický glyf ze skládaných kruhů (jazyk glyfů cest).
+   - Sedmá karta „Vlastní…“ odkryje textové pole (max 140 znaků).
+   - Vybraná je právě jedna karta. `dreamBody` ukládá titulek vybrané karty, nebo vlastní text; bez změny schématu.
+   - Při změně cesty se předvolená vize vymaže, vlastní text zůstává.
+3. **Milestones** (změna: rozhodnutí uživatele 2026-09-30):
+   - Aspoň 6 předvoleb na cestu plus obecné (`data/milestones.ts`), realistické cíle kalisteniky se správnou jednotkou.
    - Vybírá se 2–3 z předvoleb podle zvolené cesty, případně „+ vlastní“ (název, cíl, jednotka).
    - Tlačítko „Pokračovat“ je aktivní až při 2 vybraných.
 4. **Váha:** segment Hubnutí / Nabírání / Neřeším. U prvních dvou numerická pole pro aktuální a cílovou váhu (validace 30–250 kg, cíl musí být ve směru volby).
