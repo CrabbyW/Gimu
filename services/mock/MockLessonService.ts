@@ -36,7 +36,10 @@ export class MockLessonService implements LessonService {
       if (!e) throw new Error(`Cvik ${eid} v lekci ${id} neexistuje.`);
       return e;
     });
-    return { lesson, exercises };
+    // Stav uzlu i tady (QA kolo 1) — deep link na zamčenou lekci ji nesmí ani otevřít, ne až při dokončení.
+    const completed = new Set(useDb.getState().profile?.activity.map((e) => e.lessonId) ?? []);
+    const state = nodeStates(LESSONS_BY_PATH[lesson.pathId], completed).get(lesson.id) ?? 'locked';
+    return { lesson, exercises, state };
   }
   async completeLesson(id: string, attemptId: string, now: Date) {
     const profile = useDb.getState().profile;

@@ -13,6 +13,8 @@ const requireProfile = () => {
 export class MockUserService implements UserService {
   async getProfile() { return useDb.getState().profile; }
   async completeOnboarding(input: Parameters<UserService['completeOnboarding']>[0]) {
+    // Druhý onboarding by přepsal profil a smazal `activity` (QA kolo 1) — jakmile profil existuje, odmítnout.
+    if (useDb.getState().profile) throw new Error('Profil už existuje, onboarding nelze spustit znovu.');
     const profile = buildInitialProfile(input, clockNow());
     useDb.getState().setProfile(profile);
     return profile;

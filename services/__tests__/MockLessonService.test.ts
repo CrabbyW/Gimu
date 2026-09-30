@@ -26,6 +26,15 @@ test('uzel mapy nese základní XP: lekce, boss, u dokončené opakování', asy
   expect(nodes.find((n) => n.lesson.isBoss)!.xp).toBe(40);
 });
 
+test('getLesson vrací stav uzlu, aby zamčenou lekci šlo poznat před startem (QA kolo 1)', async () => {
+  await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+  expect((await services.lessons.getLesson('bc-1-1')).state).toBe('current');
+  expect((await services.lessons.getLesson('bc-1-boss')).state).toBe('locked');
+  await services.lessons.completeLesson('bc-1-1', 'att-1', new Date(2026, 8, 29, 10));
+  expect((await services.lessons.getLesson('bc-1-1')).state).toBe('done');
+  expect((await services.lessons.getLesson('bc-1-2')).state).toBe('current');
+});
+
 test('zamčenou lekci (např. přes deep link) nejde dokončit a nic se neuloží', async () => {
   await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
   await expect(services.lessons.completeLesson('bc-1-5', 'att-x', new Date(2026, 8, 29, 10))).rejects.toThrow();

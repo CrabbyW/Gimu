@@ -65,6 +65,7 @@ export const copy = {
     quitConfirm: 'Ukončit', quitCancel: 'Trénovat dál', holdReady: 'Připrav se', nextExercise: 'Další cvik',
     close: 'Ukončit lekci',
     progressA11y: (n: number, total: number) => `Cvik ${n} z ${total}`,
+    locked: 'Nejdřív dokonči předchozí lekci.', backToMap: 'Zpět na mapu',
   },
   complete: {
     title: 'Kotouč na ose.', xpLesson: 'lekce', xpBoss: 'boss', xpReplay: 'opakování', xpFirst: 'první dnes',

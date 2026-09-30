@@ -69,10 +69,15 @@ export default function LessonScreen() {
     router.dismissTo({ pathname: '/(tabs)', params: r.unlockedLessonId ? { unlocked: r.unlockedLessonId } : {} });
   }, []);
 
+  // Deep link nemá historii: `router.back()` by pak neudělal nic (QA kolo 1).
+  const goBack = useCallback(() => {
+    if (router.canGoBack()) router.back(); else router.replace('/(tabs)');
+  }, []);
+
   const askQuit = useCallback(() => {
     setQuitOpen(true);
-    confirmQuit(() => router.back(), () => setQuitOpen(false));
-  }, []);
+    confirmQuit(goBack, () => setQuitOpen(false));
+  }, [goBack]);
 
   // Hardwarové Zpět na Androidu během cviků otevře stejný dialog; při ukládání a oslavě se ignoruje.
   useEffect(() => {
@@ -85,6 +90,10 @@ export default function LessonScreen() {
 
   if (lesson.status === 'error') return <ErrorState what={copy.common.loadTarget.lesson} onRetry={lesson.retry} />;
   if (lesson.status !== 'ready') return <View style={{ flex: 1, backgroundColor: c.base }} />;
+  // Zamčený uzel otevřený deep linkem: nesmí se ani rozjet, ne až selhat na konci (QA kolo 1).
+  if (lesson.data.state === 'locked') {
+    return <ErrorState message={copy.lesson.locked} actionLabel={copy.lesson.backToMap} onRetry={goBack} />;
+  }
   const { exercises } = lesson.data;
 
   if (phase.kind === 'celebrate' && result) {

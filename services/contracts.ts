@@ -9,7 +9,7 @@ export type { LessonResult, NodeState };
 /** `xp`: základní XP za dokončení teď (lekce/boss, u dokončené opakování), bez bonusů za den a streak. */
 export interface MapNode { lesson: Lesson; state: NodeState; exerciseCount: number; xp: number }
 export interface LessonPathView { path: PathMeta; sections: { index: number; title: string; nodes: MapNode[] }[]; currentLessonId: string | null }
-export interface LessonDetail { lesson: Lesson; exercises: Exercise[] }
+export interface LessonDetail { lesson: Lesson; exercises: Exercise[]; state: NodeState }
 
 export interface UserService {
   getProfile(): Promise<UserProfile | null>;
