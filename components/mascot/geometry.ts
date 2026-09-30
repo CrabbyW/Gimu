@@ -37,3 +37,10 @@ export const STAGE_GEOMETRY: Record<MascotStage, StageGeometry> = {
     legs: { y: 178, dx: 17, r: 15 },
   },
 };
+
+/** Bod na ose paže ve vzdálenosti `t` od ramene při úhlu `deg`; `side` −1 = levá, +1 = pravá. */
+export function armPoint(limb: Limb, side: -1 | 1, t: number, deg: number): { x: number; y: number } {
+  'worklet';
+  const rad = (deg * Math.PI) / 180;
+  return { x: limb.x + side * Math.sin(rad) * t, y: limb.y + Math.cos(rad) * t };
+}

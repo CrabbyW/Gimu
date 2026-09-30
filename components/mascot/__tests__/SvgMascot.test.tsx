@@ -2,7 +2,11 @@ import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
 import { Circle, Ellipse, Path, Svg } from 'react-native-svg';
 import { buildTheme, type Scheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
-import type { Mood } from '@/types';
+import type { Mood, SeasonThemeId } from '@/types';
+import { SeasonScarf } from '../cosmetics';
+import { OutfitScarf } from '../cosmetics/OutfitScarf';
+import { OutfitTank } from '../cosmetics/OutfitTank';
+import { AccWristbands } from '../cosmetics/AccWristbands';
 import { Mascot, MASCOT_SIZES } from '..';
 import { MOOD_POSE } from '../SvgMascot';
 import { STAGE_GEOMETRY } from '../geometry';
@@ -20,8 +24,8 @@ const HAPPY_MOUTH = 'M86 104 Q100 122 114 104 Z';
 const SAD_MOUTH = 'M88 112 Q100 104 112 112';
 
 const base: MascotProps = { stage: 1, mood: 'idle', size: 'M', cosmetics: {} };
-const tree = (props: Partial<MascotProps>, scheme: Scheme = 'dark') => (
-  <ThemeContext.Provider value={buildTheme(scheme, null)}>
+const tree = (props: Partial<MascotProps>, scheme: Scheme = 'dark', season: SeasonThemeId | null = null) => (
+  <ThemeContext.Provider value={buildTheme(scheme, season)}>
     <Mascot {...base} {...props} />
   </ThemeContext.Provider>
 );
@@ -31,9 +35,9 @@ const unmount = () => {
   act(() => { renderer?.unmount(); });
   renderer = null;
 };
-const render = (props: Partial<MascotProps>, scheme?: Scheme) => {
+const render = (props: Partial<MascotProps>, scheme?: Scheme, season: SeasonThemeId | null = null) => {
   unmount();
-  act(() => { renderer = TestRenderer.create(tree(props, scheme)); });
+  act(() => { renderer = TestRenderer.create(tree(props, scheme, season)); });
   return renderer!.root;
 };
 afterEach(() => {
@@ -96,4 +100,31 @@ test('stage 2 a 3 kreslí vlastní geometrii bez varování, hlava se zmenšuje'
   expect(headR(3)).toBe(STAGE_GEOMETRY[3].head.r);
   expect(new Set([headR(1), headR(2), headR(3)]).size).toBe(3);
   expect(warn).not.toHaveBeenCalled();
+});
+
+describe('kosmetické vrstvy', () => {
+  const count = (root: ReactTestInstance, type: Parameters<ReactTestInstance['findAllByType']>[0]) => root.findAllByType(type).length;
+
+  test('nasazený outfit a accessory se vykreslí, neznámé id se tiše přeskočí', () => {
+    const root = render({ cosmetics: { outfit: 'outfit-tank-ember', accessory: 'acc-wristbands' } });
+    expect(count(root, OutfitTank)).toBe(1);
+    expect(count(root, AccWristbands)).toBe(1);
+    expect(() => render({ cosmetics: { outfit: 'outfit-neexistuje', accessory: 'x' } })).not.toThrow();
+  });
+
+  test('sezónní šála: jen během Winter Arc a nekreslí se dvakrát, když je šála nasazená jako outfit', () => {
+    expect(count(render({}, 'dark', null), SeasonScarf)).toBe(0);
+    expect(count(render({}, 'dark', 'summerBody'), SeasonScarf)).toBe(0);
+    expect(count(render({ cosmetics: { outfit: 'outfit-tank-ember' } }, 'dark', 'winterArc'), SeasonScarf)).toBe(1);
+    const worn = render({ cosmetics: { outfit: 'outfit-winter-arc-scarf' } }, 'light', 'winterArc');
+    expect(count(worn, SeasonScarf)).toBe(0);
+    expect(count(worn, OutfitScarf)).toBe(1);
+  });
+
+  test.each([1, 2, 3] as const)('stage %s: potítka sedí na konci paže i při celebrate', (stage) => {
+    const root = render({ stage, mood: 'celebrate', cosmetics: { accessory: 'acc-wristbands' } });
+    const limb = STAGE_GEOMETRY[stage].armL;
+    const bands = root.findAllByType(Path).filter((p) => p.props.strokeWidth === limb.w + 3);
+    expect(bands).toHaveLength(2);
+  });
 });

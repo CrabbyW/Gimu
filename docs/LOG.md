@@ -131,3 +131,15 @@ Nálady celebrate a sad v `components/mascot/SvgMascot.tsx` (spec §8). Mapován
 - Rozhodnuto sám: **zvednutý úhel paží podle stage 1: 120°, 2: 140°, 3: 160°**. Brief chce 160° pro všechny, ale krátká paže stage 1 by skončila uvnitř hlavy (ruka 41 od středu hlavy r 54), takže by opice vypadala bez rukou. Stage 2 by ruka jen vykukovala. Ruce jdou do V, dokud ruka nemine hlavu.
 - Rozhodnuto sám: paže se kreslí jako tah s kulatými konci (vizuálně totožné s dřívějším otočeným `Rect rx=w/2`), aby šel úhel animovat přes `d` na UI vlákně. Biceps stage 3 se posouvá po paži.
 - Otevřené: pružina `motion.hop` při dopadu klesne ~16 pt pod klid, než se ustálí. U opakovaných poskoků je to vidět častěji než u jednoho skoku happy. Preset a chování jsou z plánu A, rating posoudí.
+
+## 2026-09-30 · boss+design · Task 17
+- **Boss:** `data/cosmetics.ts` (12 položek přesně podle tabulky briefu), `riveInputs.ts` + test (TDD, nejdřív FAIL), `RiveMascot.tsx` stub (Rive import zakomentovaný, vykreslí `SvgMascot`), `Theme.seasonThemeId`, tokeny `seasonGold #C6A15B` a `onSeasonGold #131316` v obou paletách + kontrastní test.
+- **Rozhodnutí 12 (šála):** během Winter Arc se `SeasonScarf` kreslí vždy na `neck`, kromě případu, kdy je `outfit-winter-arc-scarf` nasazená jako outfit (bez zdvojení). Pokryto testem v `SvgMascot.test.tsx`.
+- **ESLint:** `cosmetics.test.ts` importuje `@/data/cosmetics`, takže UI hranice teď má `ignores: ['**/__tests__/**']` (jak brief předvídal).
+- **Design:** vrstvy kreslí v souřadnicích kotvy (tvar pro stage 1 kolem 0,0). Body vrstvy jsou oříznuté na trup a čelenka na hlavu, takže sedí na všech stage bez ladění.
+  - Tílko: podklad je stín srsti, aby 85% inkoust nepropouštěl bříško; akcent jen jako lem 3 px.
+  - Mikina: `rule`, kapsa a šňůrky v `muted`; kapuce je zadní část na `neck`. `MascotLayer.parts` je rozšíření typu z briefu, přidané kvůli dvěma kotvám.
+  - Šála: neutrály Winter Arc (`mapRule` a pruhy v `headerBase`) čte přímo z `SEASON_OVERRIDES.winterArc[scheme]`, aby šála vypadala stejně i mimo sezónu.
+  - Potítka: nekreslí se v transformované skupině. Jsou to tahy po ose paže ze stejného `raise` (sdíleného přes `ArmPoseContext`) a `armPoint` (přesunuto do `geometry.ts`), takže se zvedají s celebrate. Brief chce pořadí outfit → accessory; drží se v rámci každé kotvy a kotvy jdou v pořadí zadní → ruce → trup → krk → hlava.
+- Screenshoty: `.superpowers/sdd/planB/shots/t17` (každá vrstva, stage 1–3, idle a celebrate, light a dark). Dočasná route byla smazána.
+- Otevřené: v dark režimu je šála (`mapRule #243039`) na pozadí málo výrazná, na srsti ale čitelná. Rozhodne rating.

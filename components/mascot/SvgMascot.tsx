@@ -7,7 +7,9 @@ import { copy } from '@/data/copy';
 import { motion, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { MascotStage, Mood } from '@/types';
-import { STAGE_GEOMETRY, type Limb } from './geometry';
+import { ANCHORS, type Anchor } from './anchors';
+import { ArmPoseContext, layerParts, SeasonScarf, type LayerPart } from './cosmetics';
+import { armPoint, STAGE_GEOMETRY, type Limb } from './geometry';
 import { MASCOT_COLORS, mascotInk } from './palette';
 import { resolveMascotSize, type MascotProps } from './types';
 
@@ -63,10 +65,11 @@ const BODY_LIGHT = 6;
 // Stage 3: biceps v 40 % délky paže, poloměr 0.6 šířky paže.
 const BICEP_AT = 0.4;
 const BICEP_R = 0.6;
+const WINTER_SCARF_ID = 'outfit-winter-arc-scarf';
 
-/** Geometrická opice stage 1–3 z `STAGE_GEOMETRY` (spec §8). Kosmetické vrstvy na kotvách z `anchors.ts` doplní Task 17. */
-export function SvgMascot({ stage, mood, size, accessibilityLabel }: MascotProps) {
-  const { c } = useTheme();
+/** Geometrická opice stage 1–3 z `STAGE_GEOMETRY` (spec §8) s kosmetickými vrstvami na kotvách z `anchors.ts`. */
+export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: MascotProps) {
+  const { c, seasonThemeId } = useTheme();
   const { reduced } = useMotionSafe();
   const px = resolveMascotSize(size);
   const pose = MOOD_POSE[mood];
@@ -80,6 +83,17 @@ export function SvgMascot({ stage, mood, size, accessibilityLabel }: MascotProps
   const faceScale = head.r / FACE_REF.r;
   const faceTransform = `translate(${head.cx} ${head.cy}) scale(${faceScale}) translate(${-FACE_REF.cx} ${-FACE_REF.cy})`;
   const bicep = shoulders !== null;
+  const anchors = ANCHORS[stage];
+
+  // Kosmetika (spec §8): outfit → sezónní šála → accessory; neznámé id se tiše přeskočí.
+  // Sezónní šála Winter Arc se kreslí vždy během sezóny, kromě případu, kdy je šála nasazená jako outfit.
+  const seasonScarf: LayerPart[] =
+    seasonThemeId === 'winterArc' && cosmetics.outfit !== WINTER_SCARF_ID ? [{ anchor: 'neck', z: 'front', Component: SeasonScarf }] : [];
+  const layers = [...layerParts(cosmetics.outfit), ...seasonScarf, ...layerParts(cosmetics.accessory)];
+  const pick = (z: LayerPart['z'], anchor: LayerPart['anchor']) => layers.filter((l) => l.z === z && l.anchor === anchor);
+  const renderLayers = (ls: LayerPart[], anchor: Anchor) =>
+    ls.map(({ Component }, i) => <Component key={i} anchor={anchor} stage={stage} ink={ink} />);
+  const backLayers = layers.filter((l) => l.z === 'back');
 
   // Dýchání celého těla; smutek dýchá pomaleji a mělčeji. Střed škálování je uprostřed plátna,
   // translateY vrací spodní hranu zpět: opice stojí na místě a dýchá nahoru.
@@ -214,12 +228,21 @@ export function SvgMascot({ stage, mood, size, accessibilityLabel }: MascotProps
           )}
         </Defs>
 
+        {/* Zadní vrstvy kosmetiky (kapuce) leží za celou opicí. */}
+        {backLayers.map(({ Component, anchor }, i) => (
+          <Component key={i} anchor={anchor === 'hands' ? anchors.handL : anchors[anchor]} stage={stage} ink={ink} />
+        ))}
+
         {/* Hmotu dává jen plochý stín srsti dole: nohy, paže a srpky pod hlavou, tělem a čenichem. Bez gradientu. */}
         <Circle cx={100 - legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
         <Circle cx={100 + legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
         {/* Ramena paží leží uvnitř obrysu těla: horní konec paže zajede pod tělo, bez mezery. */}
         <Arm limb={g.armL} side={-1} bicep={bicep} raise={arms} upAngle={ARMS_UP_ANGLE[stage]} />
         <Arm limb={g.armR} side={1} bicep={bicep} raise={arms} upAngle={ARMS_UP_ANGLE[stage]} />
+        {/* Vrstvy na rukou jedou po ose paže se stejnou pózou, takže se zvedají s celebrate. */}
+        <ArmPoseContext.Provider value={{ raise: arms, upAngle: ARMS_UP_ANGLE[stage] }}>
+          {renderLayers(pick('front', 'hands'), anchors.handL)}
+        </ArmPoseContext.Provider>
         {shoulders && (
           <>
             <Rect x={shoulders.x} y={shoulders.y} width={shoulders.w} height={shoulders.h} rx={shoulders.rx} fill={MASCOT_COLORS.furShade} />
@@ -235,6 +258,7 @@ export function SvgMascot({ stage, mood, size, accessibilityLabel }: MascotProps
           fill={MASCOT_COLORS.fur} clipPath={`url(#${clip.body})`}
         />
         <Ellipse cx={100} cy={torso.y + torso.h / 2 - 2} rx={torso.w / 4} ry={torso.h * 0.23} fill={MASCOT_COLORS.face} />
+        <G clipPath={`url(#${clip.body})`}>{renderLayers(pick('front', 'body'), anchors.body)}</G>
 
         <AnimatedCircle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={MASCOT_COLORS.fur} animatedProps={earLeftProps} />
         <AnimatedCircle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={MASCOT_COLORS.fur} animatedProps={earRightProps} />
@@ -260,6 +284,9 @@ export function SvgMascot({ stage, mood, size, accessibilityLabel }: MascotProps
           <AnimatedPath d={HAPPY_MOUTH} fill={ink} animatedProps={happyMouthProps} />
           <AnimatedPath d={SAD_MOUTH} stroke={ink} strokeWidth={3} strokeLinecap="round" fill="none" animatedProps={sadMouthProps} />
         </G>
+
+        {renderLayers(pick('front', 'neck'), anchors.neck)}
+        <G clipPath={`url(#${clip.head})`}>{renderLayers(pick('front', 'head'), anchors.head)}</G>
       </Svg>
     </Animated.View>
   );
@@ -273,8 +300,7 @@ export function SvgMascot({ stage, mood, size, accessibilityLabel }: MascotProps
 function Arm({ limb, side, bicep, raise, upAngle }: { limb: Limb; side: -1 | 1; bicep: boolean; raise: SharedValue<number>; upAngle: number }) {
   const at = (t: number, deg: number) => {
     'worklet';
-    const rad = (deg * Math.PI) / 180;
-    return { x: limb.x + side * Math.sin(rad) * t, y: limb.y + Math.cos(rad) * t };
+    return armPoint(limb, side, t, deg);
   };
   // `raise.value` se čte přímo v updateru: reanimated sleduje závislosti z jeho closure.
   const armProps = useAnimatedProps(() => {
