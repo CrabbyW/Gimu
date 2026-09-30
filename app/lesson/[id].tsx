@@ -2,19 +2,22 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Platform, ScrollView, View } from 'react-native';
 import { ExerciseCard } from '@/components/lesson/ExerciseCard';
+import { LessonCompleteScene } from '@/components/lesson/LessonCompleteScene';
 import { LessonProgress } from '@/components/lesson/LessonProgress';
 import { useHoldTimer } from '@/components/lesson/useHoldTimer';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
-import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useLesson } from '@/hooks/useLesson';
+import { useProfile } from '@/hooks/useProfile';
 import { now } from '@/lib/clock';
 import { nextPhase, type LessonPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
 import { useTheme } from '@/theme';
-import type { Exercise } from '@/types';
+import type { CosmeticSlot, Exercise } from '@/types';
+
+const NO_COSMETICS: Partial<Record<CosmeticSlot, string>> = {};
 
 /** Dialog „Ukončit lekci?“. RN Web `Alert` nic nezobrazí, proto na webu (jen dev náhled) `confirm`. */
 function confirmQuit(onQuit: () => void, onStay: () => void) {
@@ -37,6 +40,9 @@ export default function LessonScreen() {
   const [quitOpen, setQuitOpen] = useState(false);
   const [attemptId] = useState(() => `${id}-${now().getTime()}`); // jeden pokus = jedno id (idempotence)
   const completing = useRef(false);
+  const leaving = useRef(false);
+  const profile = useProfile();
+  const cosmetics = profile.status === 'ready' ? profile.data?.equipped ?? NO_COSMETICS : NO_COSMETICS;
 
   const advance = useCallback(async () => {
     if (lesson.status !== 'ready') return;
@@ -54,6 +60,14 @@ export default function LessonScreen() {
       Alert.alert(copy.common.loadError(copy.common.loadTarget.lessonResult), undefined, [{ text: copy.common.retry }]);
     }
   }, [phase, lesson, id, attemptId]);
+
+  // Pokračovat z oslavy: zpět na mapu (pod modalem), s id odemčeného uzlu pro unlock sekvenci.
+  // Cesta `/(tabs)`, ne `/`: přesměrování z indexu by query zahodilo (Ruling R22). Dvojí tap hlídá ref.
+  const onContinue = useCallback((r: LessonResult) => {
+    if (leaving.current) return;
+    leaving.current = true;
+    router.dismissTo({ pathname: '/(tabs)', params: r.unlockedLessonId ? { unlocked: r.unlockedLessonId } : {} });
+  }, []);
 
   const askQuit = useCallback(() => {
     setQuitOpen(true);
@@ -74,17 +88,7 @@ export default function LessonScreen() {
   const { exercises } = lesson.data;
 
   if (phase.kind === 'celebrate' && result) {
-    // TODO(Task 13): <LessonCompleteScene result={result} lesson={lesson.data.lesson} onContinue={…} />
-    return (
-      <View style={{ flex: 1, backgroundColor: c.base }}>
-        <Screen edges={['top']}>
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Text variant="display" accessibilityRole="header">{copy.complete.title}</Text>
-          </View>
-        </Screen>
-        <BigActionBar primary={{ label: copy.complete.cta, onPress: () => router.back() }} />
-      </View>
-    );
+    return <LessonCompleteScene result={result} lesson={lesson.data.lesson} cosmetics={cosmetics} onContinue={() => onContinue(result)} />;
   }
 
   const index = phase.kind === 'exercise' ? phase.index : exercises.length - 1;
