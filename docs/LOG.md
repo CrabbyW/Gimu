@@ -111,3 +111,10 @@ Oprava tří chybějících kritérií z `docs/RATING.md` (krok 2, skóre 70/100
 - Potvrzuji ruling: tloušťky/poloměry materiálu činky jsou geometrie, ne UI radius §6.6 → `material` tokeny v theme.
 - Další rozhodnutí boss v tomto kroku: CTA oslavy zamčené do konce sekvence (§7.3 krok 7); impact při prvním dotyku kotouče (§7.3 „při dopadu“); popover mapy jako modální vrstva se závojem; světlý plate10 #8A867F kvůli kontrastu; label „KG“ odstraněn.
 - Pokračuje plán B (`docs/superpowers/plans/2026-09-30-opice-faze1-planB.md`), krok 3: maskot.
+
+## 2026-09-30 · boss+design · Task 15
+- Boss: `components/mascot/geometry.ts` (`STAGE_GEOMETRY`, hodnoty z briefu 1:1), `ANCHORS[2]`/`ANCHORS[3]` vlastní, test `components/mascot/__tests__/anchors.test.ts` (TDD: nejdřív FAIL, pak PASS).
+- Rozhodnutí sám: kotvy `handL/handR` stage 1 posunuty z (64,159)/(136,159) na konec paže (62,166)/(138,166). Brief říká „stage 1 beze změny“, ale jeho vlastní test „ruka leží na konci paže“ (tolerance 1.5) by se starými hodnotami (střed dlaně) padal; stage 2/3 kotvy z briefu leží na konci paže, takže sjednoceno. Kotvy zatím nic nespotřebovává (kosmetika až Task 17).
+- Design: `SvgMascot` kreslí tělo, paže (skupina `rotate` kolem ramene), nohy, uši, ramena stage 3 (fur nahoře / furShade dole přes clip) a biceps stage 3 (r = 0.6·w ve 40 % délky) z geometrie. Obličej = skupina stage 1 se scale r/54. Světelný posun hlavy škálován s hlavou. Bříško odvozeno z trupu (rx = w/4, ry = 0.23·h). Odstraněn `useStageFallbackWarning`. Stage 1 vizuálně beze změny.
+- Screenshot light+dark, S a XL: `.superpowers/sdd/planB/shots/t15`. Stage čitelné v S, stage 3 jasně silnější silueta.
+- Otevřené: ramenní „jho“ stage 3 působí mírně jako límec (spodní stínová polovina); pro Task 17/rating k posouzení.

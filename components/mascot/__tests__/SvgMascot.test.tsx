@@ -1,9 +1,10 @@
 import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
-import { Ellipse, Path, Svg } from 'react-native-svg';
+import { Circle, Ellipse, Path, Svg } from 'react-native-svg';
 import { buildTheme, type Scheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
 import type { Mood } from '@/types';
 import { Mascot, MASCOT_SIZES } from '..';
+import { STAGE_GEOMETRY } from '../geometry';
 import type { MascotProps } from '../types';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- oficiální jest mocky knihoven */
@@ -69,14 +70,16 @@ test.each<Scheme>(['light', 'dark'])('detaily obličeje jsou tmavé i v režimu 
   eyes.forEach((e) => expect(e.props.fill).toBe('#131316'));
 });
 
-test('stage 2/3 zatím kreslí stage 1 a ve vývoji varuje jednou za mount', () => {
+test('stage 2 a 3 kreslí vlastní geometrii bez varování, hlava se zmenšuje', () => {
   const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-  render({ stage: 1 });
+  const headR = (stage: MascotProps['stage']) => {
+    const { head } = STAGE_GEOMETRY[stage];
+    const circles = render({ stage }).findAllByType(Circle).filter((n) => n.props.cx === head.cx && n.props.cy === head.cy);
+    return circles[0]?.props.r;
+  };
+  expect(headR(1)).toBe(54);
+  expect(headR(2)).toBe(STAGE_GEOMETRY[2].head.r);
+  expect(headR(3)).toBe(STAGE_GEOMETRY[3].head.r);
+  expect(new Set([headR(1), headR(2), headR(3)]).size).toBe(3);
   expect(warn).not.toHaveBeenCalled();
-
-  render({ stage: 2 });
-  act(() => { renderer!.update(tree({ stage: 2, mood: 'happy' })); });
-  act(() => { renderer!.update(tree({ stage: 3 })); });
-  expect(warn).toHaveBeenCalledTimes(1);
-  expect(warn.mock.calls[0]?.[0]).toContain('stage 2');
 });
