@@ -2,6 +2,7 @@ import type { Lesson, MascotStage, PlateKg, UserProfile, XpRules } from '@/types
 import { isLessonEvent } from './activity';
 import { toISODate } from './dates';
 import { nextLessonId } from './map';
+import { repairTarget, type SeasonSpan } from './season';
 import { stageForXp } from './mascot';
 import { activeDays, currentStreak } from './streak';
 import { lessonXp, totalXp, type XpBreakdown } from './xp';
@@ -16,6 +17,8 @@ export interface LessonResult {
 interface Args {
   profile: UserProfile; lesson: Lesson; pathLessons: Lesson[]; now: Date;
   attemptId: string; rules: XpRules; thresholds: readonly number[];
+  /** Běžící sezóna pro comeback opravu (plán B). Bez ní se neopravuje nic (plán A). */
+  season?: SeasonSpan | null; repairWindowDays?: number;
 }
 
 export function applyLessonCompletion(a: Args): { profile: UserProfile; result: LessonResult } {
@@ -50,6 +53,7 @@ export function applyLessonCompletion(a: Args): { profile: UserProfile; result: 
   };
 
   if (isRetry) return { profile: a.profile, result };
-  const event = { id: a.attemptId, at: now.toISOString(), day, lessonId: a.lesson.id, xp: xp.total };
+  const repairsDate = repairTarget(events, a.season ?? null, day, a.repairWindowDays ?? 3, toISODate(new Date(a.profile.createdAt)));
+  const event = { id: a.attemptId, at: now.toISOString(), day, lessonId: a.lesson.id, xp: xp.total, ...(repairsDate ? { repairsDate } : {}) };
   return { profile: { ...a.profile, activity: [...a.profile.activity, event] }, result };
 }

@@ -1,8 +1,10 @@
 import { EXERCISES } from '@/data/exercises';
 import { LESSONS, LESSONS_BY_PATH } from '@/data/lessons';
 import { PATHS } from '@/data/paths';
+import { SEASON_RULES, SEASONS } from '@/data/seasons';
 import { STAGE_THRESHOLDS, XP_RULES } from '@/data/xp';
 import { applyLessonCompletion } from '@/logic/completion';
+import { toISODate } from '@/logic/dates';
 import { nodeStates, nextLessonId } from '@/logic/map';
 import { useDb } from '@/store/db';
 import type { Exercise, PathId } from '@/types';
@@ -48,7 +50,12 @@ export class MockLessonService implements LessonService {
     // Spec §7.2: kromě current a dokončených je vše locked — ani deep link nesmí zamčenou lekci započítat.
     const completed = new Set(profile.activity.map((e) => e.lessonId));
     if (nodeStates(LESSONS_BY_PATH[lesson.pathId], completed).get(lesson.id) === 'locked') throw new Error(`Lekce ${id} je zamčená.`);
-    const out = applyLessonCompletion({ profile, lesson, pathLessons: LESSONS_BY_PATH[lesson.pathId], now, attemptId, rules: XP_RULES, thresholds: STAGE_THRESHOLDS });
+    const today = toISODate(now);
+    const season = SEASONS.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
+    const out = applyLessonCompletion({
+      profile, lesson, pathLessons: LESSONS_BY_PATH[lesson.pathId], now, attemptId, rules: XP_RULES, thresholds: STAGE_THRESHOLDS,
+      season, repairWindowDays: SEASON_RULES.repairWindowDays,
+    });
     if (out.profile !== profile) useDb.getState().setProfile(out.profile);
     return out.result;
   }

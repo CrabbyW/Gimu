@@ -274,3 +274,9 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
   - Copy `explainer` a `result.stay` mají nezlomitelnou mezeru po „a“/„v“ (test sirotků).
   - Doplňková copy: odpočet, a11y řádku, `emptyWeek`, `lastWeek`, `dismiss`, `rank`, `myXp`.
 - Otevřené (K ruční kontrole): FPS s 16 dýchajícími opicemi na slabším zařízení; haptika banneru na zařízení.
+
+## 2026-09-30 · boss · Task 22
+- Hotovo: `logic/season.ts` (`SeasonSpan`, `seasonDays`, `repairableDays`, `repairTarget`) TDD; `SEASON_RULES.repairWindowDays = 3` v `data/seasons.ts`; `applyLessonCompletion` má volitelné `season`/`repairWindowDays` a u nového pokusu (ne retry) zapíše `repairsDate` nejstaršího zameškaného dne okna; `MockLessonService.completeLesson` předává aktivní sezónu podle `toISODate(now)`.
+- Pravidla (rozhodnutí 4–6): oprava jen pro cíl sezóny, streak beze změny (test); opravuje druhá a další lekce dne včetně replay, `dev-xp` ne; dny před `startDate` a před `createdAt` profilu nejsou v okně.
+- Rozhodnuto sám: `repairTarget` vrací `null` i když dnešek leží mimo rozsah sezóny (test navíc); completion testy používají fixture s `createdAt` 2026-09-29 (≤ oknu), takže přepis `createdAt` nebyl potřeba.
+- Otevřené: dev posun času (`seasonEndOffset`, Task 31) zatím výběr aktivní sezóny v mocku neovlivňuje, bere reálné `now` předané službě.
