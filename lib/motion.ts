@@ -21,6 +21,9 @@ export const motion = {
   moodShift: { duration: 300, easing: Easing.bezier(0.22, 1, 0.36, 1) } satisfies WithTimingConfig,
   // Opice celebrate: pauza na zemi mezi opakovanými poskoky (ms).
   celebrateRestMs: 600,
+  // DotLoader (port @dotmatrix dotm-square-11 „Echo Ring“): mřížka 5×5, cyklus 1500 ms / speed,
+  // výchozí speed 1.25, trojice opacit z dotmatrix-loader.css (--dmx-opacity-*).
+  dotLoader: { cycleMs: 1500, speed: 1.25, opacityBase: 0.16, opacityMid: 0.32, opacityPeak: 1 },
 };
 
 /** Při zapnutém omezení pohybu se pružiny nahradí 200ms fade a pulzování se vypne. */

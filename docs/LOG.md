@@ -143,3 +143,12 @@ Nálady celebrate a sad v `components/mascot/SvgMascot.tsx` (spec §8). Mapován
   - Potítka: nekreslí se v transformované skupině. Jsou to tahy po ose paže ze stejného `raise` (sdíleného přes `ArmPoseContext`) a `armPoint` (přesunuto do `geometry.ts`), takže se zvedají s celebrate. Brief chce pořadí outfit → accessory; drží se v rámci každé kotvy a kotvy jdou v pořadí zadní → ruce → trup → krk → hlava.
 - Screenshoty: `.superpowers/sdd/planB/shots/t17` (každá vrstva, stage 1–3, idle a celebrate, light a dark). Dočasná route byla smazána.
 - Otevřené: v dark režimu je šála (`mapRule #243039`) na pozadí málo výrazná, na srsti ale čitelná. Rozhodne rating.
+
+## 2026-09-30 · motion-agent · DotLoader (požadavek uživatele)
+- Nativní port shadcn @dotmatrix `dotm-square-11` („Echo Ring“): `components/ui/DotLoader.tsx` (`DotLoader`, `DotLoaderScreen`), čisté funkce v `lib/dotLoader.ts` (test `lib/__tests__/dotLoader.test.ts`).
+- Parametry: mřížka 5×5 (vzor full, 25 teček), kruh = Manhattanova vzdálenost 0–4; cyklus 1500 ms / speed (výchozí speed 1.25); zpoždění kruhu (ring·0.14 + parita·0.03)·cyklus; keyframy 0 % 0.625·base → 28 % 0.98·peak → 56 % mid → 78 % 0.68·peak+0.32·mid → 100 %, každý úsek ease-in-out (0.42,0,0.58,1); výchozí opacity base 0.16 / mid 0.32 / peak 1 (`motion.dotLoader` v `lib/motion.ts`, ruling R33). Bloom = radiální záře (react-native-svg) mezi 14 % a 42 % cyklu, stejně jako skoková `--dmx-bloom-level` 0.9 v originále.
+- Jeden sdílený čas (`withRepeat(withTiming)` 0→1) na UI threadu, každá tečka jen posouvá fázi. Omezení pohybu: statická opacita 0.2 + (1 − ring/4)·0.72 (přemapovaná, když jsou zadané opacity).
+- Tokeny: `size.loader` 32, `size.loaderDot` 4; barva `c.accent` (prop `color`). A11y: `progressbar`, popisek `copy.common.loading` („Načítám“).
+- Použití: hydratační brána v `app/_layout.tsx` (dřív `null`), `app/index.tsx` (načítání profilu, dřív `null`), `app/(tabs)/index.tsx` a `app/lesson/[id].tsx` (dřív prázdný View).
+- Screenshoty: `.superpowers/sdd/planB/shots/dotloader` (light, dark, reduced). Dočasná route byla smazána.
+- Otevřené: záře je aproximace CSS drop-shadow radiálním gradientem. Na nativu kryje hydrataci splash, takže loader v bráně je vidět jen na webu. Ukládání výsledku lekce (`busy`) loader zatím nemá (fáze 2).

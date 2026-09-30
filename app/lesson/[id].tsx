@@ -6,6 +6,7 @@ import { LessonCompleteScene } from '@/components/lesson/LessonCompleteScene';
 import { LessonProgress } from '@/components/lesson/LessonProgress';
 import { useHoldTimer } from '@/components/lesson/useHoldTimer';
 import { BigActionBar } from '@/components/ui/BigActionBar';
+import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
 import { copy } from '@/data/copy';
@@ -89,7 +90,7 @@ export default function LessonScreen() {
   }, [phase.kind, askQuit]);
 
   if (lesson.status === 'error') return <ErrorState what={copy.common.loadTarget.lesson} onRetry={lesson.retry} />;
-  if (lesson.status !== 'ready') return <View style={{ flex: 1, backgroundColor: c.base }} />;
+  if (lesson.status !== 'ready') return <DotLoaderScreen />;
   // Zamčený uzel otevřený deep linkem: nesmí se ani rozjet, ne až selhat na konci (QA kolo 1).
   if (lesson.data.state === 'locked') {
     return <ErrorState message={copy.lesson.locked} actionLabel={copy.lesson.backToMap} onRetry={goBack} />;

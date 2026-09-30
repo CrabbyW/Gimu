@@ -5,7 +5,7 @@ const MILESTONE_UNIT_SHORT = { reps: '×', seconds: 's', kg: 'kg' } as const;
 export const copy = {
   common: {
     continue: 'Pokračovat', back: 'Zpět', done: 'Hotovo', start: 'Start', pause: 'Pauza',
-    resume: 'Pokračovat', retry: 'Zkusit znovu',
+    resume: 'Pokračovat', retry: 'Zkusit znovu', loading: 'Načítám',
     loadError: (what: string) => `Nepodařilo se načíst ${what}.`,
     // Předmět věty „Nepodařilo se načíst …“ (4. pád).
     loadTarget: { profile: 'profil', path: 'cestu', lesson: 'lekci', lessonResult: 'výsledek lekce' },

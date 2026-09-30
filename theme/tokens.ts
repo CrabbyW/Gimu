@@ -5,6 +5,8 @@ export const radius = { s: 8, l: 20, full: 999 } as const;
 // minima 44 pt (dřív duplikované natvrdo ve třech komponentách).
 export const size = {
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
+  // DotLoader: rozměr mřížky a průměr tečky (uživatelské zadání size={32} dotSize={4}).
+  loader: 32, loaderDot: 4,
 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).

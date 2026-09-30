@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { useActiveSeason } from '@/hooks/useActiveSeason';
 import { useHydrated } from '@/hooks/useHydrated';
 import { ThemeProvider, useTheme } from '@/theme';
@@ -24,10 +25,11 @@ export default function RootLayout() {
   // Splash drží, dokud nejsou fonty i uložená data (spec §9). Chyba fontů splash neblokuje.
   const ready = (fontsLoaded || fontError != null) && hydrated;
   useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => undefined); }, [ready]);
-  if (!ready) return null;
+  const seasonThemeId = season.status === 'ready' ? season.data?.themeId ?? null : null;
+  // Na nativu brání splash; na webu (bez splashe) je tu místo prázdna DotLoader. Fonty nepotřebuje.
   return (
-    <ThemeProvider seasonThemeId={season.status === 'ready' ? season.data?.themeId ?? null : null}>
-      <RootStack />
+    <ThemeProvider seasonThemeId={seasonThemeId}>
+      {ready ? <RootStack /> : <DotLoaderScreen />}
     </ThemeProvider>
   );
 }
