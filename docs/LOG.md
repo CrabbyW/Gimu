@@ -57,7 +57,7 @@ Presety v `lib/motion.ts`, haptika v `lib/haptics.ts`, zvuk v `lib/sound.ts`. Ov
 - Opraveno: `expo-doctor` hlásil chybějící peer `expo-asset` pro `expo-audio` — doinstalováno přes `npx expo install expo-asset`, `21/21 checks passed`.
 - Opraveno: zamčená lekce otevřená deep linkem se rozjela a selhala až na konci — `getLesson` teď vrací i stav uzlu, `app/lesson/[id].tsx` ho čte hned na startu a zamčenou lekci ukáže přes `ErrorState` s tlačítkem zpět na mapu (test v `MockLessonService.test.ts`).
 - Opraveno: Zrušit lekci deep linkem nic nedělalo, protože `router.back()` neměl historii — nahrazeno `router.canGoBack() ? router.back() : router.replace('/(tabs)')`.
-- `npm test` (201 testů), `npx tsc --noEmit`, `npx expo lint`, `npx expo-doctor` (21/21) — vše čisté.
+- `npm test` (200 testů), `npx tsc --noEmit`, `npx expo lint`, `npx expo-doctor` (21/21) — vše čisté.
 
 ## 2026-09-30 · design-agent · QA oprava kolo 1
 - Odstraněny natvrdo zapsané typografické hodnoty mimo `theme/`: přidány tokeny `theme/tokens.ts` → `type.input` (20/28, `TextField`), `type.inputLarge` (22/32, `app/onboarding/dream.tsx`), `type.counter` (display 32/32, `TopBar` streak/XP), `type.badgeLabel` (mono 10/12, `TopBar` `TierBadge`). Vykreslený výsledek beze změny — jen přejmenované/centralizované hodnoty; `components/ui/Text.tsx` doplněn o `TABULAR` záznamy pro nové varianty.
@@ -70,3 +70,9 @@ Presety v `lib/motion.ts`, haptika v `lib/haptics.ts`, zvuk v `lib/sound.ts`. Ov
 - Regrese celého flow je čistá: `npm test` 200, tsc, lint a doctor projdou.
 - Sám jsem nic neopravoval.
 - Verdikt SCHVÁLENO. Otevřené a neblokující: drobné SVG a Stat literály mimo theme (design) a kontrola na zařízení (uživatel). Detail je v `docs/QA.md`.
+
+## 2026-09-30 · boss · úklid před ratingem
+- Design tokeny: zbylé SVG a Stat literály z QA kola 2 přesunuty do `theme/tokens.ts` — `svgType.label`/`svgType.plateKg` (BarbellBoss, Plate) a `statSize` (Stat), exportované přes `theme/index.ts`. Vykreslený výsledek beze změny.
+- README.md přepsáno do češtiny podle aktuálního stavu repa; `docs/STATUS.md` aktualizován (krok 2 hotový a schválený QA, rating čeká).
+- Oprava záznamu QA kola 1: `npm test` mělo 200 testů, ne 201.
+- `npm test` 200/200, `npx tsc --noEmit`, `npx expo lint` — vše čisté.

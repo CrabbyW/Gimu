@@ -24,6 +24,18 @@ export const type = {
   badgeLabel: { fontFamily: font.mono, fontSize: 10, lineHeight: 12, letterSpacing: 0, textTransform: 'uppercase' as const },
 } as const;
 
+// Typografie pro SVG text (react-native-svg `<Text>` nepoužije lineHeight/textTransform,
+// proto samostatně od `type`, které pohání `<Text>` z `components/ui/Text.tsx`).
+export const svgType = {
+  // Popisek "BOSS" na ose v BarbellBoss: stejné vlastnosti jako `type.label`.
+  label: { fontFamily: font.mono, fontSize: 11, letterSpacing: 2 },
+  // Číslo kg uprostřed kotouče v Plate.
+  plateKg: { fontFamily: font.display, fontSize: 22 },
+} as const;
+
+// Velikosti čísla ve `Stat` (M/L/XL) podle spec §6.6.
+export const statSize = { M: 56, L: 88, XL: 120 } as const;
+
 // Barvy opice (srst, obličej) — stejné v obou režimech, viz spec §8.
 export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0' } as const;
 
@@ -32,3 +44,4 @@ export type Radius = typeof radius;
 export type Fonts = typeof font;
 export type TypeVariant = keyof typeof type;
 export type Mascot = typeof mascot;
+export type StatSize = keyof typeof statSize;

@@ -5,7 +5,7 @@ import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
 import { copy } from '@/data/copy';
 import { useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
-import { useTheme } from '@/theme';
+import { svgType, useTheme } from '@/theme';
 import { BOSS_SIZE } from './geometry';
 import { PULSE_MS, useShake, useUnlockProgress } from './PlateNode';
 
@@ -44,7 +44,7 @@ export function BarbellBoss({ state, accessibilityLabel, onPress, shakeKey = 0, 
 }
 
 function Barbell({ state }: { state: NodeState }) {
-  const { c, font, seasonal } = useTheme();
+  const { c, seasonal } = useTheme();
   const locked = state === 'locked';
   // Zamčená osa je obrys; výplň podkladem mapy zakryje tyč za kotouči, aby se čáry nekřížily.
   const stroke = locked ? { fill: seasonal.mapBase, stroke: c.rule, strokeWidth: 1.5 } : null;
@@ -64,7 +64,7 @@ function Barbell({ state }: { state: NodeState }) {
       <Rect x={0} y={MID - 3} width={W} height={6} rx={3} {...(stroke ?? { fill: c.plateRim })} />
       {collar(-1)}{collar(1)}
       {side(-1)}{side(1)}
-      <SvgText x={W / 2} y={MID - 10} fontFamily={font.mono} fontSize={11} letterSpacing={2} textAnchor="middle" fill={locked ? c.muted : c.text}>
+      <SvgText x={W / 2} y={MID - 10} fontFamily={svgType.label.fontFamily} fontSize={svgType.label.fontSize} letterSpacing={svgType.label.letterSpacing} textAnchor="middle" fill={locked ? c.muted : c.text}>
         {copy.map.boss}
       </SvgText>
       {state === 'done' ? (

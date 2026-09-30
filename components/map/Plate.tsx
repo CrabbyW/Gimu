@@ -3,7 +3,7 @@ import { useId } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Defs, Path, Pattern, RadialGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import type { NodeState } from '@/logic/map';
-import { inkOn, useTheme } from '@/theme';
+import { inkOn, svgType, useTheme } from '@/theme';
 import type { PlateKg } from '@/types';
 
 interface Props {
@@ -20,7 +20,7 @@ export const CHECK_LENGTH = 18;
 
 /** Kotouč zepředu: plný kruh, vnitřní prstenec, díra, kg v Bebas. Hloubku dělá radiální světlo a jemné zrno. */
 export function Plate({ kg, size, state, check = true }: Props) {
-  const { c, seasonal, font } = useTheme();
+  const { c, seasonal } = useTheme();
   // ID defs musí být v dokumentu unikátní (na webu je víc kotoučů v jednom DOM).
   const uid = useId().replace(/[^\w-]/g, '');
   const light = `plate-light-${uid}`;
@@ -59,7 +59,7 @@ export function Plate({ kg, size, state, check = true }: Props) {
       <Circle cx={50} cy={50} r={40} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
       <Circle cx={50} cy={50} r={20} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
       <Circle cx={50} cy={50} r={9} fill={seasonal.mapBase} />
-      <SvgText x={50} y={36} fontFamily={font.display} fontSize={22} fill={ink} textAnchor="middle">{kg}</SvgText>
+      <SvgText x={50} y={36} fontFamily={svgType.plateKg.fontFamily} fontSize={svgType.plateKg.fontSize} fill={ink} textAnchor="middle">{kg}</SvgText>
       {state === 'done' && check ? (
         <Path d={CHECK_PATH} stroke={c.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       ) : null}

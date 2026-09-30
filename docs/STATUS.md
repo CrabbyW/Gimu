@@ -1,11 +1,17 @@
 # Stav práce: fáze 1, plán A (core loop)
 
-Aktualizováno: 2026-09-29 ~22:50. Větev `faze1/core-loop`, zrcadlená na `main`.
+Aktualizováno: 2026-09-30. Větev `faze1/core-loop`, zrcadlená na `main`.
 
 - **Plán:** `docs/superpowers/plans/2026-09-29-opice-faze1-core-loop.md`
 - **Spec:** `docs/superpowers/specs/2026-09-29-opice-faze1-design.md`
 
 **Proces:** každý task má implementera a BOSS review (0–100). UI tasky navíc dostávají DESIGN review ze screenshotů (Expo web + Playwright, světlý i tmavý režim). Dál se pokračuje až při 100/100 od obou.
+
+## Krok 2 (core loop): hotovo, QA schváleno
+
+Krok 2 specifikace (lekce, oslava dokončení, odemykání) prošel dvěma koly QA a byl schválen
+(`docs/LOG.md`, `docs/QA.md` — verdikt SCHVÁLENO). Otevřený zbytek je úklid tokenů typografie
+(vyřešen) a kontrola na fyzickém zařízení. **Rating kroku 2 čeká na vyhodnocení.**
 
 ## Hotovo (100/100)
 
