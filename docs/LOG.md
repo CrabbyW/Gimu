@@ -280,3 +280,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Pravidla (rozhodnutí 4–6): oprava jen pro cíl sezóny, streak beze změny (test); opravuje druhá a další lekce dne včetně replay, `dev-xp` ne; dny před `startDate` a před `createdAt` profilu nejsou v okně.
 - Rozhodnuto sám: `repairTarget` vrací `null` i když dnešek leží mimo rozsah sezóny (test navíc); completion testy používají fixture s `createdAt` 2026-09-29 (≤ oknu), takže přepis `createdAt` nebyl potřeba.
 - Otevřené: dev posun času (`seasonEndOffset`, Task 31) zatím výběr aktivní sezóny v mocku neovlivňuje, bere reálné `now` předané službě.
+
+## 2026-09-30 · boss · Task 23
+- Hotovo: `logic/season.ts` rozšířen o `SeasonCtx`, `goalTarget`, `goalValue` (4 typy), `weightBaseline`/`weightLatest`, `dayStates`, `seasonProgress` (met, reachable, daysLeft vč. dneška), `buildRecap`, `rewardFor`, `participationBadgeId`, `applyClaim` (idempotentní). Testy v `logic/__tests__/season.test.ts`.
+- Rozhodnuto samo: typy `DayState`, `SeasonProgress`, `RecapBeforeAfter`, `SeasonRecap` přesunuty z `services/contracts.ts` do `logic/season.ts` (logic smí importovat jen `@/types`), contracts je re-exportuje (stejný vzor jako `NodeState`). Recap `beforeAfter` pro váhu (cíl weight nebo weightGoal lose/gain) vrací `null`, když chybí baseline nebo latest → slide se vynechá (ruling 8). Opravy (`repairsDate`) se do activeDays počítají jen v sezóně a ≤ dnes.
+- Otevřené: mock `SeasonService` (getProgress/getRecap/claimReward) má tyto funkce napojit (Task 24).

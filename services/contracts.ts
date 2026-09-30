@@ -1,5 +1,6 @@
 import type { LessonResult } from '@/logic/completion';
 import type { NodeState } from '@/logic/map';
+import type { DayState, RecapBeforeAfter, SeasonProgress, SeasonRecap } from '@/logic/season';
 import type {
   Cosmetic, CosmeticSlot, Exercise, LeagueEntry, LeagueTierId, LeagueWeekResult, Lesson, OnboardingInput, PathId, PathMeta,
   Season, SeasonGoal, UserProfile, ISODate, MascotStage,
@@ -8,7 +9,7 @@ import type {
 /** Důvod, proč (ne)jde položku koupit. TODO(Task 28): re-export z `logic/cosmetics.ts`. */
 export type BuyCheck = 'ok' | 'owned' | 'notShop' | 'insufficient';
 
-export type { LessonResult, NodeState };
+export type { DayState, LessonResult, NodeState, RecapBeforeAfter, SeasonProgress, SeasonRecap };
 /** `xp`: základní XP za dokončení teď (lekce/boss, u dokončené opakování), bez bonusů za den a streak. */
 export interface MapNode { lesson: Lesson; state: NodeState; exerciseCount: number; xp: number }
 export interface LessonPathView { path: PathMeta; sections: { index: number; title: string; nodes: MapNode[] }[]; currentLessonId: string | null }
@@ -37,20 +38,7 @@ export interface LeagueService {
   getCurrentWeek(now: Date): Promise<LeagueWeekView>;
   dismissLastResult(): Promise<void>;
 }
-export type DayState = 'active' | 'repaired' | 'missed' | 'today' | 'future';
-export interface SeasonProgress {
-  goal: SeasonGoal; value: number; target: number; met: boolean; reachable: boolean;
-  daysLeft: number; repairWindow: ISODate[]; dayStates: { day: ISODate; state: DayState }[];
-}
 export interface SeasonStatus { season: Season; phase: 'active' | 'ended'; goal: SeasonGoal | null; claimed: boolean }
-export interface RecapBeforeAfter {
-  kind: 'weight' | 'milestone' | 'activeDays' | 'lessons'; before: number; after: number;
-  unit: 'kg' | 'reps' | 'seconds' | 'days' | 'lessons'; label: string;
-}
-export interface SeasonRecap {
-  lessons: number; longestStreak: number; stageStart: MascotStage; stageEnd: MascotStage;
-  beforeAfter: RecapBeforeAfter | null; rewardEarned: boolean; rewardCosmeticIds: string[]; badgeIds: string[];
-}
 export interface SeasonService {
   getActive(now: Date): Promise<Season | null>;
   /** Aktivní sezóna, jinak poslední skončená (recap po konci, ruling 15). */
