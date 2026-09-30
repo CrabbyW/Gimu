@@ -7,7 +7,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "ios": { "supportsTablet": false, "bundleIdentifier": "app.opice" },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.opice"
+    },
     "android": {
       "package": "app.opice",
       "adaptiveIcon": {
@@ -18,13 +21,26 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "web": { "favicon": "./assets/favicon.png", "output": "single" },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single"
+    },
     "plugins": [
       "expo-router",
       "expo-font",
-      ["expo-splash-screen", { "backgroundColor": "#0E0D0C", "image": "./assets/splash-icon.png", "imageWidth": 120 }],
-      "expo-notifications"
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0E0D0C",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120
+        }
+      ],
+      "expo-notifications",
+      "expo-audio"
     ],
-    "experiments": { "typedRoutes": true }
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }

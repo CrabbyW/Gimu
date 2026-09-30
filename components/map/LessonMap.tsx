@@ -187,13 +187,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
       <PathLine width={width} height={height} positions={layout.positions} reached={reached} drawing={drawing} />
 
       {selected ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={copy.map.closePopover}
-          onPress={() => setSelected(null)}
-          // Závoj: popover je modální vrstva, sousední uzly a opice pod ním záměrně ustoupí.
-          style={{ position: 'absolute', left: 0, top: 0, width, height, backgroundColor: c.scrim, zIndex: 1 }}
-        />
+        <Scrim width={width} height={height} color={c.scrim} onPress={() => setSelected(null)} />
       ) : null}
 
       {view.sections.map((s) => {
@@ -263,6 +257,25 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
         />
       ) : null}
     </ScrollView>
+  );
+}
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Závoj: popover je modální vrstva, sousední uzly a opice pod ním záměrně ustoupí.
+ *  Prolne se stejným presetem jako popover (motion.ui, 180 ms), takže oba naběhnou spolu.
+ *  Tap funguje hned od mountu, průhlednost interakci neblokuje. */
+function Scrim({ width, height, color, onPress }: { width: number; height: number; color: string; onPress(): void }) {
+  const o = useSharedValue(0);
+  useEffect(() => { o.value = withTiming(1, motion.ui); }, [o]);
+  const style = useAnimatedStyle(() => ({ opacity: o.value }));
+  return (
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityLabel={copy.map.closePopover}
+      onPress={onPress}
+      style={[{ position: 'absolute', left: 0, top: 0, width, height, backgroundColor: color, zIndex: 1 }, style]}
+    />
   );
 }
 

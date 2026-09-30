@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import Animated, { useAnimatedReaction, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Mascot } from '@/components/mascot';
 import { BigActionBar } from '@/components/ui/BigActionBar';
@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
 import { motion, useMotionSafe } from '@/lib/motion';
+import { useClickSound } from '@/lib/sound';
 import type { LessonResult } from '@/services';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, Lesson, Mood } from '@/types';
@@ -23,12 +24,15 @@ const XP_LABELS = { lesson: t.xpLesson, boss: t.xpBoss, replay: t.xpReplay, firs
 const LAUNCH_AT = 250;
 const LEFT_LAG = 60;
 const XP_AFTER_IMPACT = 120;
+// Opice se raduje až po vyskočení +XP (spec §7.3 krok 4 → 5 → 6): vlastní takt, nesoupeří s číslem.
+const CHEER_AFTER_IMPACT = 420;
 const TITLE_AFTER_IMPACT = 700;
 const CTA_AFTER_IMPACT = 900;
 // Odkud kotouč přilétá (pravá strana; levá zrcadlově).
 const FROM = { x: 140, rotate: 18 };
-const ROTATE_MS = 420;
 const COLLAR_MS = 120;
+// Osa se po dopadu prohne o 3 pt dolů a pružinou (motion.rattle) vrátí.
+const SHAKE_DEPTH = 3;
 // Omezený pohyb (spec §6.7): místo pružin se konečný stav jen prolne.
 const REDUCED_FADE = { duration: 200 };
 // Opice (M = 120 pt) zarovnaná chodidly k účaří velkého čísla XP.
@@ -67,44 +71,51 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
   const shake = useSharedValue(0);
   const start = calm ? { x: 0, rotate: 0 } : FROM;
   const startDrop = calm ? 1 : 0;
-  const right: PlateFlight = { drop: useSharedValue(startDrop), x: useSharedValue(start.x), rotate: useSharedValue(start.rotate) };
-  const left: PlateFlight = { drop: useSharedValue(startDrop), x: useSharedValue(-start.x), rotate: useSharedValue(-start.rotate) };
-  const bar: BarbellMotion = { right, left, opacity: useSharedValue(calm ? 0 : 1), collar: useSharedValue(COLLAR_TRAVEL) };
+  // S omezeným pohybem jsou objímky na místě od začátku (součást osy), kotouč se jen prolne.
+  const startCollar = calm ? 0 : COLLAR_TRAVEL;
+  const right: PlateFlight = {
+    drop: useSharedValue(startDrop), seat: useSharedValue(0), x: useSharedValue(start.x), rotate: useSharedValue(start.rotate), collar: useSharedValue(startCollar),
+  };
+  const left: PlateFlight = {
+    drop: useSharedValue(startDrop), seat: useSharedValue(0), x: useSharedValue(-start.x), rotate: useSharedValue(-start.rotate), collar: useSharedValue(startCollar),
+  };
+  const bar: BarbellMotion = { right, left, opacity: useSharedValue(calm ? 0 : 1) };
+  const click = useClickSound();
 
+  // Dopad pravého kotouče (první dotek osy): úder, cvak zámku, rozkmit osy a odpočet odměn.
   const onImpact = () => {
     if (impacted.current) return;
     impacted.current = true;
-    haptics.snap();
-    if (calm) {
-      bar.collar.set(0);
-    } else {
-      shake.set(withSequence(withTiming(3, { duration: 50 }), withSpring(0, { damping: 6, stiffness: 400 })));
-      bar.collar.set(withTiming(0, { duration: COLLAR_MS, easing: motion.ui.easing }));
-    }
+    haptics.impact();
+    click();
+    if (!calm) shake.set(withSequence(withTiming(SHAKE_DEPTH, { duration: 50 }), withSpring(0, motion.rattle)));
     const at = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)); };
-    at(XP_AFTER_IMPACT, () => { setXpShown(true); setMood(cheer); });
+    at(XP_AFTER_IMPACT, () => setXpShown(true));
+    at(CHEER_AFTER_IMPACT, () => { setMood(cheer); haptics.success(); });
     at(TITLE_AFTER_IMPACT, () => { titleOpacity.set(withTiming(1, calm ? REDUCED_FADE : motion.reveal)); });
     at(CTA_AFTER_IMPACT, () => setCtaReady(true));
   };
-
-  // Dopad = první dotek osy (pravý kotouč dosáhne cílové polohy), ne až doznění přestřelu pružiny.
-  useAnimatedReaction(
-    () => right.drop.value >= 1,
-    (landed, before) => { if (!calm && landed && before === false) scheduleOnRN(onImpact); },
-  );
 
   useEffect(() => {
     sceneOpacity.set(withTiming(1, calm ? REDUCED_FADE : motion.reveal));
     if (calm) {
       bar.opacity.set(withDelay(LAUNCH_AT, withTiming(1, REDUCED_FADE, (fin) => { if (fin) scheduleOnRN(onImpact); })));
     } else {
-      const fly = (side: PlateFlight, delay: number) => {
-        side.drop.set(withDelay(delay, withSpring(1, motion.snap)));
-        side.x.set(withDelay(delay, withTiming(0, { duration: ROTATE_MS, easing: motion.ui.easing })));
-        side.rotate.set(withDelay(delay, withTiming(0, { duration: ROTATE_MS })));
+      // Oblouk: svisle zrychlující pád (motion.fall), vodorovně a rotačně dobíhá (ease-out) stejně dlouho.
+      // V okamžiku dotyku (konec pádu, UI vlákno) převezme pohyb dosednutí `seat` s rychlostí dopadu
+      // a objímka té strany dojede a objeví se. Pravý kotouč spouští dopad (haptika, zvuk, odměny).
+      const fly = (side: PlateFlight, delay: number, lead: boolean) => {
+        side.drop.set(withDelay(delay, withTiming(1, motion.fall, (done) => {
+          if (!done) return;
+          side.seat.set(withSpring(0, motion.seat));
+          side.collar.set(withTiming(0, { duration: COLLAR_MS, easing: motion.ui.easing }));
+          if (lead) scheduleOnRN(onImpact);
+        })));
+        side.x.set(withDelay(delay, withTiming(0, { duration: motion.fall.duration, easing: motion.ui.easing })));
+        side.rotate.set(withDelay(delay, withTiming(0, { duration: motion.fall.duration, easing: motion.ui.easing })));
       };
-      fly(right, LAUNCH_AT);
-      fly(left, LAUNCH_AT + LEFT_LAG);
+      fly(right, LAUNCH_AT, true);
+      fly(left, LAUNCH_AT + LEFT_LAG, false);
     }
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);

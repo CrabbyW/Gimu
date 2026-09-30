@@ -1,29 +1,35 @@
 import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import Animated, { Extrapolation, interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useTheme } from '@/theme';
 import type { PlateKg } from '@/types';
-import { AXIS, BARBELL_H, COLLAR, SLEEVE, type BarbellLayout, type PlacedPlate } from './celebration';
+import { AXIS, BARBELL_H, COLLAR, COLLAR_TRAVEL, SLEEVE, type BarbellLayout, type PlacedPlate } from './celebration';
 
 const SHEEN = 'plateSheen';
 
-/** Přílet jednoho kotouče. `drop` jde pružinou 0 → 1 (1 = na ose); `x` a `rotate` jsou odchylky od cílové polohy. */
-export interface PlateFlight { drop: SharedValue<number>; x: SharedValue<number>; rotate: SharedValue<number> }
+/** Přílet jednoho kotouče.
+ *  - `drop` 0 → 1: pád po oblouku (1 = dotek osy),
+ *  - `seat`: dosednutí po dopadu v pt pod osou (pružina s rychlostí dopadu: kotouč se zaboří pár bodů
+ *    a vrátí, bez odskoku nad osu),
+ *  - `x`, `rotate`: odchylky od cílové polohy,
+ *  - `collar`: odstup objímky této strany v pt (0 = zacvaknuto). */
+export interface PlateFlight {
+  drop: SharedValue<number>;
+  seat: SharedValue<number>;
+  x: SharedValue<number>;
+  rotate: SharedValue<number>;
+  collar: SharedValue<number>;
+}
 
 /** Výška, ze které kotouč padá (pt nad osou). */
 export const DROP_FROM = 420;
-// Přestřel pružiny za osu se kreslí zmenšený: kotouč jen „dosedne“ pár bodů pod osu a vrátí se,
-// místo aby propadl o čtvrtinu výšky pádu (motion.snap přestřelí ~26 %).
-const OVERSHOOT_SCALE = 0.1;
 
 export interface BarbellMotion {
   right: PlateFlight;
   left: PlateFlight;
   /** Průhlednost přilétajících kotoučů (omezený pohyb: kotouč se jen prolne na místě). */
   opacity: SharedValue<number>;
-  /** Odstup objímek od kotoučů v pt; 0 = zacvaknuto. */
-  collar: SharedValue<number>;
 }
 
 interface Props { width: number; layout: BarbellLayout; motion: BarbellMotion }
@@ -61,8 +67,8 @@ export function Barbell({ width, layout, motion }: Props) {
       </Svg>
       <FlyingPlate kg={f.kg} x={cx + f.offset} w={f.w} h={f.h} flight={motion.right} opacity={motion.opacity} />
       <FlyingPlate kg={f.kg} x={cx - f.offset - f.w} w={f.w} h={f.h} flight={motion.left} opacity={motion.opacity} />
-      <Collar x={cx + layout.collarOffset} side={1} shift={motion.collar} />
-      <Collar x={cx - layout.collarOffset - COLLAR.w} side={-1} shift={motion.collar} />
+      <Collar x={cx + layout.collarOffset} side={1} shift={motion.right.collar} />
+      <Collar x={cx - layout.collarOffset - COLLAR.w} side={-1} shift={motion.left.collar} />
     </View>
   );
 }
@@ -97,8 +103,7 @@ interface FlyingProps { kg: PlateKg; x: number; w: number; h: number; flight: Pl
 
 function FlyingPlate({ kg, x, w, h, flight, opacity }: FlyingProps) {
   const style = useAnimatedStyle(() => {
-    const d = flight.drop.value;
-    const y = d <= 1 ? -DROP_FROM * (1 - d) : DROP_FROM * OVERSHOOT_SCALE * (d - 1);
+    const y = -DROP_FROM * (1 - flight.drop.value) + flight.seat.value;
     return {
       opacity: opacity.value,
       transform: [{ translateX: flight.x.value }, { translateY: y }, { rotate: `${flight.rotate.value}deg` }],
@@ -114,10 +119,14 @@ function FlyingPlate({ kg, x, w, h, flight, opacity }: FlyingProps) {
   );
 }
 
-/** Objímka: před zacvaknutím stojí o `shift` dál od kotoučů (ven), při dopadu dojede k nim. */
+/** Objímka: před zacvaknutím čeká neviditelná o `shift` dál od kotoučů (ven), aby se nekřížila s letícím
+ *  kotoučem; při dopadu dojede k němu a zároveň se objeví (průhlednost je odvozená z odstupu). */
 function Collar({ x, side, shift }: { x: number; side: 1 | -1; shift: SharedValue<number> }) {
   const { c } = useTheme();
-  const style = useAnimatedStyle(() => ({ transform: [{ translateX: side * shift.value }] }));
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(shift.value, [0, COLLAR_TRAVEL], [1, 0], Extrapolation.CLAMP),
+    transform: [{ translateX: side * shift.value }],
+  }));
   return (
     <Animated.View
       pointerEvents="none"

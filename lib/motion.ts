@@ -5,7 +5,13 @@ export const motion = {
   ui: { duration: 180, easing: Easing.bezier(0.22, 1, 0.36, 1) } satisfies WithTimingConfig,
   uiExit: { duration: 150, easing: Easing.bezier(0.4, 0, 0.2, 1) } satisfies WithTimingConfig,
   reveal: { duration: 480, easing: Easing.bezier(0.22, 1, 0.36, 1) } satisfies WithTimingConfig,
-  snap: { damping: 11, stiffness: 180, mass: 1.1 } satisfies WithSpringConfig, // kotouč: znatelný přestřel
+  // Kotouč: pád jako gravitace (zrychluje, ease-in), dopad přebírá `seat`.
+  fall: { duration: 440, easing: Easing.bezier(0.55, 0, 0.9, 0.5) } satisfies WithTimingConfig,
+  // Dosednutí kotouče na osu: pružina z 0 s rychlostí dopadu (pt/s, dolů). ζ ≈ 0.55 → zaboří se ~6 pt
+  // a vrátí s přestřelem < 1 pt nad osu, doznění ~250 ms. Těžké, čisté zacvaknutí.
+  seat: { damping: 25, stiffness: 520, mass: 1, velocity: 260 } satisfies WithSpringConfig,
+  // Rozkmit osy po dopadu: krátký, ζ ≈ 0.45 (jeden zákmit ~0.6 pt nad klid, doznění ~250 ms).
+  rattle: { damping: 22, stiffness: 600 } satisfies WithSpringConfig,
   pop: { damping: 9, stiffness: 260, mass: 0.8 } satisfies WithSpringConfig, // +XP
   unlock: { damping: 14, stiffness: 200 } satisfies WithSpringConfig, // odemčení uzlu
   hop: { damping: 12, stiffness: 240 } satisfies WithSpringConfig, // opice

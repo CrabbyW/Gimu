@@ -5,14 +5,14 @@ import * as Haptics from 'expo-haptics';
 const safe = (p: Promise<void>) => { p.catch(() => undefined); };
 
 export const haptics = {
-  /** Nacvaknutí kotouče: úder a po 90 ms potvrzení. */
-  snap() { safe(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)); setTimeout(() => safe(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)), 90); },
+  /** Dopad kotouče na osu (úder). Potvrzení (success) přijde až s odměnou, spec §7.3 krok 3 a 6. */
+  impact() { safe(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)); },
   /** Odemčení uzlu na mapě. */
   unlock() { safe(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)); },
   /** Konec výdrže. */
   holdDone() { safe(Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)); },
   /** Výběr v nabídce. */
   tick() { safe(Haptics.selectionAsync()); },
-  /** Stage-up a narození opice. */
+  /** Odměna po dopadu kotouče, stage-up a narození opice. */
   success() { safe(Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)); },
 };
