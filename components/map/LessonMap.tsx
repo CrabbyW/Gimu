@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { Mascot, MASCOT_SIZES } from '@/components/mascot';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import type { LessonPathView, MapNode } from '@/services/contracts';
 import { useTheme } from '@/theme';
@@ -22,6 +22,7 @@ import { HAPPY_MS, UNLOCK_STEPS, findUnlockPair, unlockFrame, type UnlockPhase }
 const MASCOT = MASCOT_SIZES.S;
 const MASCOT_GAP = 16;
 const HOP_LIFT = -24;
+const HOP_CROUCH = 4;
 const HOP_MS = 360;
 const SECTION_LABEL_OFFSET = 32;
 const POPOVER_ROOM = 220; // odhad výšky popoveru (i se zavírací ikonou) pro volbu strany
@@ -129,12 +130,18 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
     if (!spot) return;
     if (!hopping) { mx.value = spot.x; my.value = spot.y; return; }
     // Fáze 5: skok po oblouku na nový uzel, pak radost a konec sekvence.
-    // Přesun po oblouku v timingu (pružina na 112 pt dráze přestřelí přes cílový uzel);
-    // pérování odměny nese doskok: zvednutí o 24 pt a dopad na pružině motion.hop.
-    const travel = { duration: HOP_MS, easing: motion.reveal.easing };
-    mx.value = withTiming(spot.x, travel);
-    my.value = withTiming(spot.y, travel);
-    lift.value = withSequence(withTiming(HOP_LIFT, { duration: HOP_MS / 2, easing: motion.ui.easing }), withSpring(0, motion.hop));
+    // UX2 skok: přikrčení (+4 pt, 70 ms) → odraz ease-out do výšky 24 pt → pád s gravitací na nový uzel.
+    // Vodorovně dojíždí `ease.out` přes celý skok. Bez pružiny: dřív `motion.hop` propadal pod cílový uzel.
+    const h = motion.hop;
+    const airMs = HOP_MS - h.crouchMs;
+    const travel = { duration: airMs, easing: ease.out };
+    mx.value = withSequence(withTiming(mx.value, { duration: h.crouchMs }), withTiming(spot.x, travel));
+    my.value = withSequence(withTiming(my.value, { duration: h.crouchMs }), withTiming(spot.y, travel));
+    lift.value = withSequence(
+      withTiming(HOP_CROUCH, { duration: h.crouchMs, easing: ease.out }),
+      withTiming(HOP_LIFT, { duration: airMs / 2, easing: ease.out }),
+      withTiming(0, { duration: airMs / 2, easing: ease.gravity }),
+    );
     const t = setTimeout(() => {
       advance(6);
       endRef.current?.();

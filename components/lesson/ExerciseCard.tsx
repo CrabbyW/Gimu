@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import Animated, { withTiming, type EntryExitAnimationFunction } from 'react-native-reanimated';
+import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -10,18 +10,12 @@ import { ExerciseSilhouette } from './ExerciseSilhouette';
 import { HoldTimer } from './HoldTimer';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
-// Nová karta přijede zprava s dozvukem (reveal), stará rychle zmizí (uiExit).
-const enter: EntryExitAnimationFunction = () => {
-  'worklet';
-  return {
-    initialValues: { opacity: 0, transform: [{ translateX: 24 }] },
-    animations: { opacity: withTiming(1, motion.reveal), transform: [{ translateX: withTiming(0, motion.reveal) }] },
-  };
-};
-const exit: EntryExitAnimationFunction = () => {
-  'worklet';
-  return { initialValues: { opacity: 1 }, animations: { opacity: withTiming(0, motion.uiExit) } };
-};
+// UX2 výměna cviku (hyperframes: odchod a příchod běží současně, pohyb je předávka):
+// nová karta přijede zprava o 32 pt punch křivkou (`motion.enter`, 260 ms), stará odjede
+// doleva a zmizí (`motion.uiExit`, 150 ms). S omezeným pohybem jen prolnutí (reanimated ReduceMotion).
+const enter = FadeInRight.duration(motion.enter.duration).easing(motion.enter.easing)
+  .withInitialValues({ opacity: 0, transform: [{ translateX: 32 }] });
+const exit = FadeOutLeft.duration(motion.uiExit.duration).easing(motion.uiExit.easing);
 
 const SILHOUETTE_HEIGHT = 200;
 // ~62 znaků Interu 16 pt (průměrná šířka znaku ≈ 8 pt): pohodlná délka řádku na tabletu.

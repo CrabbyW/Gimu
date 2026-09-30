@@ -170,3 +170,57 @@ Nálady celebrate a sad v `components/mascot/SvgMascot.tsx` (spec §8). Mapován
 - SPEC §7.1 kroky 2 a 3 aktualizovány. Testy: `data/__tests__/onboardingChoices.test.ts`, `components/onboarding/__tests__/dream.test.tsx`.
 - Screenshoty: `.superpowers/sdd/planB/shots/ux1/r1–r3` (r3 finální). Dočasná route `mascot-preview` smazána.
 - Otevřené: animace se nedotýkal (proužek `ChoiceCard` je statický, háček `selected`); glyf „half“ (kupole) opticky sedí mírně níž než ostatní.
+
+## 2026-09-30 · motion-agent · UX2 motion overhaul (brag)
+Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `lib/motion.ts` (R33): pojmenované `ease` a `dur`, pružiny, `stagger(i)` a `enterRise(i, rise)`. Test `lib/__tests__/motion.test.ts` hlídá UI 90–300 ms, ζ odměn 0.65–0.9, víčko staggeru ≤ 500 ms a hop bez pružiny. Snímky: `.superpowers/sdd/planB/shots/ux2/r1` a `r2` (page.clock), `rt` (reálný čas pro layout animace).
+
+**Tón:** brag `cinematic` („dramatic, trailer-scale“: každý úder dosedne, než přijde další), zkrocený na osobnost „Posilovna“. UI je krátké a rozhodné: silný ease-out, bez zákmitu. Odměny mají váhu: gravitační pád, tvrdý dopad s punchem scény, slam čísla z 1.2, pružiny ζ 0.7–0.85. Z hyperframes-animation přebírám tato pravidla: smooth beats bouncy (žádný back.out), press-release (rychlé stlačení, rozhodný návrat), sled ≤ 0.5 s, odchod a příchod současně, anticipace před velkým pohybem.
+
+**Křivky a délky:**
+- Křivky: `ease.out` (0.22,1,0.36,1), `ease.punch` (0.16,1,0.3,1), `ease.exit` (0.4,0,0.2,1), `ease.gravity` (0.55,0,0.9,0.5), `ease.press` (0.5,0,0.75,0), `ease.sine`.
+- `dur`: press 90, release 220, tap 150, ui 180, enter 260, reveal 480, step 45, staggerCap 360.
+- Pružiny: `pop` 21/220 (ζ 0.71), `unlock` 22/260 (ζ 0.68), `slam` 33/420 (ζ 0.80), `settle` 29/300 (ζ 0.84). `seat` a `rattle` beze změny.
+
+**Animace (parametry · spouštěč):**
+- **Stisk** (`usePressFeedback`): scale na 0.94–0.98, `motion.press` 90 ms a `motion.release` 220 ms punch · onPressIn/Out. Nově mají stisk i uzly mapy (0.94), boss (0.96), chipy milníků (0.96) a zavírací ✕ lekce (0.9). Reduced: opacita 0.7.
+- **Přechody obrazovek** (Expo Router Stack): kořen `fade` 250 ms, lekce `slide_from_bottom` 350 ms (výchozí iOS 500 ms), onboarding `slide_from_right`, zrození `fade` 300 ms (střih do tmy).
+- **Nástup kroku onboardingu** · mount obrazovky: titulek `enterRise(0, 16)`, lead `enterRise(1)`. Karty cest, 7 karet vize a chipy milníků jedou `enterRise(i)` = FadeInDown 260 ms punch, zdvih 12 pt (chipy 8 pt), zpoždění i·45 ms (max 360 ms). Pole „Tvoje vize“ a formulář vlastního milníku `enterRise(0, 8)` · odkrytí.
+- **Výběr karty** (PathCard, ChoiceCard) · `selected`: proužek scaleY 0.3 → 1 a opacita, glyf crossfade text → akcent. Výběr `motion.ui`, zrušení `motion.uiExit`.
+- **Chip milníku** · `selected`: inverze se prolne `motion.ui`/`uiExit`. Zatřesení beze změny.
+- **Výběr vize:** `haptics.tick` + zvuk `select` (R40). Výběr cesty: zvuk `select`.
+- **Zrození:** kruh `pop` (ζ 0.71, dřív 0.29). Anticipace 140 ms před prasknutím (scale 0.94). Prasknutí 220 ms `ease.punch`. Opice `settle` (dřív hop ζ 0.39).
+- **Odemčení uzlu** · první dosažení cíle pružinou `unlock`: shock prstenec (akcent 2 px) 1 → 1.45, opacita 0.7 → 0, 420 ms punch, spolu s haptikou Light a zvukem `unlock`. Fajfka 280 ms punch. Puls aktuálního uzlu 1100 ms `ease.sine` (dřív lineární).
+- **Popover** · tap uzlu: opacita, scale 0.94 → 1 a posun 8 pt od uzlu, `motion.ui`.
+- **Skok opice na mapě** · fáze 5: přikrčení +4 pt (70 ms), odraz −24 pt ease-out, pád `ease.gravity`, celkem 360 ms. Bez pružiny.
+- **Výměna cviku** · další cvik: FadeInRight 32 pt `motion.enter` a zároveň FadeOutLeft `motion.uiExit`. Je to builder, protože vlastní worklet na webu neběžel.
+- **Výdrž:** v posledních 3 s pulzuje prstenec i číslo 1 → 1.06. Na konci 1 → 1.1 → 1 spolu s haptikou Medium.
+- **Oslava** (časy od dopadu):
+  - Kotouč beze změny.
+  - Nově punch scény 1 → 1.018 za 60 ms, pak `release` · dopad.
+  - +120 ms +XP: slam 1.2 → 1, opacita naráz (akcent se nezprůhledňuje), count-up 700 ms expo.out.
+  - +480 ms opice.
+  - +760 ms titulek: fade a zdvih 12 pt.
+  - +1000 ms CTA vyjede 160 pt zespodu (`motion.reveal`, bez průhlednosti) a zaktivní se.
+  - Reduced: fade 200 ms.
+- **Maskot:**
+  - Poskok: squash 70 ms → odraz 150 ms ease-out → pád 170 ms gravity → dopad squash 60 ms → 180 ms narovnání. Squash scaleY −6 %, chodidla drží.
+  - **Oprava:** pružina ζ 0.39 dřív klesala ~16 pt pod klid, teď opice pod klid nikdy neklesne.
+  - Stage 3: deltoidy s pažemi +6 nahoru a +2 ven (viewBox 200).
+- **DotLoader:** beze změny.
+
+**Zvuky:** Kenney (kenney.nl), CC0, ze `brag/0.3.0/skills/brag/assets/sfx`. Převod přes ffmpeg na WAV 44.1 kHz mono 16 bit. Hrají přes `lib/sound.ts` `useSfx` (expo-audio, `playsInSilentMode: false`, `mixWithOthers`).
+- `plate-snap.wav` · dopad kotouče: `impact/impactPlate_heavy_003.ogg` ×0.85 + `impact/impactSoft_medium_001.ogg` ×0.9, lowpass 9 kHz, fade-out, limiter. Nahrazuje `click.wav` (smazán).
+- `select.wav` · výběr cesty a vize: `ui/click2.ogg` ×0.6, lowpass 8 kHz.
+- `unlock.wav` · odemčení uzlu: `interface/bong_001.ogg` ×0.7.
+
+**Rozhodnuto samo:**
+- CTA oslavy je do nástupu schované pod okrajem, jako u zrození.
+- Zvuk výběru hraje jen u cesty a vize, ne u chipů.
+- Poskok je bez pružiny.
+
+**QA a úklid:** `qa-step2.mjs` a `qa-r2.mjs` pracují s kartami vize a polem „Tvoje vize“. Dočasná route smazána, server zastaven.
+
+**Otevřené:**
+- Zvuky jsem neslyšel na zařízení.
+- Count-up +XP běží na JS (rAF).
+- Opice na mapě pořád dělá dvojitý poskok, jako dřív.

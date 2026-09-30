@@ -40,9 +40,11 @@ export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above
   const { reduced } = useMotionSafe();
   const open = useSharedValue(0);
   useEffect(() => { open.value = withTiming(1, motion.ui); }, [open]);
+  // UX2: popover vyroste z uzlu (scale 0.94 → 1 od hrany u šipky) a přisune se k němu o 8 pt, 180 ms ease-out.
+  const toward = above ? 1 : -1;
   const style = useAnimatedStyle(() => ({
     opacity: open.value,
-    transform: reduced ? [] : [{ scale: 0.95 + 0.05 * open.value }],
+    transform: reduced ? [] : [{ translateY: toward * 8 * (1 - open.value) }, { scale: 0.94 + 0.06 * open.value }],
   }));
 
   const width = Math.min(POPOVER_W, mapWidth - EDGE * 2);

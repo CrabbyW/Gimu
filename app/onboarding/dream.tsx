@@ -1,12 +1,16 @@
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { ChoiceCard } from '@/components/onboarding/ChoiceCard';
 import { DreamGlyph } from '@/components/onboarding/DreamGlyph';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { useRevealOnFocus } from '@/components/ui/revealOnFocus';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
+import { haptics } from '@/lib/haptics';
+import { enterRise } from '@/lib/motion';
+import { useSfx } from '@/lib/sound';
 import { isDreamPreset, useDreamOptions, useOnboardingDraft } from '@/hooks/useOnboardingDraft';
 import { DREAM_MAX_LENGTH, isDreamValid } from '@/logic/onboarding';
 import { typography, useTheme } from '@/theme';
@@ -24,6 +28,9 @@ export default function DreamStep() {
   const [custom, setCustom] = useState(() => dreamBody !== '' && !options.some((o) => o.title === dreamBody));
   const selectedId = custom ? null : options.find((o) => o.title === dreamBody)?.id ?? null;
   const glyph = size.choiceGlyph;
+  const selectSound = useSfx('select');
+  // R40: výběr vize = haptics.tick (jako krok 1) + tichý klik.
+  const feedback = () => { haptics.tick(); selectSound(); };
 
   return (
     <OnboardingFrame
@@ -34,24 +41,31 @@ export default function DreamStep() {
       onContinue={() => router.push('/onboarding/milestones')}
     >
       <View accessibilityRole="radiogroup" style={{ gap: space.s }}>
-        {options.map((o) => (
-          <ChoiceCard
-            key={o.id}
-            title={o.title}
-            line={o.line}
-            selected={o.id === selectedId}
-            onPress={() => { setCustom(false); set({ dreamBody: o.title }); }}
-            renderGlyph={(color, bg) => <DreamGlyph glyph={o.glyph} color={color} bg={bg} size={glyph} />}
-          />
+        {options.map((o, i) => (
+          <Animated.View key={o.id} entering={enterRise(i)}>
+            <ChoiceCard
+              title={o.title}
+              line={o.line}
+              selected={o.id === selectedId}
+              onPress={() => { feedback(); setCustom(false); set({ dreamBody: o.title }); }}
+              renderGlyph={(color, bg) => <DreamGlyph glyph={o.glyph} color={color} bg={bg} size={glyph} />}
+            />
+          </Animated.View>
         ))}
-        <ChoiceCard
-          title={t.customTitle}
-          line={t.customLine}
-          selected={custom}
-          onPress={() => { if (!custom) { setCustom(true); if (isDreamPreset(dreamBody)) set({ dreamBody: '' }); } }}
-          renderGlyph={(color, bg) => <DreamGlyph glyph="custom" color={color} bg={bg} size={glyph} />}
-        />
-        {custom ? <CustomDream value={dreamBody} onChange={(dreamBody) => set({ dreamBody })} /> : null}
+        <Animated.View entering={enterRise(options.length)}>
+          <ChoiceCard
+            title={t.customTitle}
+            line={t.customLine}
+            selected={custom}
+            onPress={() => { feedback(); if (!custom) { setCustom(true); if (isDreamPreset(dreamBody)) set({ dreamBody: '' }); } }}
+            renderGlyph={(color, bg) => <DreamGlyph glyph="custom" color={color} bg={bg} size={glyph} />}
+          />
+        </Animated.View>
+        {custom ? (
+          <Animated.View entering={enterRise(0, 8)}>
+            <CustomDream value={dreamBody} onChange={(dreamBody) => set({ dreamBody })} />
+          </Animated.View>
+        ) : null}
       </View>
     </OnboardingFrame>
   );

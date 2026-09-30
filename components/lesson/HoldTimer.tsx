@@ -5,7 +5,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
@@ -29,8 +29,13 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
   const scale = useSharedValue(1);
   useEffect(() => {
     if (reduced || status !== 'running' || secondsLeft > PULSE_FROM || secondsLeft === 0) return;
-    scale.value = withSequence(withTiming(1.06, motion.ui), withTiming(1, motion.ui));
+    scale.set(withSequence(withTiming(1.06, motion.press), withTiming(1, motion.release)));
   }, [secondsLeft, status, reduced, scale]);
+  // Konec výdrže (UX2): číslo i prstenec jednou tvrdě „dosednou“ spolu s haptikou Medium (1 → 1.1 → 1).
+  useEffect(() => {
+    if (reduced || status !== 'done') return;
+    scale.set(withSequence(withTiming(1.1, { duration: 90, easing: ease.punch }), withTiming(1, motion.release)));
+  }, [status, reduced, scale]);
   const pulse = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
@@ -40,7 +45,8 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
       accessibilityLabel={`${secondsLeft} ${copy.lesson.seconds.toLowerCase()}`}
       style={{ width: SIZE, height: SIZE, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' }}
     >
-      <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
+      <Animated.View style={[pulse, { position: 'absolute' }]}>
+      <Svg width={SIZE} height={SIZE}>
         <Circle cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={c.rule} strokeWidth={STROKE} fill="none" />
         {/* Start nahoře, ubývá po směru hodinových ručiček. */}
         <AnimatedCircle
@@ -49,6 +55,7 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
           transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
         />
       </Svg>
+      </Animated.View>
       <Animated.View style={[pulse, { alignItems: 'center' }]}>
         <Stat size="XL" value={secondsLeft} unit={copy.lesson.seconds} />
         {status === 'ready' ? <Text variant="label" tone="muted" style={{ marginTop: space.xs }}>{copy.lesson.holdReady}</Text> : null}

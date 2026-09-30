@@ -1,10 +1,10 @@
 import { useEffect, useId, useRef } from 'react';
 import Animated, {
-  type SharedValue, cancelAnimation, Easing, Extrapolation, interpolate, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming,
+  type SharedValue, cancelAnimation, Easing, Extrapolation, interpolate, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path, Rect } from 'react-native-svg';
 import { copy } from '@/data/copy';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { MascotStage, Mood } from '@/types';
 import { ANCHORS, type Anchor } from './anchors';
@@ -36,7 +36,6 @@ const BREATH_HALF_MS_SAD = 1800;
 const BREATH_SCALE_SAD = 0.012;
 // Poskočení ve zlomcích strany plátna, aby se animace nemusela restartovat při změně velikosti.
 const HOP_HEIGHT = 0.12;
-const HOP_RISE_MS = 140;
 // Celebrate: paže z klidového úhlu nahoru. Brief: 180 − 20 = 160° (ruce nad hlavou, mírně od sebe).
 // Kratší paže stage 1–2 by v 160° skončily za velkou hlavou (stage 1: ruka 41 od středu hlavy r 54),
 // proto se úhel otevře, až ruka hlavu mine: stage 1 120°, stage 2 140° (ruce nahoru do V), stage 3 160°.
@@ -45,6 +44,9 @@ const ARMS_UP_ANGLE: Record<MascotStage, number> = { 1: 120, 2: 140, 3: 160 };
 const EARS_DOWN_Y = 8;
 const EARS_DOWN_X = 4;
 const GAZE_DOWN = 3;
+// Stage 3: posun deltoidu při plně zvednutých pažích (jednotky viewBoxu 200).
+const DELT_RAISE_Y = 6;
+const DELT_RAISE_X = 2;
 
 type Face = 'idle' | 'happy' | 'sad';
 type MoodPose = { face: Face; armsUp: boolean; earsDown: boolean; breathHalfMs: number; hopRepeat: boolean };
@@ -138,34 +140,49 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
     };
   }, [reduced, eyeRy]);
 
-  // Poskoky pružinou (herní odměna, spec §6.8). happy = jeden skok při změně nálady na happy,
-  // celebrate = opakované poskoky s pauzou na zemi, dokud nálada trvá; změna nálady je zruší
-  // a opice dosedne timingem. Při omezení pohybu bez skoků; samo přepnutí omezení skok nespustí.
+  // Poskoky (herní odměna). happy = jeden skok při změně nálady na happy, celebrate = opakované
+  // poskoky s pauzou na zemi, dokud nálada trvá; změna nálady je zruší a opice dosedne timingem.
+  // Skok (UX2, `motion.hop`): přikrčení (squash) → odraz ease-out → pád s gravitací → dopad (squash)
+  // → narovnání. Bez pružiny na výšce, takže opice nikdy neklesne pod klid (dřív ~16 pt pod zem).
+  // Při omezení pohybu bez skoků; samo přepnutí omezení skok nespustí.
   const prevMood = useRef<Mood | null>(null);
   const hop = useSharedValue(0);
+  const squash = useSharedValue(0);
   useEffect(() => {
     const changed = prevMood.current !== mood;
     prevMood.current = mood;
     const p = MOOD_POSE[mood];
     cancelAnimation(hop);
+    cancelAnimation(squash);
+    const h = motion.hop;
+    const jump = () => withSequence(
+      withTiming(0, { duration: h.crouchMs }),
+      withTiming(-HOP_HEIGHT, { duration: h.riseMs, easing: ease.out }),
+      withTiming(0, { duration: h.fallMs, easing: ease.gravity }),
+    );
+    const squashJump = () => withSequence(
+      withTiming(1, { duration: h.crouchMs, easing: ease.out }),
+      withTiming(0, { duration: h.riseMs, easing: ease.out }),
+      withTiming(0, { duration: h.fallMs }),
+      withTiming(1, { duration: h.landMs, easing: ease.out }),
+      withTiming(0, { duration: h.recoverMs, easing: ease.out }),
+    );
     if (reduced) {
       hop.value = 0;
+      squash.value = 0;
     } else if (p.hopRepeat) {
-      hop.value = withRepeat(
-        withSequence(
-          withTiming(-HOP_HEIGHT, { duration: HOP_RISE_MS }),
-          withSpring(0, motion.hop),
-          withDelay(motion.celebrateRestMs, withTiming(0, { duration: 0 })),
-        ),
-        -1,
-      );
+      const rest = motion.celebrateRestMs + h.landMs + h.recoverMs;
+      hop.value = withRepeat(withSequence(jump(), withDelay(rest, withTiming(0, { duration: 0 }))), -1);
+      squash.value = withRepeat(withSequence(squashJump(), withDelay(motion.celebrateRestMs, withTiming(0, { duration: 0 }))), -1);
     } else if (p.face === 'happy' && changed) {
-      hop.value = withSequence(withTiming(-HOP_HEIGHT, { duration: HOP_RISE_MS }), withSpring(0, motion.hop));
+      hop.value = jump();
+      squash.value = squashJump();
     } else {
       hop.value = withTiming(0, motion.moodShift);
+      squash.value = withTiming(0, motion.moodShift);
     }
-  }, [mood, reduced, hop]);
-  useEffect(() => () => cancelAnimation(hop), [hop]);
+  }, [mood, reduced, hop, squash]);
+  useEffect(() => () => { cancelAnimation(hop); cancelAnimation(squash); }, [hop, squash]);
 
   // Paže nahoru (celebrate), timing: pozornost nese poskok.
   const arms = useSharedValue(pose.armsUp ? 1 : 0);
@@ -196,8 +213,10 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
 
   const bodyStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: (hop.value - (breath.value * breathScale) / 2) * px },
-      { scaleY: 1 + breath.value * breathScale },
+      // Squash drží chodidla na zemi stejně jako dech: o kolik se spodní hrana zmenšením zvedne, o tolik ji translateY vrátí.
+      { translateY: (hop.value - (breath.value * breathScale) / 2 + (squash.value * motion.hop.squash) / 2) * px },
+      { scaleY: 1 + breath.value * breathScale - squash.value * motion.hop.squash },
+      { scaleX: 1 + squash.value * motion.hop.squash * 0.6 },
     ],
   }));
   const eyeLeftProps = useAnimatedProps(() => ({ ry: eyeRy.value, cy: 78 + droop.value * GAZE_DOWN }));
@@ -212,6 +231,12 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
   }));
   const earLeftProps = useAnimatedProps(() => ({ cx: head.cx - ears.dx - droop.value * EARS_DOWN_X, cy: head.cy + ears.dy + droop.value * EARS_DOWN_Y }));
   const earRightProps = useAnimatedProps(() => ({ cx: head.cx + ears.dx + droop.value * EARS_DOWN_X, cy: head.cy + ears.dy + droop.value * EARS_DOWN_Y }));
+  // Stage 3: deltoidy sledují zvednutí paží (celebrate): posunou se nahoru a mírně ven se stejným `arms`.
+  const sh = shoulders ?? { dx: 0, y: 0, r: 0, trapY: 0 };
+  const deltL = useAnimatedProps(() => ({ cx: 100 - sh.dx - arms.value * DELT_RAISE_X, cy: sh.y - arms.value * DELT_RAISE_Y }));
+  const deltR = useAnimatedProps(() => ({ cx: 100 + sh.dx + arms.value * DELT_RAISE_X, cy: sh.y - arms.value * DELT_RAISE_Y }));
+  const deltLightL = useAnimatedProps(() => ({ cx: 100 - sh.dx - arms.value * DELT_RAISE_X, cy: sh.y - DELT_LIGHT - arms.value * DELT_RAISE_Y }));
+  const deltLightR = useAnimatedProps(() => ({ cx: 100 + sh.dx + arms.value * DELT_RAISE_X, cy: sh.y - DELT_LIGHT - arms.value * DELT_RAISE_Y }));
   const idleMouthProps = useAnimatedProps(() => ({ opacity: mouthIdle.value }));
   const happyMouthProps = useAnimatedProps(() => ({ opacity: mouthHappy.value }));
   const sadMouthProps = useAnimatedProps(() => ({ opacity: mouthSad.value }));
@@ -233,8 +258,8 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
           </ClipPath>
           {shoulders && (
             <>
-              <ClipPath id={clip.deltL}><Circle cx={100 - shoulders.dx} cy={shoulders.y} r={shoulders.r} /></ClipPath>
-              <ClipPath id={clip.deltR}><Circle cx={100 + shoulders.dx} cy={shoulders.y} r={shoulders.r} /></ClipPath>
+              <ClipPath id={clip.deltL}><AnimatedCircle r={shoulders.r} animatedProps={deltL} /></ClipPath>
+              <ClipPath id={clip.deltR}><AnimatedCircle r={shoulders.r} animatedProps={deltR} /></ClipPath>
             </>
           )}
         </Defs>
@@ -261,10 +286,10 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
             <Path d={trapPath(shoulders)} fill={MASCOT_COLORS.fur} />
             {([-1, 1] as const).map((side) => (
               <G key={side}>
-                <Circle cx={100 + side * shoulders.dx} cy={shoulders.y} r={shoulders.r} fill={MASCOT_COLORS.furShade} />
-                <Circle
-                  cx={100 + side * shoulders.dx} cy={shoulders.y - DELT_LIGHT} r={shoulders.r}
-                  fill={MASCOT_COLORS.fur} clipPath={`url(#${side < 0 ? clip.deltL : clip.deltR})`}
+                <AnimatedCircle r={shoulders.r} fill={MASCOT_COLORS.furShade} animatedProps={side < 0 ? deltL : deltR} />
+                <AnimatedCircle
+                  r={shoulders.r} fill={MASCOT_COLORS.fur} clipPath={`url(#${side < 0 ? clip.deltL : clip.deltR})`}
+                  animatedProps={side < 0 ? deltLightL : deltLightR}
                 />
               </G>
             ))}

@@ -8,7 +8,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import { useClickSound } from '@/lib/sound';
 import type { LessonResult } from '@/services';
 import { useTheme } from '@/theme';
@@ -23,11 +23,16 @@ const XP_LABELS = { lesson: t.xpLesson, boss: t.xpBoss, replay: t.xpReplay, firs
 // Časová osa oslavy (ms). Start kotouče se počítá od zobrazení scény, zbytek od dopadu.
 const LAUNCH_AT = 250;
 const LEFT_LAG = 60;
+// UX2 takty (brag `cinematic`: každý úder dosedne, než přijde další): dopad → +XP slam (120) →
+// opice (480, když count-up dojíždí) → titulek (760) → CTA (1000).
 const XP_AFTER_IMPACT = 120;
 // Opice se raduje až po vyskočení +XP (spec §7.3 krok 4 → 5 → 6): vlastní takt, nesoupeří s číslem.
-const CHEER_AFTER_IMPACT = 420;
-const TITLE_AFTER_IMPACT = 700;
-const CTA_AFTER_IMPACT = 900;
+const CHEER_AFTER_IMPACT = 480;
+const TITLE_AFTER_IMPACT = 760;
+const CTA_AFTER_IMPACT = 1000;
+const TITLE_RISE = 12;
+// CTA vyjede zespodu (jako zrození). Nezprůhledňuje se: poloprůhledný akcent by byl nový odstín.
+const CTA_TRAVEL = 160;
 // Odkud kotouč přilétá (pravá strana; levá zrcadlově).
 const FROM = { x: 140, rotate: 18 };
 const COLLAR_MS = 120;
@@ -69,6 +74,8 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
   const sceneOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
   const shake = useSharedValue(0);
+  const punch = useSharedValue(1);
+  const ctaIn = useSharedValue(0);
   const start = calm ? { x: 0, rotate: 0 } : FROM;
   const startDrop = calm ? 1 : 0;
   // S omezeným pohybem jsou objímky na místě od začátku (součást osy), kotouč se jen prolne.
@@ -88,12 +95,16 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
     impacted.current = true;
     haptics.impact();
     click();
-    if (!calm) shake.set(withSequence(withTiming(SHAKE_DEPTH, { duration: 50 }), withSpring(0, motion.rattle)));
+    if (!calm) {
+      shake.set(withSequence(withTiming(SHAKE_DEPTH, { duration: 50 }), withSpring(0, motion.rattle)));
+      // Punch „kamery“: celá scéna se na 60 ms nadechne (1.018) a rozhodně vrátí (brag cinematic slam).
+      punch.set(withSequence(withTiming(motion.punch.scale, { duration: motion.punch.inMs, easing: ease.out }), withTiming(1, motion.release)));
+    }
     const at = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)); };
     at(XP_AFTER_IMPACT, () => setXpShown(true));
     at(CHEER_AFTER_IMPACT, () => { setMood(cheer); haptics.success(); });
-    at(TITLE_AFTER_IMPACT, () => { titleOpacity.set(withTiming(1, calm ? REDUCED_FADE : motion.reveal)); });
-    at(CTA_AFTER_IMPACT, () => setCtaReady(true));
+    at(TITLE_AFTER_IMPACT, () => { titleOpacity.set(withTiming(1, calm ? REDUCED_FADE : motion.enter)); });
+    at(CTA_AFTER_IMPACT, () => { setCtaReady(true); ctaIn.set(withTiming(1, calm ? REDUCED_FADE : motion.reveal)); });
   };
 
   useEffect(() => {
@@ -125,11 +136,16 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
 
   const sceneStyle = useAnimatedStyle(() => ({ opacity: sceneOpacity.value }));
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateY: shake.value }] }));
-  const titleStyle = useAnimatedStyle(() => ({ opacity: titleOpacity.value }));
+  const punchStyle = useAnimatedStyle(() => ({ transform: [{ scale: punch.value }] }));
+  const titleRise = calm ? 0 : TITLE_RISE;
+  const titleStyle = useAnimatedStyle(() => ({ opacity: titleOpacity.value, transform: [{ translateY: (1 - titleOpacity.value) * titleRise }] }));
+  const ctaStyle = useAnimatedStyle(() => (calm
+    ? { opacity: ctaIn.value }
+    : { transform: [{ translateY: (1 - ctaIn.value) * CTA_TRAVEL }] }));
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
-      <Animated.View style={[{ flex: 1 }, sceneStyle]}>
+    <View style={{ flex: 1, backgroundColor: c.base, overflow: 'hidden' }}>
+      <Animated.View style={[{ flex: 1 }, sceneStyle, punchStyle]}>
         <Screen edges={['top']}>
           <Animated.View style={[{ paddingTop: space.xl }, titleStyle]}>
             <Text variant="display" accessibilityRole="header">{title}</Text>
@@ -148,7 +164,10 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
           </View>
         </Screen>
       </Animated.View>
-      <BigActionBar primary={{ label: t.cta, onPress: onContinue, disabled: !ctaReady }} />
+      {/* CTA nastoupí až po odměně (spec §7.3 krok 7); místo je rezervované, layout se nehýbe. */}
+      <Animated.View style={ctaStyle}>
+        <BigActionBar primary={{ label: t.cta, onPress: onContinue, disabled: !ctaReady }} />
+      </Animated.View>
     </View>
   );
 }

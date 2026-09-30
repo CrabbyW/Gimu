@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
+import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { copy } from '@/data/copy';
 import { useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
@@ -33,12 +34,15 @@ interface Props {
 export function BarbellBoss({ state, accessibilityLabel, onPress, shakeKey = 0, unlocking = false, onUnlocked }: Props) {
   const { reduced } = useMotionSafe();
   const shake = useShake(shakeKey, reduced);
+  const feedback = usePressFeedback(0.96);
   return (
     <Animated.View style={[{ width: W, height: H, alignItems: 'center', justifyContent: 'center' }, shake]}>
       {state === 'current' && !unlocking ? <BossPulse reduced={reduced} /> : null}
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
-        {unlocking ? <UnlockingBarbell reduced={reduced} onUnlocked={onUnlocked} /> : <Barbell state={state} />}
-      </Pressable>
+      <Animated.View style={feedback.style}>
+        <Pressable onPress={onPress} onPressIn={feedback.onPressIn} onPressOut={feedback.onPressOut} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
+          {unlocking ? <UnlockingBarbell reduced={reduced} onUnlocked={onUnlocked} /> : <Barbell state={state} />}
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 }

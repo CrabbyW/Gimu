@@ -1,12 +1,14 @@
 import { useEffect, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
-  cancelAnimation, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming,
+  type SharedValue, cancelAnimation, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
+import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { haptics } from '@/lib/haptics';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
+import { useSfx } from '@/lib/sound';
 import type { NodeState } from '@/logic/map';
 import { useTheme } from '@/theme';
 import { CHECK_LENGTH, CHECK_PATH, Plate } from './Plate';
@@ -41,12 +43,16 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
   const { size } = useTheme();
   const { reduced } = useMotionSafe();
   const shake = useShake(shakeKey, reduced);
+  const feedback = usePressFeedback(0.94);
   const slop = Math.max(0, (size.hitLarge - nodeSize) / 2);
   const solid = state !== 'locked' || unlocking;
   return (
     <Animated.View style={[{ width: nodeSize, height: nodeSize }, shake]}>
+      <Animated.View style={feedback.style}>
       <Pressable
         onPress={onPress}
+        onPressIn={feedback.onPressIn}
+        onPressOut={feedback.onPressOut}
         hitSlop={slop}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
@@ -62,6 +68,7 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
         )}
         {state === 'done' && justCompleted ? <DrawnCheck size={nodeSize} reduced={reduced} /> : null}
       </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -81,7 +88,7 @@ function PulseRing({ size, reduced }: { size: number; reduced: boolean }) {
   const t = useSharedValue(0);
   useEffect(() => {
     if (reduced) { cancelAnimation(t); t.value = 0; return; }
-    t.value = withRepeat(withTiming(1, { duration: PULSE_MS }), -1, true);
+    t.value = withRepeat(withTiming(1, { duration: PULSE_MS, easing: ease.sine }), -1, true);
     return () => cancelAnimation(t);
   }, [reduced, t]);
   const style = useAnimatedStyle(() => ({ opacity: 1 - t.value * 0.6, transform: [{ scale: 1 + t.value * 0.08 }] }));
@@ -101,6 +108,7 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked }: { kg: PlateKg; size: 
   const solid = useAnimatedStyle(() => ({ opacity: Math.min(p.value, 1), transform: [{ scale: reduced ? 1 : 0.8 + 0.2 * p.value }] }));
   return (
     <View style={{ width: size, height: size }}>
+      {reduced ? null : <ShockRing size={size} progress={p} />}
       <Animated.View style={[{ position: 'absolute' }, outline]}><Plate kg={kg} size={size} state="locked" /></Animated.View>
       <Animated.View style={[{ position: 'absolute' }, solid]}>
         <Shadowed on size={size}><Plate kg={kg} size={size} state="current" /></Shadowed>
@@ -109,11 +117,33 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked }: { kg: PlateKg; size: 
   );
 }
 
+/** Shock kruh odemčení (UX2): při dopadu se od kotouče rozběhne akcentový prstenec a zmizí
+ *  (`motion.shock`: 1 → 1.45, opacita 0.7 → 0, 420 ms punch). Spouští ho první dosažení cíle pružinou. */
+export function ShockRing({ size, progress, width }: { size: number; progress: SharedValue<number>; width?: number }) {
+  const { c, radius } = useTheme();
+  const k = useSharedValue(0);
+  useAnimatedReaction(
+    () => progress.value >= 1,
+    (arrived, before) => { if (arrived && !before) k.value = withTiming(1, { duration: motion.shock.duration, easing: ease.punch }); },
+  );
+  const style = useAnimatedStyle(() => ({
+    opacity: k.value === 0 ? 0 : motion.shock.from * (1 - k.value),
+    transform: [{ scale: 1 + (motion.shock.to - 1) * k.value }],
+  }));
+  const w = width ?? size;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[{ position: 'absolute', left: 0, top: 0, width: w, height: size, borderRadius: radius.full, borderWidth: 2, borderColor: c.accent }, style]}
+    />
+  );
+}
+
 function DrawnCheck({ size, reduced }: { size: number; reduced: boolean }) {
   const { c } = useTheme();
   const offset = useSharedValue(reduced ? 0 : CHECK_LENGTH);
   useEffect(() => {
-    if (!reduced) offset.value = withTiming(0, { duration: CHECK_MS, easing: motion.ui.easing });
+    if (!reduced) offset.value = withTiming(0, { duration: CHECK_MS, easing: ease.punch });
   }, [offset, reduced]);
   const props = useAnimatedProps(() => ({ strokeDashoffset: offset.value }));
   return (
@@ -130,7 +160,8 @@ function DrawnCheck({ size, reduced }: { size: number; reduced: boolean }) {
  *  Dopad = první dosažení cíle (pružina pak ještě doznívá): haptika a `onUnlocked`. */
 export function useUnlockProgress(reduced: boolean, onUnlocked?: () => void) {
   const p = useSharedValue(0);
-  const land = () => { haptics.unlock(); onUnlocked?.(); };
+  const unlockSound = useSfx('unlock');
+  const land = () => { haptics.unlock(); unlockSound(); onUnlocked?.(); };
   useAnimatedReaction(
     () => p.value >= 1,
     (arrived, before) => { if (arrived && !before) scheduleOnRN(land); },

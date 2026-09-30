@@ -47,3 +47,6 @@ Hotové a QA schválené kroky specifikace 1–2 (scaffolding, onboarding, mapa 
 oslava dokončení a odemykání). Rating kroku 2 je v přípravě. Další je plán B:
 [`docs/superpowers/plans/2026-09-30-opice-faze1-planB.md`](./docs/superpowers/plans/2026-09-30-opice-faze1-planB.md)
 (maskot stage 2–3, liga, progres, sezóna s recapem, šatník, notifikace, dev menu).
+
+## Zvuky
+Zvukové efekty v `assets/sounds/` (`plate-snap.wav`, `select.wav`, `unlock.wav`) pocházejí od [Kenney](https://kenney.nl/) (licence CC0, public domain), převzaté z SFX knihovny skillu brag a upravené přes ffmpeg (mix, lowpass, WAV 44.1 kHz mono). Zdroje jsou zapsané v `docs/LOG.md` (UX2).

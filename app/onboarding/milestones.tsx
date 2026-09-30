@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { MilestoneChip } from '@/components/onboarding/MilestoneChip';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +12,7 @@ import { TextField } from '@/components/ui/TextField';
 import { copy } from '@/data/copy';
 import { useMilestonePresets, useOnboardingDraft } from '@/hooks/useOnboardingDraft';
 import { now } from '@/lib/clock';
+import { enterRise } from '@/lib/motion';
 import {
   customMilestone, MILESTONES_MAX, MILESTONES_MIN, parseMilestoneTarget, toggleMilestone,
 } from '@/logic/onboarding';
@@ -70,14 +72,15 @@ export default function MilestonesStep() {
           {t.pickCount(selected.length, MILESTONES_MAX)}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s }}>
-          {chips.map((m) => (
-            <MilestoneChip
-              key={m.id}
-              label={m.custom ? t.customChip(m.label, m.target, m.unit) : m.label}
-              selected={isSelected(m.id)}
-              onPress={() => toggle(m)}
-              shakeSignal={shakes[m.id] ?? 0}
-            />
+          {chips.map((m, i) => (
+            <Animated.View key={m.id} entering={enterRise(i, 8)}>
+              <MilestoneChip
+                label={m.custom ? t.customChip(m.label, m.target, m.unit) : m.label}
+                selected={isSelected(m.id)}
+                onPress={() => toggle(m)}
+                shakeSignal={shakes[m.id] ?? 0}
+              />
+            </Animated.View>
           ))}
         </View>
         <CustomMilestone
@@ -126,7 +129,7 @@ function CustomMilestone({ disabled, onAdd }: { disabled: boolean; onAdd(m: Mile
   }
 
   return (
-    <View style={{ gap: space.l, marginTop: space.m }}>
+    <Animated.View entering={enterRise(0, 8)} style={{ gap: space.l, marginTop: space.m }}>
       <TextField label={t.customLabel} value={label} onChangeText={setLabel} placeholder={t.customPlaceholder} maxLength={CUSTOM_LABEL_MAX} autoFocus />
       <View style={{ gap: space.s }}>
         <Text variant="label" tone="muted">{t.customUnit}</Text>
@@ -149,6 +152,6 @@ function CustomMilestone({ disabled, onAdd }: { disabled: boolean; onAdd(m: Mile
         <Button label={t.customSubmit} onPress={submit} variant="secondary" disabled={!valid || disabled} style={{ flex: 1 }} />
         <Button label={t.customCancel} onPress={close} variant="ghost" />
       </View>
-    </View>
+    </Animated.View>
   );
 }

@@ -11,7 +11,7 @@ import { copy } from '@/data/copy';
 import { useOnboardingDraft, usePathOptions } from '@/hooks/useOnboardingDraft';
 import { now } from '@/lib/clock';
 import { haptics } from '@/lib/haptics';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import { formatCzDate, toISODate } from '@/logic/dates';
 import { buildOnboardingInput } from '@/logic/onboarding';
 import { services } from '@/services';
@@ -30,6 +30,9 @@ const TEXT_AT = INFLATE_AT + 1400;
 const CTA_AT = INFLATE_AT + 1800;
 const BURST_MS = 220;
 const BURST_SCALE = 1.15;
+// Nádech před prasknutím (UX2, anticipace): kruh se 140 ms stahuje na 0.94, pak praskne.
+const TENSE_MS = 140;
+const TENSE_SCALE = 0.94;
 // Kruh a opice v plné velikosti (Mascot XL); na nízkém displeji se zmenší do volného místa nad textem.
 const DISC_MAX = 300;
 const DISC_MIN = 160;
@@ -100,15 +103,16 @@ function BirthScene() {
     }
 
     circleScale.value = withDelay(INFLATE_AT, withSpring(1, motion.pop));
+    at(BURST_AT - TENSE_MS, () => { circleScale.value = withTiming(TENSE_SCALE, { duration: TENSE_MS, easing: ease.press }); });
     // Prasknutí: kruh se roztáhne a od středu vyprázdní do mizejícího prstence, ze kterého vyskočí opice.
     // Akcent se nezprůhledňuje (ztlumený akcent by byl nový odstín), vyprázdní ho díra v barvě pozadí.
     at(BURST_AT, () => {
-      circleScale.value = withTiming(BURST_SCALE, { duration: BURST_MS, easing: motion.ui.easing });
-      holeScale.value = withTiming(1, { duration: BURST_MS, easing: motion.ui.easing });
+      circleScale.value = withTiming(BURST_SCALE, { duration: BURST_MS, easing: ease.punch });
+      holeScale.value = withTiming(1, { duration: BURST_MS, easing: ease.punch });
       circleOpacity.value = withDelay(BURST_MS, withTiming(0, { duration: 0 }));
       mascotOpacity.value = 1;
-      mascotScale.value = withSpring(1, motion.hop);
-      mascotY.value = withSpring(0, motion.hop);
+      mascotScale.value = withSpring(1, motion.settle);
+      mascotY.value = withSpring(0, motion.settle);
       haptics.success();
     });
     at(HAPPY_AT, () => setMood('happy'));

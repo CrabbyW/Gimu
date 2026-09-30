@@ -10,6 +10,8 @@ jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 /* eslint-enable @typescript-eslint/no-require-imports */
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+// expo-audio nemá v jestu nativní modul; zvuk je doplněk (UX2).
+jest.mock('@/lib/sound', () => ({ useSfx: () => () => undefined }));
 
 let renderer: TestRenderer.ReactTestRenderer | null = null;
 const render = () => {

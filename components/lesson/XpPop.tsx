@@ -6,8 +6,10 @@ import { Text } from '@/components/ui/Text';
 import { motion } from '@/lib/motion';
 import { useTheme } from '@/theme';
 
-const COUNT_MS = 500;
-const easeOut = (t: number) => 1 - (1 - t) ** 3;
+// Count-up (UX2): expo.out, čísla naskočí a dojedou. Slam z 1.2 na pružině `motion.slam` (ζ ≈ 0.8).
+const COUNT_MS = motion.countMs;
+const SLAM_FROM = 1.2;
+const easeOut = (t: number) => (t >= 1 ? 1 : 1 - 2 ** (-10 * t));
 
 interface Props {
   total: number;
@@ -23,14 +25,15 @@ interface Props {
 export function XpPop({ total, breakdown, shown, calm }: Props) {
   const { space } = useTheme();
   const [count, setCount] = useState(calm ? total : 0);
-  const scale = useSharedValue(calm ? 1 : 0.6);
+  const scale = useSharedValue(calm ? 1 : SLAM_FROM);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
     if (!shown) return;
     if (calm) { opacity.set(withTiming(1, { duration: 200 })); return; }
-    opacity.set(withTiming(1, motion.ui));
-    scale.set(withSpring(1, motion.pop));
+    // Akcent se nezprůhledňuje (nový odstín): číslo se objeví naráz a vstup nese slam scale.
+    opacity.set(1);
+    scale.set(withSpring(1, motion.slam));
     let frame = 0;
     let start: number | null = null;
     const tick = (t: number) => {

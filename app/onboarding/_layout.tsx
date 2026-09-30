@@ -11,7 +11,8 @@ export default function OnboardingLayout() {
   return (
     <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', gestureEnabled: true, contentStyle: { backgroundColor: c.base } }}>
       {/* Zrození je konec cesty: zpět swipem by se vracelo do rozpracovaného formuláře uprostřed oslavy. */}
-      <Stack.Screen name="birth" options={{ gestureEnabled: false }} />
+      {/* UX2: zrození není další formulářový krok, ale střih do tmy: fade místo posunu. */}
+      <Stack.Screen name="birth" options={{ gestureEnabled: false, animation: 'fade', animationDuration: 300 }} />
     </Stack>
   );
 }
