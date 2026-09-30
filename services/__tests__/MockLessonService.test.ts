@@ -25,3 +25,14 @@ test('uzel mapy nese základní XP: lekce, boss, u dokončené opakování', asy
   expect(nodes.find((n) => n.lesson.id === 'bc-1-2')!.xp).toBe(20);
   expect(nodes.find((n) => n.lesson.isBoss)!.xp).toBe(40);
 });
+
+test('zamčenou lekci (např. přes deep link) nejde dokončit a nic se neuloží', async () => {
+  await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+  await expect(services.lessons.completeLesson('bc-1-5', 'att-x', new Date(2026, 8, 29, 10))).rejects.toThrow();
+  await expect(services.lessons.completeLesson('bc-1-boss', 'att-y', new Date(2026, 8, 29, 10))).rejects.toThrow();
+  expect(useDb.getState().profile!.activity).toHaveLength(0);
+  await services.lessons.completeLesson('bc-1-1', 'att-1', new Date(2026, 8, 29, 10));
+  // Opakování dokončené lekce zůstává povolené.
+  await services.lessons.completeLesson('bc-1-1', 'att-2', new Date(2026, 8, 29, 11));
+  expect(useDb.getState().profile!.activity).toHaveLength(2);
+});

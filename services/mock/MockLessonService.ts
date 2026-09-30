@@ -42,6 +42,9 @@ export class MockLessonService implements LessonService {
     const profile = useDb.getState().profile;
     if (!profile) throw new Error('Profil neexistuje.');
     const { lesson } = await this.getLesson(id);
+    // Spec §7.2: kromě current a dokončených je vše locked — ani deep link nesmí zamčenou lekci započítat.
+    const completed = new Set(profile.activity.map((e) => e.lessonId));
+    if (nodeStates(LESSONS_BY_PATH[lesson.pathId], completed).get(lesson.id) === 'locked') throw new Error(`Lekce ${id} je zamčená.`);
     const out = applyLessonCompletion({ profile, lesson, pathLessons: LESSONS_BY_PATH[lesson.pathId], now, attemptId, rules: XP_RULES, thresholds: STAGE_THRESHOLDS });
     if (out.profile !== profile) useDb.getState().setProfile(out.profile);
     return out.result;
