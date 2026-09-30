@@ -8,6 +8,8 @@ export type Scheme = 'light' | 'dark';
 
 export interface Theme {
   scheme: Scheme; c: Colors; space: Space; radius: Radius; size: Size; material: Material; font: Fonts; seasonal: SeasonalColors;
+  /** Aktivní sezónní téma (spec §6.3), null mimo sezónu. Čte ho např. sezónní šála opice. */
+  seasonThemeId: SeasonThemeId | null;
 }
 
 /** Volba uživatele má přednost; 'system' přebírá schéma OS. Neznámé schéma
@@ -21,6 +23,7 @@ export function buildTheme(scheme: Scheme, seasonThemeId: SeasonThemeId | null):
   const c = scheme === 'dark' ? dark : light;
   return {
     scheme, c, space, radius, size, material, font,
+    seasonThemeId,
     seasonal: seasonThemeId ? SEASON_OVERRIDES[seasonThemeId][scheme] : neutralSeasonal(c),
   };
 }

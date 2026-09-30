@@ -12,6 +12,10 @@ describe.each([['dark', dark as Colors], ['light', light]] as const)('%s paleta'
   it('onAccent na accent má kontrast ≥ 4.5:1', () => {
     expect(contrast(c.onAccent, c.accent)).toBeGreaterThanOrEqual(4.5);
   });
+  it('onSeasonGold na seasonGold (sezónní štítek) má kontrast ≥ 4.5:1', () => {
+    expect(c.seasonGold).toBe('#C6A15B');
+    expect(contrast(c.onSeasonGold, c.seasonGold)).toBeGreaterThanOrEqual(4.5);
+  });
   it.each(PLATES)('kg číslo (inkOn) na %s má kontrast ≥ 4.5:1', (p) => {
     expect(contrast(inkOn(c[p], c), c[p])).toBeGreaterThanOrEqual(4.5);
   });

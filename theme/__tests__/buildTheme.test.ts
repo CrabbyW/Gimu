@@ -32,4 +32,8 @@ describe('buildTheme', () => {
     expect(t.seasonal).toBe(SEASON_OVERRIDES.winterArc.dark);
     expect(buildTheme('light', 'summerBody').seasonal).toBe(SEASON_OVERRIDES.summerBody.light);
   });
+  it('nese seasonThemeId (null mimo sezónu)', () => {
+    expect(buildTheme('dark', 'winterArc').seasonThemeId).toBe('winterArc');
+    expect(buildTheme('light', null).seasonThemeId).toBeNull();
+  });
 });
