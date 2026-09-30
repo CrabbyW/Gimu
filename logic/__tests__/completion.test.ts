@@ -59,3 +59,8 @@ test('přechod stage se hlásí', () => {
   const r = run(p, 'bc-1-1', new Date(2026, 8, 29, 10));
   expect(r.result.stageBefore).toBe(1); expect(r.result.stageAfter).toBe(2);
 });
+test('dev-xp dnes nezruší bonus za první lekci dne', () => {
+  const profile = { ...base(), activity: [{ id: 'd1', at: '2026-10-01T08:00:00.000Z', day: '2026-10-01', lessonId: 'dev-xp', xp: 500 }] };
+  const { result } = run(profile, 'bc-1-1', new Date(2026, 9, 1, 12));
+  expect(result.xp.firstOfDay).toBe(10);
+});

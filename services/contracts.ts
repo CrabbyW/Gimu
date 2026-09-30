@@ -1,9 +1,12 @@
 import type { LessonResult } from '@/logic/completion';
 import type { NodeState } from '@/logic/map';
 import type {
-  Cosmetic, CosmeticSlot, Exercise, LeagueEntry, LeagueTierId, Lesson, OnboardingInput, PathId, PathMeta,
+  Cosmetic, CosmeticSlot, Exercise, LeagueEntry, LeagueTierId, LeagueWeekResult, Lesson, OnboardingInput, PathId, PathMeta,
   Season, SeasonGoal, UserProfile, ISODate, MascotStage,
 } from '@/types';
+
+/** Důvod, proč (ne)jde položku koupit. TODO(Task 28): re-export z `logic/cosmetics.ts`. */
+export type BuyCheck = 'ok' | 'owned' | 'notShop' | 'insufficient';
 
 export type { LessonResult, NodeState };
 /** `xp`: základní XP za dokončení teď (lekce/boss, u dokončené opakování), bez bonusů za den a streak. */
@@ -11,11 +14,14 @@ export interface MapNode { lesson: Lesson; state: NodeState; exerciseCount: numb
 export interface LessonPathView { path: PathMeta; sections: { index: number; title: string; nodes: MapNode[] }[]; currentLessonId: string | null }
 export interface LessonDetail { lesson: Lesson; exercises: Exercise[]; state: NodeState }
 
+export interface MilestoneUpdateResult { completed: boolean; unlockedCosmeticIds: string[] }
 export interface UserService {
   getProfile(): Promise<UserProfile | null>;
   completeOnboarding(input: OnboardingInput): Promise<UserProfile>;
   logWeight(kg: number, now: Date): Promise<void>;
-  updateMilestone(id: string, current: number): Promise<void>;
+  updateMilestone(id: string, current: number): Promise<MilestoneUpdateResult>;
+  /** Dev menu: přidá XP jako událost `dev-xp` (ne lekce, ruling 17). */
+  grantDevXp(amount: number, now: Date): Promise<void>;
   reset(): Promise<void>;
 }
 export interface LessonService {
@@ -25,20 +31,40 @@ export interface LessonService {
 }
 export interface LeagueWeekView {
   tier: LeagueTierId; entries: LeagueEntry[]; promoteCount: number; demoteCount: number;
-  endsAt: Date; weekStart: ISODate;
+  endsAt: Date; weekStart: ISODate; myRank: number; lastResult: LeagueWeekResult | null;
 }
-export interface LeagueService { getCurrentWeek(now: Date): Promise<LeagueWeekView> }
-export interface SeasonProgress { value: number; target: number; unit: string; daysLeft: number; repairWindow: ISODate[]; dayStates: { day: ISODate; state: 'active' | 'repaired' | 'missed' | 'today' | 'future' }[] }
-export interface SeasonRecap { lessons: number; longestStreak: number; stageStart: MascotStage; stageEnd: MascotStage; before: string; after: string; rewardEarned: boolean; rewardCosmeticIds: string[] }
+export interface LeagueService {
+  getCurrentWeek(now: Date): Promise<LeagueWeekView>;
+  dismissLastResult(): Promise<void>;
+}
+export type DayState = 'active' | 'repaired' | 'missed' | 'today' | 'future';
+export interface SeasonProgress {
+  goal: SeasonGoal; value: number; target: number; met: boolean; reachable: boolean;
+  daysLeft: number; repairWindow: ISODate[]; dayStates: { day: ISODate; state: DayState }[];
+}
+export interface SeasonStatus { season: Season; phase: 'active' | 'ended'; goal: SeasonGoal | null; claimed: boolean }
+export interface RecapBeforeAfter {
+  kind: 'weight' | 'milestone' | 'activeDays' | 'lessons'; before: number; after: number;
+  unit: 'kg' | 'reps' | 'seconds' | 'days' | 'lessons'; label: string;
+}
+export interface SeasonRecap {
+  lessons: number; longestStreak: number; stageStart: MascotStage; stageEnd: MascotStage;
+  beforeAfter: RecapBeforeAfter | null; rewardEarned: boolean; rewardCosmeticIds: string[]; badgeIds: string[];
+}
 export interface SeasonService {
   getActive(now: Date): Promise<Season | null>;
+  /** Aktivní sezóna, jinak poslední skončená (recap po konci, ruling 15). */
+  getLatest(now: Date): Promise<SeasonStatus | null>;
   setGoal(seasonId: string, goal: SeasonGoal): Promise<void>;
   getProgress(seasonId: string, now: Date): Promise<SeasonProgress>;
   getRecap(seasonId: string, now: Date): Promise<SeasonRecap>;
   claimReward(seasonId: string, now: Date): Promise<string[]>;
 }
+export interface WardrobeItem { cosmetic: Cosmetic; unlocked: boolean; equipped: boolean; canBuy: BuyCheck }
+export interface WardrobeView { items: WardrobeItem[]; bananas: number; equipped: Partial<Record<CosmeticSlot, string>> }
 export interface CosmeticsService {
   getCatalog(): Promise<Cosmetic[]>;
+  getWardrobe(): Promise<WardrobeView>;
   equip(slot: CosmeticSlot, id: string | null): Promise<void>;
   /** TODO(fáze 3): nahradit IAP. */
   acquireFromShop(id: string): Promise<void>;

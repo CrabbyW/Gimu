@@ -1,4 +1,5 @@
 import type { Lesson, MascotStage, PlateKg, UserProfile, XpRules } from '@/types';
+import { isLessonEvent } from './activity';
 import { toISODate } from './dates';
 import { nextLessonId } from './map';
 import { stageForXp } from './mascot';
@@ -29,7 +30,7 @@ export function applyLessonCompletion(a: Args): { profile: UserProfile; result: 
 
   const completedBefore = new Set(events.map((e) => e.lessonId));
   const isReplay = completedBefore.has(a.lesson.id);
-  const isFirstToday = !events.some((e) => e.day === day);
+  const isFirstToday = !events.some((e) => isLessonEvent(e) && e.day === day);
   const daysAfter = activeDays([...events, { day }]);
   const streak = currentStreak(daysAfter, day);
   const xp = lessonXp({ isBoss: a.lesson.isBoss, isReplay, isFirstToday, streakDays: streak }, a.rules);

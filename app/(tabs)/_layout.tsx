@@ -1,13 +1,19 @@
 import { Tabs } from 'expo-router/js-tabs';
-import { Dumbbell } from 'lucide-react-native';
+import { CalendarRange, CircleUser, Dumbbell, Trophy, TrendingUp, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { copy } from '@/data/copy';
 import { typography, useTheme } from '@/theme';
 
-// Plán A má jediný tab (Trénink), lišta s jednou položkou nic nenaviguje, proto je skrytá.
-// Plán B přidá Ligu, Progres a Profil a přepne tuhle konstantu na true.
-const SHOW_TAB_BAR = false;
+const SHOW_TAB_BAR = true;
+
+const TABS: { name: string; title: string; Icon: LucideIcon }[] = [
+  { name: 'index', title: copy.tabs.training, Icon: Dumbbell },
+  { name: 'league', title: copy.tabs.league, Icon: Trophy },
+  { name: 'progress', title: copy.tabs.progress, Icon: TrendingUp },
+  { name: 'season', title: copy.tabs.season, Icon: CalendarRange },
+  { name: 'profile', title: copy.tabs.profile, Icon: CircleUser },
+];
 const TAB_BAR_HEIGHT = 64;
 
 export default function TabsLayout() {
@@ -34,13 +40,13 @@ export default function TabsLayout() {
           : { display: 'none' },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: copy.tabs.training,
-          tabBarIcon: ({ color, size }) => <Dumbbell color={color} size={size} strokeWidth={1.5} />,
-        }}
-      />
+      {TABS.map(({ name, title, Icon }) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{ title, tabBarIcon: ({ color, size }) => <Icon color={color} size={size} strokeWidth={1.5} /> }}
+        />
+      ))}
     </Tabs>
   );
 }

@@ -1,7 +1,7 @@
 import type { ActivityEvent } from './activity';
 import type { ISODate } from './common';
 import type { CosmeticSlot } from './cosmetic';
-import type { LeagueTierId } from './league';
+import type { LeagueTierId, LeagueWeekResult } from './league';
 import type { PathId } from './lesson';
 import type { SeasonGoal } from './season';
 
@@ -22,6 +22,12 @@ export interface UserProfile {
   seasonGoals: Record<string, SeasonGoal>;
   leagueTier: LeagueTierId;
   createdAt: string;
+  /** Pondělí týdne, ve kterém uživatel právě soutěží. */
+  leagueWeek: ISODate;
+  /** Pro banner v Lize po vyhodnocení týdne. */
+  lastLeagueResult: LeagueWeekResult | null;
+  badges: string[];
+  seasonClaims: Record<string, { at: string; cosmeticIds: string[]; badgeIds: string[] }>;
 }
 
 export interface OnboardingInput {

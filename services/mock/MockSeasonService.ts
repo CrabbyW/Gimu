@@ -8,6 +8,7 @@ export class MockSeasonService implements SeasonService {
     const today = toISODate(now);
     return SEASONS.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
   }
+  getLatest = notImplemented('season.getLatest');
   setGoal = notImplemented('season.setGoal');
   getProgress = notImplemented('season.getProgress');
   getRecap = notImplemented('season.getRecap');

@@ -10,7 +10,7 @@ export const copy = {
     // Předmět věty „Nepodařilo se načíst …“ (4. pád).
     loadTarget: { profile: 'profil', path: 'cestu', lesson: 'lekci', lessonResult: 'výsledek lekce' },
   },
-  tabs: { training: 'Trénink' },
+  tabs: { training: 'Trénink', league: 'Liga', progress: 'Progres', season: 'Sezóna', profile: 'Profil' },
   onboarding: {
     stepLabel: (n: number, total: number) => `KROK ${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
     path: { title: 'Vyber si cestu', lead: 'Cestu můžeš později změnit. Opice půjde s\u00A0tebou.' },

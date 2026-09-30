@@ -115,5 +115,6 @@ export function buildInitialProfile(input: OnboardingInput, now: Date): UserProf
     path: input.path, dreamBody: input.dreamBody.trim(), milestones: input.milestones,
     weightGoal: input.weightGoal, weights: mockWeightHistory(input.weightGoal, now, now.getTime() % 100_000),
     activity: [], equipped: {}, owned: [], seasonGoals: {}, leagueTier: 'wood', createdAt: now.toISOString(),
+    leagueWeek: weekStart(now), lastLeagueResult: null, badges: [], seasonClaims: {},
   };
 }
