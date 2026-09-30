@@ -95,6 +95,25 @@ export const copy = {
     xpStreak: 'streak', cta: 'Pokračovat', replayTitle: 'Opakování dělá mistra.',
   },
   leagueTier: 'LIGA',
+  league: {
+    me: 'Ty', promote: '▲ POSTUP', demote: '▼ SESTUP', explainer: 'XP za lekce a pravidelnost, ne za výkon.',
+    endsIn: 'KONEC TÝDNE',
+    result: {
+      promote: (tier: string) => `Postup do ligy ${tier}.`,
+      stay: (tier: string) => `Zůstáváš v lize ${tier}.`,
+      demote: (tier: string) => `Sestup do ligy ${tier}. Tenhle týden to otočíš.`,
+    },
+    errorWhat: 'ligu',
+    // Odpočet „3D 14H 22M“ (velká písmena, tabulární číslice).
+    countdown: (d: number, h: number, m: number) => `${d}D ${String(h).padStart(2, '0')}H ${String(m).padStart(2, '0')}M`,
+    countdownA11y: (d: number, h: number, m: number) => `Do konce týdne ${d} d, ${h} h, ${m} min`,
+    xp: 'XP', rank: 'POZICE', myXp: 'TVOJE XP',
+    // Prázdný stav: uživatel má tento týden 0 XP (soupeři už mohou mít).
+    emptyWeek: 'Tenhle týden zatím bez XP. Jedna lekce tě posune nahoru.',
+    lastWeek: (rank: number) => `MINULÝ TÝDEN · ${rank}. MÍSTO`,
+    dismiss: 'Rozumím',
+    rowA11y: (rank: number, name: string, xp: number) => `${rank}. místo, ${name}, ${xp} XP`,
+  },
   mascot: {
     // Popisek pro čtečku obrazovky podle nálady.
     label: { idle: 'Tvoje opice', happy: 'Tvoje opice má radost', celebrate: 'Tvoje opice slaví', sad: 'Tvoje opice je smutná' },

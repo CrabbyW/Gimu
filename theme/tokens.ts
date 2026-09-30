@@ -9,6 +9,8 @@ export const size = {
   choiceCard: 80, choiceGlyph: 40, glyph: 48,
   // DotLoader: rozměr mřížky a průměr tečky (uživatelské zadání size={32} dotSize={4}).
   loader: 32, loaderDot: 4,
+  // Liga (§7.5): řádek 56, sloupec pořadí 32, mini opice 32, odznak úrovně 72, akcentový proužek vlastního řádku 3.
+  leagueRow: 56, rankCol: 32, rowMascot: 32, tierBadge: 72, ownStripe: 3,
 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
@@ -34,6 +36,8 @@ export const type = {
   inputLarge: { fontFamily: font.body, fontSize: 22, lineHeight: 32 },
   // Velké číslo v TopBaru (streak, XP): display font, menší řez než `display`.
   counter: { fontFamily: font.display, fontSize: 32, lineHeight: 32 },
+  // Název úrovně v kruhu TierBadge (72 pt): nejdelší „DIAMANT“ se vejde na jeden řádek.
+  tierName: { fontFamily: font.display, fontSize: 20, lineHeight: 22 },
   // Iniciála v kruhovém odznaku ligy (TopBar TierBadge): stejný jazyk jako `label`, menší a bez rozpalu.
   badgeLabel: { fontFamily: font.mono, fontSize: 10, lineHeight: 12, letterSpacing: 0, textTransform: 'uppercase' as const },
 } as const;

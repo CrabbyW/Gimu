@@ -260,3 +260,17 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Hotovo: `logic/league.ts` (TDD, 19 testů): deterministické XP soupeřů (týdenní + denní šum přes mulberry32), `standings` (remíza → uživatel výš), `resolveWeek` (top 5 postup, poslední 3 sestup; Dřevo bez sestupu, Diamant bez postupu), `nextTier`, `settleLeague` (idempotentní, vyhodnotí jen poslední týden účasti, max ±1 stupeň), `formatCountdown`. `data/leagueUsers.ts` s 15 soupeři dle briefu, `LEAGUE_RULES` rozšířeno o `tierXpStep` 0.03 a `weeklyNoise` 0.08.
 - Rozhodnuto sám: `Rival` a `LeagueRules` žijí v `logic/league.ts` (data je importuje jen jako typ); kosmetika: 9 soupeřů něco má, 6 nic. Kalibrace prošla bez úpravy `weeklyBase`.
 - Otevřené: nic.
+
+## 2026-09-30 · boss+design+motion · Task 21
+- Hotovo (boss): `MockLeagueService.getCurrentWeek` (settleLeague → zápis profilu jen při změně, standings aktuálního týdne, „Ty“, stage z celkového XP, `promoteCount`/`demoteCount` podle Dřevo/Diamant, `endsAt = weekEndsAt`), `dismissLastResult`. `hooks/useLeague.ts` (klíč = `weekStart(now())`). Test `services/__tests__/MockLeagueService.test.ts` (postup o stupeň, druhé volání nemění `revision`, Dřevo/Diamant, dismiss). TopBar na mapě bere úroveň z `useLeague` (vyhodnocení týdne proběhne i bez otevření Ligy); API TopBaru beze změny.
+- Hotovo (design): `components/league/{TierBadge,Countdown,ZoneDivider,LeagueRow}` podle §7.5. Hlavička: TierBadge 72 pt + obří Stat pozice (L, `/ 16`) + Stat XP týdne (M) + odpočet v Bebas. Vlastní řádek = `raised` + akcentový proužek 3 pt (jediný akcent na obrazovce). Zóny: barva jen v trojúhelníku, slovo `muted`, vlasová linka. Prázdný stav (0 XP tento týden) = výzva pod odpočtem; loading `DotLoaderScreen`; chyba `ErrorState` „Nepodařilo se načíst ligu.“.
+- Hotovo (motion): nástup řádků (fade + zdvih 8 pt, `stagger(i)`, `motion.enter`), `LeagueResultBanner` (vysunutí `motion.ui`, zavření `motion.uiExit` → `dismissLastResult`; u postupu odznak pružinou `motion.pop` + `haptics.success`; omezený pohyb = 200ms fade bez pružiny), `Countdown` přes `useNow(30_000)`, auto-scroll na vlastní řádek (`scrollToIndex`, `viewPosition 0.5`). Mini opice s dechem, obalená `pointerEvents="none"`.
+- Rozhodnuto sám:
+  - Nástup řádků přes vlastní shared value, ne `entering` (layout animace ve virtualizovaných buňkách FlatListu se na webu rozjela, řádky se překrývaly).
+  - Banner výsledku stojí nad seznamem, ne v jeho hlavičce, aby ho auto-scroll neodvezl.
+  - S 0 XP se neauto-scrolluje (přednost má výzva v hlavičce).
+  - Tokeny `size.leagueRow/rankCol/rowMascot/tierBadge/ownStripe` a typ `tierName` (Bebas 20, „DIAMANT“ se vejde do kruhu 72).
+  - Kontrast trojúhelníku zóny testován jako grafický symbol ≥ 3:1 (light `success` z §6.2 má na base 4.36:1; význam nese slovo v `muted`).
+  - Copy `explainer` a `result.stay` mají nezlomitelnou mezeru po „a“/„v“ (test sirotků).
+  - Doplňková copy: odpočet, a11y řádku, `emptyWeek`, `lastWeek`, `dismiss`, `rank`, `myXp`.
+- Otevřené (K ruční kontrole): FPS s 16 dýchajícími opicemi na slabším zařízení; haptika banneru na zařízení.

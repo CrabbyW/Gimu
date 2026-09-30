@@ -6,6 +6,7 @@ import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TopBar } from '@/components/ui/TopBar';
 import { copy } from '@/data/copy';
+import { useLeague } from '@/hooks/useLeague';
 import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
@@ -19,7 +20,9 @@ export default function TrainingScreen() {
   const data = profile.status === 'ready' ? profile.data : null;
   const view = useLessonPath(data?.path);
   const stats = useProfileStats(data);
-  const tierName = useTierName(data?.leagueTier);
+  // Liga při načtení vyhodnotí uplynulý týden, takže TopBar ukáže úroveň po postupu/sestupu.
+  const league = useLeague();
+  const tierName = useTierName(league.status === 'ready' ? league.data.tier : data?.leagueTier);
   // Po sekvenci se parametr smaže, aby se při návratu na tab nepřehrála znovu.
   const clearUnlocked = useCallback(() => router.setParams({ unlocked: undefined }), []);
 

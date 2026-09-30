@@ -16,6 +16,11 @@ describe.each([['dark', dark as Colors], ['light', light]] as const)('%s paleta'
     expect(c.seasonGold).toBe('#C6A15B');
     expect(contrast(c.onSeasonGold, c.seasonGold)).toBeGreaterThanOrEqual(4.5);
   });
+  // Trojúhelník zóny ligy je grafický symbol vedle slova v `muted` (význam nese text) → WCAG 1.4.11, ≥ 3:1.
+  // Hodnoty success/danger jsou dané spec §6.2 (light success má na base 4.36:1).
+  it.each(['success', 'danger'] as const)('trojúhelník zóny ligy (%s) na base má kontrast ≥ 3:1', (t) => {
+    expect(contrast(c[t], c.base)).toBeGreaterThanOrEqual(3);
+  });
   it.each(PLATES)('kg číslo (inkOn) na %s má kontrast ≥ 4.5:1', (p) => {
     expect(contrast(inkOn(c[p], c), c[p])).toBeGreaterThanOrEqual(4.5);
   });
