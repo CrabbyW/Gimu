@@ -15,7 +15,6 @@ const ARROW = 14;
 const GAP = 12;
 const EDGE = 16;
 const CLOSE_ICON = 20;
-const CLOSE_HIT = 44;
 
 interface Props {
   title: string;
@@ -36,7 +35,8 @@ interface Props {
 
 /** Karta k uzlu: název, kg · cviky · XP a akce. Otevírá se timingem (UI), bez pružiny. */
 export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above, mapWidth, mapHeight, onStart, onClose }: Props) {
-  const { c, space, radius } = useTheme();
+  const { c, space, radius, size } = useTheme();
+  const CLOSE_HIT = size.hit;
   const { reduced } = useMotionSafe();
   const open = useSharedValue(0);
   useEffect(() => { open.value = withTiming(1, motion.ui); }, [open]);

@@ -13,7 +13,7 @@ interface Props extends Omit<TextInputProps, 'style' | 'selectionColor' | 'place
 
 /** Pole s mono štítkem nad sebou a jedinou spodní linkou, která při fokusu přejde do akcentu. */
 export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Props) {
-  const { c, space } = useTheme();
+  const { c, space, size } = useTheme();
   const [focused, setFocused] = useState(false);
   const reveal = useRevealOnFocus();
   // Celý blok (štítek, pole, chyba), aby nad klávesnicí bylo vidět i chybové hlášení.
@@ -30,7 +30,7 @@ export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Pro
           selectionColor={c.accent}
           cursorColor={c.accent}
           placeholderTextColor={c.muted}
-          style={{ ...typography.input, color: c.text, flex: 1, minHeight: 48, paddingVertical: space.s }}
+          style={{ ...typography.input, color: c.text, flex: 1, minHeight: size.control, paddingVertical: space.s }}
         />
         {unit ? <Text variant="caption" tone="muted">{unit}</Text> : null}
       </View>

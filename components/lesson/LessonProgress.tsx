@@ -7,11 +7,11 @@ import { useTheme } from '@/theme';
 interface Props { total: number; /** 0-based index aktuálního cviku. */ current: number; onClose(): void }
 
 const ICON = 24;
-const HIT = 44;
 
 /** Horní řada lekce: zavírací „✕“ vlevo, tečky průběhu cviků vpravo. */
 export function LessonProgress({ total, current, onClose }: Props) {
-  const { c, space } = useTheme();
+  const { c, space, size } = useTheme();
+  const HIT = size.hit;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: HIT, marginTop: space.s }}>
       <Pressable

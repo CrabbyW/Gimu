@@ -18,7 +18,7 @@ const SHAKE_STEP = { duration: 50, easing: motion.ui.easing };
 
 /** Chip milníku: nevybraný na ploše `surface`, vybraný inverzní (pozadí `text`, písmo `base`). */
 export function MilestoneChip({ label, selected, onPress, shakeSignal }: Props) {
-  const { c, space, radius } = useTheme();
+  const { c, space, radius, size } = useTheme();
   const { reduced } = useMotionSafe();
   const x = useSharedValue(0);
 
@@ -40,7 +40,7 @@ export function MilestoneChip({ label, selected, onPress, shakeSignal }: Props) 
         accessibilityLabel={label}
         accessibilityState={{ checked: selected }}
         style={({ pressed }) => ({
-          minHeight: 44, justifyContent: 'center', paddingHorizontal: space.m, borderRadius: radius.full,
+          minHeight: size.hit, justifyContent: 'center', paddingHorizontal: space.m, borderRadius: radius.full,
           backgroundColor: selected ? c.text : pressed ? c.raised : c.surface,
         })}
       >

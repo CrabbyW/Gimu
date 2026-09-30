@@ -70,7 +70,7 @@ Zrození: `completeOnboarding` zvýší `revision`, takže nový redirect v `onb
 | §10 testy logiky (krok 1–2) | ✅ | liga/sezóna/recap → plán B |
 | §10 vizuální kontrola proti „Never“ | ✅ | review soubor, Step 4 |
 | §11 roadmapa TODO | ✅ | |
-| README | ⚠️ plán B | |
+| README | ✅ | aktuální, viz LOG 2026-09-30 (rating oprava kolo 1) |
 
 ## Otevřené problémy (neblokující)
 

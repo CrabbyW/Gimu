@@ -91,7 +91,7 @@ export default function MilestonesStep() {
 
 /** „+ Vlastní milník“: rozbalí inline formulář s názvem, jednotkou a cílem. */
 function CustomMilestone({ disabled, onAdd }: { disabled: boolean; onAdd(m: Milestone): void }) {
-  const { c, space } = useTheme();
+  const { c, space, size } = useTheme();
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState('');
   const [unit, setUnit] = useState<MilestoneUnit>('reps');
@@ -117,7 +117,7 @@ function CustomMilestone({ disabled, onAdd }: { disabled: boolean; onAdd(m: Mile
         accessibilityRole="button"
         accessibilityLabel={t.addCustom}
         accessibilityState={{ disabled }}
-        style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space.s, alignSelf: 'flex-start', opacity: disabled ? 0.4 : 1 }}
+        style={{ minHeight: size.hit, flexDirection: 'row', alignItems: 'center', gap: space.s, alignSelf: 'flex-start', opacity: disabled ? 0.4 : 1 }}
       >
         <Plus color={c.text} size={20} strokeWidth={1.5} />
         <Text variant="bodyStrong">{t.addCustom}</Text>

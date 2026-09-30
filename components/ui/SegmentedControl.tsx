@@ -16,7 +16,7 @@ const BORDER = 1;
  *  v barvě `base`, posunutou proti němu: během posunu je každé písmeno ostré a kontrastní,
  *  ať leží na pozadí výběru, nebo mimo něj. */
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
-  const { c, radius, space } = useTheme();
+  const { c, radius, space, size } = useTheme();
   const { reduced } = useMotionSafe();
   const [width, setWidth] = useState(0);
   const index = options.findIndex((o) => o.value === value);
@@ -34,7 +34,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
 
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const inverseLabels = useAnimatedStyle(() => ({ transform: [{ translateX: -x.value }] }));
-  const cell = { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s } as const;
+  const cell = { flex: 1, minHeight: size.control, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s } as const;
 
   return (
     <View

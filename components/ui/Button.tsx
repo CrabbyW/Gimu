@@ -18,7 +18,7 @@ interface Props {
 const labelTone: Record<ButtonVariant, TextTone> = { primary: 'onAccent', secondary: 'text', ghost: 'text' };
 
 export function Button({ label, onPress, variant = 'primary', disabled = false, style }: Props) {
-  const { c, space, radius } = useTheme();
+  const { c, space, radius, size } = useTheme();
   const feedback = usePressFeedback(0.97);
   return (
     <Animated.View style={[feedback.style, style]}>
@@ -31,7 +31,7 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
         accessibilityLabel={label}
         accessibilityState={{ disabled }}
         style={{
-          minHeight: 56,
+          minHeight: size.hitLarge,
           borderRadius: radius.full,
           paddingHorizontal: space.l,
           alignItems: 'center',

@@ -6,20 +6,19 @@ import { copy } from '@/data/copy';
 import { inkOn, useTheme } from '@/theme';
 import { Text } from './Text';
 
-const BAR_H = 56;
 const BADGE = 20;
 
 interface Props { streak: number; streakBroken: boolean; xp: number; tierLabel: string }
 
 /** Hlavička mapy (instrument vrstva): streak, XP a liga v řadě, oddělené svislými vlasovými linkami. */
 export function TopBar({ streak, streakBroken, xp, tierLabel }: Props) {
-  const { c, space, seasonal } = useTheme();
+  const { c, space, seasonal, size } = useTheme();
   const insets = useSafeAreaInsets();
   const streakTone = streakBroken ? 'muted' : 'text';
   return (
     <View
       style={{
-        backgroundColor: seasonal.headerBase, paddingTop: insets.top, height: BAR_H + insets.top,
+        backgroundColor: seasonal.headerBase, paddingTop: insets.top, height: size.hitLarge + insets.top,
         paddingHorizontal: space.m, flexDirection: 'row', alignItems: 'center',
         // Mapa pod hlavičkou scrolluje; jediný oddělovač je vlasová linka.
         borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule,
@@ -43,13 +42,13 @@ export function TopBar({ streak, streakBroken, xp, tierLabel }: Props) {
 }
 
 function Cell({ first = false, accessibilityLabel, children }: { first?: boolean; accessibilityLabel: string; children: ReactNode }) {
-  const { c, space } = useTheme();
+  const { c, space, size } = useTheme();
   return (
     <View
       accessible
       accessibilityLabel={accessibilityLabel}
       style={{
-        flexDirection: 'row', alignItems: 'center', gap: space.s, height: 32,
+        flexDirection: 'row', alignItems: 'center', gap: space.s, height: size.topBarBadge,
         ...(first ? { paddingRight: space.m } : { paddingHorizontal: space.m, borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: c.rule }),
       }}
     >

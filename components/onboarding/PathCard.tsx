@@ -14,7 +14,7 @@ const STRIPE_WIDTH = 2;
 
 /** Velká karta cesty. Karta se odděluje jen pozadím; výběr nese 2px akcentový proužek vlevo a glyf v akcentu. */
 export function PathCard({ path, selected, onPress }: Props) {
-  const { c, space, radius } = useTheme();
+  const { c, space, radius, size } = useTheme();
   const feedback = usePressFeedback(0.98);
   const stripe = useSharedValue(selected ? 1 : 0);
   useEffect(() => { stripe.value = withTiming(selected ? 1 : 0, selected ? motion.ui : motion.uiExit); }, [selected, stripe]);
@@ -29,7 +29,7 @@ export function PathCard({ path, selected, onPress }: Props) {
         accessibilityLabel={`${path.name}. ${path.tagline}`}
         accessibilityState={{ selected, checked: selected }}
         style={{
-          minHeight: 120, flexDirection: 'row', alignItems: 'center', gap: space.m,
+          minHeight: size.pathCard, flexDirection: 'row', alignItems: 'center', gap: space.m,
           padding: space.l, borderRadius: radius.l, backgroundColor: c.surface,
         }}
       >

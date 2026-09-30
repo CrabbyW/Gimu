@@ -12,7 +12,7 @@ interface Props { primary: CtaAction; secondary?: { label: string; onPress(): vo
  *  Kulaté CTA sedí v polovině lišty; pilulka s delším popiskem („Jdeme trénovat“) dostane
  *  dvě třetiny šířky, jinak by se popisek na telefonu šířky 360–390 pt uřízl. */
 export function BigActionBar({ primary, secondary }: Props) {
-  const { c, space } = useTheme();
+  const { c, space, size } = useTheme();
   const insets = useSafeAreaInsets();
   // Nad klávesnicí (KeyboardAvoidingView) by spodní safe area byla jen mrtvý pruh.
   const keyboardVisible = useKeyboardVisible();
@@ -25,7 +25,7 @@ export function BigActionBar({ primary, secondary }: Props) {
           accessibilityRole="button"
           accessibilityLabel={secondary.label}
           style={({ pressed }) => ({
-            flex: 1, minHeight: 96, justifyContent: 'center', paddingHorizontal: space.l,
+            flex: 1, minHeight: size.actionBar, justifyContent: 'center', paddingHorizontal: space.l,
             borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: c.rule,
             backgroundColor: pressed ? c.surface : 'transparent',
           })}
@@ -33,7 +33,7 @@ export function BigActionBar({ primary, secondary }: Props) {
           <Text variant="label" tone="muted">{secondary.label}</Text>
         </Pressable>
       ) : <View style={{ flex: 1 }} />}
-      <View style={{ flex: primaryFlex, minHeight: 96, alignItems: 'center', justifyContent: 'center', paddingVertical: space.m, paddingHorizontal: space.m }}>
+      <View style={{ flex: primaryFlex, minHeight: size.actionBar, alignItems: 'center', justifyContent: 'center', paddingVertical: space.m, paddingHorizontal: space.m }}>
         <RoundCta {...primary} />
       </View>
     </View>

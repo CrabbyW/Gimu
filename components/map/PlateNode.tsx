@@ -16,7 +16,6 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export const PULSE_MS = 1100;
 const RING_GAP = 14;
-const MIN_HIT = 56;
 const CHECK_MS = 280;
 const SHAKE = 6;
 
@@ -38,29 +37,30 @@ interface Props {
 }
 
 /** Kulatý uzel mapy: kotouč, u aktuálního pulzující akcentový prstenec, jeden měkký stín. */
-export function PlateNode({ kg, size, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0 }: Props) {
+export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0 }: Props) {
+  const { size } = useTheme();
   const { reduced } = useMotionSafe();
   const shake = useShake(shakeKey, reduced);
-  const slop = Math.max(0, (MIN_HIT - size) / 2);
+  const slop = Math.max(0, (size.hitLarge - nodeSize) / 2);
   const solid = state !== 'locked' || unlocking;
   return (
-    <Animated.View style={[{ width: size, height: size }, shake]}>
+    <Animated.View style={[{ width: nodeSize, height: nodeSize }, shake]}>
       <Pressable
         onPress={onPress}
         hitSlop={slop}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}
+        style={{ width: nodeSize, height: nodeSize, alignItems: 'center', justifyContent: 'center' }}
       >
-        {state === 'current' && !unlocking ? <PulseRing size={size} reduced={reduced} /> : null}
+        {state === 'current' && !unlocking ? <PulseRing size={nodeSize} reduced={reduced} /> : null}
         {unlocking ? (
-          <UnlockingPlate kg={kg} size={size} reduced={reduced} onUnlocked={onUnlocked} />
+          <UnlockingPlate kg={kg} size={nodeSize} reduced={reduced} onUnlocked={onUnlocked} />
         ) : (
-          <Shadowed on={solid} size={size}>
-            <Plate kg={kg} size={size} state={state} check={!(justCompleted || checkHidden)} />
+          <Shadowed on={solid} size={nodeSize}>
+            <Plate kg={kg} size={nodeSize} state={state} check={!(justCompleted || checkHidden)} />
           </Shadowed>
         )}
-        {state === 'done' && justCompleted ? <DrawnCheck size={size} reduced={reduced} /> : null}
+        {state === 'done' && justCompleted ? <DrawnCheck size={nodeSize} reduced={reduced} /> : null}
       </Pressable>
     </Animated.View>
   );

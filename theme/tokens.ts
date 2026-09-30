@@ -1,6 +1,14 @@
 // Spacing, radiusy a typografie podle spec §6.4 a §6.6.
-export const space = { xs: 4, xs_plus: 6, s: 8, m: 16, l: 24, xl: 40, xxl: 64, xxxl: 104 } as const;
-export const radius = { xs: 2, s: 8, m: 12, l: 20, full: 999 } as const;
+export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 40, xxl: 64, xxxl: 104 } as const;
+export const radius = { s: 8, l: 20, full: 999 } as const;
+// Rozměry dotykových ploch a ovládacích prvků podle spec §6.6. `hit` je jediný zdroj
+// minima 44 pt (dřív duplikované natvrdo ve třech komponentách).
+export const size = {
+  hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
+} as const;
+// Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
+// činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
+export const material = { collarRadius: 2 } as const;
 // Názvy rodin = klíče předané do useFonts v app/_layout.tsx. Váha je součást rodiny:
 // fontWeight se s nimi nekombinuje (Android u vlastních fontů váhu nesyntetizuje).
 export const font = {
@@ -41,6 +49,8 @@ export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0' } a
 
 export type Space = typeof space;
 export type Radius = typeof radius;
+export type Size = typeof size;
+export type Material = typeof material;
 export type Fonts = typeof font;
 export type TypeVariant = keyof typeof type;
 export type Mascot = typeof mascot;

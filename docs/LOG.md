@@ -76,3 +76,24 @@ Presety v `lib/motion.ts`, haptika v `lib/haptics.ts`, zvuk v `lib/sound.ts`. Ov
 - README.md přepsáno do češtiny podle aktuálního stavu repa; `docs/STATUS.md` aktualizován (krok 2 hotový a schválený QA, rating čeká).
 - Oprava záznamu QA kola 1: `npm test` mělo 200 testů, ne 201.
 - `npm test` 200/200, `npx tsc --noEmit`, `npx expo lint` — vše čisté.
+
+## 2026-09-30 · design-agent · rating oprava kolo 1
+Oprava tří chybějících kritérií z `docs/RATING.md` (krok 2, skóre 70/100), podle rozhodnutí boss.
+
+- **Spacing (spec §6.6: 4 8 16 24 40 64 104).** Odstraněn `space.xs_plus` (6), zavedený bez zápisu v LOG commitem 77301b7 pro `DotSteps.tsx`. `DotSteps` mezera mezi tečkami přepnuta na `space.s` (8) — vizuálně nejbližší spec hodnota, řádek průběhu zůstává čitelný i s rozšířenou aktuální tečkou (20 pt). Toto je jediná změněná vykreslená hodnota v celé opravě.
+- **Radius (spec §6.6: 8, 20, full).** Odstraněn nepoužívaný `radius.m` (12) — mrtvý token, nikde v `app/`, `components/` ani `hooks/` nebyl použit. `radius.xs` (2), použitý jen pro objímku činky (`Barbell.tsx` `Collar`), byl z `radius` odstraněn a přesunut do nového `theme/tokens.ts` → `material.collarRadius: 2`.
+  **Ruling: tloušťky/poloměry materiálu činky (geometrie) nejsou UI radius §6.6; žijí v theme jako material tokeny.**
+  `radius` teď obsahuje jen skutečnou UI škálu: `{ s: 8, l: 20, full: 999 }`.
+- **Sizes.** Přidán `theme/tokens.ts` → `size = { hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32 }`, exportovaný přes `theme/index.ts` a `Theme.size` (`buildTheme.ts`). Nahrazeny natvrdo zapsané duplicity minima 44 pt a další rozměry z `docs/RATING.md` kategorie 3:
+  - `LessonProgress.tsx` (`HIT`), `NodePopover.tsx` (`CLOSE_HIT`) → `size.hit`
+  - `PlateNode.tsx` (`MIN_HIT`) → `size.hitLarge`
+  - `MilestoneChip.tsx` (`minHeight: 44`), `app/onboarding/milestones.tsx` `CustomMilestone` (`minHeight: 44`) → `size.hit`
+  - `PathCard.tsx` (`minHeight: 120`) → `size.pathCard`
+  - `BigActionBar.tsx` (obě `minHeight: 96`) → `size.actionBar`
+  - `Button.tsx` (`minHeight: 56`) → `size.hitLarge`
+  - `SegmentedControl.tsx`, `TextField.tsx` (`minHeight: 48`) → `size.control`
+  - `TopBar.tsx` (`BAR_H = 56` → `size.hitLarge`, `Cell` `height: 32` → `size.topBarBadge`)
+  Doplňkový grep `app/` a `components/` na další width/height/minHeight/minWidth literály (mimo SVG geometrii a viewBox) odhalil ještě `app/onboarding/dream.tsx` (`minHeight: 32 * 3 + …`) — nahrazeno `typography.inputLarge.lineHeight * 3 + …`, aby řádek nedublovat samostatný literál vedle existujícího typografického tokenu, místo nového `size` tokenu (hodnota je odvozená od textu, ne od dotykové plochy).
+- Vykreslený výsledek beze změny kromě mezery v `DotSteps` (6 → 8 px).
+- `docs/QA.md`: řádek README přepnut na ✅ (repo je aktuální, viz doporučení rating-agenta).
+- Ověření: `npm test` 200/200 (26 sad), `npx tsc --noEmit` čisté, `npx expo lint` čisté.
