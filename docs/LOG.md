@@ -118,3 +118,16 @@ Oprava tří chybějících kritérií z `docs/RATING.md` (krok 2, skóre 70/100
 - Design: `SvgMascot` kreslí tělo, paže (skupina `rotate` kolem ramene), nohy, uši, ramena stage 3 (fur nahoře / furShade dole přes clip) a biceps stage 3 (r = 0.6·w ve 40 % délky) z geometrie. Obličej = skupina stage 1 se scale r/54. Světelný posun hlavy škálován s hlavou. Bříško odvozeno z trupu (rx = w/4, ry = 0.23·h). Odstraněn `useStageFallbackWarning`. Stage 1 vizuálně beze změny.
 - Screenshot light+dark, S a XL: `.superpowers/sdd/planB/shots/t15`. Stage čitelné v S, stage 3 jasně silnější silueta.
 - Otevřené: ramenní „jho“ stage 3 působí mírně jako límec (spodní stínová polovina); pro Task 17/rating k posouzení.
+
+## 2026-09-30 · motion-agent · Task 16
+Nálady celebrate a sad v `components/mascot/SvgMascot.tsx` (spec §8). Mapování `MOOD_POSE` (export, TDD). Presety v `lib/motion.ts` (sdílené presety projektu, `theme/motion.ts` neexistuje). Vše reanimated na UI vlákně. Ověřeno snímkovými sekvencemi (web, light + dark, stage 1–3, reduced): `.superpowers/sdd/planB/shots/t16`.
+- **celebrate · paže nahoru:** `withTiming` 0 → 1, `motion.armsRaise` (220 ms, bezier 0.22,1,0.36,1). Paže se otočí z klidového `limb.angle` na zvednutý úhel. Spouští se změnou nálady na celebrate (oslava lekce: boss nebo stage-up, `LessonCompleteScene` beze změny, už předává celebrate). Při odchodu z celebrate se paže vrátí stejným timingem.
+- **celebrate · opakované poskoky:** `withRepeat(withSequence(withTiming(−0.12·px, 140 ms), withSpring(0, motion.hop {damping 12, stiffness 240}), withDelay(motion.celebrateRestMs = 600, withTiming(0, 0 ms))), −1)`. Perioda ~1.3 s. Změna nálady je zruší (`cancelAnimation`) a opice dosedne `motion.moodShift`. Pružina = herní odměna.
+- **happy · poskočení:** beze změny (jeden skok 140 ms + `motion.hop` při změně nálady na happy).
+- **sad:** uši `+8` dolů a `±4` ven, oči a odlesky `cy +3` (pohled dolů), pusa `SAD_MOUTH` crossfade. Vše `withTiming` `motion.moodShift` (300 ms, bez pružiny). Dech `BREATH_HALF_MS_SAD` 1800 ms a `BREATH_SCALE_SAD` 0.012 (idle/happy/celebrate 1200 ms a 0.02). Spouští se náladou sad. Zatím ji v appce nikdo nepředává.
+- **Pusy:** tři (idle, happy, sad) crossfade přes opacity. Do sad a ze sad `motion.moodShift`, jinak `motion.ui` (180 ms).
+- **Reduce motion:** celebrate = paže nahoře staticky, bez poskoků. Sad = statická póza (uši, pohled, pusa bez přechodu), bez dechu. Dech a mrkání vypnuté ve všech náladách jako v plánu A.
+- Haptika se v maskotu nespouští, patří volajícímu.
+- Rozhodnuto sám: **zvednutý úhel paží podle stage 1: 120°, 2: 140°, 3: 160°**. Brief chce 160° pro všechny, ale krátká paže stage 1 by skončila uvnitř hlavy (ruka 41 od středu hlavy r 54), takže by opice vypadala bez rukou. Stage 2 by ruka jen vykukovala. Ruce jdou do V, dokud ruka nemine hlavu.
+- Rozhodnuto sám: paže se kreslí jako tah s kulatými konci (vizuálně totožné s dřívějším otočeným `Rect rx=w/2`), aby šel úhel animovat přes `d` na UI vlákně. Biceps stage 3 se posouvá po paži.
+- Otevřené: pružina `motion.hop` při dopadu klesne ~16 pt pod klid, než se ustálí. U opakovaných poskoků je to vidět častěji než u jednoho skoku happy. Preset a chování jsou z plánu A, rating posoudí.

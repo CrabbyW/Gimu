@@ -15,6 +15,12 @@ export const motion = {
   pop: { damping: 9, stiffness: 260, mass: 0.8 } satisfies WithSpringConfig, // +XP
   unlock: { damping: 14, stiffness: 200 } satisfies WithSpringConfig, // odemčení uzlu
   hop: { damping: 12, stiffness: 240 } satisfies WithSpringConfig, // opice
+  // Opice: zvednutí paží do celebrate (a zpět), 220 ms ease-out.
+  armsRaise: { duration: 220, easing: Easing.bezier(0.22, 1, 0.36, 1) } satisfies WithTimingConfig,
+  // Opice: přechod do smutku a z něj (uši, pohled, pusa, dosednutí), 300 ms bez pružiny: smutek neodskakuje.
+  moodShift: { duration: 300, easing: Easing.bezier(0.22, 1, 0.36, 1) } satisfies WithTimingConfig,
+  // Opice celebrate: pauza na zemi mezi opakovanými poskoky (ms).
+  celebrateRestMs: 600,
 };
 
 /** Při zapnutém omezení pohybu se pružiny nahradí 200ms fade a pulzování se vypne. */

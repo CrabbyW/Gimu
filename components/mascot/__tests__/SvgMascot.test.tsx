@@ -4,6 +4,7 @@ import { buildTheme, type Scheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
 import type { Mood } from '@/types';
 import { Mascot, MASCOT_SIZES } from '..';
+import { MOOD_POSE } from '../SvgMascot';
 import { STAGE_GEOMETRY } from '../geometry';
 import type { MascotProps } from '../types';
 
@@ -16,6 +17,7 @@ jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock
 
 const IDLE_MOUTH = 'M88 108 Q100 112 112 108';
 const HAPPY_MOUTH = 'M86 104 Q100 122 114 104 Z';
+const SAD_MOUTH = 'M88 112 Q100 104 112 112';
 
 const base: MascotProps = { stage: 1, mood: 'idle', size: 'M', cosmetics: {} };
 const tree = (props: Partial<MascotProps>, scheme: Scheme = 'dark') => (
@@ -53,15 +55,27 @@ test('pojmenovaná velikost se převede na pt, číselná zůstane', () => {
   expect(render({ size: 90 }).findByType(Svg).props.height).toBe(90);
 });
 
-test.each<[Mood, 'idle' | 'happy']>([
+test('celebrate: ruce nahoru, opakované poskoky, veselý obličej', () => {
+  expect(MOOD_POSE.celebrate).toEqual({ face: 'happy', armsUp: true, earsDown: false, breathHalfMs: 1200, hopRepeat: true });
+});
+test('sad: svěšené uši, smutný obličej, pomalejší dech', () => {
+  expect(MOOD_POSE.sad).toEqual({ face: 'sad', armsUp: false, earsDown: true, breathHalfMs: 1800, hopRepeat: false });
+});
+test('idle a happy beze změny proti plánu A', () => {
+  expect(MOOD_POSE.idle).toMatchObject({ face: 'idle', armsUp: false, hopRepeat: false, breathHalfMs: 1200 });
+  expect(MOOD_POSE.happy).toMatchObject({ face: 'happy', armsUp: false, hopRepeat: false });
+});
+
+test.each<[Mood, 'idle' | 'happy' | 'sad']>([
   ['idle', 'idle'],
   ['happy', 'happy'],
-  ['celebrate', 'happy'], // plán B: vlastní animace
-  ['sad', 'idle'], // plán B: vlastní animace
+  ['celebrate', 'happy'],
+  ['sad', 'sad'],
 ])('nálada %s ukáže pusu %s', (mood, face) => {
   const root = render({ mood });
   expect(mouthOpacity(root, IDLE_MOUTH)).toBe(face === 'idle' ? 1 : 0);
   expect(mouthOpacity(root, HAPPY_MOUTH)).toBe(face === 'happy' ? 1 : 0);
+  expect(mouthOpacity(root, SAD_MOUTH)).toBe(face === 'sad' ? 1 : 0);
 });
 
 test.each<Scheme>(['light', 'dark'])('detaily obličeje jsou tmavé i v režimu %s (leží na světlém obličeji)', (scheme) => {
