@@ -6,4 +6,4 @@ export const LEAGUE_TIERS: LeagueTier[] = [
   { id: 'silver', name: 'Stříbro', order: 4 }, { id: 'gold', name: 'Zlato', order: 5 },
   { id: 'diamond', name: 'Diamant', order: 6 },
 ];
-export const LEAGUE_RULES = { groupSize: 16, promote: 5, demote: 3 } as const;
+export const LEAGUE_RULES = { groupSize: 16, promote: 5, demote: 3, tierXpStep: 0.03, weeklyNoise: 0.08 } as const;
