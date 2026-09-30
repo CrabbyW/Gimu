@@ -1,39 +1,42 @@
-# QA — krok 3 (maskot dokončit + DotLoader)
+# QA: krok 3, gate A2 (UX1 + UX2)
 
-Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah spec §12 krok 3 (commity `e2b82c0..dce977a`), regresní smoke kroků 1–2.
+Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah: re-check kroku 3 po UX1 (`a584337`) a UX2 (`70768e9`), regresní průchod core loopu.
 
 **Verdikt: SCHVÁLENO**
 
 ## Build a testy
-- `npm test`: 30 suites, 237/237 ✅ (po doplnění případu −10 XP)
+- `npm test`: 33 suites, 257/257 ✅
 - `npm run typecheck` ✅ · `npm run lint` ✅ · `npx expo-doctor` 21/21 ✅
+- Web export a flow `qa-step2`, `qa-r2`, `qa-a2`, `qa-a2-rm` (light i dark): žádný pageerror ani console.error ✅
 
-## Spec §12 krok 3, bod po bodu
+## Spec bod po bodu
 | Bod | Stav | Důkaz |
 |---|---|---|
-| Stage 2 a 3 (`SvgMascot` z `STAGE_GEOMETRY`) | ✅ | snímky `r-none`: 3 čitelné siluety, hlava se zmenšuje, ramena rostou |
-| Stage podle prahů 500 / 2000 | ✅ | `logic/__tests__/mascot.test.ts`: 499/500/1999/2000/99999 a nově −10 → 1 (poškozená data) |
-| Nálada celebrate | ✅ | paže nahoru (120/140/160° podle stage, ruling R32), opakované poskoky, reduce motion = statická póza |
-| Nálada sad | ✅ | uši dolů, pohled dolů, smutná pusa, bez pružiny. ⚠️ Zatím ji v appce nikdo nepředává (plán B: streak/liga v kroku 4) |
-| Kotvy stage 1–3 | ✅ | `anchors.test.ts` prochází pro 1–3 (viewBox, ruka na konci paže, hlava = střed) |
-| Kosmetika na kotvách | ✅ | tílko, mikina, šála (outfit i sezónní), čelenka, potítka, opasek ve všech stage. Šála v stage 3 nesedí v obličeji, potítka jdou s pažemi v celebrate (`m-wrist-*`) |
-| Rive stub | ✅ | `RiveMascot.tsx` kompiluje, import zakomentovaný, `riveInputs.test.ts` zelený, Expo Go beze změny |
-| DotLoader (požadavek uživatele) | ✅ | light a dark animuje (vlna a záře), reduce motion = statický gradient od středu; použit v `_layout`, `index`, `(tabs)/index`, `lesson/[id]`; `size.loader`/`size.loaderDot` z theme |
-| Šatník UI, liga, sezóna, progres, notifikace, dev menu | ⚠️ plán B | kroky 4–5, mimo rozsah |
-
-## Regresní smoke kroků 1–2 (flow `qa-step2.mjs`, light + dark)
-✅ Onboarding validace (prázdné vstupy, nesmyslná váha) → zrození → mapa → lekce → oslava → odemčení další lekce → XP v top baru → persist po reloadu. Zamčená lekce přes URL se nedá dokončit, neznámá lekce ukáže chybu + „Zkusit znovu“, ukončení lekce dialogem neuloží aktivitu, boss dokončen.
+| §7.1 krok 1: výběr cesty | ✅ | 3 cesty, „Pokračovat“ bez výběru zakázané |
+| §7.1 krok 2: karty vize + „Vlastní…“ (R36) | ✅ | každá cesta 6 karet + „Vlastní…“, vybraná právě jedna (proužek + akcentní glyf), prázdný/mezery/„ab“ vlastní text blokuje, pole ořízne na 140 znaků |
+| Změna cesty po výběru vize | ✅ | předvolená vize se vymaže (Pokračovat zakázané), vlastní text zůstane |
+| §7.1 krok 3: milníky ≥6 na cestu (R37) | ✅ | 9 checkboxů na každé cestě (7 + 2 obecné), výběr 1–3 funguje |
+| §7.1 krok 4: váha, validace | ✅ | 0, abc, 999, 1e2, −80, 29 a špatný směr cíle zamítnuto s českou chybou |
+| Zrození → mapa → lekce → oslava → odemčení → XP | ✅ | `qa-a2/*-05..10`, uzel 2 přejde na „aktuální“, XP v top baru |
+| Persist po reloadu | ✅ | `*-11-map-reload`, `qa-a2-r2/*-04-reload` |
+| Rychlé klepání (Hotovo, Jdeme trénovat, Pokračovat v oslavě) | ✅ | dblclick → 1 aktivita, 1 navigace |
+| Reduce motion | ✅ | celý loop s `reducedMotion: reduce` projde, press/selection/stagger skočí na konec (`useMotionSafe`, ReduceMotion.System) |
+| Motion UX2 (press, stagger, oslava, hop) | ✅ | oslava: kotouče, +XP, rozpis; žádné chyby. Délky nativních stack přechodů na webu neověřitelné |
+| Zvuky: `click.wav` odstraněn | ✅ | žádný odkaz v kódu; `assets/sounds` = plate-snap, select, unlock |
+| Zvuky: chyby expo-audio | ✅ | `setAudioModeAsync().catch`, `seekTo().catch`, `play()` v try/catch |
+| Stage 3 ramena, zimní šála | ✅ | UX1 opraveno (deltoidy, `SEASON_MATERIAL.winterArc`) |
+| Liga, sezóna, šatník UI, progres, notifikace, dev menu | ⚠️ plán B | kroky 4–5 |
 
 ## Architektura
-✅ Žádné inline hex barvy v `components/`, `app/`, `lib/` (šála bere Winter Arc neutrály ze `SEASON_OVERRIDES`, tedy z theme). ✅ Spacing a radius jen ze škály §6.6, žádné numerické padding/margin/gap/borderRadius literály. ✅ Rozměry loaderu jsou tokeny `size.*`. Souřadnice SVG maskota jsou geometrie viewBoxu (`geometry.ts`), ne UI rozměry.
+✅ Žádné hex barvy v `app/`, `components/`, `lib/`, `hooks/` (jen komentář v `mascot/palette.ts`). ✅ Žádné numerické literály padding/margin/gap/borderRadius/fontSize v komponentách, spacing a radius ze škály §6.6, rozměry jako tokeny. ✅ Motion parametry v `lib/motion.ts` (R33). ✅ Validace a délka vize v `logic/onboarding.ts`.
 
-## Oprava
-- `logic/__tests__/mascot.test.ts`: doplněn případ `stageForXp(-10)` → 1 (brief Task 18 Step 2). Logika už ho správně ořezávala.
+## Rozbité / otevřené (neblokuje)
+- ⚠️ **boss:** rychlé dvojité klepnutí na „Pokračovat“ v onboardingu posune o dva kroky (web: milníky → váha → zrození, krok váhy se přeskočí s výchozím „bez cíle“). Repro: krok 3, vyber milníky, trojklik na Pokračovat. Nevzniká neplatný stav, ale uživatel krok nevidí. Návrh: zámek navigace v `OnboardingFrame` (ignorovat onContinue do blur).
+- ⚠️ **motion:** count-up +XP běží na JS; na snímku 1,2 s je +31 z 32 (dopočítá se). Dvojitý poskok opice na mapě (UX2 obava).
+- ⚠️ **boss:** zvuky neslyšeny na zařízení, K ruční kontrole.
+- ⚠️ **design:** `dreamBody` ukládá titulek karty, ne větu (UX1 obava), rozhodnout pro Progres v kroku 5.
 
-## Otevřené (neblokuje)
-- design / rating: v dark režimu šála (`#243039`) na pozadí málo výrazná, na srsti čitelná (R35).
-- design / rating: ramenní pás stage 3 působí mírně jako límec (Task 15).
-- motion / rating: `motion.hop` při opakovaných poskocích celebrate klesá ~16 pt pod klid.
-- boss (krok 4): nálada sad a `cosmetics` zatím nemají zdroj v appce (liga/streak, šatník).
+## Opravy
+- Žádná oprava v appce. V nástrojích (mimo repo) `flows/qa-r2.mjs`: po načtení se nechá doběhnout stagger (`tick 800`), jinak klik na kartu padal na překrytí při zmrazených hodinách. Nové flow `qa-a2.mjs`, `qa-a2-rm.mjs`.
 
-Snímky: `.superpowers/sdd/2026-09-29-opice-faze1-core-loop/tools/shots/qa-step3` a `qa-step3-loop`. Dočasná route `app/qa-preview.tsx` smazána, server ukončen, web-build odstraněn.
+Snímky: `.superpowers/sdd/2026-09-29-opice-faze1-core-loop/tools/shots/qa-a2`, `qa-a2-edge`, `qa-a2-r2`, `qa-a2-rm`. Server ukončen, web-build smazán, dočasné routy žádné.

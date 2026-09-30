@@ -224,3 +224,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Zvuky jsem neslyšel na zařízení.
 - Count-up +XP běží na JS (rAF).
 - Opice na mapě pořád dělá dvojitý poskok, jako dřív.
+
+## 2026-09-30 · qa-agent · krok 3 A2
+**Udělal:** re-check kroku 3 po UX1 a UX2. Testy 257/257, typecheck, lint, expo-doctor 21/21. Core loop na webu light i dark, každá cesta, karty vize, „Vlastní…“ (prázdné, >140), změna cesty, milníky, váha, reload, rychlé klepání, reduce motion. Ověřeno, že click.wav nikde nezůstal a expo-audio chyby polyká. Verdikt SCHVÁLENO (docs/QA.md).
+**Rozhodl sám:** dvojité posunutí onboardingu rychlým klepnutím hodnotím jako neblokující (bez neplatného stavu).
+**Otevřené:** zámek navigace v OnboardingFrame (boss), count-up na JS a dvojitý poskok (motion), zvuky na zařízení (ruční kontrola), dreamBody titulek vs. věta (design).
