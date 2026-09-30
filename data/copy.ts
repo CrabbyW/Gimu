@@ -8,7 +8,7 @@ export const copy = {
     resume: 'Pokračovat', retry: 'Zkusit znovu',
     loadError: (what: string) => `Nepodařilo se načíst ${what}.`,
     // Předmět věty „Nepodařilo se načíst …“ (4. pád).
-    loadTarget: { profile: 'profil', path: 'cestu' },
+    loadTarget: { profile: 'profil', path: 'cestu', lesson: 'lekci', lessonResult: 'výsledek lekce' },
   },
   tabs: { training: 'Trénink' },
   onboarding: {
@@ -63,6 +63,8 @@ export const copy = {
   lesson: {
     reps: 'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',
     quitConfirm: 'Ukončit', quitCancel: 'Trénovat dál', holdReady: 'Připrav se', nextExercise: 'Další cvik',
+    close: 'Ukončit lekci',
+    progressA11y: (n: number, total: number) => `Cvik ${n} z ${total}`,
   },
   complete: {
     title: 'Kotouč na ose.', xpLesson: 'lekce', xpBoss: 'boss', xpReplay: 'opakování', xpFirst: 'první dnes',
