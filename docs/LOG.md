@@ -58,3 +58,9 @@ Presety v `lib/motion.ts`, haptika v `lib/haptics.ts`, zvuk v `lib/sound.ts`. Ov
 - Opraveno: zamčená lekce otevřená deep linkem se rozjela a selhala až na konci — `getLesson` teď vrací i stav uzlu, `app/lesson/[id].tsx` ho čte hned na startu a zamčenou lekci ukáže přes `ErrorState` s tlačítkem zpět na mapu (test v `MockLessonService.test.ts`).
 - Opraveno: Zrušit lekci deep linkem nic nedělalo, protože `router.back()` neměl historii — nahrazeno `router.canGoBack() ? router.back() : router.replace('/(tabs)')`.
 - `npm test` (201 testů), `npx tsc --noEmit`, `npx expo lint`, `npx expo-doctor` (21/21) — vše čisté.
+
+## 2026-09-30 · design-agent · QA oprava kolo 1
+- Odstraněny natvrdo zapsané typografické hodnoty mimo `theme/`: přidány tokeny `theme/tokens.ts` → `type.input` (20/28, `TextField`), `type.inputLarge` (22/32, `app/onboarding/dream.tsx`), `type.counter` (display 32/32, `TopBar` streak/XP), `type.badgeLabel` (mono 10/12, `TopBar` `TierBadge`). Vykreslený výsledek beze změny — jen přejmenované/centralizované hodnoty; `components/ui/Text.tsx` doplněn o `TABULAR` záznamy pro nové varianty.
+- `MASCOT_COLORS` (`components/mascot/palette.ts`) přesunuty do `theme/tokens.ts` jako token `mascot` (srst/obličej jsou v obou režimech stejné, viz spec §8) a exportovány přes `theme/index.ts`; `palette.ts` je nyní jen re-export z tématu.
+- Grep `app/` a `components/` na raw hex/fontSize/spacing mimo theme: nalezeno navíc `DotSteps.tsx` (`gap: 6`) a `Barbell.tsx` (`Collar` `borderRadius: 2`) — ponecháno, jde o animační/geometrické konstanty motion-agenta (reanimated), ne o statický design token; mimo scope design-agenta.
+- `npm test` 200/200, `npx tsc --noEmit` čisté, `npx expo lint` čisté.

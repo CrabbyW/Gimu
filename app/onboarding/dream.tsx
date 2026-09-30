@@ -43,7 +43,7 @@ export default function DreamStep() {
             cursorColor={c.accent}
             placeholderTextColor={c.muted}
             textAlignVertical="top"
-            style={{ ...typography.body, fontSize: 22, lineHeight: 32, color: c.text, minHeight: 32 * 3 + space.m * 2, paddingVertical: space.m }}
+            style={{ ...typography.inputLarge, color: c.text, minHeight: 32 * 3 + space.m * 2, paddingVertical: space.m }}
           />
         </View>
         <Text variant="label" tone="muted" style={{ alignSelf: 'flex-end' }} accessibilityLabel={t.counterA11y(dreamBody.length, DREAM_MAX_LENGTH)}>

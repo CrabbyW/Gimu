@@ -15,9 +15,20 @@ export const type = {
   // letterSpacing 0.18em při 11 pt ≈ 2.
   label: { fontFamily: font.mono, fontSize: 11, lineHeight: 14, letterSpacing: 2, textTransform: 'uppercase' as const },
   caption: { fontFamily: font.body, fontSize: 14, lineHeight: 20 },
+  // Volný text ve víceřádkovém poli (TextField, onboarding dream): tělový font, větší řez.
+  input: { fontFamily: font.body, fontSize: 20, lineHeight: 28 },
+  inputLarge: { fontFamily: font.body, fontSize: 22, lineHeight: 32 },
+  // Velké číslo v TopBaru (streak, XP): display font, menší řez než `display`.
+  counter: { fontFamily: font.display, fontSize: 32, lineHeight: 32 },
+  // Iniciála v kruhovém odznaku ligy (TopBar TierBadge): stejný jazyk jako `label`, menší a bez rozpalu.
+  badgeLabel: { fontFamily: font.mono, fontSize: 10, lineHeight: 12, letterSpacing: 0, textTransform: 'uppercase' as const },
 } as const;
+
+// Barvy opice (srst, obličej) — stejné v obou režimech, viz spec §8.
+export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0' } as const;
 
 export type Space = typeof space;
 export type Radius = typeof radius;
 export type Fonts = typeof font;
 export type TypeVariant = keyof typeof type;
+export type Mascot = typeof mascot;

@@ -30,7 +30,7 @@ export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Pro
           selectionColor={c.accent}
           cursorColor={c.accent}
           placeholderTextColor={c.muted}
-          style={{ ...typography.body, fontSize: 20, lineHeight: 28, color: c.text, flex: 1, minHeight: 48, paddingVertical: space.s }}
+          style={{ ...typography.input, color: c.text, flex: 1, minHeight: 48, paddingVertical: space.s }}
         />
         {unit ? <Text variant="caption" tone="muted">{unit}</Text> : null}
       </View>

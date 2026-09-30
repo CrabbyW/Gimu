@@ -8,7 +8,6 @@ import { Text } from './Text';
 
 const BAR_H = 56;
 const BADGE = 20;
-const NUMBER = { fontSize: 32, lineHeight: 32 };
 
 interface Props { streak: number; streakBroken: boolean; xp: number; tierLabel: string }
 
@@ -28,11 +27,11 @@ export function TopBar({ streak, streakBroken, xp, tierLabel }: Props) {
     >
       <Cell first accessibilityLabel={copy.map.streakA11y(streak)}>
         <Flame size={20} color={streakBroken ? c.muted : c.accent} strokeWidth={1.5} />
-        <Text variant="display" tone={streakTone} maxFontSizeMultiplier={1} style={NUMBER}>{streak}</Text>
+        <Text variant="counter" tone={streakTone} maxFontSizeMultiplier={1}>{streak}</Text>
         <Text variant="label" tone="muted">{copy.map.streak}</Text>
       </Cell>
       <Cell accessibilityLabel={copy.map.xpA11y(xp)}>
-        <Text variant="display" maxFontSizeMultiplier={1} style={NUMBER}>{xp}</Text>
+        <Text variant="counter" maxFontSizeMultiplier={1}>{xp}</Text>
         <Text variant="label" tone="muted">{copy.map.xp}</Text>
       </Cell>
       <Cell accessibilityLabel={copy.map.leagueA11y(tierLabel)}>
@@ -64,7 +63,7 @@ function TierBadge({ initial }: { initial: string }) {
   const { c, radius } = useTheme();
   return (
     <View style={{ width: BADGE, height: BADGE, borderRadius: radius.full, backgroundColor: c.plate25, alignItems: 'center', justifyContent: 'center' }}>
-      <Text variant="label" maxFontSizeMultiplier={1} style={{ color: inkOn(c.plate25, c), fontSize: 10, lineHeight: 12, letterSpacing: 0 }}>
+      <Text variant="badgeLabel" maxFontSizeMultiplier={1} style={{ color: inkOn(c.plate25, c) }}>
         {initial}
       </Text>
     </View>

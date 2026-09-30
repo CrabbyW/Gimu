@@ -11,7 +11,10 @@ const toneColor: Record<TextTone, keyof Colors> = { text: 'text', muted: 'muted'
 const maxScale: Partial<Record<TypeVariant, number>> = { displayXL: 1, display: 1.15, title: 1.3 };
 // Tabulární číslice jen u čísel a štítků (R18). Inter v tnum rozšiřuje i spojovník,
 // takže běžný text („muscle-up“, „-3 kg“) má proporcionální číslice.
-const TABULAR: Record<TypeVariant, boolean> = { displayXL: true, display: true, title: true, label: true, body: false, bodyStrong: false, caption: false };
+const TABULAR: Record<TypeVariant, boolean> = {
+  displayXL: true, display: true, title: true, label: true, body: false, bodyStrong: false, caption: false,
+  input: false, inputLarge: false, counter: true, badgeLabel: true,
+};
 const tabular = { fontVariant: ['tabular-nums' as const] };
 
 export function Text({ variant = 'body', tone = 'text', style, ...rest }: Props) {
