@@ -1,8 +1,38 @@
-# QA — krok 2 (core loop), kolo 2
+# QA — krok 2 (core loop), kolo 3
 
-Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah spec §12 kroky 1–2. Ověřené opravy: cbc9b83, e413bca, 77301b7.
+Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah spec §12 kroky 1–2. Ověřené opravy: cbc9b83, e413bca, 77301b7 (kolo 2). Kolo 3: design-tokenový refaktor od `6ef2b1b` — `size` tokeny nahrazují natvrdo psaná minHeight/height (44/48/56/96/120/32), `svgType`/`statSize` nahrazují literály ve `Stat`, `BarbellBoss`, `Plate`, nový `material.collarRadius` nahrazuje `radius.xs` v `Barbell.tsx`, `DotSteps` gap `space.xs_plus` (6) → `space.s` (8) — jediná záměrná vizuální změna.
 
 **Verdikt: SCHVÁLENO**
+
+## Kolo 3 — ověření refaktoru tokenů
+
+Rozsah: `git diff 6ef2b1b..HEAD -- . ':!docs'` (21 souborů, README + app/components/theme; žádná logika).
+
+| Kontrola | Výsledek |
+|---|---|
+| `npm test` | ✅ 26 suites, 200 testů |
+| `tsc --noEmit` | ✅ |
+| `expo lint` | ✅ exit 0 |
+| `npx expo-doctor` | ✅ 21/21 |
+| web export + flow `qa-step2.mjs` (light i dark) | ✅ žádný pageerror ani console.error, snímky `tools/shots/qa-step2-r3` |
+
+Ruční ověření mapování hodnota-za-hodnotu v diffu (aby se potvrdilo, že vykreslený výstup je beze změny kromě DotSteps gapu):
+- `size.hit` 44 = staré `44` (LessonProgress HIT, NodePopover CLOSE_HIT, MilestoneChip minHeight, onboarding/milestones.tsx custom milník)
+- `size.hitLarge` 56 = staré `56` (Button minHeight, TopBar BAR_H, PlateNode MIN_HIT)
+- `size.control` 48 = staré `48` (SegmentedControl cell, TextField minHeight)
+- `size.actionBar` 96 = staré `96` (BigActionBar × 2)
+- `size.pathCard` 120 = staré `120` (PathCard minHeight)
+- `size.topBarBadge` 32 = staré `32` (TopBar Cell height)
+- `material.collarRadius` 2 = staré `radius.xs` 2 (Barbell Collar)
+- `svgType.label` (mono, 11, letterSpacing 2) = staré literály v `BarbellBoss` SvgText
+- `svgType.plateKg` (display, 22) = staré literál v `Plate` SvgText
+- `statSize` M/L/XL 56/88/120 = starý `fontSize` map v `Stat.tsx`
+- `dream.tsx` `typography.inputLarge.lineHeight` = 32 (ověřeno v `theme/tokens.ts:28`) = staré natvrdo `32` → beze změny
+- `DotSteps` gap `space.s` (8) nahrazuje `space.xs_plus` (6) — **jediná úmyslná vizuální změna**, viditelná a přijatelná na snímcích milestones (`light/dark-03-milestones.png`)
+
+Grep na zbylé natvrdo psané UI rozměry/fontSize/hex mimo `theme/` v `app/` a `components/` (SVG geometrie vyjmuta): 0 nálezů. Problém B z kola 2 (drobné literály mimo theme) je tímto vyřešen.
+
+Žádná chyba mapování tokenů, žádné zmenšené hit area, žádný přejmenovaný prop opomenutý v jiném souboru.
 
 ## Build a nástroje
 
@@ -75,5 +105,5 @@ Zrození: `completeOnboarding` zvýší `revision`, takže nový redirect v `onb
 ## Otevřené problémy (neblokující)
 
 A. **K ruční kontrole na zařízení** — uživatel: zvuk `click` v tichém režimu iOS, haptika, Android hardware Zpět v lekci a na zrození, deep link na zamčenou lekci a na `/onboarding/path` s existujícím profilem (redirect bez probliknutí formuláře).
-B. **Drobné literály mimo theme** — design-agent: `components/map/BarbellBoss.tsx:67` (SVG `fontSize={11}`), `components/map/Plate.tsx:62` (`fontSize={22}` ve viewBoxu 100), `components/ui/Stat.tsx:13` (velikosti M/L/XL 56/88/120), `DotSteps.tsx` gap 6, `Barbell.tsx` radius 2. Vzhled to neovlivní, jde o úklid.
+B. ~~Drobné literály mimo theme~~ — ✅ vyřešeno v kole 3 (`theme/tokens.ts`: `size`, `material`, `svgType`, `statSize`).
 C. Plán B (liga, sezóna, stage-up, dev menu, README) — ⚠️ podle plánu.

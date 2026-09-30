@@ -97,3 +97,11 @@ Oprava tří chybějících kritérií z `docs/RATING.md` (krok 2, skóre 70/100
 - Vykreslený výsledek beze změny kromě mezery v `DotSteps` (6 → 8 px).
 - `docs/QA.md`: řádek README přepnut na ✅ (repo je aktuální, viz doporučení rating-agenta).
 - Ověření: `npm test` 200/200 (26 sad), `npx tsc --noEmit` čisté, `npx expo lint` čisté.
+
+## 2026-09-30 · qa-agent · krok 2 kolo 3
+- Rozsah: `git diff 6ef2b1b..HEAD -- . ':!docs'` — design-tokenový refaktor (size, material, svgType, statSize) + DotSteps gap 6→8.
+- `npm test` 200/200 (26 sad), `tsc --noEmit` čisté, `expo lint` čisté, `expo-doctor` 21/21.
+- Ověřeno hodnota za hodnotou, že každé nahrazení literálu tokenem zachovává původní číslo (size.hit=44, hitLarge=56, control=48, actionBar=96, pathCard=120, topBarBadge=32, material.collarRadius=2, svgType.label/plateKg, statSize M/L/XL). `dream.tsx` `typography.inputLarge.lineHeight` = 32, beze změny.
+- Web smoke test (`tools/flows/qa-step2.mjs`, light+dark, `tools/shots/qa-step2-r3`): celý flow onboarding → mapa → lekce → oslava → boss proběhl bez pageerror/console.error; DotSteps mezera 8px viditelná a bez rozbití layoutu; server po testu ukončen.
+- Grep na natvrdo psané UI rozměry/fontSize/hex v `app/` a `components/` mimo theme (SVG geometrie vyjmuta): 0 nálezů — problém B z kola 2 uzavřen.
+- Verdikt: SCHVÁLENO.
