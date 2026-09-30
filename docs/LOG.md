@@ -152,3 +152,9 @@ Nálady celebrate a sad v `components/mascot/SvgMascot.tsx` (spec §8). Mapován
 - Použití: hydratační brána v `app/_layout.tsx` (dřív `null`), `app/index.tsx` (načítání profilu, dřív `null`), `app/(tabs)/index.tsx` a `app/lesson/[id].tsx` (dřív prázdný View).
 - Screenshoty: `.superpowers/sdd/planB/shots/dotloader` (light, dark, reduced). Dočasná route byla smazána.
 - Otevřené: záře je aproximace CSS drop-shadow radiálním gradientem. Na nativu kryje hydrataci splash, takže loader v bráně je vidět jen na webu. Ukládání výsledku lekce (`busy`) loader zatím nemá (fáze 2).
+
+## 2026-09-30 · qa-agent · krok 3
+- `npm test` 237/237, typecheck, lint, expo-doctor 21/21 zelené.
+- Doplněn test `stageForXp(-10)` → 1. Prahy 499/500/1999/2000 a `anchors.test.ts` pro stage 1–3 prochází.
+- Snímky (web, light a dark): 3 stage × 4 nálady × kosmetika, reduce motion, potítka v celebrate, DotLoader. Regresní smoke core loopu kroků 1–2 prošel.
+- Verdikt SCHVÁLENO. Otevřené pro rating: kontrast šály v dark režimu, ramenní pás stage 3, dopad `motion.hop`. Detail v `docs/QA.md`.

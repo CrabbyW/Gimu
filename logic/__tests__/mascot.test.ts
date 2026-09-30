@@ -1,7 +1,7 @@
 import { STAGE_THRESHOLDS } from '@/data/xp';
 import { stageForXp, stageProgress } from '@/logic/mascot';
 
-test.each([[0, 1], [499, 1], [500, 2], [1999, 2], [2000, 3], [99999, 3]])('xp %i → stage %i', (xp, st) => {
+test.each([[-10, 1], [0, 1], [499, 1], [500, 2], [1999, 2], [2000, 3], [99999, 3]])('xp %i → stage %i', (xp, st) => {
   expect(stageForXp(xp, STAGE_THRESHOLDS)).toBe(st);
 });
 test('stageProgress', () => {

@@ -1,109 +1,39 @@
-# QA — krok 2 (core loop), kolo 3
+# QA — krok 3 (maskot dokončit + DotLoader)
 
-Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah spec §12 kroky 1–2. Ověřené opravy: cbc9b83, e413bca, 77301b7 (kolo 2). Kolo 3: design-tokenový refaktor od `6ef2b1b` — `size` tokeny nahrazují natvrdo psaná minHeight/height (44/48/56/96/120/32), `svgType`/`statSize` nahrazují literály ve `Stat`, `BarbellBoss`, `Plate`, nový `material.collarRadius` nahrazuje `radius.xs` v `Barbell.tsx`, `DotSteps` gap `space.xs_plus` (6) → `space.s` (8) — jediná záměrná vizuální změna.
+Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah spec §12 krok 3 (commity `e2b82c0..dce977a`), regresní smoke kroků 1–2.
 
 **Verdikt: SCHVÁLENO**
 
-## Kolo 3 — ověření refaktoru tokenů
+## Build a testy
+- `npm test`: 30 suites, 237/237 ✅ (po doplnění případu −10 XP)
+- `npm run typecheck` ✅ · `npm run lint` ✅ · `npx expo-doctor` 21/21 ✅
 
-Rozsah: `git diff 6ef2b1b..HEAD -- . ':!docs'` (21 souborů, README + app/components/theme; žádná logika).
-
-| Kontrola | Výsledek |
-|---|---|
-| `npm test` | ✅ 26 suites, 200 testů |
-| `tsc --noEmit` | ✅ |
-| `expo lint` | ✅ exit 0 |
-| `npx expo-doctor` | ✅ 21/21 |
-| web export + flow `qa-step2.mjs` (light i dark) | ✅ žádný pageerror ani console.error, snímky `tools/shots/qa-step2-r3` |
-
-Ruční ověření mapování hodnota-za-hodnotu v diffu (aby se potvrdilo, že vykreslený výstup je beze změny kromě DotSteps gapu):
-- `size.hit` 44 = staré `44` (LessonProgress HIT, NodePopover CLOSE_HIT, MilestoneChip minHeight, onboarding/milestones.tsx custom milník)
-- `size.hitLarge` 56 = staré `56` (Button minHeight, TopBar BAR_H, PlateNode MIN_HIT)
-- `size.control` 48 = staré `48` (SegmentedControl cell, TextField minHeight)
-- `size.actionBar` 96 = staré `96` (BigActionBar × 2)
-- `size.pathCard` 120 = staré `120` (PathCard minHeight)
-- `size.topBarBadge` 32 = staré `32` (TopBar Cell height)
-- `material.collarRadius` 2 = staré `radius.xs` 2 (Barbell Collar)
-- `svgType.label` (mono, 11, letterSpacing 2) = staré literály v `BarbellBoss` SvgText
-- `svgType.plateKg` (display, 22) = staré literál v `Plate` SvgText
-- `statSize` M/L/XL 56/88/120 = starý `fontSize` map v `Stat.tsx`
-- `dream.tsx` `typography.inputLarge.lineHeight` = 32 (ověřeno v `theme/tokens.ts:28`) = staré natvrdo `32` → beze změny
-- `DotSteps` gap `space.s` (8) nahrazuje `space.xs_plus` (6) — **jediná úmyslná vizuální změna**, viditelná a přijatelná na snímcích milestones (`light/dark-03-milestones.png`)
-
-Grep na zbylé natvrdo psané UI rozměry/fontSize/hex mimo `theme/` v `app/` a `components/` (SVG geometrie vyjmuta): 0 nálezů. Problém B z kola 2 (drobné literály mimo theme) je tímto vyřešen.
-
-Žádná chyba mapování tokenů, žádné zmenšené hit area, žádný přejmenovaný prop opomenutý v jiném souboru.
-
-## Build a nástroje
-
-| Kontrola | Výsledek |
-|---|---|
-| `npm test` | ✅ 26 suites, 200 testů |
-| `tsc --noEmit` | ✅ |
-| `expo lint` | ✅ exit 0 |
-| `npx expo-doctor` | ✅ 21/21 |
-| web export + flow (light i dark) | ✅ žádný pageerror ani console.error |
-
-Flow skript: `.superpowers/sdd/2026-09-29-opice-faze1-core-loop/tools/flows/qa-r2.mjs`, snímky `tools/shots/qa-r2`.
-
-## Problémy z kola 1
-
-| # | Problém | Stav | Důkaz |
-|---|---|---|---|
-| 1 | Opakovaný onboarding smaže data | ✅ opraveno | `/onboarding/path`, `/weight`, `/birth` s profilem → `/`, `activity` zůstává 1; webové Zpět → `/`, cesta `power` beze změny. Service druhý onboarding odmítne (`MockUserService.test.ts`). |
-| 2 | `expo-doctor` chce `expo-asset` | ✅ opraveno | `21/21 checks passed`, `expo-asset ~57.0.18` v package.json a pluginech. |
-| 3 | Zamčená lekce přes URL se spustí | ✅ opraveno | `/lesson/pw-1-5` ukáže „Nejdřív dokonči předchozí lekci.“ a „Zpět na mapu“, žádné Start ani Hotovo (`dark-06-locked.png`). Tlačítko vede na `/`. Aktuální i dokončená lekce se dál otevřou. |
-| 4 | Ukončení lekce bez historie nic neudělá | ✅ opraveno | `/lesson/pw-1-2` přímo URL → Ukončit → potvrdit → `/`, nic se neuloží. |
-| 5 | Hardcoded typografie a `MASCOT_COLORS` | ✅ opraveno | Všech 5 míst z kola 1 bere hodnoty z tokenů, `MASCOT_COLORS` je re-export tokenu `theme.mascot`. Zbytky viz problém B. |
-
-## Regrese flow (web, light i dark)
-
-✅ Čistý profil → `/onboarding/path` → 4 kroky → zrození (`01-birth.png`) → „Jdeme trénovat“ (dvojklik) → mapa. Lekce 1 → oslava, +32 XP → Pokračovat → uzel 2 `aktuální` → reload: uzel 1 `dokončená`, uzel 2 `aktuální`.
-
-Zrození: `completeOnboarding` zvýší `revision`, takže nový redirect v `onboarding/_layout` se spustí souběžně s `router.replace('/(tabs)')` v `birth.tsx`. Obojí vede na stejnou obrazovku. Ověřeno bez dvojité navigace a bez chyb.
-
-## Diff scan
-
-- `getLesson` počítá stav uzlu v rámci cesty lekce. Lekce jiné cesty, než má profil, je tedy `locked`, což je správně.
-- `LessonDetail.state` je nové povinné pole kontraktu. Jiná implementace zatím není (fáze 2 ho musí doplnit).
-- Test count: LOG boss uvádí 201, skutečně je 200. Jen nepřesnost v zápisu.
-
-## Spec bod po bodu (rozsah kroků 1–2)
-
-| Spec | Stav | Poznámka |
+## Spec §12 krok 3, bod po bodu
+| Bod | Stav | Důkaz |
 |---|---|---|
-| §1 cíl a rozsah (core loop) | ✅ | |
-| §2 stack (Expo 57, router, reanimated, zustand, svg) | ✅ | doctor 21/21 |
-| §3.1 struktura složek | ✅ | |
-| §3.2 tok dat přes services, `now` jako parametr | ✅ | |
-| §3.3 typy | ✅ | názvy dle R9 |
-| §3.4 contracts | ✅ | služby plánu B `notImplemented` záměrně |
-| §4 XP rozpis | ✅ | testy + ověřeno v UI |
-| §4 streak (přelom dne/měsíce, mezera) | ✅ | testy |
-| §4 stavy uzlů mapy | ✅ | testy + UI; guard při dokončení i při otevření |
-| §4 stage prahy | ✅ | testy |
-| §4 liga, comeback, cíl sezóny, graf váhy | ⚠️ plán B | |
-| §5 obsah (cesty, lekce, cviky) | ✅ | |
-| §6.1–6.2 směr, palety, kontrast | ✅ | contrast test |
-| §6.3 sezónní override | ⚠️ plán B | |
-| §6.4 typografie | ✅ | tokeny `input`, `inputLarge`, `counter`, `badgeLabel`; drobné zbytky viz problém B (nemá vliv na vzhled) |
-| §6.5 kotouče | ✅ | |
-| §6.6 tvary a spacing | ✅ | |
-| §6.7 motion | ✅ | pružiny jen na odměnách |
-| §6.8 výjimky skillu | ✅ | |
-| §7.1 onboarding (5 kroků, validace, zrození) | ✅ | s profilem přesměruje na mapu; service druhý onboarding odmítne |
-| §7.2 mapa | ✅ | |
-| §7.3 lekce + oslava | ✅ | krok 8 stage-up → plán B |
-| §7.4–7.10 stage-up, liga, progres, sezóna, šatník, notifikace, dev menu | ⚠️ plán B | |
-| §8 maskot stage 1 idle/happy | ✅ | stages 2–3, celebrate, sad → plán B |
-| §9 hydratace, migrate, error stav, přerušená lekce, změna dne | ✅ | notifikace → plán B |
-| §10 testy logiky (krok 1–2) | ✅ | liga/sezóna/recap → plán B |
-| §10 vizuální kontrola proti „Never“ | ✅ | review soubor, Step 4 |
-| §11 roadmapa TODO | ✅ | |
-| README | ✅ | aktuální, viz LOG 2026-09-30 (rating oprava kolo 1) |
+| Stage 2 a 3 (`SvgMascot` z `STAGE_GEOMETRY`) | ✅ | snímky `r-none`: 3 čitelné siluety, hlava se zmenšuje, ramena rostou |
+| Stage podle prahů 500 / 2000 | ✅ | `logic/__tests__/mascot.test.ts`: 499/500/1999/2000/99999 a nově −10 → 1 (poškozená data) |
+| Nálada celebrate | ✅ | paže nahoru (120/140/160° podle stage, ruling R32), opakované poskoky, reduce motion = statická póza |
+| Nálada sad | ✅ | uši dolů, pohled dolů, smutná pusa, bez pružiny. ⚠️ Zatím ji v appce nikdo nepředává (plán B: streak/liga v kroku 4) |
+| Kotvy stage 1–3 | ✅ | `anchors.test.ts` prochází pro 1–3 (viewBox, ruka na konci paže, hlava = střed) |
+| Kosmetika na kotvách | ✅ | tílko, mikina, šála (outfit i sezónní), čelenka, potítka, opasek ve všech stage. Šála v stage 3 nesedí v obličeji, potítka jdou s pažemi v celebrate (`m-wrist-*`) |
+| Rive stub | ✅ | `RiveMascot.tsx` kompiluje, import zakomentovaný, `riveInputs.test.ts` zelený, Expo Go beze změny |
+| DotLoader (požadavek uživatele) | ✅ | light a dark animuje (vlna a záře), reduce motion = statický gradient od středu; použit v `_layout`, `index`, `(tabs)/index`, `lesson/[id]`; `size.loader`/`size.loaderDot` z theme |
+| Šatník UI, liga, sezóna, progres, notifikace, dev menu | ⚠️ plán B | kroky 4–5, mimo rozsah |
 
-## Otevřené problémy (neblokující)
+## Regresní smoke kroků 1–2 (flow `qa-step2.mjs`, light + dark)
+✅ Onboarding validace (prázdné vstupy, nesmyslná váha) → zrození → mapa → lekce → oslava → odemčení další lekce → XP v top baru → persist po reloadu. Zamčená lekce přes URL se nedá dokončit, neznámá lekce ukáže chybu + „Zkusit znovu“, ukončení lekce dialogem neuloží aktivitu, boss dokončen.
 
-A. **K ruční kontrole na zařízení** — uživatel: zvuk `click` v tichém režimu iOS, haptika, Android hardware Zpět v lekci a na zrození, deep link na zamčenou lekci a na `/onboarding/path` s existujícím profilem (redirect bez probliknutí formuláře).
-B. ~~Drobné literály mimo theme~~ — ✅ vyřešeno v kole 3 (`theme/tokens.ts`: `size`, `material`, `svgType`, `statSize`).
-C. Plán B (liga, sezóna, stage-up, dev menu, README) — ⚠️ podle plánu.
+## Architektura
+✅ Žádné inline hex barvy v `components/`, `app/`, `lib/` (šála bere Winter Arc neutrály ze `SEASON_OVERRIDES`, tedy z theme). ✅ Spacing a radius jen ze škály §6.6, žádné numerické padding/margin/gap/borderRadius literály. ✅ Rozměry loaderu jsou tokeny `size.*`. Souřadnice SVG maskota jsou geometrie viewBoxu (`geometry.ts`), ne UI rozměry.
+
+## Oprava
+- `logic/__tests__/mascot.test.ts`: doplněn případ `stageForXp(-10)` → 1 (brief Task 18 Step 2). Logika už ho správně ořezávala.
+
+## Otevřené (neblokuje)
+- design / rating: v dark režimu šála (`#243039`) na pozadí málo výrazná, na srsti čitelná (R35).
+- design / rating: ramenní pás stage 3 působí mírně jako límec (Task 15).
+- motion / rating: `motion.hop` při opakovaných poskocích celebrate klesá ~16 pt pod klid.
+- boss (krok 4): nálada sad a `cosmetics` zatím nemají zdroj v appce (liga/streak, šatník).
+
+Snímky: `.superpowers/sdd/2026-09-29-opice-faze1-core-loop/tools/shots/qa-step3` a `qa-step3-loop`. Dočasná route `app/qa-preview.tsx` smazána, server ukončen, web-build odstraněn.
