@@ -1,6 +1,6 @@
 // Spacing, radiusy a typografie podle spec §6.4 a §6.6.
-export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 40, xxl: 64, xxxl: 104 } as const;
-export const radius = { s: 8, m: 12, l: 20, full: 999 } as const;
+export const space = { xs: 4, xs_plus: 6, s: 8, m: 16, l: 24, xl: 40, xxl: 64, xxxl: 104 } as const;
+export const radius = { xs: 2, s: 8, m: 12, l: 20, full: 999 } as const;
 // Názvy rodin = klíče předané do useFonts v app/_layout.tsx. Váha je součást rodiny:
 // fontWeight se s nimi nekombinuje (Android u vlastních fontů váhu nesyntetizuje).
 export const font = {

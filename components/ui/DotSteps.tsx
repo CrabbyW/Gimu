@@ -31,12 +31,13 @@ function Dot({ state }: { state: DotState }) {
 
 /** Řada teček průběhu: hotové plné, aktuální akcentová pilulka, budoucí obrys. */
 export function DotSteps({ total, current }: Props) {
+  const { space } = useTheme();
   return (
     <View
       accessible
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 1, max: total, now: current + 1 }}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: space.xs_plus }}
     >
       {Array.from({ length: total }, (_, i) => (
         <Dot key={i} state={i < current ? 'done' : i === current ? 'current' : 'future'} />

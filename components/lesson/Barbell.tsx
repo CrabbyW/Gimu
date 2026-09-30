@@ -122,7 +122,7 @@ function FlyingPlate({ kg, x, w, h, flight, opacity }: FlyingProps) {
 /** Objímka: před zacvaknutím čeká neviditelná o `shift` dál od kotoučů (ven), aby se nekřížila s letícím
  *  kotoučem; při dopadu dojede k němu a zároveň se objeví (průhlednost je odvozená z odstupu). */
 function Collar({ x, side, shift }: { x: number; side: 1 | -1; shift: SharedValue<number> }) {
-  const { c } = useTheme();
+  const { c, radius } = useTheme();
   const style = useAnimatedStyle(() => ({
     opacity: interpolate(shift.value, [0, COLLAR_TRAVEL], [1, 0], Extrapolation.CLAMP),
     transform: [{ translateX: side * shift.value }],
@@ -130,7 +130,7 @@ function Collar({ x, side, shift }: { x: number; side: 1 | -1; shift: SharedValu
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', left: x, top: AXIS.mid - COLLAR.h / 2, width: COLLAR.w, height: COLLAR.h, borderRadius: 2, backgroundColor: c.muted }, style]}
+      style={[{ position: 'absolute', left: x, top: AXIS.mid - COLLAR.h / 2, width: COLLAR.w, height: COLLAR.h, borderRadius: radius.xs, backgroundColor: c.muted }, style]}
     />
   );
 }
