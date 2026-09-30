@@ -3,7 +3,6 @@ import { useId } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Defs, Path, Pattern, RadialGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import type { NodeState } from '@/logic/map';
-import { copy } from '@/data/copy';
 import { inkOn, useTheme } from '@/theme';
 import type { PlateKg } from '@/types';
 
@@ -60,8 +59,7 @@ export function Plate({ kg, size, state, check = true }: Props) {
       <Circle cx={50} cy={50} r={40} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
       <Circle cx={50} cy={50} r={20} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
       <Circle cx={50} cy={50} r={9} fill={seasonal.mapBase} />
-      <SvgText x={50} y={36} fontFamily={font.display} fontSize={22} fill={ink} opacity={0.92} textAnchor="middle">{kg}</SvgText>
-      <SvgText x={50} y={80} fontFamily={font.mono} fontSize={9} fill={ink} opacity={0.6} textAnchor="middle" letterSpacing={1.5}>{copy.map.kgUnit}</SvgText>
+      <SvgText x={50} y={36} fontFamily={font.display} fontSize={22} fill={ink} textAnchor="middle">{kg}</SvgText>
       {state === 'done' && check ? (
         <Path d={CHECK_PATH} stroke={c.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       ) : null}

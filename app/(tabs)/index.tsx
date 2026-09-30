@@ -28,7 +28,7 @@ export default function TrainingScreen() {
 
   if (profile.status === 'error') return <ErrorState what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
   if (view.status === 'error') return <ErrorState what={copy.common.loadTarget.path} onRetry={view.retry} />;
-  if (view.status !== 'ready' || !stats || !data || !tierName) return <View style={{ flex: 1, backgroundColor: c.base }} />;
+  if (view.status !== 'ready' || !stats || !data) return <View style={{ flex: 1, backgroundColor: c.base }} />;
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <TopBar streak={stats.streak} streakBroken={stats.streakBroken} xp={stats.totalXp} tierLabel={tierName} />

@@ -45,3 +45,26 @@ export function segmentLength(a: { x: number; y: number }, b: { x: number; y: nu
   for (let i = 1; i <= samples; i++) { const q = at(i / samples); len += Math.hypot(q.x - p.x, q.y - p.y); p = q; }
   return len;
 }
+
+export type PopoverSide = 'above' | 'below';
+
+/** Strana popoveru u uzlu. Dokončený uzel otevírá kartu nad sebou, pryč od následujícího (aktuálního)
+ *  uzlu a opice, která sedí vedle něj; ostatní pod sebou. Když se preferovaná strana nevejde do
+ *  výřezu (a do mapy), zkusí druhou; když ani ta, vezme stranu s víc místem. */
+export function popoverSide(o: {
+  done: boolean;
+  nodeTop: number;
+  nodeBottom: number;
+  viewportTop: number;
+  viewportBottom: number;
+  room: number;
+}): PopoverSide {
+  const spaceAbove = o.nodeTop - Math.max(o.viewportTop, 0);
+  const spaceBelow = o.viewportBottom - o.nodeBottom;
+  const fits = (s: PopoverSide) => (s === 'above' ? spaceAbove : spaceBelow) >= o.room;
+  const preferred: PopoverSide = o.done ? 'above' : 'below';
+  const other: PopoverSide = o.done ? 'below' : 'above';
+  if (fits(preferred)) return preferred;
+  if (fits(other)) return other;
+  return spaceAbove > spaceBelow ? 'above' : 'below';
+}

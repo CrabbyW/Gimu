@@ -1,5 +1,6 @@
+import { X } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
@@ -13,6 +14,8 @@ export const POPOVER_W = 296;
 const ARROW = 14;
 const GAP = 12;
 const EDGE = 16;
+const CLOSE_ICON = 20;
+const CLOSE_HIT = 44;
 
 interface Props {
   title: string;
@@ -27,10 +30,12 @@ interface Props {
   mapWidth: number;
   mapHeight: number;
   onStart(): void;
+  /** Zavření: vlastní tlačítko a VoiceOver escape (modální karta nesmí uvěznit fokus). */
+  onClose(): void;
 }
 
 /** Karta k uzlu: název, kg · cviky · XP a akce. Otevírá se timingem (UI), bez pružiny. */
-export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above, mapWidth, mapHeight, onStart }: Props) {
+export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above, mapWidth, mapHeight, onStart, onClose }: Props) {
   const { c, space, radius } = useTheme();
   const { reduced } = useMotionSafe();
   const open = useSharedValue(0);
@@ -50,6 +55,7 @@ export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above
       // Zachytí tap, aby neprošel na podklad, který popover zavírá.
       onStartShouldSetResponder={() => true}
       accessibilityViewIsModal
+      onAccessibilityEscape={onClose}
       style={[
         { position: 'absolute', left, width, transformOrigin: above ? 'bottom' : 'top' },
         above ? { bottom: mapHeight - edgeY } : { top: edgeY },
@@ -57,7 +63,18 @@ export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above
       ]}
     >
       <View style={{ backgroundColor: c.raised, borderRadius: radius.l, padding: space.m, gap: space.s }}>
-        <Text variant="title" numberOfLines={2}>{title}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.s }}>
+          <Text variant="title" numberOfLines={2} style={{ flex: 1 }}>{title}</Text>
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel={copy.map.closePopover}
+            hitSlop={(CLOSE_HIT - CLOSE_ICON) / 2}
+            style={{ marginTop: space.xs }}
+          >
+            <X size={CLOSE_ICON} color={c.muted} strokeWidth={1.5} />
+          </Pressable>
+        </View>
         <Text variant="label" tone="muted">{copy.map.nodeMeta(kg, copy.map.exercises(exerciseCount), xp)}</Text>
         {state === 'locked' ? (
           <Text variant="caption" tone="muted" style={{ marginTop: space.xs }} accessibilityRole="alert">{copy.map.locked}</Text>

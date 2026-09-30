@@ -52,7 +52,7 @@ export const copy = {
     exercises: (n: number) => (n >= 5 ? `${n} cviků` : `${n} cviky`), streak: 'STREAK', xp: 'XP', days: 'dní',
     // Řádek v popoveru uzlu: „10 KG · 4 CVIKY · +20 XP“ (velká písmena dělá mono štítek).
     nodeMeta: (kg: number, exercises: string, xp: number) => `${kg} kg · ${exercises} · +${xp} XP`,
-    boss: 'BOSS', kgUnit: 'KG', closePopover: 'Zavřít detail lekce',
+    boss: 'BOSS', closePopover: 'Zavřít detail lekce',
     nodeState: { locked: 'zamčená', current: 'aktuální', done: 'dokončená' },
     nodeA11y: (order: number, title: string, kg: number, state: string) => `Lekce ${order}, ${title}, ${kg} kilogramů, ${state}`,
     league: (tier: string) => `LIGA · ${tier}`,

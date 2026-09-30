@@ -13,7 +13,7 @@ import type { LessonPathView, MapNode } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
 import { BarbellBoss } from './BarbellBoss';
-import { BOSS_SIZE, layoutNodes, type NodePosition } from './geometry';
+import { BOSS_SIZE, layoutNodes, popoverSide, type NodePosition } from './geometry';
 import { NodePopover } from './NodePopover';
 import { PathLine } from './PathLine';
 import { PlateNode } from './PlateNode';
@@ -24,7 +24,7 @@ const MASCOT_GAP = 16;
 const HOP_LIFT = -24;
 const HOP_MS = 360;
 const SECTION_LABEL_OFFSET = 32;
-const POPOVER_ROOM = 220; // odhad výšky popoveru; když se pod uzel do výřezu nevejde, otevře se nad ním
+const POPOVER_ROOM = 220; // odhad výšky popoveru (i se zavírací ikonou) pro volbu strany
 const TEXTURE_STEP = 24;
 
 interface Props {
@@ -152,8 +152,13 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
   const [shakes, setShakes] = useState<Record<string, number>>({});
   const onNodePress = (n: MapNode, shown: NodeState) => {
     const p = posOf(n.lesson.id);
-    // Nad uzlem, když by se karta pod ním nevešla do viditelné části mapy.
-    const above = p ? p.y + p.size / 2 + POPOVER_ROOM > scrollY.current + viewportH : false;
+    // Dokončený uzel nahoru (nepřekryje aktuální uzel ani opici), jinak dolů; podle místa ve výřezu.
+    const above = p
+      ? popoverSide({
+        done: shown === 'done', nodeTop: p.y - p.size / 2, nodeBottom: p.y + p.size / 2,
+        viewportTop: scrollY.current, viewportBottom: scrollY.current + viewportH, room: POPOVER_ROOM,
+      }) === 'above'
+      : false;
     setSelected((cur) => (cur?.id === n.lesson.id ? null : { id: n.lesson.id, above }));
     if (shown === 'locked') setShakes((s) => ({ ...s, [n.lesson.id]: (s[n.lesson.id] ?? 0) + 1 }));
   };
@@ -253,6 +258,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
           mapWidth={width}
           mapHeight={height}
           onStart={() => { setSelected(null); onOpenLesson(selectedNode.lesson.id); }}
+          onClose={() => setSelected(null)}
         />
       ) : null}
     </ScrollView>

@@ -1567,7 +1567,7 @@ export const dark = {
 export const light: Record<keyof typeof dark, string> = {
   base: '#EFEEEA', surface: '#E5E4DF', raised: '#F6F5F2', rule: '#C9C7C0', text: '#131316', muted: '#5E5E63',
   accent: '#FF6B35', onAccent: '#131316', accentText: '#AE3A0B',
-  plate5: '#A29E97', plate10: '#7D7A74', plate15: '#5A5752', plate20: '#353331', plate25: '#131316',
+  plate5: '#A29E97', plate10: '#8A867F', plate15: '#5A5752', plate20: '#353331', plate25: '#131316',
   plateRim: '#8E8A83', plateHighlight: 'rgba(255,255,255,0.18)', danger: '#B42328', success: '#2A7E3B',
 };
 export type Colors = Record<keyof typeof dark, string>;
