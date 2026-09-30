@@ -47,6 +47,9 @@ export const DREAM_MAX_LENGTH = 140;
 const DREAM_MIN_LENGTH = 3;
 export const isDreamValid = (dream: string): boolean => dream.trim().length >= DREAM_MIN_LENGTH;
 
+/** R41: karta vize se ukládá jako věta „Titulek. Řádek“, ne jen titulek — Progres ji zobrazuje celou. */
+export const composeDreamSentence = (title: string, line: string): string => `${title}. ${line}`;
+
 // Spec §7.1: vybírají se 2 až 3 milníky.
 export const MILESTONES_MIN = 2;
 export const MILESTONES_MAX = 3;

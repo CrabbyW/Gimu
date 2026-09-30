@@ -24,9 +24,9 @@ export default function DreamStep() {
   const dreamBody = useOnboardingDraft((s) => s.dreamBody);
   const set = useOnboardingDraft((s) => s.set);
   const options = useDreamOptions(path);
-  // Při návratu na krok se vlastní režim obnoví z uloženého textu, který není titulkem karty.
-  const [custom, setCustom] = useState(() => dreamBody !== '' && !options.some((o) => o.title === dreamBody));
-  const selectedId = custom ? null : options.find((o) => o.title === dreamBody)?.id ?? null;
+  // Při návratu na krok se vlastní režim obnoví z uloženého textu, který neodpovídá žádné kartě (R41: karta = věta).
+  const [custom, setCustom] = useState(() => dreamBody !== '' && !options.some((o) => o.sentence === dreamBody));
+  const selectedId = custom ? null : options.find((o) => o.sentence === dreamBody)?.id ?? null;
   const glyph = size.choiceGlyph;
   const selectSound = useSfx('select');
   // R40: výběr vize = haptics.tick (jako krok 1) + tichý klik.
@@ -47,7 +47,7 @@ export default function DreamStep() {
               title={o.title}
               line={o.line}
               selected={o.id === selectedId}
-              onPress={() => { feedback(); setCustom(false); set({ dreamBody: o.title }); }}
+              onPress={() => { feedback(); setCustom(false); set({ dreamBody: o.sentence }); }}
               renderGlyph={(color, bg) => <DreamGlyph glyph={o.glyph} color={color} bg={bg} size={glyph} />}
             />
           </Animated.View>

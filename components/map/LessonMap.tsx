@@ -21,8 +21,6 @@ import { HAPPY_MS, UNLOCK_STEPS, findUnlockPair, unlockFrame, type UnlockPhase }
 
 const MASCOT = MASCOT_SIZES.S;
 const MASCOT_GAP = 16;
-const HOP_LIFT = -24;
-const HOP_CROUCH = 4;
 const HOP_MS = 360;
 const SECTION_LABEL_OFFSET = 32;
 const POPOVER_ROOM = 220; // odhad výšky popoveru (i se zavírací ikonou) pro volbu strany
@@ -122,26 +120,20 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
   const spot = mascotPos && mascotNode ? mascotSpot(mascotPos, cx, mascotNode.lesson.isBoss) : null;
   const mx = useSharedValue(spot?.x ?? 0);
   const my = useSharedValue(spot?.y ?? 0);
-  const lift = useSharedValue(0);
   const hopping = pair !== null && !reduced && phase === 5;
   // Fáze 5 trvá HAPPY_MS: po celou dobu skoku a doskoku má opice radost.
   const mood: Mood = hopping ? 'happy' : stats.streakBroken ? 'sad' : 'idle';
   useEffect(() => {
     if (!spot) return;
     if (!hopping) { mx.value = spot.x; my.value = spot.y; return; }
-    // Fáze 5: skok po oblouku na nový uzel, pak radost a konec sekvence.
-    // UX2 skok: přikrčení (+4 pt, 70 ms) → odraz ease-out do výšky 24 pt → pád s gravitací na nový uzel.
-    // Vodorovně dojíždí `ease.out` přes celý skok. Bez pružiny: dřív `motion.hop` propadal pod cílový uzel.
+    // Fáze 5: přesun na nový uzel. Svislý skok (přikrčení → odraz → pád s gravitací → dopad se
+    // squashem) je jen v `<Mascot />` (mood 'happy', `motion.hop`) — mapa dřív hrála vlastní
+    // svislý `lift`, takže opice skočila dvakrát. Tady zůstává jen vodorovný přejezd.
     const h = motion.hop;
     const airMs = HOP_MS - h.crouchMs;
     const travel = { duration: airMs, easing: ease.out };
     mx.value = withSequence(withTiming(mx.value, { duration: h.crouchMs }), withTiming(spot.x, travel));
     my.value = withSequence(withTiming(my.value, { duration: h.crouchMs }), withTiming(spot.y, travel));
-    lift.value = withSequence(
-      withTiming(HOP_CROUCH, { duration: h.crouchMs, easing: ease.out }),
-      withTiming(HOP_LIFT, { duration: airMs / 2, easing: ease.out }),
-      withTiming(0, { duration: airMs / 2, easing: ease.gravity }),
-    );
     const t = setTimeout(() => {
       advance(6);
       endRef.current?.();
@@ -151,7 +143,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spot?.x, spot?.y, hopping]);
   const mascotStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: mx.value - MASCOT / 2 }, { translateY: my.value - MASCOT / 2 + lift.value }],
+    transform: [{ translateX: mx.value - MASCOT / 2 }, { translateY: my.value - MASCOT / 2 }],
   }));
 
   // --- Popover a zatřesení ---

@@ -1,7 +1,7 @@
 import { copy } from '@/data/copy';
 import { DREAM_OPTIONS } from '@/data/dreams';
 import { MILESTONE_PRESETS } from '@/data/milestones';
-import { DREAM_MAX_LENGTH, isDreamValid } from '@/logic/onboarding';
+import { composeDreamSentence, DREAM_MAX_LENGTH, isDreamValid } from '@/logic/onboarding';
 import type { MilestoneUnit, PathId } from '@/types';
 
 const PATHS: PathId[] = ['power', 'bodyControl', 'strength'];
@@ -31,6 +31,18 @@ describe('vize těla (R36)', () => {
 
   test('řádek karty se vejde na jeden řádek (≤ 34 znaků)', () => {
     for (const o of Object.values(copy.onboarding.dream.options)) expect(o.line.length).toBeLessThanOrEqual(34);
+  });
+
+  test('R41: složená věta „Titulek. Řádek“ je unikátní napříč cestami, platná a v limitu délky', () => {
+    const sentences = PATHS.flatMap((p) => DREAM_OPTIONS[p].map((o) => {
+      const meta = copy.onboarding.dream.options[o.id];
+      return composeDreamSentence(meta.title, meta.line);
+    }));
+    expect(new Set(sentences).size).toBe(sentences.length);
+    for (const s of sentences) {
+      expect(isDreamValid(s)).toBe(true);
+      expect(s.length).toBeLessThanOrEqual(DREAM_MAX_LENGTH);
+    }
   });
 });
 

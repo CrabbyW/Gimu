@@ -11,7 +11,14 @@ jest.mock('react-native-safe-area-context', () => require('react-native-safe-are
 /* eslint-enable @typescript-eslint/no-require-imports */
 // Ikony jsou ESM balíček mimo transformaci Jestu; pro chování obrazovky nejsou podstatné.
 jest.mock('lucide-react-native', () => ({ Plus: () => null }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), back: jest.fn() },
+  // Test renderer nemá skutečnou navigaci; obrazovka je vždy "zaostřená", efekt jen naběhne jednou při mountu.
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    const { useEffect } = jest.requireActual('react');
+    useEffect(() => effect(), []); // eslint-disable-line react-hooks/exhaustive-deps
+  },
+}));
 
 let renderer: TestRenderer.ReactTestRenderer | null = null;
 const render = () => {

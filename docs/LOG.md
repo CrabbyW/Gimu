@@ -229,3 +229,13 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 **Udělal:** re-check kroku 3 po UX1 a UX2. Testy 257/257, typecheck, lint, expo-doctor 21/21. Core loop na webu light i dark, každá cesta, karty vize, „Vlastní…“ (prázdné, >140), změna cesty, milníky, váha, reload, rychlé klepání, reduce motion. Ověřeno, že click.wav nikde nezůstal a expo-audio chyby polyká. Verdikt SCHVÁLENO (docs/QA.md).
 **Rozhodl sám:** dvojité posunutí onboardingu rychlým klepnutím hodnotím jako neblokující (bez neplatného stavu).
 **Otevřené:** zámek navigace v OnboardingFrame (boss), count-up na JS a dvojitý poskok (motion), zvuky na zařízení (ruční kontrola), dreamBody titulek vs. věta (design).
+
+## 2026-09-30 · boss+motion · opravy před ratingem A2
+**Udělal:**
+1. `OnboardingFrame` (boss): rychlé dvojité/trojité ťuknutí na Pokračovat přeskakovalo krok (milníky → váha → zrození bez zastavení na váze). `onContinue` je teď za bránou `firedRef`, kterou otevírá/zavírá `useFocusEffect` z `expo-router` (SDK 57) — projde nejvýš jedno volání na zaostřenou obrazovku, další ťuknutí se ignorují, dokud se krok nerozostří a znovu nezaostří. Kroky cesty, vize, milníků a váhy sdílejí `OnboardingFrame`, takže je oprava pokrývá všechny; krok zrození má vlastní `submitting.current` zámek a nebyl dotčen.
+2. Mapa (motion): opice při odemčení uzlu skákala dvakrát — `<Mascot />` už hraje vlastní poskok (přikrčení → odraz → pád s gravitací → dopad se squashem, `motion.hop`) při změně nálady na „happy“, a `LessonMap` navíc přehrával vlastní svislý `lift` (stejné konstanty, druhá vrstva). Svislý `lift` v `LessonMap` je pryč (`HOP_LIFT`/`HOP_CROUCH` smazány), zůstal jen vodorovný přejezd mezi uzly; jediný skok teď hraje maskot sám.
+3. R41 (boss): `dreamBody` u karty ukládá `"<Titulek>. <Řádek>"` (např. „Muscle-up. Přes hrazdu čistě, bez kopání.“), ne jen titulek — Progres zobrazuje `dreamBody` celý nahoře. `useDreamOptions` (hooks/useOnboardingDraft.ts) skládá větu přes novou `composeDreamSentence` z `logic/onboarding.ts`; `isDreamPreset` porovnává proti větám, ne titulkům. Krok vize (`app/onboarding/dream.tsx`) ukládá `o.sentence` a obnovu vlastního režimu i výběru karty po návratu na krok poznává podle věty. Vlastní text uživatele zůstává beze změny.
+
+**Testy:** nový `components/onboarding/__tests__/OnboardingFrame.test.tsx` (brána onContinue: trojité ťuknutí = 1 volání, rozostření+zaostření ji znovu otevře). `dream.test.tsx` přepsán na věty a doplněn test obnovy výběru karty po návratu. `data/__tests__/onboardingChoices.test.ts` doplněn o unikátnost/délku/validitu složených vět (R41). `npm test` 261/261, `npx tsc --noEmit` čisto, `npx expo lint` čisto.
+
+**Otevřené:** žádné z těchto tří položek.

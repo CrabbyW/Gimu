@@ -1,5 +1,6 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import type { ReactNode } from 'react';
+import { useCallback, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { BigActionBar } from '@/components/ui/BigActionBar';
@@ -25,6 +26,21 @@ interface Props {
 /** Rám kroku onboardingu: ukazatel kroků, titulek vlevo, obsah a spodní lišta Zpět / Pokračovat. */
 export function OnboardingFrame({ step, title, lead, canContinue, onContinue, children }: Props) {
   const { c, space } = useTheme();
+  // Boss oprava: rychlé dvojité/trojité ťuknutí na Pokračovat přeskakovalo krok (např. milníky → váha →
+  // zrození bez zastavení na váze). Bez debounce na hodnotu: gate se otevře jen zaostřením/reostřením
+  // obrazovky, ne časem, takže na stejném kroku projde vždy nejvýš jedno volání onContinue.
+  const firedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      firedRef.current = false;
+      return () => { firedRef.current = false; };
+    }, []),
+  );
+  const guardedContinue = () => {
+    if (firedRef.current) return;
+    firedRef.current = true;
+    onContinue();
+  };
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.base }}>
       <Screen edges={['top']} scroll>
@@ -40,7 +56,7 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
         <View style={{ marginTop: space.xl }}>{children}</View>
       </Screen>
       <BigActionBar
-        primary={{ label: copy.common.continue, onPress: onContinue, disabled: !canContinue }}
+        primary={{ label: copy.common.continue, onPress: guardedContinue, disabled: !canContinue }}
         secondary={step > 1 ? { label: copy.common.back, onPress: () => router.back() } : undefined}
       />
     </KeyboardAvoidingView>
