@@ -142,3 +142,11 @@ Blokuje bug 1 (dvojí tap → tab Sezóna, reprodukovatelné na webu) a 10 (oře
 - **Bug 1:** `lib/navGuard.ts`, oslava a stage-up při odchodu volají `markNavigation()`, tab bar 600 ms ignoruje `tabPress` (`screenListeners` v `app/(tabs)/_layout.tsx`). Ověřeno na 320×568 dvěma tapy 120 ms po sobě: oslava → `/`, stage-up → `/?unlocked=bc-1-boss`.
 - **Bug 10:** hlavička ligy na kompaktním displeji má pozici o stupeň menší (Stat M) a užší mezery. Na 320 je XP i jednotka uvnitř obrazu.
 - **Bug 3 (rozpis XP):** zalomení na 320 jde jen mezi položkami a nic se neořízne. Je to záměrné rozhodnutí design-agenta (LOG, kolo 1), ne bug.
+
+## Demo fáze 4, kolo 3
+
+- Bug 1 (dvojtap „Pokračovat“, 120 ms, dark, 320×568 i 390×844): OK. Replay bc-1-1 → `/` (mapa); bc-1-8 oslava → `/stage-up?from=1&to=2&unlocked=bc-1-boss`; stage-up dvojtap → `/?unlocked=bc-1-boss` (mapa). Žádný propad do jiného tabu. Flow `tools/flows/bug1b.mjs`.
+- Bug 10 (liga 320 pt): OK. Demo profil (3ciferné XP) i po 3× dev „+500 XP“ (1676 XP) — číslo i jednotka „XP“ celé v hlavičce i v řádku žebříčku, nic neořezáno. Dlouhé jméno soupeře zkráceno elipsou („Kuba_Sh...“) — záměrné, ne bug. Flow `tools/flows/bug10.mjs`, snímky `shots/demo-f4d/bug10-320|390/`.
+- `npm test` 46/46 suites, 391/391 testů; `npm run typecheck` čisté; `npm run lint` čisté.
+
+Verdikt: **SCHVÁLENO** (bugy 2–9 ověřeny v kole 2).

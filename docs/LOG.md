@@ -370,3 +370,5 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
   - Rozpis XP v oslavě se na 320 pt zalamuje mezi položkami. Je to záměr design-agenta, ne bug.
   - Video (Remotion) uživatel nechce. Zůstává jen kostra v `video/`, appka na ní nezávisí.
 - **Otevřené:** dvojtap, haptika a zvuk na fyzickém zařízení, VoiceOver a TalkBack (K ruční kontrole).
+
+- qa-agent (demo f4, kolo 3): ověřen bug 1 (dvojtap na oslavě i stage-upu končí na mapě, 320 i 390, dark) a bug 10 (4ciferné XP v lize na 320 pt bez ořezu). Testy/typecheck/lint zelené. Přidán flow `tools/flows/bug10.mjs`. Verdikt SCHVÁLENO. Otevřené: nic.
