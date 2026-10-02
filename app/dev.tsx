@@ -2,6 +2,8 @@ import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
+import { Reveal } from '@/components/ui/choreo';
+import { intro } from '@/lib/motion';
 import { Screen } from '@/components/ui/Screen';
 import { Telemetry } from '@/components/ui/Telemetry';
 import { Text } from '@/components/ui/Text';
@@ -59,7 +61,7 @@ export default function DevScreen() {
             { key: copy.dev.offset, value: copy.dev.offsetValue(days, hours) },
           ]}
         />
-        <Group>
+        <Group i={0}>
           <Button
             label={copy.dev.demo} disabled={busy}
             onPress={run(async () => { setDevTimeOffset(0); await services.user.loadDemo(now()); router.replace('/(tabs)'); })}
@@ -67,7 +69,7 @@ export default function DevScreen() {
           <Button variant="secondary" label={copy.dev.xp} disabled={busy} onPress={run(() => services.user.grantDevXp(500, now()))} />
           <Button variant="secondary" label={copy.dev.stage(stage)} disabled={busy} onPress={run(() => setStageOverride(nextStageOverride(stage)))} />
         </Group>
-        <Group>
+        <Group i={1}>
           <Button
             variant="secondary" label={copy.dev.seasonEnd} disabled={busy}
             onPress={run(async () => {
@@ -80,7 +82,7 @@ export default function DevScreen() {
           <Button variant="secondary" label={copy.dev.streakLoss} disabled={busy} onPress={run(() => setDevTimeOffset(streakLossOffset(offset)))} />
           <Button variant="secondary" label={copy.dev.resetTime} disabled={busy || offset === 0} onPress={run(() => setDevTimeOffset(0))} />
         </Group>
-        <Group>
+        <Group i={2}>
           <Pressable
             disabled={busy}
             accessibilityRole="button"
@@ -98,7 +100,9 @@ export default function DevScreen() {
   );
 }
 
-function Group({ children }: { children: ReactNode }) {
+/** Skupina akcí; motion: skupiny nastoupí po sobě (fade + 10 pt, po 50 ms) při otevření. */
+function Group({ children, i }: { children: ReactNode; i: number }) {
   const { space } = useTheme();
-  return <View style={{ gap: space.s }}>{children}</View>;
+  const M = intro.modal;
+  return <Reveal play delay={M.at + M.step * (i + 1)} rise={M.rise} style={{ gap: space.s }}>{children}</Reveal>;
 }

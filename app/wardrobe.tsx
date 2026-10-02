@@ -3,6 +3,7 @@ import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
 import { CosmeticTile, type WardrobeItem } from '@/components/cosmetics/CosmeticTile';
+import { Reveal } from '@/components/ui/choreo';
 import { Mascot } from '@/components/mascot';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -17,7 +18,7 @@ import { useProfileStats } from '@/hooks/useProfileStats';
 import { useSeasonStatus } from '@/hooks/useSeason';
 import { useWardrobe, wardrobeActions } from '@/hooks/useWardrobe';
 import { haptics } from '@/lib/haptics';
-import { hopMs } from '@/lib/motion';
+import { hopMs, intro, motion, stagger } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot } from '@/types';
 
@@ -70,6 +71,12 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
   const stage = useDisplayStage(stats?.stage ?? 1);
   const season = useSeasonStatus();
   const [slot, setSlot] = useState<CosmeticSlot>('outfit');
+  // Motion: nástup obsahu modalu (náhled → přepínač → dlaždice po 35 ms); změna slotu přehraje jen
+  // mřížku, rychleji (`motion.ui`, po 30 ms).
+  // Modal je nová scéna: nástup se hraje při každém otevření.
+  const first = true;
+  const [changed, setChanged] = useState(false);
+  const M = intro.modal;
   const [width, setWidth] = useState(0);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -118,36 +125,48 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: space.xxl, gap: space.l }} showsVerticalScrollIndicator={false}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.l }}>
+      <Reveal play={first} delay={M.at} rise={M.rise} style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.l }}>
         <Mascot stage={stage} mood={cheer ? 'happy' : 'idle'} size={size.wardrobePreview} cosmetics={equipped} accessibilityLabel={copy.wardrobe.preview} />
         <Stat label={copy.wardrobe.bananas} value={bananas} unit="" size="M" />
-      </View>
+      </Reveal>
 
+      <Reveal play={first} delay={M.at + M.step} rise={M.rise}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ minWidth: size.slotSegment * SLOTS.length }}>
         <View style={{ width: size.slotSegment * SLOTS.length }}>
           <SegmentedControl
             options={SLOTS.map((s) => ({ value: s, label: copy.wardrobe.slots[s] }))}
             value={slot}
-            onChange={(s) => { haptics.tick(); setSlot(s); setNote(null); }}
+            onChange={(s) => { haptics.tick(); setSlot(s); setChanged(true); setNote(null); }}
           />
         </View>
       </ScrollView>
+      </Reveal>
 
       {note ? <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
 
       <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: gap, rowGap: space.l }}>
         {visible.length === 0 ? <Text variant="body" tone="muted">{copy.wardrobe.empty}</Text>
-          : tile > 0 ? visible.map((item) => (
-            <CosmeticTile
-              key={item.cosmetic.id}
-              item={item}
-              width={tile}
-              stage={stage}
-              seasonName={seasonName(item.cosmetic.seasonId)}
-              disabled={busy}
-              onPress={() => onTile(item)}
-            />
-          )) : null}
+          : tile > 0 ? visible.map((item, i) => {
+            const opening = !changed;
+            return (
+              <Reveal
+                key={`${slot}:${item.cosmetic.id}`}
+                play={opening ? first : true}
+                delay={opening ? M.at + M.step * 2 + stagger(i, 35) : stagger(i, 30)}
+                rise={8}
+                config={opening ? motion.enter : motion.ui}
+              >
+                <CosmeticTile
+                  item={item}
+                  width={tile}
+                  stage={stage}
+                  seasonName={seasonName(item.cosmetic.seasonId)}
+                  disabled={busy}
+                  onPress={() => onTile(item)}
+                />
+              </Reveal>
+            );
+          }) : null}
       </View>
     </ScrollView>
   );

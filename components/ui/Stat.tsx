@@ -8,6 +8,8 @@ interface Props {
   value: string | number; unit: string; label?: string; size?: StatSize;
   /** Barva čísla; akcent jen tam, kde je číslo subjektem obrazovky (+XP v oslavě). */
   tone?: TextTone;
+  /** Konečná hodnota pro čtečku, když `value` právě napočítává (count-up). */
+  a11yValue?: string | number;
 }
 
 // Optické vyrovnání první číslice na levou hranu štítku (v em). Odhad pro Inter Light s tabulárními
@@ -16,13 +18,13 @@ interface Props {
 const opticalInset = (value: string | number): number => (String(value).replace(/^\+/, '').startsWith('1') ? 0.12 : 0.04);
 
 /** Obří tabulární číslo s malou jednotkou na jeho účaří (`20 kg`, `12 dní`). */
-export function Stat({ value, unit, label, size = 'M', tone = 'text' }: Props) {
+export function Stat({ value, unit, label, size = 'M', tone = 'text', a11yValue }: Props) {
   const { space } = useTheme();
   const px = statSize[size];
   // Na akcentové ploše oslavy by `muted` jednotka zanikla: štítek i jednotka přejdou do `onAccent`.
   const quiet: TextTone = tone === 'onAccent' ? 'onAccent' : 'muted';
   return (
-    <View accessible accessibilityLabel={[label, `${value} ${unit}`].filter(Boolean).join(', ')}>
+    <View accessible accessibilityLabel={[label, `${a11yValue ?? value} ${unit}`].filter(Boolean).join(', ')}>
       {label ? <Text variant="label" tone={quiet} style={{ marginBottom: space.xs }}>{label}</Text> : null}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.xs }}>
         <Text variant="display" tone={tone} maxFontSizeMultiplier={1} style={{ fontSize: px, lineHeight: px * 1.05, letterSpacing: px * tracking.display, marginLeft: -px * opticalInset(value) }}>{value}</Text>

@@ -12,6 +12,8 @@ import { enterRise } from '@/lib/motion';
 import { useTheme } from '@/theme';
 
 const TOTAL_STEPS = 5;
+/** Natažení linky kroku začne v druhé polovině přechodu `slide_from_right`, aby ho bylo vidět. */
+const STEP_LINE_DELAY = 220;
 
 interface Props {
   /** Číslo kroku 1–5. */
@@ -51,6 +53,8 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
           label={copy.onboarding.stepKey}
           value={copy.onboarding.stepValue(step, TOTAL_STEPS)}
           accessibilityLabel={copy.onboarding.stepA11y(step, TOTAL_STEPS)}
+          // Motion: linka se dotáhne z předchozího kroku na tento, až dojede přechod obrazovky (slide).
+          drawFrom={step > 1 ? (step - 2) / TOTAL_STEPS : undefined} drawDelay={STEP_LINE_DELAY}
         />
         {/* Nástup kroku (UX2): titulek, pak lead, pak obsah (ten si řadí vlastní sled). Víc vzduchu nad titulkem. */}
         <View style={{ marginTop: space.xxl, gap: space.s }}>

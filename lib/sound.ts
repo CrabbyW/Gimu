@@ -1,5 +1,6 @@
 import { setAudioModeAsync, useAudioPlayer, type AudioSource } from 'expo-audio';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 
 // Zvuky jsou doplněk jako haptika: chyba přehrávání se tiše spolkne.
 // Tichý režim (iOS přepínač ticho/zvonění) se respektuje: expo-audio má výchozí playsInSilentMode true,
@@ -31,6 +32,9 @@ export function useSfx(name: SfxName) {
   const player = useAudioPlayer(SOURCES[name]);
   useEffect(ensureMode, []);
   return () => {
+    // Web (jen dev náhled): expo-audio volá `HTMLMediaElement.play()` bez `.catch`, takže autoplay politika
+    // nebo přerušení seekem vyhodí nezachycený promise rejection (pageerror). Na webu je zvuk proto vypnutý.
+    if (Platform.OS === 'web') return;
     try {
       void player.seekTo(0).catch(() => undefined);
       player.play();

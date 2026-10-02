@@ -1,10 +1,11 @@
 import { View } from 'react-native';
 import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
+import { Reveal } from '@/components/ui/choreo';
 import { RegMark } from '@/components/ui/RegMark';
 import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { motion } from '@/lib/motion';
+import { intro, motion } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { Exercise } from '@/types';
 import { ExerciseSilhouette } from './ExerciseSilhouette';
@@ -19,6 +20,7 @@ const enter = FadeInRight.duration(motion.enter.duration).easing(motion.enter.ea
 const exit = FadeOutLeft.duration(motion.uiExit.duration).easing(motion.uiExit.easing);
 
 const SILHOUETTE_HEIGHT = 200;
+const { step, rise } = intro.card;
 // ~62 znaků Interu 16 pt (průměrná šířka znaku ≈ 8 pt): pohodlná délka řádku na tabletu.
 const MEASURE = 496;
 
@@ -33,15 +35,19 @@ export function ExerciseCard({ exercise, timer }: Props) {
     <Animated.View entering={enter} exiting={exit} style={{ gap: space.xl }}>
       <RegMark>
         <View style={{ height: SILHOUETTE_HEIGHT, backgroundColor: c.surface, borderRadius: radius.l, padding: space.m }}>
-          <ExerciseSilhouette id={exercise.silhouette} />
+          {/* Vnitřní sled karty (motion): panel přijede s kartou, silueta v něm se zvedne o úder později,
+              pak název, množství a popis po 50 ms. Celý sled ≤ 260 + 200 ms. */}
+          <Reveal play delay={step} rise={rise} style={{ flex: 1 }}><ExerciseSilhouette id={exercise.silhouette} /></Reveal>
         </View>
       </RegMark>
       <View style={{ gap: space.m }}>
-        <Text variant="display" accessibilityRole="header">{exercise.name}</Text>
-        {exercise.type === 'hold' && timer
-          ? <HoldTimer timer={timer} />
-          : <Stat size="L" value={exercise.amount} unit={copy.lesson.reps} />}
-        <Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{exercise.description}</Text>
+        <Reveal play delay={step * 2} rise={rise}><Text variant="display" accessibilityRole="header">{exercise.name}</Text></Reveal>
+        <Reveal play delay={step * 3} rise={rise}>
+          {exercise.type === 'hold' && timer
+            ? <HoldTimer timer={timer} />
+            : <Stat size="L" value={exercise.amount} unit={copy.lesson.reps} />}
+        </Reveal>
+        <Reveal play delay={step * 4} rise={rise}><Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{exercise.description}</Text></Reveal>
       </View>
     </Animated.View>
   );

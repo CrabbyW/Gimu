@@ -5,13 +5,16 @@ import { LeagueResultBanner } from '@/components/league/LeagueResultBanner';
 import { LeagueRow } from '@/components/league/LeagueRow';
 import { TierBadge } from '@/components/league/TierBadge';
 import { ZoneDivider } from '@/components/league/ZoneDivider';
+import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Stat } from '@/components/ui/Stat';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
+import { useCountUp } from '@/hooks/useCountUp';
 import { useLeague } from '@/hooks/useLeague';
+import { intro, motion, stagger } from '@/lib/motion';
 import { tierName } from '@/hooks/useTierName';
 import { services, type LeagueWeekView } from '@/services';
 import { useTheme } from '@/theme';
@@ -50,6 +53,10 @@ function Standings({ view }: { view: LeagueWeekView }) {
   const myIndex = items.findIndex((it) => it.kind === 'row' && it.entry.isMe);
   const myXp = view.entries[view.myRank - 1]?.xpThisWeek ?? 0;
   const name = tierName(view.tier);
+  // Motion: úvodní sled jen při prvním zobrazení tabu: hlavička (XP napočítá), řádky po 45 ms,
+  // vlastní řádek jako vyvrcholení po dojetí scrollu.
+  const first = useFirstShow('tab:league');
+  const xpShown = useCountUp(myXp, motion.countFirstMs + 200, 0, { enabled: first, delayMs: intro.league.header + 80 });
 
   // Po otevření tabu dojet tak, aby vlastní řádek byl uprostřed seznamu (hlavička je mimo scroll, zůstává). S 0 XP (začátek týdne) se nescrolluje:
   // přednost má hlavička s výzvou, vlastní řádek je stejně poslední.
@@ -70,15 +77,15 @@ function Standings({ view }: { view: LeagueWeekView }) {
         />
       ) : null}
       {/* Hlavička mimo FlatList (sticky): odznak, pozice, XP a odpočet zůstanou vidět i po dojetí na vlastní řádek. */}
-      <View style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
+      <Reveal play={first} delay={intro.league.header} rise={intro.tab.rise} style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
           <TierBadge tierName={name} />
           <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size="L" />
-          <Stat label={copy.league.myXp} value={myXp} unit={copy.league.xp} size="M" />
+          <Stat label={copy.league.myXp} value={xpShown} a11yValue={myXp} unit={copy.league.xp} size="M" />
         </View>
         <Countdown endsAt={view.endsAt} />
         {myXp === 0 ? <Text variant="body" tone="muted">{copy.league.emptyWeek}</Text> : null}
-      </View>
+      </Reveal>
       <FlatList
         ref={list}
         data={items}
@@ -87,8 +94,8 @@ function Standings({ view }: { view: LeagueWeekView }) {
         onScrollToIndexFailed={() => undefined}
         contentContainerStyle={{ paddingBottom: space.xxl }}
         renderItem={({ item, index }) => (item.kind === 'row'
-          ? <LeagueRow entry={item.entry} rank={item.rank} index={index} />
-          : <ZoneDivider kind={item.zone} />)}
+          ? <LeagueRow entry={item.entry} rank={item.rank} index={index} play={first} />
+          : <Reveal play={first} delay={intro.league.rows + stagger(index)} rise={0}><ZoneDivider kind={item.zone} /></Reveal>)}
         ListFooterComponent={
           <Text variant="caption" tone="muted" style={{ paddingHorizontal: space.l, paddingTop: space.l }}>{copy.league.explainer}</Text>
         }

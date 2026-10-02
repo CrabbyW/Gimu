@@ -150,3 +150,42 @@ export const enterRise = (i = 0, rise = 12) => FadeInDown
 
 /** Při zapnutém omezení pohybu se pružiny nahradí 200ms fade a pulzování se vypne. */
 export const useMotionSafe = () => ({ reduced: useReducedMotion() });
+
+/**
+ * Úvodní choreografie obrazovek (brag `cinematic` zkrocený: jeden řízený sled na obrazovku, každý úder
+ * dosedne, než přijde další). Časy v ms od zobrazení obsahu. Přehrává se jen při prvním zobrazení
+ * v relaci (`useFirstShow`); s omezeným pohybem vše jedním 200ms prolnutím bez posunu.
+ */
+export const intro = {
+  /** Mapa: hlavička po položkách → linka sekce se natáhne → kotouče se usadí shora dolů → opice poslední. */
+  map: {
+    streak: 0,
+    telemetry: 70,
+    countMs: 600,
+    line: 140,
+    lineMs: 520,
+    plates: 220,
+    plateStep: 55,
+    /** Kolik uzlů nad aktuálním se usazuje (výš jsou mimo výřez, stojí hned). */
+    plateWindow: 6,
+    /** Výška pádu kotouče (pt) před dosednutím pružinou `motion.settle`. */
+    plateDrop: 28,
+    /** Opice dorazí po dosednutí aktuálního uzlu. */
+    mascotLag: 180,
+    mascotDrop: 20,
+  },
+  /** Taby: hlavička → obsah po blocích; vlastní řádek ligy jako vyvrcholení po dojetí scrollu. */
+  tab: { step: 70, rise: 12 },
+  league: { header: 0, rows: 120, meLag: 140, meRise: 16, stripeMs: 260 },
+  /** Mřížka aktivity se vyplní po dnech (35 buněk za ≤ 420 ms). */
+  grid: { at: 140, step: 12, cellMs: 180 },
+  bars: { at: 260, step: 70, ms: 520 },
+  chart: { at: 380, ms: 900 },
+  profile: { frameMs: 520, xpAt: 160, countMs: 700 },
+  /** Lekce: vnitřní sled karty cviku (silueta → název → množství → popis). */
+  card: { step: 50, rise: 10 },
+  /** Start výdrže: prstenec se nadechne (0.97) a rozhodně vrátí. */
+  holdStart: { dip: 0.97 },
+  /** Modaly: obsah nastoupí po přechodu listu (Stack modal ~350 ms se překrývá). */
+  modal: { at: 60, step: 50, rise: 10 },
+};

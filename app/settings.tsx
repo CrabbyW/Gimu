@@ -2,16 +2,20 @@ import { router } from 'expo-router';
 import { ChevronRight, Minus, Plus, X } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
+import { Reveal } from '@/components/ui/choreo';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
 import { Toggle } from '@/components/ui/Toggle';
+import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { useSettingsPrefs, type ThemePreference } from '@/hooks/useSettingsPrefs';
 import { haptics } from '@/lib/haptics';
+import { intro } from '@/lib/motion';
 import { opacity, useTheme } from '@/theme';
 
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
@@ -27,6 +31,9 @@ export default function SettingsScreen() {
   const stats = useProfileStats(profile.status === 'ready' ? profile.data : null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Motion: řádky nastoupí po sobě (fade + 10 pt, 260 ms punch, po 50 ms) při každém otevření.
+  // Modal je nová scéna: nástup se hraje při každém otevření.
+  const first = true;
 
   const web = Platform.OS === 'web';
   const denied = !web && prefs.permission === 'denied';
@@ -48,7 +55,7 @@ export default function SettingsScreen() {
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={{ paddingBottom: space.xxl }} showsVerticalScrollIndicator={false}>
-        <Row>
+        <Row i={0} play={first}>
           <Text variant="label" tone="muted">{copy.settings.theme}</Text>
           <SegmentedControl
             options={THEMES.map((t) => ({ value: t, label: copy.settings.themeOptions[t] }))}
@@ -57,7 +64,7 @@ export default function SettingsScreen() {
           />
         </Row>
 
-        <Row>
+        <Row i={1} play={first}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
             <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.reminder}</Text>
             <Toggle value={on} disabled={blocked} label={copy.settings.reminder} onChange={(v) => { haptics.tick(); void prefs.setEnabled(v); }} />
@@ -85,12 +92,13 @@ export default function SettingsScreen() {
           </View>
         </Row>
 
-        <Row>
+        <Row i={2} play={first}>
           <Button label={copy.settings.sendTest} variant="secondary" disabled={blocked || prefs.permission !== 'granted' || busy} onPress={() => void sendTest()} />
           {note ? <Text variant="label" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
         </Row>
 
         {__DEV__ ? (
+          <Reveal play={first} delay={intro.modal.at + intro.modal.step * 3} rise={intro.modal.rise}>
           <Pressable
             onPress={() => router.push('/dev')}
             accessibilityRole="link"
@@ -100,22 +108,32 @@ export default function SettingsScreen() {
             <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.dev}</Text>
             <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
           </Pressable>
+          </Reveal>
         ) : null}
       </ScrollView>
     </Screen>
   );
 }
 
-function Row({ children }: { children: ReactNode }) {
+function Row({ children, i, play }: { children: ReactNode; i: number; play: boolean }) {
   const { c, space } = useTheme();
-  return <View style={{ paddingVertical: space.l, gap: space.m, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>{children}</View>;
+  const M = intro.modal;
+  return (
+    <Reveal play={play} delay={M.at + M.step * i} rise={M.rise} style={{ paddingVertical: space.l, gap: space.m, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
+      {children}
+    </Reveal>
+  );
 }
 
 function StepButton({ label, disabled, onPress, children }: { label: string; disabled: boolean; onPress(): void; children: ReactNode }) {
   const { c, size, radius } = useTheme();
+  const feedback = usePressFeedback(0.92);
   return (
+    <Animated.View style={feedback.style}>
     <Pressable
       onPress={onPress}
+      onPressIn={feedback.onPressIn}
+      onPressOut={feedback.onPressOut}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -124,5 +142,6 @@ function StepButton({ label, disabled, onPress, children }: { label: string; dis
     >
       {children}
     </Pressable>
+    </Animated.View>
   );
 }

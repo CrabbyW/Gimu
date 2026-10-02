@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
-import Animated, { useAnimatedProps, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeOut, useAnimatedProps, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { ease, motion, useMotionSafe } from '@/lib/motion';
+import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
 import { stroke, useTheme } from '@/theme';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
@@ -32,6 +32,15 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
     if (reduced || status !== 'running' || secondsLeft > PULSE_FROM || secondsLeft === 0) return;
     scale.set(withSequence(withTiming(1.06, motion.press), withTiming(1, motion.release)));
   }, [secondsLeft, status, reduced, scale]);
+  // Start výdrže (motion): měřidlo se nadechne (0.97, press 90 ms) a rozhodně vrátí (release 220 ms punch),
+  // potvrzení, že odpočet běží. Jen z „ready“, ne při pokračování po pauze.
+  const prev = useRef(status);
+  useEffect(() => {
+    const from = prev.current;
+    prev.current = status;
+    if (reduced || from !== 'ready' || status !== 'running') return;
+    scale.set(withSequence(withTiming(intro.holdStart.dip, motion.press), withTiming(1, motion.release)));
+  }, [status, reduced, scale]);
   // Konec výdrže (UX2): číslo i prstenec jednou tvrdě „dosednou“ spolu s haptikou Medium (1 → 1.1 → 1).
   useEffect(() => {
     if (reduced || status !== 'done') return;
@@ -59,7 +68,11 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
       </Animated.View>
       <Animated.View style={[pulse, { alignItems: 'center' }]}>
         <Stat size="L" value={secondsLeft} unit={copy.lesson.seconds} />
-        {status === 'ready' ? <Text variant="label" tone="muted" style={{ marginTop: space.xs }}>{copy.lesson.holdReady}</Text> : null}
+        {status === 'ready' ? (
+          <Animated.View exiting={FadeOut.duration(motion.uiExit.duration).easing(motion.uiExit.easing)}>
+            <Text variant="label" tone="muted" style={{ marginTop: space.xs }}>{copy.lesson.holdReady}</Text>
+          </Animated.View>
+        ) : null}
       </Animated.View>
     </View>
   );

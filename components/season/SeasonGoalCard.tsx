@@ -50,7 +50,8 @@ export function SeasonGoalCard({ progress, onRecord }: Props) {
       <View accessible accessibilityLabel={copy.season.progressA11y(shown, decimal(target), unit)}>
         <Stat value={counted} unit={copy.season.progressOf(decimal(target), unit)} size="L" />
       </View>
-      <MeasureLine progress={ratio} accessibilityLabel={copy.season.progressA11y(shown, decimal(target), unit)} />
+      {/* Motion: linka se natáhne souběžně s count-upem čísla (400 ms), jeden úder. */}
+      <MeasureLine progress={ratio} accessibilityLabel={copy.season.progressA11y(shown, decimal(target), unit)} drawFrom={0} drawMs={motion.countFirstMs} />
       {met ? <Text variant="body" tone="muted">{copy.season.met}</Text> : null}
       {goal.kind === 'milestone' && onRecord ? <RecordValue initial={goal.current} onRecord={onRecord} /> : null}
     </View>

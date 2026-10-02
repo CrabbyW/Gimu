@@ -8,6 +8,7 @@ import { SeasonDays } from '@/components/season/SeasonDays';
 import { SeasonGoalCard } from '@/components/season/SeasonGoalCard';
 import { SeasonHeader } from '@/components/season/SeasonHeader';
 import { Button } from '@/components/ui/Button';
+import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { Card } from '@/components/ui/Card';
 import { DotLoader, DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -20,7 +21,7 @@ import { useNow } from '@/hooks/useNow';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { seasonActions, useSeasonProgress, useSeasonStatus } from '@/hooks/useSeason';
-import { enterSafe, useMotionSafe } from '@/lib/motion';
+import { enterSafe, intro, useMotionSafe } from '@/lib/motion';
 import { diffDays, toISODate } from '@/logic/dates';
 import type { SeasonStatus } from '@/services/contracts';
 import { useTheme } from '@/theme';
@@ -64,6 +65,8 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
   const stats = useProfileStats(profile.status === 'ready' ? profile.data : null);
   const stage = useDisplayStage(stats?.stage ?? 1);
   const { reduced } = useMotionSafe();
+  // Motion: úvodní sled jen při prvním zobrazení tabu: hlavička sezóny, pak obsah o úder později.
+  const first = useFirstShow('tab:season');
   // „Lock in“ potvrzení: karta cíle vjede jen v okamžiku, kdy cíl právě vznikl (ne při každém otevření tabu).
   const [prevGoal, setPrevGoal] = useState(goal);
   const [justLocked, setJustLocked] = useState(false);
@@ -80,8 +83,8 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: space.xxl }} showsVerticalScrollIndicator={false}>
-      <SeasonHeader season={season} daysLeft={daysLeft} />
-      <View style={{ paddingHorizontal: space.l, paddingTop: space.xl, gap: space.xl }}>
+      <Reveal play={first} rise={intro.tab.rise}><SeasonHeader season={season} daysLeft={daysLeft} /></Reveal>
+      <Reveal play={first} delay={intro.tab.step * 2} rise={intro.tab.rise} style={{ paddingHorizontal: space.l, paddingTop: space.xl, gap: space.xl }}>
         {!active ? (
           <View style={{ gap: space.l, alignItems: 'flex-start' }}>
             <Text variant="body" tone="muted">{copy.season.endedBody}</Text>
@@ -118,7 +121,7 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
             <RewardCard season={season} stage={stage} />
           </>
         )}
-      </View>
+      </Reveal>
     </ScrollView>
   );
 }

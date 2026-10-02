@@ -2,16 +2,21 @@ import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { BigActionBar } from '@/components/ui/BigActionBar';
+import { Reveal } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
 import { TextField } from '@/components/ui/TextField';
+import { usePressFeedback } from '@/components/ui/usePressFeedback';
+import { useSelectionProgress } from '@/components/ui/useSelectionProgress';
 import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
 import { seasonActions, useSeasonStatus } from '@/hooks/useSeason';
+import { intro, motion, stagger } from '@/lib/motion';
 import { validateSeasonGoal, type SeasonGoalCheck } from '@/logic/season';
 import { useTheme } from '@/theme';
 import type { Milestone, Season, SeasonGoal, UserProfile } from '@/types';
@@ -111,7 +116,8 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.base }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen edges={['top']} scroll>
         <View style={{ paddingTop: space.m, gap: space.xl }}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.m }}>
+          {/* Motion: hlavička → dlaždice 2×2 po 50 ms → pole hodnoty (při změně typu znovu, `motion.ui`). */}
+          <Reveal play delay={intro.modal.at} rise={intro.modal.rise} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.m }}>
             <View style={{ flex: 1, gap: space.s, paddingTop: space.l }}>
               <Text variant="label" tone="muted">{season.name}</Text>
               <Text variant="display" accessibilityRole="header">{t.goalTitle}</Text>
@@ -125,14 +131,15 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
             >
               <X size={size.icon} color={c.text} strokeWidth={stroke.icon} />
             </Pressable>
-          </View>
+          </Reveal>
 
           <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s }}>
-            {KINDS.map((k) => (
-              <KindTile key={k} title={t.goalKinds[k]} line={t.goalKindLines[k]} selected={kind === k} onPress={() => { setKind(k); setError(null); }} />
+            {KINDS.map((k, i) => (
+              <KindTile i={i} key={k} title={t.goalKinds[k]} line={t.goalKindLines[k]} selected={kind === k} onPress={() => { setKind(k); setError(null); }} />
             ))}
           </View>
 
+          <Reveal key={kind ?? 'none'} play={kind !== null} rise={8} config={motion.ui}>
           {kind === 'activeDays' || kind === 'lessons' ? (
             <TextField
               label={t.goalValue[kind]}
@@ -168,6 +175,7 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
               {error ? <Text variant="caption" style={{ color: c.danger }} accessibilityLiveRegion="polite">{error}</Text> : null}
             </View>
           ) : null}
+          </Reveal>
         </View>
       </Screen>
       <BigActionBar primary={{ label: t.lockIn, onPress: () => { void submit(); }, disabled: !kind || !filled || busy }} />
@@ -176,29 +184,42 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
 }
 
 /** Dlaždice typu cíle (2×2): stejná gramatika jako karty volby v onboardingu, výběr = proužek v `text`. */
-function KindTile({ title, line, selected, onPress }: { title: string; line: string; selected: boolean; onPress(): void }) {
+function KindTile({ title, line, selected, onPress, i }: { title: string; line: string; selected: boolean; onPress(): void; i: number }) {
   const { c, space, radius, size, stroke } = useTheme();
+  // Motion: nástup ve sledu, stisk 0.98 (bez pružiny), proužek výběru vyroste scaleY 0.3 → 1 (`motion.ui`).
+  const feedback = usePressFeedback(0.98);
+  const sel = useSelectionProgress(selected);
+  const stripe = useAnimatedStyle(() => ({ opacity: sel.value, transform: [{ scaleY: 0.3 + 0.7 * sel.value }] }));
   return (
+    <Reveal play delay={intro.modal.at + intro.modal.step + stagger(i, intro.modal.step)} rise={intro.modal.rise} style={{ flexBasis: '45%', flexGrow: 1 }}>
+    <Animated.View style={feedback.style}>
     <Pressable
       onPress={onPress}
+      onPressIn={feedback.onPressIn}
+      onPressOut={feedback.onPressOut}
       accessibilityRole="radio"
       accessibilityLabel={`${title}. ${line}`}
       accessibilityState={{ selected, checked: selected }}
       style={({ pressed }) => ({
-        flexBasis: '45%', flexGrow: 1, minHeight: size.choiceCard, padding: space.m, gap: space.xs,
+        minHeight: size.choiceCard, padding: space.m, gap: space.xs,
         borderRadius: radius.l, backgroundColor: pressed || selected ? c.raised : c.surface,
       })}
     >
-      {selected ? <View style={{ position: 'absolute', left: 0, top: space.m, bottom: space.m, width: stroke.focus, backgroundColor: c.text }} /> : null}
+      <Animated.View style={[stripe, { position: 'absolute', left: 0, top: space.m, bottom: space.m, width: stroke.focus, backgroundColor: c.text }]} />
       <Text variant="bodyStrong" tone={selected ? 'text' : 'muted'}>{title}</Text>
       <Text variant="caption" tone="muted">{line}</Text>
     </Pressable>
+    </Animated.View>
+    </Reveal>
   );
 }
 
 /** Řádek volby milníku: kruh výběru (obrys → plné jádro) a popisek, dotyková plocha 44 pt. */
 function RadioRow({ label, selected, onPress }: { label: string; selected: boolean; onPress(): void }) {
   const { c, space, size, radius } = useTheme();
+  // Motion: jádro výběru vyroste 0.4 → 1 s prolnutím (`motion.ui`, zrušení `uiExit`), bez pružiny.
+  const sel = useSelectionProgress(selected);
+  const dot = useAnimatedStyle(() => ({ opacity: sel.value, transform: [{ scale: 0.4 + 0.6 * sel.value }] }));
   return (
     <Pressable
       onPress={onPress}
@@ -208,7 +229,7 @@ function RadioRow({ label, selected, onPress }: { label: string; selected: boole
       style={{ minHeight: size.hit, flexDirection: 'row', alignItems: 'center', gap: space.m }}
     >
       <View style={{ width: size.icon, height: size.icon, borderRadius: radius.full, borderWidth: 1, borderColor: selected ? c.text : c.muted, alignItems: 'center', justifyContent: 'center' }}>
-        {selected ? <View style={{ width: size.dot, height: size.dot, borderRadius: radius.full, backgroundColor: c.text }} /> : null}
+        <Animated.View style={[dot, { width: size.dot, height: size.dot, borderRadius: radius.full, backgroundColor: c.text }]} />
       </View>
       <Text variant="body" style={{ flexShrink: 1 }}>{label}</Text>
     </Pressable>

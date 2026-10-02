@@ -10,6 +10,7 @@ import { MilestoneSheet } from '@/components/progress/MilestoneSheet';
 import { NumberSheet } from '@/components/progress/NumberSheet';
 import { WeightChart } from '@/components/progress/WeightChart';
 import { Button } from '@/components/ui/Button';
+import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Stat } from '@/components/ui/Stat';
@@ -22,7 +23,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { progressActions, useProgressView } from '@/hooks/useProgressView';
 import { haptics } from '@/lib/haptics';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { intro, motion, stagger, useMotionSafe } from '@/lib/motion';
 import { parseWeight } from '@/logic/onboarding';
 import { useTheme } from '@/theme';
 import type { MascotStage, Milestone, UserProfile } from '@/types';
@@ -57,6 +58,10 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
   const [editing, setEditing] = useState<Milestone | null>(null);
   const [weightOpen, setWeightOpen] = useState(false);
   const [celebration, setCelebration] = useState<Celebration | null>(null);
+  // Motion: úvodní sled jen při prvním zobrazení tabu. Sekce nastoupí po 70 ms, mřížka se vyplní po dnech,
+  // lišty milníků se natáhnou, graf se vykreslí čarou.
+  const first = useFirstShow('tab:progress');
+  const T = intro.tab;
 
   if (!view) return null;
   const { grid, chart, milestones, dreamBody } = view;
@@ -76,19 +81,19 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space.l, paddingBottom: space.xxl, gap: space.xl }} keyboardShouldPersistTaps="handled">
-        {dreamBody ? <DreamBodyCard text={dreamBody} /> : null}
+        {dreamBody ? <Reveal play={first} rise={T.rise}><DreamBodyCard text={dreamBody} /></Reveal> : null}
 
-        <Section label={copy.progress.activityLabel}>
-          <ActivityGrid cells={grid} />
+        <Section label={copy.progress.activityLabel} play={first} delay={T.step}>
+          <ActivityGrid cells={grid} play={first} />
           <Telemetry items={[{ key: copy.progress.activeKey, value: copy.progress.activeDays(activeCount) }]} />
         </Section>
 
-        <Section label={copy.progress.milestonesLabel}>
+        <Section label={copy.progress.milestonesLabel} play={first} delay={T.step * 2}>
           {milestones.length === 0 ? <Text variant="body" tone="muted">{copy.progress.noMilestones}</Text> : (
             <View>
               {milestones.map((m, i) => (
                 <View key={m.id} style={i > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule } : undefined}>
-                  <MilestoneRow milestone={m} onPress={() => setEditing(m)} />
+                  <MilestoneRow milestone={m} onPress={() => setEditing(m)} play={first} delay={intro.bars.at + stagger(i, intro.bars.step)} />
                 </View>
               ))}
             </View>
@@ -96,12 +101,12 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
         </Section>
 
         {chart ? (
-          <Section label={copy.progress.weightLabel}>
+          <Section label={copy.progress.weightLabel} play={first} delay={T.step * 3}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
               {latest !== null ? <Stat value={fmtKg(latest)} unit={copy.progress.weightUnit} size="M" /> : null}
               <Telemetry items={[{ key: copy.progress.weightTarget, value: fmtKg(chart.targetKg), unit: copy.progress.weightUnit }]} style={{ paddingBottom: space.s }} />
             </View>
-            <WeightChart model={chart} />
+            <WeightChart model={chart} play={first} />
             <Button label={copy.progress.logWeight} variant="secondary" onPress={() => setWeightOpen(true)} />
           </Section>
         ) : null}
@@ -128,13 +133,13 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
   );
 }
 
-function Section({ label, children }: { label: string; children: ReactNode }) {
+function Section({ label, children, play = false, delay = 0 }: { label: string; children: ReactNode; play?: boolean; delay?: number }) {
   const { space } = useTheme();
   return (
-    <View style={{ gap: space.m }}>
+    <Reveal play={play} delay={delay} rise={intro.tab.rise} style={{ gap: space.m }}>
       <Text variant="label" tone="muted" accessibilityRole="header">{label}</Text>
       {children}
-    </View>
+    </Reveal>
   );
 }
 

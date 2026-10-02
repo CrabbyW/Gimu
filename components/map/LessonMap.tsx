@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { Mascot, MASCOT_SIZES } from '@/components/mascot';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
-import { ease, motion, useMotionSafe } from '@/lib/motion';
+import { ease, intro as T, motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import type { LessonPathView, MapNode } from '@/services/contracts';
 import { useTheme } from '@/theme';
@@ -35,6 +35,8 @@ interface Props {
   onOpenLesson(id: string): void;
   /** Sekvence doběhla (nebo byla přeskočena); volající smaže route param. */
   onUnlockSequenceEnd?(): void;
+  /** Úvodní sled (motion, první zobrazení): kotouče se usadí shora dolů k aktuálnímu uzlu, opice poslední. */
+  intro?: boolean;
 }
 
 /** Opice sedí vedle uzlu na opačné straně vlny. */
@@ -44,7 +46,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean) => {
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd }: Props) {
+export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false }: Props) {
   const { c, space, seasonal } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -72,6 +74,14 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
     const cur = s.key === pairKey ? s.phase : 0;
     return cur < next ? { key: pairKey, phase: next } : s;
   }), [pairKey]);
+  // --- Úvodní sled (motion): jen bez odemykací sekvence. Plán se rozhodne jednou při mountu. ---
+  const [plan] = useState(() => {
+    if (!intro || pair) return null;
+    const ci = Math.max(0, view.currentLessonId ? flat.findIndex((n) => n.lesson.id === view.currentLessonId) : flat.length - 1);
+    const from = Math.max(0, ci - T.map.plateWindow);
+    const at = (i: number) => (i < from ? null : T.map.plates + (Math.min(i, ci) - from) * T.map.plateStep);
+    return { ci, from, at, mascotAt: T.map.plates + (ci - from) * T.map.plateStep + T.map.mascotLag };
+  });
   // S omezeným pohybem se sekvence nepřehrává: rovnou konečný stav.
   const frame = unlockFrame(pair && !reduced ? phase : null);
   const endRef = useRef(onUnlockSequenceEnd);
@@ -109,9 +119,10 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
     if (pair && !reduced && phase === 1) { scrollToNode(pair.prevId, true); initialScrollDone.current = true; return; }
     if ((!pair || reduced) && !initialScrollDone.current && view.currentLessonId) {
       initialScrollDone.current = true;
-      scrollToNode(view.currentLessonId, true);
+      // Při úvodním sledu skok bez animace: kotouče se usazují v klidném výřezu, ne během rolování.
+      scrollToNode(view.currentLessonId, !plan);
     }
-  }, [pair, reduced, phase, viewportH, scrollToNode, view.currentLessonId]);
+  }, [pair, reduced, phase, viewportH, scrollToNode, view.currentLessonId, plan]);
 
   // --- Opice ---
   const mascotNodeId = pair ? (frame.mascotOn === 'prev' ? pair.prevId : pair.nextId) : view.currentLessonId;
@@ -142,8 +153,20 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
     // Spouští se změnou cílové pozice nebo začátkem skoku.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spot?.x, spot?.y, hopping]);
+  // Příchod opice v úvodním sledu: poslední úder, spadne o 20 pt a dosedne pružinou `motion.settle`
+  // (fyzický prvek). Omezený pohyb: jen prolnutí 200 ms.
+  const arrive = useSharedValue(plan ? 0 : 1);
+  useEffect(() => {
+    if (!plan) return;
+    arrive.value = reduced
+      ? withTiming(1, { ...motion.calmFade, reduceMotion: ReduceMotion.Never })
+      : withDelay(plan.mascotAt, withSpring(1, motion.settle));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const dropMascot = reduced ? 0 : T.map.mascotDrop;
   const mascotStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: mx.value - MASCOT / 2 }, { translateY: my.value - MASCOT / 2 }],
+    opacity: Math.min(1, arrive.value * 1.6),
+    transform: [{ translateX: mx.value - MASCOT / 2 }, { translateY: my.value - MASCOT / 2 - (1 - arrive.value) * dropMascot }],
   }));
 
   // --- Popover a zatřesení ---
@@ -215,7 +238,12 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
         const isPrev = pair?.prevId === n.lesson.id;
         const w = n.lesson.isBoss ? BOSS_SIZE.w : p.size;
         return (
-          <View key={n.lesson.id} style={{ position: 'absolute', left: p.x - w / 2, top: p.y - p.size / 2, zIndex: selected?.id === n.lesson.id ? 2 : 0 }}>
+          <SettleIn
+            key={n.lesson.id}
+            at={plan ? (i > plan.ci ? -1 : plan.at(i)) : null}
+            fadeAt={plan ? plan.at(plan.ci) ?? 0 : 0}
+            style={{ position: 'absolute', left: p.x - w / 2, top: p.y - p.size / 2, zIndex: selected?.id === n.lesson.id ? 2 : 0 }}
+          >
             {n.lesson.isBoss ? (
               <BarbellBoss
                 state={state} accessibilityLabel={label} onPress={() => onNodePress(n, state)}
@@ -229,7 +257,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
                 justCompleted={isPrev && frame.prevCheck === 'draw'} checkHidden={isPrev && frame.prevCheck === 'hidden'}
               />
             )}
-          </View>
+          </SettleIn>
         );
       })}
 
@@ -260,6 +288,30 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Usazení uzlu v úvodním sledu. `at` = ms dopadu shora (kotouč spadne o 28 pt a dosedne pružinou
+ *  `motion.settle`, fyzický prvek), `-1` = uzel pod aktuálním se jen prolne (`motion.enter`) v okamžiku
+ *  usazení aktuálního, `null` = bez animace. Omezený pohyb: všechny jedním prolnutím 200 ms.
+ *  Uzel je klepnutelný od prvního snímku (animace interakci neblokuje). */
+function SettleIn({ at, fadeAt, style, children }: { at: number | null; fadeAt: number; style: object; children: ReactNode }) {
+  const { reduced } = useMotionSafe();
+  const [anim] = useState(at);
+  const t = useSharedValue(anim === null ? 1 : 0);
+  useEffect(() => {
+    if (anim === null) return;
+    if (reduced) t.value = withTiming(1, { ...motion.calmFade, reduceMotion: ReduceMotion.Never });
+    else if (anim < 0) t.value = withDelay(fadeAt, withTiming(1, motion.enter));
+    else t.value = withDelay(anim, withSpring(1, motion.settle));
+    // Rozhodne se jednou při mountu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const drop = reduced || (anim ?? 0) < 0 ? 0 : T.map.plateDrop;
+  const a = useAnimatedStyle(() => ({
+    opacity: Math.min(1, t.value * 1.8),
+    transform: [{ translateY: -(1 - t.value) * drop }],
+  }));
+  return <Animated.View style={[style, a]}>{children}</Animated.View>;
+}
 
 /** Závoj: popover je modální vrstva, sousední uzly a opice pod ním záměrně ustoupí.
  *  Prolne se stejným presetem jako popover (motion.ui, 180 ms), takže oba naběhnou spolu.

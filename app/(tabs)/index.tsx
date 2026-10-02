@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { LessonMap } from '@/components/map/LessonMap';
+import { useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TopBar, type SectionProgress } from '@/components/ui/TopBar';
@@ -39,8 +40,12 @@ export default function TrainingScreen() {
   if (view.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.path} onRetry={view.retry} />;
   if (view.status !== 'ready' || !stats || !data) return <DotLoaderScreen />;
   return (
+    <MapContent
+      unlocked={unlocked ?? null}
+      render={(intro) => (
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <TopBar
+        intro={intro}
         streak={stats.streak} streakBroken={stats.streakBroken} xp={stats.totalXp} tierLabel={tierName}
         section={currentSection(view.data)}
       />
@@ -51,7 +56,18 @@ export default function TrainingScreen() {
         unlockedLessonId={unlocked ?? null}
         onOpenLesson={(id) => router.push({ pathname: '/lesson/[id]', params: { id } })}
         onUnlockSequenceEnd={clearUnlocked}
+        intro={intro}
       />
     </View>
+      )}
+    />
   );
+}
+
+/** Úvodní sled mapy (motion) jen při prvním zobrazení obsahu a ne přes odemykací sekvenci. Samostatná
+ *  komponenta, aby se „první zobrazení“ rozhodlo až s daty (ne během načítání). */
+function MapContent({ unlocked, render }: { unlocked: string | null; render(intro: boolean): ReactNode }) {
+  const first = useFirstShow('tab:map');
+  const [intro] = useState(first && !unlocked);
+  return <>{render(intro)}</>;
 }
