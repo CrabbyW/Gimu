@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import { useEffect } from 'react';
 import Animated, {
   cancelAnimation, Easing, useAnimatedProps, useSharedValue, withRepeat, withTiming, type SharedValue,
@@ -47,13 +48,16 @@ export function ExerciseSilhouette({ id }: { id: SilhouetteId }) {
   const [a, b] = SILHOUETTES[id];
   const vb = poseFrame(id);
   // Zem drží spodní hranu karty; postava se zvětší, aby vyplnila výšku nebo šířku.
+  // Dekorativní: Svg na webu atributy přístupnosti propouští do DOM, proto je skrývá obalový View.
   return (
-    <Svg width="100%" height="100%" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMax meet" accessible={false}>
+    <View style={{ flex: 1, alignSelf: 'stretch' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Svg width="100%" height="100%" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMax meet">
       <Line x1={vb.x - 200} y1={GROUND_Y + STROKE / 2} x2={vb.x + vb.w + 200} y2={GROUND_Y + STROKE / 2} stroke={c.rule} strokeWidth={1.5} strokeLinecap="round" />
       {BONES.map(([from, to]) => (
         <Bone key={`${from}-${to}`} a0={a.joints[from]} a1={b.joints[from]} b0={a.joints[to]} b1={b.joints[to]} t={t} color={c.text} />
       ))}
       <Head h0={a.head} h1={b.head} t={t} color={c.text} />
     </Svg>
+    </View>
   );
 }

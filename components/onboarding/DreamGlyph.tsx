@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import type { DreamGlyphId } from '@/hooks/useOnboardingDraft';
 
@@ -13,9 +14,11 @@ interface Props {
 /** Plochý glyf vize těla ze skládaných kruhů, stejný jazyk jako `PathGlyph`. Dekorativní: význam nese text karty. */
 export function DreamGlyph({ glyph, color, bg, size }: Props) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 48 48" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Svg width={size} height={size} viewBox="0 0 48 48">
       {SHAPES[glyph](color, bg)}
     </Svg>
+    </View>
   );
 }
 

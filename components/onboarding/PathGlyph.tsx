@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '@/theme';
 import type { PathId } from '@/types';
@@ -10,7 +11,8 @@ interface Props { path: PathId; /** Barva tvaru (`muted`, u vybrané karty `text
 export function PathGlyph({ path, color, bg }: Props) {
   const SIZE = useTheme().size.glyph;
   return (
-    <Svg width={SIZE} height={SIZE} viewBox="0 0 48 48" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Svg width={SIZE} height={SIZE} viewBox="0 0 48 48">
       {path === 'power' ? (
         // Kruh s vyříznutou výsečí 90°: směr, výbuch.
         <Path d="M24 24 L24 4 A20 20 0 1 1 4 24 Z" fill={color} />
@@ -28,5 +30,6 @@ export function PathGlyph({ path, color, bg }: Props) {
         </>
       )}
     </Svg>
+    </View>
   );
 }

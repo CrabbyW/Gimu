@@ -58,7 +58,7 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
       </Svg>
       </Animated.View>
       <Animated.View style={[pulse, { alignItems: 'center' }]}>
-        <Stat size="XL" value={secondsLeft} unit={copy.lesson.seconds} />
+        <Stat size="L" value={secondsLeft} unit={copy.lesson.seconds} />
         {status === 'ready' ? <Text variant="label" tone="muted" style={{ marginTop: space.xs }}>{copy.lesson.holdReady}</Text> : null}
       </Animated.View>
     </View>
