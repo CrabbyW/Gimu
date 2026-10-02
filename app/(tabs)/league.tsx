@@ -79,8 +79,8 @@ function Standings({ view }: { view: LeagueWeekView }) {
       ) : null}
       {/* Hlavička mimo FlatList (sticky): odznak, pozice, XP a odpočet zůstanou vidět i po dojetí na vlastní řádek. */}
       <Reveal play={first} delay={intro.league.header} rise={intro.tab.rise} style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
-        {/* Na 320 pt by se XP s jednotkou nevešlo (QA bug 10): pozice o stupeň menší a menší mezery. */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: compact ? space.m : space.l }}>
+        {/* Na 320 pt by se XP s jednotkou nevešlo (QA bug 10): pozice o stupeň menší, menší mezery; delší XP (4+ cifry) zalomí na další řádek. */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', columnGap: compact ? space.m : space.l, rowGap: space.m }}>
           <TierBadge tierName={name} />
           <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size={compact ? 'M' : 'L'} />
           <Stat label={copy.league.myXp} value={xpShown} a11yValue={myXp} unit={copy.league.xp} size="M" />

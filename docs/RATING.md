@@ -1,53 +1,37 @@
-# RATING: krok 3 (spec §12 krok 3 + DotLoader + UX1 + UX2 + opravy 0d24483), kolo 2
+# Demo 2026-10-02, kolo 1 (rating-agent, HEAD a9a450c)
 
-Datum: 2026-09-30 · rating-agent · větev `faze1/core-loop` @ 1c5d772 (kód beze změny od 0d24483)
-Rozsah: maskot stage 2–3, nálady celebrate a sad, kotvy, kosmetika, Rive stub, DotLoader (požadavek uživatele), UX1 (R36/R37), UX2 (R38–R40), opravy 0d24483 (R41). Kroky 1–2 jen regrese. Body, které `docs/QA.md` značí ⚠️ plán B, se nepočítají jako chybějící.
+**Celkem podle rubriky: 65/100**
+- **BOSS skóre: 46/100** (kategorie 1, 2, 3, 6 = 30/65 bodů, přepočteno na 100)
+- **DESIGN skóre: 100/100** (kategorie 4, 5 = 35/35 bodů, platí s výhradou v sekci K ruční kontrole)
 
-## Skóre: 100/100
+| # | Kategorie | Body | Skóre |
+|---|---|---|---|
+| 1 | Funkčnost | 0/25 | BOSS |
+| 2 | Shoda se specifikací | 15/15 | BOSS |
+| 3 | Architektura a kód | 15/15 | BOSS |
+| 4 | Vizuální kvalita | 20/20 | DESIGN |
+| 5 | Motion | 15/15 | DESIGN |
+| 6 | Dokumentace | 0/10 | BOSS |
 
-| # | Kategorie | Max | Body | Stav |
-|---|---|---|---|---|
-| 1 | Funkčnost | 25 | 25 | ✅ |
-| 2 | Shoda se specifikací | 15 | 15 | ✅ |
-| 3 | Architektura a kód | 15 | 15 | ✅ |
-| 4 | Vizuální kvalita | 20 | 20 | ✅ |
-| 5 | Motion | 15 | 15 | ✅ |
-| 6 | Dokumentace | 10 | 10 | ✅ |
+## Srážky
+1. **Funkčnost, -25 (boss + qa):** poslední verdikt v `docs/QA.md` (Demo fáze 4, kolo 2) je **NESCHVÁLENO** (bug 1 dvojí tap → tab Sezóna, bug 10 ořez TVOJE XP v lize na 320). Boss je opravil v a9a450c (`lib/navGuard.ts`, `app/(tabs)/_layout.tsx`, `app/(tabs)/league.tsx`, `app/lesson/[id].tsx`, `app/stage-up.tsx`), ale qa-agent opravy znovu neověřil a SCHVÁLENO nedal. Testy 391/391, tsc a lint jsou čisté. To ale samo nestačí.
+2. **Dokumentace, -10 (boss):** v `docs/LOG.md` chybí záznam bosse o opravách po kole 2. Jsou jen v `docs/QA.md` („Boss: opravy po kole 2“). Poslední záznam v LOG je od qa-agenta. README (sekce Demo) je aktuální.
 
-## Ověření
-- `npm test`: 34 sad, 261/261 ✅
-- `npx tsc --noEmit`: bez chyb ✅
-- `npx expo lint`: exit 0 ✅
-- `docs/QA.md`: gate A3, SCHVÁLENO; pokrývá hodnocený stav kódu (0d24483 znovu ověřen, po něm jen commity dokumentace).
+## Co je potřeba pro ≥95
+- qa-agent: kolo 3 s re-checkem bugů 1 a 10 (320×568 a 390×844, dvojtap 120 ms z oslavy i ze stage-upu; liga na 320 s 3cif. i **4cif. XP**, protože oprava zmenšila jen pozici, ne XP). Při SCHVÁLENO +25.
+- boss: záznam v `docs/LOG.md` (navGuard 600 ms, kompaktní hlavička ligy, rozpis XP na 320 jako záměr). +10.
+- Obě položky → 100/100 (BOSS 100, DESIGN 100).
 
-## Nesplněná kritéria
-Žádná.
+## Ověřeno bez srážky
+- Architektura: žádné `any`, TODO mají fázi (`services/contracts.ts`, `MockCosmeticsService.ts`, `LocalNotificationService.ts`, `app/season-recap.tsx`). V `app/` a `components/` nejsou hardcoded barvy ani přímý přístup k AsyncStorage/fetch (jen testy). Data jdou přes `services`.
+- Design: jeden akcent (oranžová na +XP). Zelený trojúhelník POSTUP je sémantický. Typografie Stat/mono labely, tab bar bez ořezu na 320, prázdné, chybové a zamčené stavy existují (`ErrorState`, QA kolo 1).
+- Motion: brag orchestrace podle LOG motion-agenta, pružiny jen na kotoučích, opici a rámu. Reduce motion podle QA kola 2 všude viditelné do 300 ms, návrat na tab sekvenci nepřehrává.
 
-## Stav nálezů z kola 1
-- **1.1 (qa)** opraveno: `docs/QA.md` A3 má jednu tabulku se všemi body §12 kroku 3 (stage 2 a 3, prahy 500/2000, celebrate, sad, kotvy, kosmetika, Rive stub, DotLoader) i UX1/UX2, vše ✅ nebo ⚠️ plán B.
-- **1.2 (qa)** opraveno: sekce R41 v `docs/QA.md` ověřuje 0d24483 (trojklik, jeden poskok, věta vize a obnova výběru, vlastní text).
-- **6.1 (boss)** opraveno: `README.md` sekce „Stav“ uvádí krok 3, DotLoader, UX1, UX2 a další plán B.
+## K ruční kontrole (bez srážky)
+- Liga na 320 pt po opravě (snímek `shots/demo-f4c/xs/dark-league.png` je ještě před opravou: „176“ na hraně, „XP“ mimo obraz). Hlavně 4ciferné XP.
+- Dvojtap na fyzickém zařízení. Haptika a zvuk v rámu dopadu. VoiceOver/TalkBack (recap, modaly, řádky ligy). Reduce motion v systémovém nastavení iOS/Android.
+- CTA oslavy na 320×568 po doběhnutí nástupu.
 
-## Splněné kategorie (stručně)
-- **Funkčnost:** SCHVÁLENO A3, testy/tsc/lint čisté, všechny body kroku ✅ v QA.md.
-- **Shoda se specifikací:** body §12 kroku 3 implementované; přídavky (DotLoader R34, UX1 R36/R37, UX2 R38–R40, R41) zapsané v `docs/LOG.md`; SPEC §7.1 teď odpovídá R41.
-- **Architektura:** žádné `any`, TODO jen s fází, hex jen v komentáři `components/mascot/palette.ts` a testech, logika vize v `logic/onboarding.ts`, motion parametry v `lib/motion.ts`.
-- **Vizuál / motion:** beze změny kódu proti kolu 1, hodnocení stejné (konzistence).
-- **Dokumentace:** LOG záznamy od design, motion, qa i boss; README aktuální.
-
-## K ruční kontrole (bez srážky bodů)
-1. Zvuky `plate-snap`, `select`, `unlock` na iOS a Androidu (hlasitost, `playsInSilentMode: false`, mix s hudbou).
-2. Délky nativních stack přechodů (kořen fade 250 ms, lekce slide_from_bottom 350 ms, zrození fade 300 ms), na webu neověřitelné.
-3. Haptika (tick u výběru vize, Light u odemčení, Medium na konci výdrže, oslava) na zařízení.
-4. Count-up +XP běží na JS (rAF): plynulost na slabším Androidu při zátěži.
-5. Jeden poskok opice na mapě po odemčení a poskok celebrate bez propadu pod klid, na zařízení.
-6. Kontrast šály Winter Arc (`SEASON_MATERIAL.winterArc`) v dark režimu na zařízení.
-7. Stage 3 deltoidy a trapéz: nepůsobí jako límec na reálném displeji.
-8. DotLoader: plynulost vlny a záře na zařízení, statická varianta s reduce motion.
-9. Rive stub: build s odkomentovaným importem jen v dev buildu (Expo Go beze změny).
-10. Nálada sad a `cosmetics` zatím nemají zdroj v appce (krok 4), vizuálně ověřit až tam.
-
-## Doporučení (mimo skóre)
-- `docs/QA.md` sekce „Otevřené“ ještě uvádí SPEC §7.1 a README jako otevřené, ale db69d21 je už opravil; a věta „appka beze změny krom oprav popsaných níže“ odkazuje na opravy, které A3 nedělal. Sladit při příštím gate (qa).
-- K commitu db69d21 (README, SPEC) není samostatný záznam boss v `docs/LOG.md`; doporučuji doplnit (boss).
-- Glyf „half“ opticky sedí níž (UX1 otevřené, design).
+## Doporučení mimo rubriku
+- Rubrika neumí rozlišit „opraveno, čeká na QA“ a „neopraveno“. Kategorie 1 tak padá celá i kvůli jednomu neověřenému re-checku.
+- Rozpis XP v oslavě se na 320 zalamuje na 2 řádky (záměr design-agenta). Kosmeticky by šlo zkrátit oddělovače.

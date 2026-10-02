@@ -361,3 +361,12 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Test/typecheck/lint zelené. Bugy 2, 4, 5, 6, 7 opravené; 3 až na zalomení rozpisu XP. Motion orchestrace bez neviditelných prvků, návrat na tab nepřehrává, reduce motion okamžitě, žádný pageerror.
 - Otevřené: bug 1 (dvojí tap po dismissTo propadá do tab baru → Sezóna, i ze stage-upu) — boss; nový bug 10 (ořez TVOJE XP v lize na 320) — design-agent.
 - Nic jsem neopravoval. Verdikt NESCHVÁLENO.
+
+## 2026-10-02 · boss · Demo: opravy po QA kole 2 a ratingu kola 1
+- **Hotovo:**
+  - bug 1: guard proti propadnutí druhého tapu do tab baru. `lib/navGuard.ts` (600 ms), `markNavigation()` v oslavě (`app/lesson/[id].tsx`) a ve stage-upu, `screenListeners.tabPress` v `app/(tabs)/_layout.tsx`. Ověřeno Playwrightem na 320×568: dva tapy 120 ms po sobě skončí v obou případech na mapě.
+  - bug 10: hlavička ligy na kompaktním displeji. Pozice je Stat M, mezery užší a řádek se zalamuje, takže čtyřciferné XP spadne pod pozici a neořízne se.
+- **Rozhodl sám:**
+  - Rozpis XP v oslavě se na 320 pt zalamuje mezi položkami. Je to záměr design-agenta, ne bug.
+  - Video (Remotion) uživatel nechce. Zůstává jen kostra v `video/`, appka na ní nezávisí.
+- **Otevřené:** dvojtap, haptika a zvuk na fyzickém zařízení, VoiceOver a TalkBack (K ruční kontrole).
