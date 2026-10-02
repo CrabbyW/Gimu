@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Platform, Pressable, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
+import Animated, { FadeIn, FadeInLeft, FadeInRight, ReduceMotion, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/mascot';
 import { RecapSlide } from '@/components/season/RecapSlide';
@@ -16,6 +17,7 @@ import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { seasonActions, useRecap, useSeasonStatus } from '@/hooks/useSeason';
 import { haptics } from '@/lib/haptics';
+import { motion, useMotionSafe } from '@/lib/motion';
 import type { SeasonRecap } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { MascotStage } from '@/types';
@@ -65,6 +67,9 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState(false);
   const touch = useRef<{ x: number; y: number } | null>(null);
+  const { reduced } = useMotionSafe();
+  // Směr posledního listování (null = první snímek při otevření, ten nenastupuje).
+  const [dir, setDir] = useState<1 | -1 | null>(null);
 
   const claim = async () => {
     if (claimed || claiming) return;
@@ -132,8 +137,19 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   const i = Math.min(index, total - 1);
   const slide = slides[i];
   const celebrate = slide?.celebrate ?? false;
-  const next = () => setIndex((n) => Math.min(n + 1, total - 1));
-  const prev = () => setIndex((n) => Math.max(n - 1, 0));
+  const next = () => { if (i < total - 1) { setDir(1); setIndex(i + 1); } };
+  const prev = () => { if (i > 0) { setDir(-1); setIndex(i - 1); } };
+
+  // Přechod slidů: nový snímek nastoupí ve směru listování (posun 24 pt + prolnutí, timing 200 ms,
+  // bez pružiny: na slide se klepe). Omezený pohyb: jen prolnutí 200 ms.
+  const entering = dir === null ? undefined
+    : reduced ? FadeIn.duration(motion.slide.duration).reduceMotion(ReduceMotion.Never)
+      : (dir === 1 ? FadeInRight : FadeInLeft).duration(motion.slide.duration).easing(motion.slide.easing)
+        .withInitialValues({ opacity: 0, transform: [{ translateX: dir * motion.slideShift }] });
+  // Plocha oslavy (ember u splněné odměny) se prolne stejným taktem jako snímek, ne skokem.
+  const flood = useSharedValue(celebrate ? 1 : 0);
+  useEffect(() => { flood.set(withTiming(celebrate ? 1 : 0, motion.slide)); }, [celebrate, flood]);
+  const floodStyle = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(flood.value, [0, 1], [c.base, c.accent]) }));
 
   // Tap: levá třetina zpět, zbytek dál (čte se jako „pokračovat“). Swipe: vodorovný tah delší než 44 pt.
   const onRelease = (e: GestureResponderEvent) => {
@@ -145,7 +161,7 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: celebrate ? c.accent : c.base, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+    <Animated.View style={[{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }, floodStyle]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m, paddingLeft: space.l, paddingRight: space.s, paddingTop: space.s }}>
         <MeasureLine
           progress={(i + 1) / total}
@@ -171,14 +187,14 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
         onResponderRelease={onRelease}
         onResponderTerminate={() => { touch.current = null; }}
       >
-        <View key={slide?.key} style={{ flex: 1 }}>{slide?.render()}</View>
+        <Animated.View key={slide?.key} entering={entering} style={{ flex: 1 }}>{slide?.render()}</Animated.View>
         {/* Tap zóny nejsou pro čtečku dosažitelné: tiché šipky 44 pt jsou explicitní ovládání. */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: space.s }}>
           <NavButton label={r.prev} disabled={i === 0} onPress={prev} onAccent={celebrate} />
           <NavButton label={r.next} disabled={i === total - 1} onPress={next} onAccent={celebrate} />
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

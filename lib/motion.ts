@@ -1,4 +1,4 @@
-import { Easing, FadeInDown, useReducedMotion, type WithSpringConfig, type WithTimingConfig } from 'react-native-reanimated';
+import { Easing, FadeIn, FadeInDown, ReduceMotion, useReducedMotion, type WithSpringConfig, type WithTimingConfig } from 'react-native-reanimated';
 
 /*
  * Pohybová osobnost „Posilovna“ (UX2, odvozeno z brag tónu `cinematic`, zkrocené pro appku):
@@ -82,7 +82,62 @@ export const motion = {
   // DotLoader (port @dotmatrix dotm-square-11 „Echo Ring“): mřížka 5×5, cyklus 1500 ms / speed,
   // výchozí speed 1.25, trojice opacit z dotmatrix-loader.css (--dmx-opacity-*).
   dotLoader: { cycleMs: 1500, speed: 1.25, opacityBase: 0.16, opacityMid: 0.32, opacityPeak: 1 },
+  /** Omezený pohyb: místo pružiny a posunu jen krátké prolnutí (spec §6.7). */
+  calmFade: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
+  /** Mikrointerakce ovládání (Toggle, přechod slidu): timing, nikdy pružina (fáze 3: 150–250 ms). */
+  toggle: { duration: 180, easing: ease.out } satisfies WithTimingConfig,
+  slide: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
+  /** Posun nového slidu recapu ve směru listování (pt). */
+  slideShift: 24,
+  /** Count-up čísla při prvním zobrazení (Stat progresu sezóny). */
+  countFirstMs: 400,
 };
+
+/**
+ * Oslava dokončení lekce (§7.3), jedna časová osa. `launch`/`leftLag` od zobrazení scény, zbytek od
+ * dopadu pravého kotouče (UI vlákno → `onImpact`). Ember (`accent`) je do dopadu ve scéně nulový:
+ * rozžhaví se v okamžiku dotyku kotouče (`heat`), +XP v emberu ho převezme o 120 ms později.
+ */
+export const celebration = {
+  launch: 250,
+  leftLag: 60,
+  xp: 120,
+  cheer: 480,
+  title: 760,
+  cta: 1000,
+  /** Žár kotouče při dopadu: ember naplno v rámu dotyku, chladne do oceli. */
+  heat: { peak: 0.85, coolMs: 640 },
+};
+
+/**
+ * Stage-up (§7.4, plán B Task 26 Step 3), ms od zobrazení. Smrštění 300–600, nádech 600–700 (plán: smrštění
+ * 380 ms; zkráceno, aby se nádech vešel před prasknutí v 700), prasknutí 700, nová opice 720
+ * pružinou `motion.pop` → text → CTA.
+ */
+export const stageUp = {
+  shrinkAt: 300,
+  shrinkMs: 300,
+  /** Nádech před prasknutím (jako zrození): kruh se stáhne na `tense`. */
+  tenseMs: 100,
+  tense: 0.92,
+  burstAt: 700,
+  burstMs: 420,
+  bornAt: 720,
+  textAt: 1300,
+  ctaAt: 1500,
+  shrunk: 0.35,
+  ringTo: 1.4,
+  oldOutMs: 80,
+};
+
+/** Celková délka jednoho poskoku opice (`motion.hop`). */
+export const hopMs = () => motion.hop.crouchMs + motion.hop.riseMs + motion.hop.fallMs + motion.hop.landMs + motion.hop.recoverMs;
+
+/** Nástup prvku, který respektuje omezený pohyb vlastní variantou: `reduced` = fade 200 ms (bez posunu),
+ *  jinak `enterRise`. Fade běží i se zapnutým omezením pohybu (ReduceMotion.Never), aby změna nebyla skok. */
+export const enterSafe = (reduced: boolean, i = 0, rise = 12) => (reduced
+  ? FadeIn.duration(motion.calmFade.duration).reduceMotion(ReduceMotion.Never)
+  : enterRise(i, rise));
 
 /** Layout animace nástupu: fade + zdvih o `rise` pt (FadeInDown), i-tý prvek sledu se zpožděním
  *  `stagger(i)`, `motion.enter`. Builder (ne vlastní worklet), aby běžel i na webu (CSS keyframy);

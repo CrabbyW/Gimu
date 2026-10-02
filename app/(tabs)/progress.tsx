@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Mascot } from '@/components/mascot';
 import { ActivityGrid } from '@/components/progress/ActivityGrid';
 import { DreamBodyCard } from '@/components/progress/DreamBodyCard';
@@ -21,12 +22,15 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { progressActions, useProgressView } from '@/hooks/useProgressView';
 import { haptics } from '@/lib/haptics';
+import { motion, useMotionSafe } from '@/lib/motion';
 import { parseWeight } from '@/logic/onboarding';
 import { useTheme } from '@/theme';
 import type { MascotStage, Milestone, UserProfile } from '@/types';
 
 /** Jak dlouho drží overlay celebrate bez nové kosmetiky (Task 27 Step 7). S kosmetikou čeká na zavření. */
 const CELEBRATE_MS = 1800;
+/** Opice v overlay oslavy milníku nastoupí z této velikosti pružinou `motion.settle`. */
+const MASCOT_FROM = 0.6;
 
 const fmtKg = (kg: number) => (Number.isInteger(kg) ? String(kg) : kg.toFixed(1).replace('.', ','));
 
@@ -140,6 +144,13 @@ function CelebrateOverlay({ stage, equipped, unlocked, onDone }: {
   stage: MascotStage; equipped: UserProfile['equipped']; unlocked: boolean; onDone(): void;
 }) {
   const { c, space } = useTheme();
+  const { reduced } = useMotionSafe();
+  // Nástup: scrim se prolne (UI timing), opice dosedne pružinou ze 0.6 (fyzický prvek, odměna) a pak
+  // hraje vlastní celebrate poskoky. Omezený pohyb: opice stojí, jen prolnutí.
+  const [calm] = useState(reduced);
+  const pop = useSharedValue(calm ? 1 : MASCOT_FROM);
+  useEffect(() => { if (!calm) pop.set(withSpring(1, motion.settle)); }, [calm, pop]);
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
   const done = useRef(onDone);
   useEffect(() => { done.current = onDone; }, [onDone]);
   useEffect(() => {
@@ -149,13 +160,20 @@ function CelebrateOverlay({ stage, equipped, unlocked, onDone }: {
   }, [unlocked]);
 
   return (
+    <Animated.View
+      entering={FadeIn.duration(motion.calmFade.duration).reduceMotion(ReduceMotion.Never)}
+      exiting={FadeOut.duration(motion.uiExit.duration).reduceMotion(ReduceMotion.Never)}
+      style={StyleSheet.absoluteFill}
+    >
     <Pressable
       onPress={onDone}
       accessibilityRole="button"
       accessibilityLabel={copy.progress.dismiss}
       style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.scrim, alignItems: 'center', justifyContent: 'center', gap: space.l, padding: space.l }}
     >
-      <Mascot stage={stage} mood="celebrate" size="M" cosmetics={equipped} accessibilityLabel={copy.mascot.label.celebrate} />
+      <Animated.View style={popStyle}>
+        <Mascot stage={stage} mood="celebrate" size="M" cosmetics={equipped} accessibilityLabel={copy.mascot.label.celebrate} />
+      </Animated.View>
       <Text variant="title" accessibilityLiveRegion="polite">{copy.progress.milestoneDone}</Text>
       {unlocked ? (
         <View style={{ alignItems: 'center', gap: space.m }}>
@@ -164,5 +182,6 @@ function CelebrateOverlay({ stage, equipped, unlocked, onDone }: {
         </View>
       ) : null}
     </Pressable>
+    </Animated.View>
   );
 }

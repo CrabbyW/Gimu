@@ -30,7 +30,7 @@ export function XpPop({ total, breakdown, shown, calm }: Props) {
 
   useEffect(() => {
     if (!shown) return;
-    if (calm) { opacity.set(withTiming(1, { duration: 200 })); return; }
+    if (calm) { opacity.set(withTiming(1, motion.calmFade)); return; }
     // Akcent se nezprůhledňuje (nový odstín): číslo se objeví naráz a vstup nese slam scale.
     opacity.set(1);
     scale.set(withSpring(1, motion.slam));

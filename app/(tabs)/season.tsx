@@ -1,5 +1,7 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { ComebackCard } from '@/components/season/ComebackCard';
 import { RewardCard } from '@/components/season/RewardCard';
 import { SeasonDays } from '@/components/season/SeasonDays';
@@ -18,6 +20,7 @@ import { useNow } from '@/hooks/useNow';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { seasonActions, useSeasonProgress, useSeasonStatus } from '@/hooks/useSeason';
+import { enterSafe, useMotionSafe } from '@/lib/motion';
 import { diffDays, toISODate } from '@/logic/dates';
 import type { SeasonStatus } from '@/services/contracts';
 import { useTheme } from '@/theme';
@@ -60,6 +63,14 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
   const profile = useProfile();
   const stats = useProfileStats(profile.status === 'ready' ? profile.data : null);
   const stage = useDisplayStage(stats?.stage ?? 1);
+  const { reduced } = useMotionSafe();
+  // „Lock in“ potvrzení: karta cíle vjede jen v okamžiku, kdy cíl právě vznikl (ne při každém otevření tabu).
+  const [prevGoal, setPrevGoal] = useState(goal);
+  const [justLocked, setJustLocked] = useState(false);
+  if (goal !== prevGoal) {
+    setPrevGoal(goal);
+    if (!prevGoal && goal) setJustLocked(true);
+  }
 
   const record = async (current: number) => {
     if (goal?.kind !== 'milestone') return;
@@ -97,7 +108,9 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
           </View>
         ) : (
           <>
-            <SeasonGoalCard progress={progress.data} onRecord={progress.data.goal.kind === 'milestone' ? record : undefined} />
+            <Animated.View entering={justLocked ? enterSafe(reduced, 0, 16) : undefined}>
+              <SeasonGoalCard progress={progress.data} onRecord={progress.data.goal.kind === 'milestone' ? record : undefined} />
+            </Animated.View>
             <SeasonDays days={progress.data.dayStates} />
             {!progress.data.reachable || progress.data.repairWindow.length > 0 ? (
               <ComebackCard repairWindow={progress.data.repairWindow} reachable={progress.data.reachable} />

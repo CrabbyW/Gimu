@@ -7,6 +7,8 @@ import { Telemetry } from '@/components/ui/Telemetry';
 import { Text } from '@/components/ui/Text';
 import { TextField } from '@/components/ui/TextField';
 import { copy } from '@/data/copy';
+import { useCountUp } from '@/hooks/useCountUp';
+import { motion } from '@/lib/motion';
 import type { SeasonProgress } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { SeasonGoal } from '@/types';
@@ -36,6 +38,8 @@ export function SeasonGoalCard({ progress, onRecord }: Props) {
   const { goal, value, target, met } = progress;
   const unit = unitOf(goal);
   const shown = decimal(value);
+  // Count-up při prvním zobrazení (400 ms); popisek pro čtečku nese vždy konečnou hodnotu.
+  const counted = decimal(useCountUp(value, motion.countFirstMs, Number.isInteger(value) ? 0 : 1));
   const ratio = target > 0 ? value / target : 0;
   return (
     <View style={{ gap: space.l }}>
@@ -44,7 +48,7 @@ export function SeasonGoalCard({ progress, onRecord }: Props) {
         {goal.kind === 'milestone' ? <Text variant="bodyStrong">{goal.label}</Text> : null}
       </View>
       <View accessible accessibilityLabel={copy.season.progressA11y(shown, decimal(target), unit)}>
-        <Stat value={shown} unit={copy.season.progressOf(decimal(target), unit)} size="L" />
+        <Stat value={counted} unit={copy.season.progressOf(decimal(target), unit)} size="L" />
       </View>
       <MeasureLine progress={ratio} accessibilityLabel={copy.season.progressA11y(shown, decimal(target), unit)} />
       {met ? <Text variant="body" tone="muted">{copy.season.met}</Text> : null}

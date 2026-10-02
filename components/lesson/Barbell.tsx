@@ -13,13 +13,16 @@ const SHEEN = 'plateSheen';
  *  - `seat`: dosednutí po dopadu v pt pod osou (pružina s rychlostí dopadu: kotouč se zaboří pár bodů
  *    a vrátí, bez odskoku nad osu),
  *  - `x`, `rotate`: odchylky od cílové polohy,
- *  - `collar`: odstup objímky této strany v pt (0 = zacvaknuto). */
+ *  - `collar`: odstup objímky této strany v pt (0 = zacvaknuto),
+ *  - `heat`: žár kotouče 0–1 (ember přes ocel). Rozsvítí se v rámu dotyku osy a chladne; do té doby 0,
+ *    takže scéna je až do dopadu monochromní. */
 export interface PlateFlight {
   drop: SharedValue<number>;
   seat: SharedValue<number>;
   x: SharedValue<number>;
   rotate: SharedValue<number>;
   collar: SharedValue<number>;
+  heat: SharedValue<number>;
 }
 
 /** Výška, ze které kotouč padá (pt nad osou). */
@@ -102,6 +105,7 @@ function SidePlate({ kg, x, y, w, h }: { kg: PlateKg; x: number; y: number; w: n
 interface FlyingProps { kg: PlateKg; x: number; w: number; h: number; flight: PlateFlight; opacity: SharedValue<number> }
 
 function FlyingPlate({ kg, x, w, h, flight, opacity }: FlyingProps) {
+  const { c } = useTheme();
   const style = useAnimatedStyle(() => {
     const y = -DROP_FROM * (1 - flight.drop.value) + flight.seat.value;
     return {
@@ -109,12 +113,15 @@ function FlyingPlate({ kg, x, w, h, flight, opacity }: FlyingProps) {
       transform: [{ translateX: flight.x.value }, { translateY: y }, { rotate: `${flight.rotate.value}deg` }],
     };
   });
+  const heatStyle = useAnimatedStyle(() => ({ opacity: flight.heat.value }));
   return (
     <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: x, top: AXIS.mid - h / 2, width: w, height: h }, style]}>
       <Svg width={w} height={h}>
         <SheenDefs />
         <SidePlate kg={kg} x={0} y={0} w={w} h={h} />
       </Svg>
+      {/* Žár dopadu: ember přes kotouč (stejný tvar), chladne do oceli. */}
+      <Animated.View style={[StyleSheet.absoluteFill, { borderRadius: 3, backgroundColor: c.accent }, heatStyle]} />
     </Animated.View>
   );
 }

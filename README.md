@@ -41,12 +41,33 @@ finální hodnocení kroku (postupuje se jen při 100/100). Zdroj pravdy je [`do
 průběh práce je v [`docs/LOG.md`](./docs/LOG.md), výsledky QA v [`docs/QA.md`](./docs/QA.md) a finální
 hodnocení v [`docs/RATING.md`](./docs/RATING.md).
 
+## Demo
+
+1. `npx expo start --web` (nebo Expo Go), otevři `/dev` (v appce: Profil → Nastavení → Dev menu).
+2. **Načíst demo profil**: 12denní streak, 7 hotových lekcí, XP 460 (těsně pod stage 2), rozpracované milníky, cíl váhy a cíl sezóny Winter Arc.
+3. Mapa → lekce 8 → oslava (kotouč, ember) → **stage-up** opice → mapa s odemčeným bossem.
+4. Liga, Progres, Sezóna, Profil, Šatník, Nastavení. **Skok na konec sezóny** v dev menu otevře recap a převzetí odměny.
+
+Všechna demo data jsou v jediném souboru `services/mock/demoData.ts`. Výměna za API = nové implementace `services/contracts.ts` v `services/index.ts`.
+
+## Dev menu (`app/dev.tsx`)
+
+| Akce | Co dělá |
+|---|---|
+| Načíst demo profil | nahradí profil demem, vynuluje posun času |
+| +500 XP | přidá událost `dev-xp` (není lekce: nemění mapu, streak ani lekce sezóny; posune stage a ligu) |
+| Stage opice | jen zobrazení: auto → 1 → 2 → 3 |
+| Skok na konec sezóny | posune `now()` na den po konci sezóny 09:00 (`lib/clock.ts`, `devTimeOffsetMs`) |
+| Simulace ztráty streaku | posun času o +2 dny |
+| Reset časového posunu / Reset appky | vrátí čas / smaže data (téma zůstává) |
+
+## Launch video
+
+Samostatný Remotion projekt v `video/` (appka na něm nezávisí, Metro/Jest/ESLint/tsc ho ignorují). Storyboard: `video/STORYBOARD.md`.
+
 ## Stav
 
-- **Krok 1–2** (scaffolding, onboarding, mapa lekcí, lekce s cviky, oslava dokončení, odemykání): QA schváleno, rating 100/100.
-- **Krok 3** (maskot stage 2–3, nálady celebrate a sad, kotvy, kosmetické vrstvy, sezónní šála, Rive stub): hotovo a v hodnocení.
-- **Na přání uživatele:** `DotLoader` (nativní port loaderu Echo Ring z @dotmatrix) ve všech stavech načítání; onboarding s výběrem vize těla a širší nabídkou milníků (UX1); přepracovaný pohyb celé appky podle skillu brag, tón cinematic, se zvuky Kenney (UX2).
-- **Další:** plán B, kroky 4–6 ([`docs/superpowers/plans/2026-09-30-opice-faze1-planB.md`](./docs/superpowers/plans/2026-09-30-opice-faze1-planB.md)): liga, progres, sezóna s recapem, šatník, notifikace, dev menu.
+Viz [`docs/STATUS.md`](./docs/STATUS.md).
 
 ## Zvuky
 Zvukové efekty v `assets/sounds/` (`plate-snap.wav`, `select.wav`, `unlock.wav`) pocházejí od [Kenney](https://kenney.nl/) (licence CC0, public domain), převzaté z SFX knihovny skillu brag a upravené přes ffmpeg (mix, lowpass, WAV 44.1 kHz mono). Zdroje jsou zapsané v `docs/LOG.md` (UX2).

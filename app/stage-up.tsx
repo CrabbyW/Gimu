@@ -11,20 +11,20 @@ import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
 import { haptics } from '@/lib/haptics';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, stageUp, useMotionSafe } from '@/lib/motion';
 import { parseStageParam } from '@/logic/mascot';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage } from '@/types';
 
 const NO_COSMETICS: Partial<Record<CosmeticSlot, string>> = {};
 const XL = MASCOT_SIZES.XL;
-// Sekvence §7.4 / plán B Task 26 Step 3 (ms od zobrazení). Ladí motion-agent.
-const T = { shrink: 300, shrinkMs: 380, burst: 700, burstMs: 420, born: 720, text: 1300, cta: 1500 };
-const SHRUNK = 0.35;
+// Sekvence §7.4 / plán B Task 26 Step 3 (ms od zobrazení): `stageUp` v lib/motion.
+const T = stageUp;
+const SHRUNK = T.shrunk;
 const RING_R = (XL / 2) * SHRUNK;
 const SHARDS = 8;
 const SHARD_TRAVEL = XL / 2;
-const FADE = { duration: 200 };
+const FADE = motion.calmFade;
 
 /** Na mapu (stejně jako „Pokračovat“ z oslavy lekce), s id odemčeného uzlu pro unlock sekvenci. */
 function toMap(unlocked: string | undefined) {
@@ -58,7 +58,9 @@ function BlankAccent() {
 function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotStage; unlocked: string | undefined }) {
   const { c, space, stroke } = useTheme();
   const insets = useSafeAreaInsets();
-  const { reduced } = useMotionSafe();
+  const { reduced: reducedNow } = useMotionSafe();
+  // Sekvence se rozhodne jednou při vstupu; přepnutí omezení pohybu uprostřed ji nerestartuje.
+  const [reduced] = useState(reducedNow);
   const profile = useProfile();
   const cosmetics = profile.status === 'ready' ? profile.data?.equipped ?? NO_COSMETICS : NO_COSMETICS;
   const [ready, setReady] = useState(false);
@@ -81,20 +83,30 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
       textOpacity.set(withTiming(1, FADE));
       haptics.success();
     } else {
-      oldScale.set(withDelay(T.shrink, withTiming(SHRUNK, { duration: T.shrinkMs, easing: motion.reveal.easing })));
-      // Kruh se objeví se smrštěním a při prasknutí se rozepne 1 → 1.4 a zmizí.
-      ringOpacity.set(withDelay(T.shrink, withSequence(
+      // 1) Smrštění staré opice do kruhu (ease-out, bez pružiny: je to příprava, ne odměna).
+      // 2) Kruh se objeví se smrštěním, před prasknutím se nadechne spolu s opicí (anticipace jako
+      //    u zrození), při prasknutí se rozepne 1 → 1.4 a zmizí.
+      ringOpacity.set(withDelay(T.shrinkAt, withSequence(
         withTiming(1, motion.ui),
-        withDelay(T.burst - T.shrink - motion.ui.duration, withTiming(0, { duration: T.burstMs })),
+        withDelay(T.burstAt - T.shrinkAt - motion.ui.duration, withTiming(0, { duration: T.burstMs, easing: ease.out })),
       )));
-      oldOpacity.set(withDelay(T.burst, withTiming(0, { duration: 80 })));
-      ringScale.set(withDelay(T.burst, withTiming(1.4, { duration: T.burstMs, easing: motion.ui.easing })));
-      burst.set(withDelay(T.burst, withTiming(1, { duration: T.burstMs, easing: motion.ui.easing })));
-      newScale.set(withDelay(T.born, withSpring(1, motion.pop)));
-      timers.push(setTimeout(() => haptics.success(), T.born));
-      textOpacity.set(withDelay(T.text, withTiming(1, motion.ui)));
+      ringScale.set(withDelay(T.burstAt - T.tenseMs, withSequence(
+        withTiming(T.tense, { duration: T.tenseMs, easing: ease.press }),
+        withTiming(T.ringTo, { duration: T.burstMs, easing: ease.punch }),
+      )));
+      // 1) Smrštění staré opice do kruhu (ease-out, bez pružiny: příprava, ne odměna) a nádech.
+      oldScale.set(withDelay(T.shrinkAt, withSequence(
+        withTiming(SHRUNK, { duration: T.shrinkMs, easing: motion.reveal.easing }),
+        withDelay(T.burstAt - T.shrinkAt - T.shrinkMs - T.tenseMs, withTiming(SHRUNK * T.tense, { duration: T.tenseMs, easing: ease.press })),
+      )));
+      // 3) Prasknutí: stará opice zmizí, úlomky letí radiálně ven, nová opice vyskočí pružinou (odměna).
+      oldOpacity.set(withDelay(T.burstAt, withTiming(0, { duration: T.oldOutMs })));
+      burst.set(withDelay(T.burstAt, withTiming(1, { duration: T.burstMs, easing: ease.punch })));
+      newScale.set(withDelay(T.bornAt, withSpring(1, motion.pop)));
+      timers.push(setTimeout(() => haptics.success(), T.bornAt));
+      textOpacity.set(withDelay(T.textAt, withTiming(1, motion.ui)));
     }
-    timers.push(setTimeout(() => setReady(true), T.cta));
+    timers.push(setTimeout(() => setReady(true), T.ctaAt));
     return () => timers.forEach(clearTimeout);
   }, [reduced, oldScale, oldOpacity, ringOpacity, ringScale, burst, newScale, newOpacity, textOpacity]);
 

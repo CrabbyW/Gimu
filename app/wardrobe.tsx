@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
 import { CosmeticTile, type WardrobeItem } from '@/components/cosmetics/CosmeticTile';
 import { Mascot } from '@/components/mascot';
@@ -17,11 +17,14 @@ import { useProfileStats } from '@/hooks/useProfileStats';
 import { useSeasonStatus } from '@/hooks/useSeason';
 import { useWardrobe, wardrobeActions } from '@/hooks/useWardrobe';
 import { haptics } from '@/lib/haptics';
+import { hopMs } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot } from '@/types';
 
 const SLOTS: readonly CosmeticSlot[] = ['outfit', 'accessory', 'mapBackground', 'lessonEffect', 'profileFrame'];
 const COLS = 3;
+// Po doskoku ještě chvíli radost, než se opice vrátí do klidu.
+const CHEER_TAIL_MS = 200;
 
 /** Potvrzení nákupu. RN Web `Alert` nic nezobrazí, proto na webu `confirm` (jako v Dev menu). */
 function confirmBuy(message: string, onYes: () => void) {
@@ -70,6 +73,15 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
   const [width, setWidth] = useState(0);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // Náhled: při nasazení opice jednou poskočí (`happy` spouští `motion.hop`), pak zpět do klidu.
+  const [cheer, setCheer] = useState(false);
+  const cheerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (cheerTimer.current) clearTimeout(cheerTimer.current); }, []);
+  const hopOnce = () => {
+    if (cheerTimer.current) clearTimeout(cheerTimer.current);
+    setCheer(true);
+    cheerTimer.current = setTimeout(() => setCheer(false), hopMs() + CHEER_TAIL_MS);
+  };
 
   const seasonName = (seasonId?: string) =>
     season.status === 'ready' && season.data && season.data.season.id === seasonId ? season.data.season.name : undefined;
@@ -87,7 +99,8 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
     const c = item.cosmetic;
     if (item.unlocked) {
       haptics.tick();
-      void run(() => wardrobeActions.equip(c.slot, item.equipped ? null : c.id));
+      const equipping = !item.equipped;
+      void run(async () => { await wardrobeActions.equip(c.slot, equipping ? c.id : null); if (equipping) hopOnce(); });
       return;
     }
     if (item.canBuy === 'insufficient') { setNote(copy.wardrobe.insufficient); return; }
@@ -98,6 +111,7 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
         await wardrobeActions.buy(c.id);
         haptics.success();
         await wardrobeActions.equip(c.slot, c.id);
+        hopOnce();
       });
     });
   };
@@ -105,7 +119,7 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: space.xxl, gap: space.l }} showsVerticalScrollIndicator={false}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.l }}>
-        <Mascot stage={stage} mood="idle" size={size.wardrobePreview} cosmetics={equipped} accessibilityLabel={copy.wardrobe.preview} />
+        <Mascot stage={stage} mood={cheer ? 'happy' : 'idle'} size={size.wardrobePreview} cosmetics={equipped} accessibilityLabel={copy.wardrobe.preview} />
         <Stat label={copy.wardrobe.bananas} value={bananas} unit="" size="M" />
       </View>
 

@@ -8,7 +8,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
-import { ease, motion, useMotionSafe } from '@/lib/motion';
+import { celebration, ease, motion, useMotionSafe } from '@/lib/motion';
 import { useClickSound } from '@/lib/sound';
 import type { LessonResult } from '@/services';
 import { useTheme } from '@/theme';
@@ -20,16 +20,10 @@ import { XpPop } from './XpPop';
 const t = copy.complete;
 const XP_LABELS = { lesson: t.xpLesson, boss: t.xpBoss, replay: t.xpReplay, first: t.xpFirst, streak: t.xpStreak };
 
-// Časová osa oslavy (ms). Start kotouče se počítá od zobrazení scény, zbytek od dopadu.
-const LAUNCH_AT = 250;
-const LEFT_LAG = 60;
-// UX2 takty (brag `cinematic`: každý úder dosedne, než přijde další): dopad → +XP slam (120) →
-// opice (480, když count-up dojíždí) → titulek (760) → CTA (1000).
-const XP_AFTER_IMPACT = 120;
-// Opice se raduje až po vyskočení +XP (spec §7.3 krok 4 → 5 → 6): vlastní takt, nesoupeří s číslem.
-const CHEER_AFTER_IMPACT = 480;
-const TITLE_AFTER_IMPACT = 760;
-const CTA_AFTER_IMPACT = 1000;
+// Časová osa oslavy je v `lib/motion` (`celebration`): start kotouče od zobrazení scény, zbytek od dopadu.
+// UX2 takty (brag `cinematic`: každý úder dosedne, než přijde další): dopad (žár emberu, úder, cvak) →
+// +XP slam (120) → opice + Success (480, když count-up dojíždí) → titulek (760) → CTA (1000).
+const { launch: LAUNCH_AT, leftLag: LEFT_LAG, xp: XP_AFTER_IMPACT, cheer: CHEER_AFTER_IMPACT, title: TITLE_AFTER_IMPACT, cta: CTA_AFTER_IMPACT } = celebration;
 const TITLE_RISE = 12;
 // CTA vyjede zespodu (jako zrození). Nezprůhledňuje se: poloprůhledný akcent by byl nový odstín.
 const CTA_TRAVEL = 160;
@@ -39,7 +33,7 @@ const COLLAR_MS = 120;
 // Osa se po dopadu prohne o 3 pt dolů a pružinou (motion.rattle) vrátí.
 const SHAKE_DEPTH = 3;
 // Omezený pohyb (spec §6.7): místo pružin se konečný stav jen prolne.
-const REDUCED_FADE = { duration: 200 };
+const REDUCED_FADE = motion.calmFade;
 // Opice (M = 120 pt) zarovnaná chodidly k účaří velkého čísla XP.
 const MASCOT_LIFT = 32;
 
@@ -81,10 +75,10 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
   // S omezeným pohybem jsou objímky na místě od začátku (součást osy), kotouč se jen prolne.
   const startCollar = calm ? 0 : COLLAR_TRAVEL;
   const right: PlateFlight = {
-    drop: useSharedValue(startDrop), seat: useSharedValue(0), x: useSharedValue(start.x), rotate: useSharedValue(start.rotate), collar: useSharedValue(startCollar),
+    drop: useSharedValue(startDrop), seat: useSharedValue(0), x: useSharedValue(start.x), rotate: useSharedValue(start.rotate), collar: useSharedValue(startCollar), heat: useSharedValue(0),
   };
   const left: PlateFlight = {
-    drop: useSharedValue(startDrop), seat: useSharedValue(0), x: useSharedValue(-start.x), rotate: useSharedValue(-start.rotate), collar: useSharedValue(startCollar),
+    drop: useSharedValue(startDrop), seat: useSharedValue(0), x: useSharedValue(-start.x), rotate: useSharedValue(-start.rotate), collar: useSharedValue(startCollar), heat: useSharedValue(0),
   };
   const bar: BarbellMotion = { right, left, opacity: useSharedValue(calm ? 0 : 1) };
   const click = useClickSound();
@@ -120,6 +114,9 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
           if (!done) return;
           side.seat.set(withSpring(0, motion.seat));
           side.collar.set(withTiming(0, { duration: COLLAR_MS, easing: motion.ui.easing }));
+          // Ember přichází jako událost: v rámu dotyku (UI vlákno, stejný snímek jako úder) se kotouč
+          // rozžhaví a chladne do oceli; +XP v emberu barvu převezme o 120 ms později.
+          side.heat.set(withSequence(withTiming(celebration.heat.peak, { duration: 0 }), withTiming(0, { duration: celebration.heat.coolMs, easing: ease.out })));
           if (lead) scheduleOnRN(onImpact);
         })));
         side.x.set(withDelay(delay, withTiming(0, { duration: motion.fall.duration, easing: motion.ui.easing })));
