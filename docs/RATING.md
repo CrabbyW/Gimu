@@ -35,3 +35,31 @@
 ## Doporučení mimo rubriku
 - Rubrika neumí rozlišit „opraveno, čeká na QA“ a „neopraveno“. Kategorie 1 tak padá celá i kvůli jednomu neověřenému re-checku.
 - Rozpis XP v oslavě se na 320 zalamuje na 2 řádky (záměr design-agenta). Kosmeticky by šlo zkrátit oddělovače.
+
+# Demo 2026-10-02, kolo 2 (rating-agent, HEAD 32432d8)
+
+**Celkem podle rubriky: 100/100**
+- **BOSS skóre: 100/100** (kategorie 1, 2, 3, 6 = 65/65)
+- **DESIGN skóre: 100/100** (kategorie 4, 5 = 35/35, s výhradou v sekci K ruční kontrole)
+
+| # | Kategorie | Body | Skóre |
+|---|---|---|---|
+| 1 | Funkčnost | 25/25 | BOSS |
+| 2 | Shoda se specifikací | 15/15 | BOSS |
+| 3 | Architektura a kód | 15/15 | BOSS |
+| 4 | Vizuální kvalita | 20/20 | DESIGN |
+| 5 | Motion | 15/15 | DESIGN |
+| 6 | Dokumentace | 10/10 | BOSS |
+
+## Změny proti kolu 1
+1. **Funkčnost, +25:** `docs/QA.md` „Demo fáze 4, kolo 3“ = **SCHVÁLENO**. Bug 1 (dvojtap, 320 i 390) a bug 10 (4ciferné XP v lize na 320) ověřeny, snímky v `shots/demo-f4d/`. Moje ověření: `npm test` 46/46 suites, 391/391 testů, `tsc --noEmit` a `expo lint` bez chyb.
+2. **Dokumentace, +10:** `docs/LOG.md` obsahuje boss záznam „Demo: opravy po QA kole 2 a ratingu kola 1“ (navGuard 600 ms, kompaktní hlavička ligy, rozpis XP na 320 jako záměr) a záznam qa-agenta ke kolu 3. README beze změny, stále aktuální.
+
+Kategorie 2–5: od kola 1 žádná změna, která by porušila kritéria. 5673d85 jen mění layout hlavičky ligy (tokeny z `theme/`).
+
+## K ruční kontrole (bez srážky)
+- Dvojtap, haptika a zvuk na fyzickém zařízení. VoiceOver/TalkBack. Systémové reduce motion na iOS/Android.
+- CTA oslavy na 320×568 po doběhnutí nástupu.
+
+## Doporučení mimo rubriku
+- Beze změny proti kolu 1.

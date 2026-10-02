@@ -21,20 +21,28 @@ Aktualizováno: 2026-10-02. Větev `faze1/core-loop`.
 | 19–21 schéma v2, liga | hotovo | `609ea36` |
 | 22–23 logika sezóny | hotovo | `6661f7d` |
 
-## Zbývá (plán B)
+## Demo (2026-10-02): hotovo
 
-1. **Task 24** — služba sezóny, tab Sezóna (teď kostra), nastavení cíle.
-2. **Task 25** — recap sezóny a převzetí odměny.
-3. **Task 26** — stage-up a napojení na oslavu.
-4. **Task 27** — `logic/progress` + tab Progres (teď kostra).
-5. **Task 28** — `logic/cosmetics`, Šatník, Profil (teď kostra); `MockCosmeticsService` je `notImplemented`.
-6. **Task 29** — notifikace a Nastavení; `LocalNotificationService` je `notImplemented`.
-7. **Task 31** — Dev menu (podle zadání jde jako první z plánu B).
-8. **Task 33** — README a závěrečné ověření.
+- **Hotové fáze:**
+  - fáze 0: ověření stavu,
+  - fáze 1: design A+B (R42),
+  - fáze 2: celý průchod a plán B (Tasky 24–29, 31, 33, viz README Demo),
+  - fáze 3: motion (oslava, stage-up, recap),
+  - brag orchestrace všech obrazovek,
+  - fáze 4: QA.
+- **QA:** kolo 3 SCHVÁLENO (`docs/QA.md`).
+- **Rating:** kolo 2 BOSS 100 / DESIGN 100 (`docs/RATING.md`).
+- **Mock data** jsou v jednom souboru `services/mock/demoData.ts` (dev menu, „Načíst demo profil“).
+- **Neudělané:** `MapBackground` a `LessonEffect` (spotřebitelé slotů kosmetiky z Tasku 28).
+- **Launch video** uživatel nechce. V `video/` zůstává jen kostra a storyboard.
 
-## Demo plán (2026-10-02)
-
-Fáze 1 design A+B (Kurogane + střídmá Instrument vrstva) → 2 průchod + plán B → 3 motion → 4 QA → 5 launch video (`video/`, Remotion). Limit 3 kola na fázi, cíl rating ≥ 95.
+**K ruční kontrole (fyzické zařízení):**
+- dvojtap na CTA oslavy a stage-upu,
+- haptika a zvuk při dopadu kotouče,
+- VoiceOver a TalkBack (recap, stage-up, Šatník, řádek ligy),
+- systémové reduce motion,
+- plynulost intro sekvencí na slabším Androidu,
+- notifikace v Expo Go.
 
 ## Spuštění
 
