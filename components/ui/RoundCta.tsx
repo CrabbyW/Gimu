@@ -14,7 +14,7 @@ const MAX_ROUND_CHARS = 7;
 /** Vejde se popisek do kulatého CTA? Delší popisek dostane pilulku (a v BigActionBar širší buňku). */
 export const fitsRoundCta = (label: string): boolean => label.length <= MAX_ROUND_CHARS;
 
-/** Hlavní CTA spodní lišty: kulaté 88 pt v akcentu; delší popisek → pilulka 64 pt na šířku buňky. */
+/** Hlavní CTA spodní lišty: kulaté 88 pt, plná světlá plocha (R42); delší popisek → pilulka 64 pt na šířku buňky. */
 export function RoundCta({ label, onPress, disabled = false }: CtaAction) {
   const { c, space, radius } = useTheme();
   const feedback = usePressFeedback(0.96);
@@ -34,13 +34,13 @@ export function RoundCta({ label, onPress, disabled = false }: CtaAction) {
           height: round ? DIAMETER : 64,
           paddingHorizontal: round ? 0 : space.l,
           borderRadius: radius.full,
-          // Neaktivní CTA nesmí zprůhlednit akcent (vznikl by nový odstín), přejde na neutrální plochu jako Button.
-          backgroundColor: disabled ? c.surface : c.accent,
+          // R42: plná `text` plocha místo akcentu. Neaktivní přejde na neutrální plochu jako Button.
+          backgroundColor: disabled ? c.surface : c.text,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Text variant="bodyStrong" tone={disabled ? 'muted' : 'onAccent'} numberOfLines={1}>{label}</Text>
+        <Text variant="bodyStrong" tone={disabled ? 'muted' : 'inverse'} numberOfLines={1}>{label}</Text>
       </Pressable>
     </Animated.View>
   );

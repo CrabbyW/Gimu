@@ -346,6 +346,12 @@ Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic`:
 | Emoji | Jen v textu systémové notifikace, v UI appky ne. |
 | Zarovnání | Výchozí je asymetrie a zarovnání vlevo. Na střed jen maskot a oslavné scény. |
 
+**R42 (2026-10-02, demo polish, rozhodnutí uživatele) — přepisuje §6.1, §6.4, §6.5 a §6.8 tam, kde se liší:**
+- Směr A+B: Kurogane naplno (tmavý režim je hlavní, světlý zůstává funkční) + střídmá Instrument vrstva (mono telemetrie s reálnými hodnotami, tabulární číslice, měřicí linky u progresu, registrační značky `+` jen na hero kartách).
+- Display font: Inter 300 Light, velký a s těsným trackingem (místo Bebas Neue). Bez nové závislosti.
+- Ember akcent (`accent`) svítí **jen v oslavě dokončení lekce** (a odvozených oslavách). CTA, aktuální uzel, „dnes“ a streak nesou stav přes `text`/kontrast a tvar, ne přes akcent.
+- Opice je jediný barevný objekt v běžném UI.
+
 ## 7. Obrazovky a chování
 
 ### 7.1 Onboarding (jen při prvním spuštění)

@@ -38,7 +38,7 @@ interface Props {
   shakeKey?: number;
 }
 
-/** Kulatý uzel mapy: kotouč, u aktuálního pulzující akcentový prstenec, jeden měkký stín. */
+/** Kulatý uzel mapy: kotouč, u aktuálního pulzující prstenec v `text` (R42), jeden měkký stín. */
 export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0 }: Props) {
   const { size } = useTheme();
   const { reduced } = useMotionSafe();
@@ -77,7 +77,7 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
 function Shadowed({ on, size, children }: { on: boolean; size: number; children: ReactNode }) {
   const { c } = useTheme();
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, boxShadow: on ? [{ offsetX: 0, offsetY: 6, blurRadius: 10, color: `${c.onAccent}59` }] : undefined }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, boxShadow: on ? [{ offsetX: 0, offsetY: 6, blurRadius: 10, color: `${c.shadow}59` }] : undefined }}>
       {children}
     </View>
   );
@@ -96,7 +96,8 @@ function PulseRing({ size, reduced }: { size: number; reduced: boolean }) {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', width: ring, height: ring, borderRadius: radius.full, borderWidth: 2, borderColor: c.accent }, style]}
+      // R42: aktuální uzel nese stav kontrastem (`text`), ne akcentem.
+      style={[{ position: 'absolute', width: ring, height: ring, borderRadius: radius.full, borderWidth: 2, borderColor: c.text }, style]}
     />
   );
 }
@@ -117,7 +118,7 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked }: { kg: PlateKg; size: 
   );
 }
 
-/** Shock kruh odemčení (UX2): při dopadu se od kotouče rozběhne akcentový prstenec a zmizí
+/** Shock kruh odemčení (UX2): při dopadu se od kotouče rozběhne prstenec v `text` (R42) a zmizí
  *  (`motion.shock`: 1 → 1.45, opacita 0.7 → 0, 420 ms punch). Spouští ho první dosažení cíle pružinou. */
 export function ShockRing({ size, progress, width }: { size: number; progress: SharedValue<number>; width?: number }) {
   const { c, radius } = useTheme();
@@ -134,7 +135,7 @@ export function ShockRing({ size, progress, width }: { size: number; progress: S
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', left: 0, top: 0, width: w, height: size, borderRadius: radius.full, borderWidth: 2, borderColor: c.accent }, style]}
+      style={[{ position: 'absolute', left: 0, top: 0, width: w, height: size, borderRadius: radius.full, borderWidth: 2, borderColor: c.text }, style]}
     />
   );
 }
@@ -149,7 +150,7 @@ function DrawnCheck({ size, reduced }: { size: number; reduced: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }} pointerEvents="none">
       <AnimatedPath
-        d={CHECK_PATH} stroke={c.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
+        d={CHECK_PATH} stroke={c.text} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
         strokeDasharray={`${CHECK_LENGTH} ${CHECK_LENGTH}`} animatedProps={props}
       />
     </Svg>

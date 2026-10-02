@@ -1,70 +1,63 @@
 import { Flame } from 'lucide-react-native';
-import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { copy } from '@/data/copy';
-import { inkOn, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
+import { MeasureLine } from './MeasureLine';
+import { Telemetry } from './Telemetry';
 import { Text } from './Text';
 
-const BADGE = 20;
+/** Průběh aktuální sekce mapy (počty z `LessonPathView`, nic dopočítaného navíc). */
+export interface SectionProgress { index: number; title: string; done: number; total: number }
 
-interface Props { streak: number; streakBroken: boolean; xp: number; tierLabel: string }
+interface Props { streak: number; streakBroken: boolean; xp: number; tierLabel: string; section?: SectionProgress | null }
 
-/** Hlavička mapy (instrument vrstva): streak, XP a liga v řadě, oddělené svislými vlasovými linkami. */
-export function TopBar({ streak, streakBroken, xp, tierLabel }: Props) {
-  const { c, space, seasonal, size } = useTheme();
+/** Hlavička mapy (R42, instrument vrstva), vážená vlevo:
+ *  1. streak — plamen v obrysu a číslo v display řezu (jediný velký prvek hlavičky),
+ *  2. telemetrický pruh `XP: 340 · LIGA: BRONZ`,
+ *  3. měřicí linka aktuální sekce, která zároveň dělí hlavičku od mapy (místo vlasové linky).
+ *  Žádný akcent: přerušený streak ztlumí plamen i číslo do `muted`. */
+export function TopBar({ streak, streakBroken, xp, tierLabel, section = null }: Props) {
+  const { c, space, seasonal, size, stroke } = useTheme();
   const insets = useSafeAreaInsets();
-  const streakTone = streakBroken ? 'muted' : 'text';
+  const tone = streakBroken ? 'muted' : 'text';
+  const measured = section !== null && section.total > 0 ? section : null;
   return (
     <View
       style={{
-        backgroundColor: seasonal.headerBase, paddingTop: insets.top, height: size.hitLarge + insets.top,
-        paddingHorizontal: space.m, flexDirection: 'row', alignItems: 'center',
-        // Mapa pod hlavičkou scrolluje; jediný oddělovač je vlasová linka.
-        borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule,
+        backgroundColor: seasonal.headerBase,
+        paddingTop: insets.top + space.m,
+        // Asymetrie: levý okraj m, pravý xl — obsah visí z levé hrany, vpravo zůstává vzduch.
+        paddingLeft: space.m, paddingRight: space.xl, paddingBottom: space.m,
+        gap: space.s,
+        // Bez sekce chybí měřicí linka; dělicí roli pak převezme vlasová linka.
+        borderBottomWidth: measured ? 0 : StyleSheet.hairlineWidth, borderBottomColor: c.rule,
       }}
     >
-      <Cell first accessibilityLabel={copy.map.streakA11y(streak)}>
-        <Flame size={20} color={streakBroken ? c.muted : c.accent} strokeWidth={1.5} />
-        <Text variant="counter" tone={streakTone} maxFontSizeMultiplier={1}>{streak}</Text>
-        <Text variant="label" tone="muted">{copy.map.streak}</Text>
-      </Cell>
-      <Cell accessibilityLabel={copy.map.xpA11y(xp)}>
-        <Text variant="counter" maxFontSizeMultiplier={1}>{xp}</Text>
-        <Text variant="label" tone="muted">{copy.map.xp}</Text>
-      </Cell>
-      <Cell accessibilityLabel={copy.map.leagueA11y(tierLabel)}>
-        <TierBadge initial={tierLabel.charAt(0)} />
-        <Text variant="label" tone="muted" numberOfLines={1}>{copy.map.league(tierLabel)}</Text>
-      </Cell>
-    </View>
-  );
-}
-
-function Cell({ first = false, accessibilityLabel, children }: { first?: boolean; accessibilityLabel: string; children: ReactNode }) {
-  const { c, space, size } = useTheme();
-  return (
-    <View
-      accessible
-      accessibilityLabel={accessibilityLabel}
-      style={{
-        flexDirection: 'row', alignItems: 'center', gap: space.s, height: size.topBarBadge,
-        ...(first ? { paddingRight: space.m } : { paddingHorizontal: space.m, borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: c.rule }),
-      }}
-    >
-      {children}
-    </View>
-  );
-}
-
-/** Kruh 20 pt v barvě nejtěžšího kotouče s iniciálou úrovně. */
-function TierBadge({ initial }: { initial: string }) {
-  const { c, radius } = useTheme();
-  return (
-    <View style={{ width: BADGE, height: BADGE, borderRadius: radius.full, backgroundColor: c.plate25, alignItems: 'center', justifyContent: 'center' }}>
-      <Text variant="badgeLabel" maxFontSizeMultiplier={1} style={{ color: inkOn(c.plate25, c) }}>
-        {initial}
-      </Text>
+      <View
+        accessible
+        accessibilityLabel={copy.map.streakA11y(streak)}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: size.hit }}
+      >
+        <Flame size={size.icon} color={streakBroken ? c.muted : c.text} strokeWidth={stroke.icon} />
+        <Text variant="title" tone={tone} maxFontSizeMultiplier={1}>{streak}</Text>
+        <Text variant="telemetry" tone="muted">{copy.map.days}</Text>
+      </View>
+      <Telemetry
+        items={[
+          { key: copy.map.xp, value: xp, a11y: copy.map.xpA11y(xp) },
+          { key: copy.map.tier, value: tierLabel, a11y: copy.map.leagueA11y(tierLabel) },
+        ]}
+      />
+      {measured ? (
+        <MeasureLine
+          progress={measured.done / measured.total}
+          label={copy.map.sectionLabel(measured.index, measured.title)}
+          value={copy.map.sectionProgress(measured.done, measured.total)}
+          accessibilityLabel={copy.map.sectionProgressA11y(measured.index, measured.title, measured.done, measured.total)}
+          style={{ marginTop: space.s }}
+        />
+      ) : null}
     </View>
   );
 }

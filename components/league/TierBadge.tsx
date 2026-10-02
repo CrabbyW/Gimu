@@ -17,7 +17,7 @@ export function TierBadge({ tierName, bare = false }: Props) {
           alignItems: 'center', justifyContent: 'center',
         }}
       >
-        <Text variant="tierName" numberOfLines={1} maxFontSizeMultiplier={1}>{tierName.toUpperCase()}</Text>
+        <Text variant="tierName" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} maxFontSizeMultiplier={1}>{tierName.toUpperCase()}</Text>
       </View>
     </View>
   );

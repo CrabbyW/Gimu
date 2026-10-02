@@ -46,7 +46,8 @@ export function DotLoader({
   const { reduced } = useMotionSafe();
   const size = sizeProp ?? tokens.loader;
   const dotSize = dotProp ?? tokens.loaderDot;
-  const fill = color ?? c.accent;
+  // R42: načítání není oslava, výchozí barva je `text` (akcent jen v dokončení lekce).
+  const fill = color ?? c.text;
   const cycleMs = D.cycleMs / (speed > 0 ? speed : 1);
   const clock = useSharedValue(0);
   const gradientId = `dl${useId().replace(/[^a-zA-Z0-9]/g, '')}`;

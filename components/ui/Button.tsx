@@ -15,7 +15,8 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-const labelTone: Record<ButtonVariant, TextTone> = { primary: 'onAccent', secondary: 'text', ghost: 'text' };
+// R42: primární akce nese stav kontrastem (světlá plocha na tmavém), ne akcentem.
+const labelTone: Record<ButtonVariant, TextTone> = { primary: 'inverse', secondary: 'text', ghost: 'text' };
 
 export function Button({ label, onPress, variant = 'primary', disabled = false, style }: Props) {
   const { c, space, radius, size } = useTheme();
@@ -36,10 +37,10 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
           paddingHorizontal: space.l,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: variant === 'primary' ? (disabled ? c.surface : c.accent) : 'transparent',
+          backgroundColor: variant === 'primary' ? (disabled ? c.surface : c.text) : 'transparent',
           borderWidth: variant === 'secondary' ? 1 : 0,
           borderColor: c.rule,
-          // Neaktivní primární nesmí zprůhlednit akcent (vznikl by nový odstín), přejde na neutrální plochu.
+          // Neaktivní primární nezprůhledňuje plnou plochu (vznikl by nový odstín), přejde na neutrální plochu.
           opacity: disabled && variant !== 'primary' ? 0.4 : 1,
         }}
       >

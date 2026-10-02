@@ -22,3 +22,8 @@ yarn-error.*
 *.tsbuildinfo
 /ios
 /android
+
+# lokálně nainstalované agent skills (npx skills)
+.agents/
+.claude/skills/
+skills-lock.json

@@ -18,7 +18,7 @@ interface Props {
 export const CHECK_PATH = 'M44 50 l4 4 l8 -9';
 export const CHECK_LENGTH = 18;
 
-/** Kotouč zepředu: plný kruh, vnitřní prstenec, díra, kg v Bebas. Hloubku dělá radiální světlo a jemné zrno. */
+/** Kotouč zepředu: plný kruh, vnitřní prstenec, díra, kg v display řezu (Inter Light). Hloubku dělá radiální světlo a jemné zrno. */
 export function Plate({ kg, size, state, check = true }: Props) {
   const { c, seasonal } = useTheme();
   // ID defs musí být v dokumentu unikátní (na webu je víc kotoučů v jednom DOM).
@@ -46,11 +46,11 @@ export function Plate({ kg, size, state, check = true }: Props) {
         {/* Světlo shora vlevo a stín dole vpravo: lité železo, gradient dělá hloubku. */}
         <RadialGradient id={light} cx="38%" cy="32%" r="75%">
           <Stop offset="0" stopColor={c.plateHighlight} stopOpacity={1} />
-          <Stop offset="1" stopColor={c.onAccent} stopOpacity={0.22} />
+          <Stop offset="1" stopColor={c.shadow} stopOpacity={0.22} />
         </RadialGradient>
         <Pattern id={grain} width={4} height={4} patternUnits="userSpaceOnUse">
           <Rect width={1} height={1} fill={c.plateHighlight} />
-          <Rect x={2} y={3} width={1} height={1} fill={c.onAccent} opacity={0.1} />
+          <Rect x={2} y={3} width={1} height={1} fill={c.shadow} opacity={0.1} />
         </Pattern>
       </Defs>
       <Circle cx={50} cy={50} r={48} fill={fill} />
@@ -59,9 +59,10 @@ export function Plate({ kg, size, state, check = true }: Props) {
       <Circle cx={50} cy={50} r={40} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
       <Circle cx={50} cy={50} r={20} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
       <Circle cx={50} cy={50} r={9} fill={seasonal.mapBase} />
-      <SvgText x={50} y={36} fontFamily={svgType.plateKg.fontFamily} fontSize={svgType.plateKg.fontSize} fill={ink} textAnchor="middle">{kg}</SvgText>
+      <SvgText x={50} y={36} fontFamily={svgType.plateKg.fontFamily} fontSize={svgType.plateKg.fontSize} letterSpacing={svgType.plateKg.letterSpacing} fill={ink} textAnchor="middle">{kg}</SvgText>
+      {/* R42: fajfka v `text` (bílá na tmavém otvoru), akcent patří jen oslavě dokončení. */}
       {state === 'done' && check ? (
-        <Path d={CHECK_PATH} stroke={c.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d={CHECK_PATH} stroke={c.text} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       ) : null}
     </Svg>
   );

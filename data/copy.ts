@@ -82,6 +82,10 @@ export const copy = {
     streakA11y: (n: number) => `Streak ${n} dní`,
     xpA11y: (n: number) => `${n} XP celkem`,
     leagueA11y: (tier: string) => `Liga ${tier}`,
+    // Telemetrický pruh a měřicí linka v hlavičce mapy (R42).
+    tier: 'LIGA',
+    sectionProgress: (done: number, total: number) => `${String(done).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
+    sectionProgressA11y: (n: number, title: string, done: number, total: number) => `Sekce ${n}, ${title}: hotovo ${done} z ${total} lekcí`,
   },
   lesson: {
     reps: 'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',

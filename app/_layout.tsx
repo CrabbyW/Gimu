@@ -1,5 +1,6 @@
 // Importy po řezech: kořen balíčku by do bundlu přibalil všechny váhy (desítky TTF).
-import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue/400Regular';
+// R42: display je Inter 300 Light; Bebas Neue se už nenačítá (balíček zůstává, nic ho neimportuje).
+import { Inter_300Light } from '@expo-google-fonts/inter/300Light';
 import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono/500Medium';
@@ -18,7 +19,7 @@ import { ThemeProvider, useTheme } from '@/theme';
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({ BebasNeue_400Regular, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
+  const [fontsLoaded, fontError] = useFonts({ Inter_300Light, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
   const hydrated = useHydrated();
   const season = useActiveSeason();
   useEffect(() => { if (fontError) console.warn('[fonts] načtení selhalo, pokračuji se systémovým písmem', fontError); }, [fontError]);
@@ -41,7 +42,7 @@ function RootStack() {
     const baseTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
     return {
       ...baseTheme,
-      colors: { ...baseTheme.colors, primary: c.accent, background: c.base, card: c.base, text: c.text, border: c.rule, notification: c.accent },
+      colors: { ...baseTheme.colors, primary: c.text, background: c.base, card: c.base, text: c.text, border: c.rule, notification: c.text },
       fonts: {
         regular: { fontFamily: font.body, fontWeight: 'normal' as const },
         medium: { fontFamily: font.body, fontWeight: 'normal' as const },

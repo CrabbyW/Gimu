@@ -4,14 +4,23 @@ import { View } from 'react-native';
 import { LessonMap } from '@/components/map/LessonMap';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { TopBar } from '@/components/ui/TopBar';
+import { TopBar, type SectionProgress } from '@/components/ui/TopBar';
 import { copy } from '@/data/copy';
 import { useLeague } from '@/hooks/useLeague';
 import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { useTierName } from '@/hooks/useTierName';
+import type { LessonPathView } from '@/services/contracts';
 import { useTheme } from '@/theme';
+
+/** Sekce s aktuální lekcí (po dokončení celé cesty poslední) a počet hotových uzlů v ní.
+ *  Jen čtení stavů z `LessonPathView` pro měřicí linku v hlavičce, žádná herní logika. */
+function currentSection(view: LessonPathView): SectionProgress | null {
+  const s = view.sections.find((sec) => sec.nodes.some((n) => n.lesson.id === view.currentLessonId)) ?? view.sections.at(-1);
+  if (!s) return null;
+  return { index: s.index, title: s.title, done: s.nodes.filter((n) => n.state === 'done').length, total: s.nodes.length };
+}
 
 export default function TrainingScreen() {
   const { c } = useTheme();
@@ -31,7 +40,10 @@ export default function TrainingScreen() {
   if (view.status !== 'ready' || !stats || !data) return <DotLoaderScreen />;
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
-      <TopBar streak={stats.streak} streakBroken={stats.streakBroken} xp={stats.totalXp} tierLabel={tierName} />
+      <TopBar
+        streak={stats.streak} streakBroken={stats.streakBroken} xp={stats.totalXp} tierLabel={tierName}
+        section={currentSection(view.data)}
+      />
       <LessonMap
         view={view.data}
         stats={stats}

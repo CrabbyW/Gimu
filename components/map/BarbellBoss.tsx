@@ -72,7 +72,7 @@ function Barbell({ state }: { state: NodeState }) {
         {copy.map.boss}
       </SvgText>
       {state === 'done' ? (
-        <Path d={`M${W / 2 - 7} ${MID + 16} l5 5 l10 -11`} stroke={c.accent} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d={`M${W / 2 - 7} ${MID + 16} l5 5 l10 -11`} stroke={c.text} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       ) : null}
     </Svg>
   );
@@ -101,7 +101,7 @@ function BossPulse({ reduced }: { reduced: boolean }) {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', width: W + PULSE_PAD * 2, height: H + PULSE_PAD * 2, borderRadius: radius.l, borderWidth: 2, borderColor: c.accent }, style]}
+      style={[{ position: 'absolute', width: W + PULSE_PAD * 2, height: H + PULSE_PAD * 2, borderRadius: radius.l, borderWidth: 2, borderColor: c.text }, style]}
     />
   );
 }

@@ -35,7 +35,7 @@ export function LeagueRow({ entry, rank, index }: Props) {
       }]}
     >
       {me ? <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: size.ownStripe, backgroundColor: c.accent }} /> : null}
-      <Text variant="counter" tone={me ? 'text' : 'muted'} maxFontSizeMultiplier={1} style={{ width: size.rankCol, textAlign: 'right' }}>
+      <Text variant="counter" tone={me ? 'text' : 'muted'} maxFontSizeMultiplier={1} numberOfLines={1} style={{ width: size.rankCol, textAlign: 'right' }}>
         {rank}
       </Text>
       {/* Maskot bez interakce; dech běží dál (reanimated na UI vlákně). */}
