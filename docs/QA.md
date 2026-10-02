@@ -107,3 +107,38 @@ Snímky: `.superpowers/sdd/2026-09-29-opice-faze1-core-loop/tools/shots/qa-a3` (
 - Skutečné `denied` notifikace na iOS/Android (web vrací „nejde“).
 - Na 320×568 byla CTA oslavy na snímku 1.8 s po dokončení oříznutá spodním okrajem (na 375 a 430 po 5 s v pořádku) — ověřit, že po doběhnutí nástupu je celá vidět.
 - Haptika a zvuk v rámu dopadu.
+
+---
+
+# Demo fáze 4, kolo 2 (qa-agent, 2026-10-02)
+
+Zúžené kolo: 320×568 a 390×844 dark, light jen oslava. Flowy `tools/flows/qa-f4d-*.mjs`, `qa-f4r-*.mjs`; snímky `shots/demo-f4c/`.
+
+## Build
+- `npm test` 46 sad / 391 testů ✅, `npm run typecheck` ✅, `npm run lint` ✅. Žádný pageerror ani console.error v žádném běhu.
+
+## Re-check bugů 1–9
+1. ❌ **Dvojí tap propadá do tab baru (stále).** Ref guard funguje (jedna navigace), ale druhý tap ~120 ms po prvním dopadne po `dismissTo` na tab bar mapy. Repro 320×568: demo → `/lesson/bc-1-1` → oslava → dva tapy na „Pokračovat“ (120 ms) → skončí na `/season`. Totéž ze stage-upu (`bc-1-8` → stage-up → dvojtap → `/season`). Oslava → stage-up je OK (stage-up je celoobrazovkový). Na nativu možná překryje přechod modalu, ověřit ručně. Návrh: po příchodu na mapu ignorovat tapy tab baru ~300 ms, nebo navigovat až po odeznění press-out. Boss.
+2. ✅ Hlavička ligy mimo scroll, POZICE/TVOJE XP viditelné na 320 i 390.
+3. ⚠️ Titulek i +44 vs opice OK (překryv nenaměřen během slamu ani v klidu, dark i light). Rozpis XP se na 320 stále láme na 2 řádky (kosmetika). Design-agent.
+4. ✅ Tab bar na 320 bez ořezu, „WINTER ARC“ celý.
+5. ✅ Telemetrie dev menu: dva řádky, bez zalomení uvnitř hodnoty.
+6. ✅ (web) Jeden `heading` „LIGA“, řádky čtené souvisle. Label opic cizích hráčů nekontrolován do hloubky.
+7. ✅ `/progress`, `/league`, `/season`, `/profile` bez profilu → `/onboarding/path`.
+8., 9. Záměr design-agenta, neověřováno.
+
+## Nové
+10. ❌ **Liga 320 pt: „TVOJE XP“ hodnota naráží na pravý okraj** (176 končí na x=319 z 320, jednotka „XP“ mimo obraz). `shots/demo-f4c/xs/dark-league.png`. Při 4ciferném XP se ořízne. Design-agent (`app/(tabs)/league.tsx` hlavička: zmenšit číslo / zalomit).
+
+## Motion regrese
+- Po 2.5 s na mapě, lize, progresu, profilu, sezóně, šatníku nic viditelného v obraze s opacitou < 0.1 (nálezy detektoru byly jen položky schované pod hlavičkou / mimo scroll; po scrollu nahoru i dolů vše viditelné).
+- Návrat na tab (Liga ↔ Trénink, vzorek po 150 ms): obsah hned viditelný, sekvence se nepřehrává ✅.
+- Reduce motion: vše viditelné po 300 ms na všech 6 obrazovkách ✅.
+
+## Verdikt: NESCHVÁLENO
+Blokuje bug 1 (dvojí tap → tab Sezóna, reprodukovatelné na webu) a 10 (ořez XP v lize na 320). Ostatní opravy z kola 1 drží, motion pass bez regresí.
+
+### Boss: opravy po kole 2 (2026-10-02)
+- **Bug 1:** `lib/navGuard.ts`, oslava a stage-up při odchodu volají `markNavigation()`, tab bar 600 ms ignoruje `tabPress` (`screenListeners` v `app/(tabs)/_layout.tsx`). Ověřeno na 320×568 dvěma tapy 120 ms po sobě: oslava → `/`, stage-up → `/?unlocked=bc-1-boss`.
+- **Bug 10:** hlavička ligy na kompaktním displeji má pozici o stupeň menší (Stat M) a užší mezery. Na 320 je XP i jednotka uvnitř obrazu.
+- **Bug 3 (rozpis XP):** zalomení na 320 jde jen mezi položkami a nic se neořízne. Je to záměrné rozhodnutí design-agenta (LOG, kolo 1), ne bug.

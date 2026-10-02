@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { copy } from '@/data/copy';
 import { useRequireProfile } from '@/hooks/useRequireProfile';
+import { isNavigationGuarded } from '@/lib/navGuard';
 import { typography, useCompact, useTheme } from '@/theme';
 
 const SHOW_TAB_BAR = true;
@@ -26,6 +27,7 @@ export default function TabsLayout() {
   if (gate === 'missing') return <Redirect href="/onboarding/path" />;
   return (
     <Tabs
+      screenListeners={{ tabPress: (e) => { if (isNavigationGuarded()) e.preventDefault(); } }}
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: c.base },

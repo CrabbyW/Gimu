@@ -17,7 +17,7 @@ import { useLeague } from '@/hooks/useLeague';
 import { intro, motion, stagger } from '@/lib/motion';
 import { tierName } from '@/hooks/useTierName';
 import { services, type LeagueWeekView } from '@/services';
-import { useTheme } from '@/theme';
+import { useCompact, useTheme } from '@/theme';
 import type { LeagueEntry } from '@/types';
 
 type Item = { kind: 'row'; entry: LeagueEntry; rank: number } | { kind: 'divider'; zone: 'promote' | 'demote' };
@@ -48,6 +48,7 @@ export default function LeagueScreen() {
 
 function Standings({ view }: { view: LeagueWeekView }) {
   const { c, space } = useTheme();
+  const compact = useCompact();
   const list = useRef<FlatList<Item>>(null);
   const items = useMemo(() => buildItems(view), [view]);
   const myIndex = items.findIndex((it) => it.kind === 'row' && it.entry.isMe);
@@ -78,9 +79,10 @@ function Standings({ view }: { view: LeagueWeekView }) {
       ) : null}
       {/* Hlavička mimo FlatList (sticky): odznak, pozice, XP a odpočet zůstanou vidět i po dojetí na vlastní řádek. */}
       <Reveal play={first} delay={intro.league.header} rise={intro.tab.rise} style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
+        {/* Na 320 pt by se XP s jednotkou nevešlo (QA bug 10): pozice o stupeň menší a menší mezery. */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: compact ? space.m : space.l }}>
           <TierBadge tierName={name} />
-          <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size="L" />
+          <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size={compact ? 'M' : 'L'} />
           <Stat label={copy.league.myXp} value={xpShown} a11yValue={myXp} unit={copy.league.xp} size="M" />
         </View>
         <Countdown endsAt={view.endsAt} />

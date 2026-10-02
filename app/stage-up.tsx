@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { markNavigation } from '@/lib/navGuard';
 import { useEffect, useState, useRef } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -121,6 +122,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
   const onContinue = () => {
     if (!ready || leaving || left.current) return;
     left.current = true;
+    markNavigation();
     setLeaving(true);
     toMap(unlocked);
   };

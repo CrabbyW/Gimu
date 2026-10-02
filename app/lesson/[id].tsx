@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { markNavigation } from '@/lib/navGuard';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Platform, ScrollView, View } from 'react-native';
 import { ExerciseCard } from '@/components/lesson/ExerciseCard';
@@ -67,6 +68,7 @@ export default function LessonScreen() {
   const onContinue = useCallback((r: LessonResult) => {
     if (leaving.current) return;
     leaving.current = true;
+    markNavigation();
     // Task 26: přechod na vyšší stage vede přes oslavu růstu, ta pak pokračuje stejně na mapu.
     if (r.stageAfter > r.stageBefore) {
       router.replace({ pathname: '/stage-up', params: { from: String(r.stageBefore), to: String(r.stageAfter), unlocked: r.unlockedLessonId ?? '' } });

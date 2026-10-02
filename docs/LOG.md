@@ -356,3 +356,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Rozhodl jsem sám: pružiny mají jen kotouče, opice a rám profilu (opice). Text, řádky a dlaždice jedou timingem. Modaly hrají sled při každém otevření, taby jen poprvé.
 - Ověřeno: test 391/391, typecheck a lint čisté. Snímky jsou v `shots/motion-brag/` (light normální, dark-rm reduced). Flow `tools/flows/motion-brag.mjs`. Bez pageerror.
 - K ruční kontrole: na webu v dev režimu se sledy po studeném načtení zpožďují (JS vlákno). Plynulost okna 6 kotoučů je potřeba ověřit na slabším Androidu. Count-upy běží na JS vlákně. Prstenec sezóny/hodnota cíle pomocí `Reveal` remountuje TextField při změně typu, takže se ztratí fokus.
+
+## qa-agent · Demo fáze 4, kolo 2 (2026-10-02)
+- Test/typecheck/lint zelené. Bugy 2, 4, 5, 6, 7 opravené; 3 až na zalomení rozpisu XP. Motion orchestrace bez neviditelných prvků, návrat na tab nepřehrává, reduce motion okamžitě, žádný pageerror.
+- Otevřené: bug 1 (dvojí tap po dismissTo propadá do tab baru → Sezóna, i ze stage-upu) — boss; nový bug 10 (ořez TVOJE XP v lize na 320) — design-agent.
+- Nic jsem neopravoval. Verdikt NESCHVÁLENO.
