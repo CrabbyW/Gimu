@@ -11,9 +11,9 @@ interface Props extends Omit<TextInputProps, 'style' | 'selectionColor' | 'place
   error?: string | null;
 }
 
-/** Pole s mono štítkem nad sebou a jedinou spodní linkou, která při fokusu přejde do akcentu. */
+/** Pole s mono štítkem nad sebou a jedinou spodní linkou, která při fokusu zesílí na `stroke.focus` v `text` (bez akcentu, R42). */
 export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Props) {
-  const { c, space, size } = useTheme();
+  const { c, space, size, stroke } = useTheme();
   const [focused, setFocused] = useState(false);
   const reveal = useRevealOnFocus();
   // Celý blok (štítek, pole, chyba), aby nad klávesnicí bylo vidět i chybové hlášení.
@@ -21,14 +21,14 @@ export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Pro
   return (
     <View ref={block} style={{ gap: space.s }}>
       <Text variant="label" tone="muted">{label}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s, borderBottomWidth: 1, borderBottomColor: focused ? c.accent : c.rule }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s, borderBottomWidth: focused ? stroke.focus : 1, marginBottom: focused ? 0 : stroke.focus - 1, borderBottomColor: focused ? c.text : c.rule }}>
         <TextInput
           {...input}
           accessibilityLabel={input.accessibilityLabel ?? label}
           onFocus={(e) => { setFocused(true); reveal?.focus(block.current); onFocus?.(e); }}
           onBlur={(e) => { setFocused(false); reveal?.blur(block.current); onBlur?.(e); }}
-          selectionColor={c.accent}
-          cursorColor={c.accent}
+          selectionColor={c.muted}
+          cursorColor={c.text}
           placeholderTextColor={c.muted}
           style={{ ...typography.input, color: c.text, flex: 1, minHeight: size.control, paddingVertical: space.s }}
         />

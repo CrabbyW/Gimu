@@ -1,6 +1,8 @@
 import { COSMETICS } from '@/data/cosmetics';
 import { weekStart } from '@/logic/dates';
 import type { CosmeticSlot, PathId, UserProfile } from '@/types';
+import { sanitizeEquipped } from '@/logic/cosmetics';
+import { activeDays, longestStreak } from '@/logic/streak';
 
 export const DB_VERSION = 2;
 export interface PersistedDb { profile: UserProfile | null }
@@ -63,11 +65,9 @@ function upgradeV1(p: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
-const COSMETIC_SLOT = new Map(COSMETICS.map((c) => [c.id, c.slot]));
-
-/** Zahodí nasazené položky s neznámým id nebo ve špatném slotu. TODO(Task 28): nahradit `logic/cosmetics.ts`. */
-function sanitizeEquipped(equipped: UserProfile['equipped']): UserProfile['equipped'] {
-  return Object.fromEntries(Object.entries(equipped).filter(([slot, id]) => COSMETIC_SLOT.get(String(id)) === (slot as CosmeticSlot)));
+/** Zahodí nasazené položky s neznámým id, ve špatném slotu nebo už neodemčené. */
+function cleanEquipped(p: UserProfile): UserProfile['equipped'] {
+  return sanitizeEquipped(p.equipped, COSMETICS, { owned: p.owned, milestones: p.milestones, longestStreak: longestStreak(activeDays(p.activity)) });
 }
 
 export function migrateDb(persisted: unknown, version: number): PersistedDb {
@@ -75,7 +75,7 @@ export function migrateDb(persisted: unknown, version: number): PersistedDb {
   let profile = (persisted as { profile?: unknown }).profile ?? null;
   if (profile === null) return EMPTY;
   if (version < 2 && isPlainObject(profile)) profile = upgradeV1(profile);
-  if (isProfile(profile)) return { profile: { ...profile, equipped: sanitizeEquipped(profile.equipped) } };
+  if (isProfile(profile)) return { profile: { ...profile, equipped: cleanEquipped(profile) } };
   console.warn('[db] poškozený profil, reset na onboarding');
   return EMPTY;
 }

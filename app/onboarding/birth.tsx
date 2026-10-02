@@ -105,7 +105,8 @@ function BirthScene() {
     circleScale.value = withDelay(INFLATE_AT, withSpring(1, motion.pop));
     at(BURST_AT - TENSE_MS, () => { circleScale.value = withTiming(TENSE_SCALE, { duration: TENSE_MS, easing: ease.press }); });
     // Prasknutí: kruh se roztáhne a od středu vyprázdní do mizejícího prstence, ze kterého vyskočí opice.
-    // Akcent se nezprůhledňuje (ztlumený akcent by byl nový odstín), vyprázdní ho díra v barvě pozadí.
+    // Kruh je v `text` (R42: světelný objekt v černé, ember patří jen oslavě lekce). Nezprůhledňuje se,
+    // vyprázdní ho díra v barvě pozadí.
     at(BURST_AT, () => {
       circleScale.value = withTiming(BURST_SCALE, { duration: BURST_MS, easing: ease.punch });
       holeScale.value = withTiming(1, { duration: BURST_MS, easing: ease.punch });
@@ -165,7 +166,7 @@ function BirthScene() {
           {stageHeight > 0 ? (
             <View style={{ width: disc, height: disc, alignItems: 'center', justifyContent: 'center' }}>
               <Animated.View
-                style={[circleStyle, { position: 'absolute', width: disc, height: disc, borderRadius: disc / 2, backgroundColor: c.accent }]}
+                style={[circleStyle, { position: 'absolute', width: disc, height: disc, borderRadius: disc / 2, backgroundColor: c.text }]}
               >
                 <Animated.View style={[holeStyle, { flex: 1, borderRadius: disc / 2, backgroundColor: c.base }]} />
               </Animated.View>
@@ -178,7 +179,7 @@ function BirthScene() {
         <Animated.View style={[textStyle, { paddingHorizontal: space.l, paddingBottom: space.xl, gap: space.s }]}>
           <Text variant="display" accessibilityRole="header">{t.title}</Text>
           <Text tone="muted">{t.lead}</Text>
-          <Text variant="label" tone="muted" style={{ marginTop: space.m }}>{`${t.bornLabel(bornOn)} · ${pathName}`}</Text>
+          <Text variant="telemetry" tone="muted" style={{ marginTop: space.m }}>{`${t.bornLabel(bornOn)} · ${pathName}`}</Text>
           {failed ? (
             <Text variant="bodyStrong" accessibilityRole="alert" style={{ color: c.danger, marginTop: space.m }}>{t.saveError}</Text>
           ) : null}

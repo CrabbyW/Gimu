@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
+import { RegMark } from '@/components/ui/RegMark';
 import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -23,19 +24,25 @@ const MEASURE = 496;
 
 interface Props { exercise: Exercise; /** Jen u výdrže. */ timer?: HoldTimerState }
 
-/** Karta cviku: silueta, název, množství (u výdrže odpočet) a popis techniky. */
+/** Karta cviku (hero, R42): panel siluety s registračními značkami, pod ním název v display řezu,
+ *  množství (u výdrže odpočet) a popis techniky. Vše zarovnané vlevo; mezi blokem siluety a textem
+ *  větší mezera (space.xl), aby silueta stála jako subjekt a text jako popiska. */
 export function ExerciseCard({ exercise, timer }: Props) {
   const { c, radius, space } = useTheme();
   return (
-    <Animated.View entering={enter} exiting={exit} style={{ gap: space.m }}>
-      <View style={{ height: SILHOUETTE_HEIGHT, backgroundColor: c.surface, borderRadius: radius.l, padding: space.m }}>
-        <ExerciseSilhouette id={exercise.silhouette} />
+    <Animated.View entering={enter} exiting={exit} style={{ gap: space.xl }}>
+      <RegMark>
+        <View style={{ height: SILHOUETTE_HEIGHT, backgroundColor: c.surface, borderRadius: radius.l, padding: space.m }}>
+          <ExerciseSilhouette id={exercise.silhouette} />
+        </View>
+      </RegMark>
+      <View style={{ gap: space.m }}>
+        <Text variant="display" accessibilityRole="header">{exercise.name}</Text>
+        {exercise.type === 'hold' && timer
+          ? <HoldTimer timer={timer} />
+          : <Stat size="L" value={exercise.amount} unit={copy.lesson.reps} />}
+        <Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{exercise.description}</Text>
       </View>
-      <Text variant="display" accessibilityRole="header">{exercise.name}</Text>
-      {exercise.type === 'hold' && timer
-        ? <HoldTimer timer={timer} />
-        : <Stat size="L" value={exercise.amount} unit={copy.lesson.reps} />}
-      <Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{exercise.description}</Text>
     </Animated.View>
   );
 }

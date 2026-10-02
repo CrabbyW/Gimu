@@ -185,3 +185,16 @@ export function applyClaim(p: ClaimProfile, seasonId: string, reward: SeasonRewa
     seasonClaims: { ...p.seasonClaims, [seasonId]: { at, cosmeticIds: reward.cosmeticIds, badgeIds: reward.badgeIds } },
   };
 }
+
+export type SeasonGoalCheck = 'ok' | 'daysRange' | 'countRange' | 'targetRange' | 'deltaRange';
+const intIn = (n: number, lo: number, hi: number) => Number.isInteger(n) && n >= lo && n <= hi;
+
+/** Rozsahy cíle sezóny (plán B, Task 24). activeDays navíc nesmí přesáhnout délku sezóny. */
+export function validateSeasonGoal(g: SeasonGoal, s?: SeasonSpan): SeasonGoalCheck {
+  switch (g.kind) {
+    case 'activeDays': return intIn(g.days, 1, Math.min(90, s ? seasonDays(s).length : 90)) ? 'ok' : 'daysRange';
+    case 'lessons': return intIn(g.count, 1, 500) ? 'ok' : 'countRange';
+    case 'milestone': return intIn(g.target, 1, 1000) && g.current >= 0 ? 'ok' : 'targetRange';
+    case 'weight': return Number.isFinite(g.deltaKg) && g.deltaKg !== 0 && Math.abs(g.deltaKg) <= 30 ? 'ok' : 'deltaRange';
+  }
+}

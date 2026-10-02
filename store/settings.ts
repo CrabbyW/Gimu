@@ -35,6 +35,8 @@ interface SettingsState extends PersistedSettings {
   setReminderEnabled(enabled: boolean): void;
   setReminderHour(hour: number): void;
   setStageOverride(stage: MascotStage | null): void;
+  /** Dev menu „Reset appky“: vše zpět na výchozí, téma zůstává. */
+  resetDev(): void;
 }
 export const useSettings = create<SettingsState>()(persist((set) => ({
   ...DEFAULTS, hydrated: false,
@@ -42,6 +44,7 @@ export const useSettings = create<SettingsState>()(persist((set) => ({
   setReminderEnabled: (reminderEnabled) => set({ reminderEnabled }),
   setReminderHour: (reminderHour) => set({ reminderHour }),
   setStageOverride: (stageOverride) => set({ stageOverride }),
+  resetDev: () => set((st) => ({ ...DEFAULTS, theme: st.theme })),
 }), {
   name: 'opice-settings', version: 2, storage: createJSONStorage(() => AsyncStorage),
   partialize: (s): PersistedSettings => ({

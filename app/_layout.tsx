@@ -59,6 +59,7 @@ function RootStack() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.base }, animation: 'fade', animationDuration: 250 }}>
             {/* UX2: lekce vyjede zespodu za 350 ms (výchozí iOS 500 ms působí líně). */}
             <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 350, gestureEnabled: false }} />
+            <Stack.Screen name="dev" options={{ presentation: 'modal' }} />
           </Stack>
         </NavigationThemeProvider>
       </SafeAreaProvider>

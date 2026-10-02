@@ -21,7 +21,7 @@ function Dot({ state }: { state: DotState }) {
       style={[animated, {
         height: DOT,
         borderRadius: radius.full,
-        backgroundColor: state === 'done' ? c.text : state === 'current' ? c.accent : 'transparent',
+        backgroundColor: state === 'done' ? c.text : state === 'current' ? c.text : 'transparent',
         borderWidth: state === 'future' ? 1 : 0,
         borderColor: c.rule,
       }]}
@@ -29,7 +29,8 @@ function Dot({ state }: { state: DotState }) {
   );
 }
 
-/** Řada teček průběhu: hotové plné, aktuální akcentová pilulka, budoucí obrys. */
+/** Řada teček průběhu: hotové plné tečky, aktuální plná pilulka (stav nese tvar, ne barva), budoucí obrys.
+ *  Bez akcentu (R42: ember jen v oslavě dokončení lekce). */
 export function DotSteps({ total, current }: Props) {
   const { space } = useTheme();
   return (

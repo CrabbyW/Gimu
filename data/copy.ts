@@ -1,5 +1,9 @@
 import type { MilestoneUnit } from '@/types';
 
+/** Česká množná čísla: 1 → one, 2–4 → few, jinak many (stačí pro UI appky). */
+export const czPlural = (n: number, one: string, few: string, many: string): string =>
+  (n === 1 ? one : n >= 2 && n <= 4 ? few : many);
+
 const MILESTONE_UNIT_SHORT = { reps: '×', seconds: 's', kg: 'kg' } as const;
 
 export const copy = {
@@ -13,6 +17,10 @@ export const copy = {
   tabs: { training: 'Trénink', league: 'Liga', progress: 'Progres', season: 'Sezóna', profile: 'Profil' },
   onboarding: {
     stepLabel: (n: number, total: number) => `KROK ${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
+    // Měřicí linka onboardingu (R42): štítek, pozice „02/05“ a hlasitý popis.
+    stepKey: 'KROK',
+    stepValue: (n: number, total: number) => `${String(n).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
+    stepA11y: (n: number, total: number) => `Krok ${n} z ${total}`,
     path: { title: 'Vyber si cestu', lead: 'Cestu můžeš později změnit. Opice půjde s\u00A0tebou.' },
     dream: {
       title: 'Jaké tělo chceš?', lead: 'Vyber jednu vizi. Uvidíš ji nahoře v Progresu.',
@@ -91,6 +99,9 @@ export const copy = {
     reps: 'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',
     quitConfirm: 'Ukončit', quitCancel: 'Trénovat dál', holdReady: 'Připrav se', nextExercise: 'Další cvik',
     close: 'Ukončit lekci',
+    // Měřicí linka lekce (R42): mono štítek a pozice „02/05“ (tabulární číslice).
+    progressLabel: 'CVIK',
+    progressValue: (n: number, total: number) => `${String(n).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
     progressA11y: (n: number, total: number) => `Cvik ${n} z ${total}`,
     locked: 'Nejdřív dokonči předchozí lekci.', backToMap: 'Zpět na mapu',
   },
@@ -115,8 +126,18 @@ export const copy = {
     // Prázdný stav: uživatel má tento týden 0 XP (soupeři už mohou mít).
     emptyWeek: 'Tenhle týden zatím bez XP. Jedna lekce tě posune nahoru.',
     lastWeek: (rank: number) => `MINULÝ TÝDEN · ${rank}. MÍSTO`,
+    // Telemetrie karty výsledku (R42): „MINULÝ TÝDEN: 3. MÍSTO“.
+    lastWeekKey: 'MINULÝ TÝDEN', placeUnit: 'MÍSTO',
+    lastWeekA11y: (rank: number) => `Minulý týden ${rank}. místo`,
     dismiss: 'Rozumím',
     rowA11y: (rank: number, name: string, xp: number) => `${rank}. místo, ${name}, ${xp} XP`,
+  },
+  dev: {
+    title: 'Dev menu', reset: 'Reset appky', resetConfirm: 'Smazat všechna data? Téma zůstane.', xp: '+500 XP',
+    stage: (s: number | null) => `Stage opice: ${s ?? 'auto'}`, seasonEnd: 'Skok na konec sezóny',
+    streakLoss: 'Simulace ztráty streaku', resetTime: 'Reset časového posunu', now: 'TEĎ', offset: 'POSUN',
+    offsetValue: (d: number, h: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)} D ${h} H`,
+    noSeason: 'Teď neběží sezóna, kterou by šlo přeskočit.', done: 'Hotovo',
   },
   mascot: {
     // Popisek pro čtečku obrazovky podle nálady.

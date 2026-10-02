@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { BigActionBar } from '@/components/ui/BigActionBar';
-import { DotSteps } from '@/components/ui/DotSteps';
+import { MeasureLine } from '@/components/ui/MeasureLine';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -23,7 +23,7 @@ interface Props {
   children: ReactNode;
 }
 
-/** Rám kroku onboardingu: ukazatel kroků, titulek vlevo, obsah a spodní lišta Zpět / Pokračovat. */
+/** Rám kroku onboardingu: měřicí linka kroků, titulek vlevo, obsah a spodní lišta Zpět / Pokračovat. */
 export function OnboardingFrame({ step, title, lead, canContinue, onContinue, children }: Props) {
   const { c, space } = useTheme();
   // Boss oprava: rychlé dvojité/trojité ťuknutí na Pokračovat přeskakovalo krok (např. milníky → váha →
@@ -44,12 +44,16 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.base }}>
       <Screen edges={['top']} scroll>
-        <View style={{ paddingTop: space.l, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text variant="label" tone="muted">{copy.onboarding.stepLabel(step, TOTAL_STEPS)}</Text>
-          <DotSteps total={TOTAL_STEPS} current={step - 1} />
-        </View>
-        {/* Nástup kroku (UX2): titulek, pak lead, pak obsah (ten si řadí vlastní sled). */}
-        <View style={{ marginTop: space.xl, gap: space.s }}>
+        {/* R42: průběh jako měřicí linka (stejná gramatika jako lekce). Linka = hotové kroky, hodnota = aktuální krok. */}
+        <MeasureLine
+          style={{ paddingTop: space.l }}
+          progress={(step - 1) / TOTAL_STEPS}
+          label={copy.onboarding.stepKey}
+          value={copy.onboarding.stepValue(step, TOTAL_STEPS)}
+          accessibilityLabel={copy.onboarding.stepA11y(step, TOTAL_STEPS)}
+        />
+        {/* Nástup kroku (UX2): titulek, pak lead, pak obsah (ten si řadí vlastní sled). Víc vzduchu nad titulkem. */}
+        <View style={{ marginTop: space.xxl, gap: space.s }}>
           <Animated.View entering={enterRise(0, 16)}><Text variant="display" accessibilityRole="header">{title}</Text></Animated.View>
           <Animated.View entering={enterRise(1)}><Text tone="muted">{lead}</Text></Animated.View>
         </View>

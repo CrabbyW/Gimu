@@ -4,7 +4,7 @@ export { buildTheme, resolveScheme, type Scheme, type Theme } from './buildTheme
 export type { Colors } from './palettes';
 export type { SeasonalColors } from './seasons';
 export {
-  type as typography, mascot, statSize, svgType, tracking,
+  type as typography, mascot, statSize, stroke, svgType, tracking,
   type Fonts, type Mascot, type Material, type Radius, type Size, type Space, type StatSize, type Stroke, type TypeVariant,
 } from './tokens';
 export { inkOn } from './ink';

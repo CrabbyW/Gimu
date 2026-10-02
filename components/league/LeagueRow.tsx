@@ -14,7 +14,8 @@ interface Props { entry: LeagueEntry; rank: number; /** Pořadí v nástupu (sta
 
 /**
  * Řádek tabulky 56 pt: pořadí (Bebas, tabulární, 32), mini opice 32, jméno Inter 600, XP vpravo.
- * Vlastní řádek: pozadí `raised` + akcentový proužek 3 pt vlevo. Jediná oddělovací technika, žádné linky mezi řádky.
+ * Vlastní řádek: pozadí `raised` + proužek 3 pt v `text` vlevo a pořadí v `text` (ostatní `muted`).
+ * R42: bez akcentu, vlastní řádek nese kontrast a tvar. Žádné linky mezi řádky.
  */
 export function LeagueRow({ entry, rank, index }: Props) {
   const { c, space, size } = useTheme();
@@ -34,7 +35,7 @@ export function LeagueRow({ entry, rank, index }: Props) {
         backgroundColor: me ? c.raised : 'transparent',
       }]}
     >
-      {me ? <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: size.ownStripe, backgroundColor: c.accent }} /> : null}
+      {me ? <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: size.ownStripe, backgroundColor: c.text }} /> : null}
       <Text variant="counter" tone={me ? 'text' : 'muted'} maxFontSizeMultiplier={1} numberOfLines={1} style={{ width: size.rankCol, textAlign: 'right' }}>
         {rank}
       </Text>

@@ -1,13 +1,13 @@
 import { buildInitialProfile } from '@/logic/onboarding';
 import { COSMETICS } from '@/data/cosmetics';
 import { DEV_XP_LESSON_ID } from '@/logic/activity';
+import { newlyUnlocked } from '@/logic/cosmetics';
+import { newlyCompleted } from '@/logic/progress';
 import { toISODate, weekStart } from '@/logic/dates';
 import { now as clockNow } from '@/lib/clock';
 import { useDb } from '@/store/db';
-import type { Milestone } from '@/types';
 import type { MilestoneUpdateResult, UserService } from '../contracts';
-
-const doneCount = (ms: Milestone[]) => ms.filter((m) => m.current >= m.target).length;
+import { ownershipCtx } from './ownership';
 
 const requireProfile = () => {
   const p = useDb.getState().profile;
@@ -32,15 +32,12 @@ export class MockUserService implements UserService {
     const p = requireProfile();
     const before = p.milestones.find((m) => m.id === id);
     if (!before) throw new Error(`Milník ${id} neexistuje.`);
-    const milestones = p.milestones.map((m) => (m.id === id ? { ...m, current } : m));
+    const value = Math.max(0, current);
+    const milestones = p.milestones.map((m) => (m.id === id ? { ...m, current: value } : m));
     useDb.getState().setProfile({ ...p, milestones });
-    // Milestone kosmetika se odvozuje z počtu splněných milníků (ruling 14); hlásí se jen nově dosažená.
-    // TODO(Task 28): pravidla přes logic/cosmetics.ts.
-    const nBefore = doneCount(p.milestones); const nAfter = doneCount(milestones);
-    const unlockedCosmeticIds = COSMETICS
-      .filter((c) => c.milestoneRule?.kind === 'milestoneCompleted' && nBefore < c.milestoneRule.count && c.milestoneRule.count <= nAfter)
-      .map((c) => c.id);
-    return { completed: before.current < before.target && current >= before.target, unlockedCosmeticIds };
+    // Milestone kosmetika se odvozuje z pravidel (ruling 14); hlásí se jen nově odemčená.
+    const unlockedCosmeticIds = newlyUnlocked(COSMETICS, ownershipCtx(p), ownershipCtx({ ...p, milestones }));
+    return { completed: newlyCompleted(p.milestones, milestones).includes(id), unlockedCosmeticIds };
   }
   async grantDevXp(amount: number, now: Date) {
     if (!Number.isInteger(amount) || amount <= 0) throw new Error('Dev XP musí být kladné celé číslo.');

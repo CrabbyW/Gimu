@@ -6,8 +6,8 @@ import type {
   Season, SeasonGoal, UserProfile, ISODate, MascotStage,
 } from '@/types';
 
-/** Důvod, proč (ne)jde položku koupit. TODO(Task 28): re-export z `logic/cosmetics.ts`. */
-export type BuyCheck = 'ok' | 'owned' | 'notShop' | 'insufficient';
+import type { BuyCheck } from '@/logic/cosmetics';
+export type { BuyCheck };
 
 export type { DayState, LessonResult, NodeState, RecapBeforeAfter, SeasonProgress, SeasonRecap };
 /** `xp`: základní XP za dokončení teď (lekce/boss, u dokončené opakování), bez bonusů za den a streak. */

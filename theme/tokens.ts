@@ -12,13 +12,15 @@ export const size = {
   choiceCard: 80, choiceGlyph: 40, glyph: 48,
   // DotLoader: rozměr mřížky a průměr tečky (uživatelské zadání size={32} dotSize={4}).
   loader: 32, loaderDot: 4,
-  // Liga (§7.5): řádek 56, sloupec pořadí 32, mini opice 32, odznak úrovně 72, akcentový proužek vlastního řádku 3.
+  // Liga (§7.5): řádek 56, sloupec pořadí 32, mini opice 32, odznak úrovně 72, proužek vlastního řádku 3 (v `text`, R42).
   leagueRow: 56, rankCol: 40, rowMascot: 32, tierBadge: 72, ownStripe: 3,
   // Instrument vrstva (R42): koncový tik MeasureLine, rameno registrační značky `+`, Lucide ikona v hlavičce.
   tick: 8, regMark: 8, icon: 20,
 } as const;
-// Tloušťky čar instrument vrstvy: Lucide obrys 1.5, aktivní úsek měřicí linky 2.
-export const stroke = { icon: 1.5, measure: 2 } as const;
+// Tloušťky čar instrument vrstvy: Lucide obrys 1.5, aktivní úsek měřicí linky 2,
+// fokus/výběr bez akcentu (spodní linka pole, proužek vybrané karty) 2, prstenec výdrže 3
+// (měřidlo v `text` na stopě `rule`; tenčí než dřív, protože už ho nenese barva, ale kontrast).
+export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 export const material = { collarRadius: 2 } as const;
@@ -73,7 +75,9 @@ export const svgType = {
 export const statSize = { M: 56, L: 88, XL: 120 } as const;
 
 // Barvy opice (srst, obličej) — stejné v obou režimech, viz spec §8.
-export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0' } as const;
+// `tankRim`: lem tílka Ember. Patří materiálu opice, ne UI akcentu (R42: ember jen v oslavě lekce);
+// pálená siena z rodiny srsti, tlumenější než UI ember, nesleduje sezónní přepis akcentu.
+export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0', tankRim: '#B4532A' } as const;
 
 export type Space = typeof space;
 export type Radius = typeof radius;

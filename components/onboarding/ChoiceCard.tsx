@@ -15,20 +15,19 @@ interface Props {
   renderGlyph(color: string, bg: string): ReactNode;
 }
 
-const STRIPE_WIDTH = 2;
-
 /**
  * Kompaktní karta volby (onboarding, vize těla). Stejná gramatika jako `PathCard`: karta se
- * odděluje jen pozadím, výběr nese 2px akcentový proužek vlevo a glyf v akcentu.
- * Motion (UX2): proužek vyroste od středu (scaleY 0.3 → 1) a prolne se, glyf přejde text → akcent
+ * odděluje jen pozadím, výběr nese proužek `stroke.focus` v `text` vlevo a glyf přecházející
+ * z `muted` do `text` (R42: bez akcentu, stav nese kontrast a tvar; a11y nese `selected`).
+ * Motion (UX2): proužek vyroste od středu (scaleY 0.3 → 1) a prolne se, glyf přejde muted → text
  * crossfadem dvou vrstev; výběr `motion.ui`, zrušení `motion.uiExit`.
  */
 export function ChoiceCard({ title, line, selected, onPress, renderGlyph }: Props) {
-  const { c, space, radius, size } = useTheme();
+  const { c, space, radius, size, stroke } = useTheme();
   const feedback = usePressFeedback(0.98);
   const sel = useSelectionProgress(selected);
   const stripeStyle = useAnimatedStyle(() => ({ opacity: sel.value, transform: [{ scaleY: 0.3 + 0.7 * sel.value }] }));
-  const accentGlyph = useAnimatedStyle(() => ({ opacity: sel.value }));
+  const selGlyph = useAnimatedStyle(() => ({ opacity: sel.value }));
   return (
     <Animated.View style={feedback.style}>
       <Pressable
@@ -43,10 +42,10 @@ export function ChoiceCard({ title, line, selected, onPress, renderGlyph }: Prop
           paddingVertical: space.m, paddingHorizontal: space.l, borderRadius: radius.l, backgroundColor: c.surface,
         }}
       >
-        <Animated.View style={[stripeStyle, { position: 'absolute', left: 0, top: space.m, bottom: space.m, width: STRIPE_WIDTH, backgroundColor: c.accent }]} />
+        <Animated.View style={[stripeStyle, { position: 'absolute', left: 0, top: space.m, bottom: space.m, width: stroke.focus, backgroundColor: c.text }]} />
         <View>
-          {renderGlyph(c.text, c.surface)}
-          <Animated.View style={[accentGlyph, { position: 'absolute', left: 0, top: 0 }]}>{renderGlyph(c.accent, c.surface)}</Animated.View>
+          {renderGlyph(c.muted, c.surface)}
+          <Animated.View style={[selGlyph, { position: 'absolute', left: 0, top: 0 }]}>{renderGlyph(c.text, c.surface)}</Animated.View>
         </View>
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="choiceTitle">{title}</Text>

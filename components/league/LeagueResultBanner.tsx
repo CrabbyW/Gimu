@@ -3,6 +3,8 @@ import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Button } from '@/components/ui/Button';
+import { RegMark } from '@/components/ui/RegMark';
+import { Telemetry } from '@/components/ui/Telemetry';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
@@ -21,7 +23,7 @@ const FADE = { duration: 200 };
  * `motion.pop` (herní odměna) + haptika success. Omezený pohyb: jen 200ms fade, bez pružiny.
  */
 export function LeagueResultBanner({ result, toTierName, onDismiss }: Props) {
-  const { c, space } = useTheme();
+  const { c, space, radius } = useTheme();
   const { reduced } = useMotionSafe();
   const shown = useSharedValue(0);
   const badge = useSharedValue(result.outcome === 'promote' && !reduced ? 0.6 : 1);
@@ -47,16 +49,18 @@ export function LeagueResultBanner({ result, toTierName, onDismiss }: Props) {
 
   const line = copy.league.result[result.outcome](toTierName);
   return (
-    <Animated.View
-      accessibilityLiveRegion="polite"
-      style={[box, { backgroundColor: c.surface, padding: space.l, flexDirection: 'row', alignItems: 'center', gap: space.l }]}
-    >
-      <Animated.View style={badgeStyle}><TierBadge tierName={toTierName} bare /></Animated.View>
-      <View style={{ flex: 1, gap: space.s, alignItems: 'flex-start' }}>
-        <Text variant="label" tone="muted">{copy.league.lastWeek(result.rank)}</Text>
-        <Text variant="bodyStrong">{line}</Text>
-        <Button label={copy.league.dismiss} variant="secondary" onPress={close} />
-      </View>
+    <Animated.View accessibilityLiveRegion="polite" style={[box, { marginHorizontal: space.l, marginTop: space.m }]}>
+      {/* Hero karta (R42): registrační značky v rozích, odsazená od okrajů, aby `+` byly celé vidět. */}
+      <RegMark>
+        <View style={{ backgroundColor: c.surface, borderRadius: radius.l, padding: space.l, flexDirection: 'row', alignItems: 'center', gap: space.l }}>
+          <Animated.View style={badgeStyle}><TierBadge tierName={toTierName} bare /></Animated.View>
+          <View style={{ flex: 1, gap: space.s, alignItems: 'flex-start' }}>
+            <Telemetry items={[{ key: copy.league.lastWeekKey, value: `${result.rank}.`, unit: copy.league.placeUnit, a11y: copy.league.lastWeekA11y(result.rank) }]} />
+            <Text variant="bodyStrong">{line}</Text>
+            <Button label={copy.league.dismiss} variant="secondary" onPress={close} />
+          </View>
+        </View>
+      </RegMark>
     </Animated.View>
   );
 }

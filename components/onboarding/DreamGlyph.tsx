@@ -3,7 +3,7 @@ import type { DreamGlyphId } from '@/hooks/useOnboardingDraft';
 
 interface Props {
   glyph: DreamGlyphId;
-  /** Barva tvaru (`text`, u vybrané karty `accent`). */
+  /** Barva tvaru (`muted`, u vybrané karty `text`). */
   color: string;
   /** Barva podkladu karty, prosvítá otvory. */
   bg: string;

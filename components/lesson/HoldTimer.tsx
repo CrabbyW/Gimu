@@ -6,18 +6,19 @@ import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { ease, motion, useMotionSafe } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { stroke, useTheme } from '@/theme';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const SIZE = 220;
-const STROKE = 6;
+const STROKE = stroke.ring;
 const R = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * R;
 const PULSE_FROM = 3;
 
-/** Kruhový odpočet výdrže: prstenec se vyprazdňuje, uprostřed zbývající sekundy.
+/** Kruhový odpočet výdrže: prstenec v `text` na stopě `rule` se vyprazdňuje, uprostřed zbývající sekundy.
+ *  R42: bez akcentu, měřidlo nese kontrast; useknutý konec (butt) čte jako měřicí čára, ne jako pilulka.
  *  Stav a ovládání drží `useHoldTimer` v rodiči, který kreslí i akční lištu. */
 export function HoldTimer({ timer }: { timer: HoldTimerState }) {
   const { c, space } = useTheme();
@@ -43,14 +44,14 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
       accessible
       accessibilityRole="timer"
       accessibilityLabel={`${secondsLeft} ${copy.lesson.seconds.toLowerCase()}`}
-      style={{ width: SIZE, height: SIZE, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: SIZE, height: SIZE, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center' }}
     >
       <Animated.View style={[pulse, { position: 'absolute' }]}>
       <Svg width={SIZE} height={SIZE}>
         <Circle cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={c.rule} strokeWidth={STROKE} fill="none" />
         {/* Start nahoře, ubývá po směru hodinových ručiček. */}
         <AnimatedCircle
-          cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={c.accent} strokeWidth={STROKE} fill="none" strokeLinecap="round"
+          cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={c.text} strokeWidth={STROKE} fill="none" strokeLinecap="butt"
           strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`} animatedProps={ring}
           transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
         />

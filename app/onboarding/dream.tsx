@@ -71,15 +71,15 @@ export default function DreamStep() {
   );
 }
 
-/** Pole vlastní vize: jediná spodní linka (jazyk TextField), při fokusu v akcentu. */
+/** Pole vlastní vize: jediná spodní linka (jazyk TextField), při fokusu zesílí v `text` (R42: bez akcentu). */
 function CustomDream({ value, onChange }: { value: string; onChange(v: string): void }) {
-  const { c, space } = useTheme();
+  const { c, space, stroke } = useTheme();
   const [focused, setFocused] = useState(false);
   const reveal = useRevealOnFocus();
   const block = useRef<View>(null);
   return (
     <View ref={block} style={{ gap: space.s, marginTop: space.m }}>
-      <View style={{ borderBottomWidth: 1, borderBottomColor: focused ? c.accent : c.rule }}>
+      <View style={{ borderBottomWidth: focused ? stroke.focus : 1, marginBottom: focused ? 0 : stroke.focus - 1, borderBottomColor: focused ? c.text : c.rule }}>
         <TextInput
           value={value}
           onChangeText={onChange}
@@ -90,14 +90,14 @@ function CustomDream({ value, onChange }: { value: string; onChange(v: string): 
           accessibilityLabel={t.customField}
           onFocus={() => { setFocused(true); reveal?.focus(block.current); }}
           onBlur={() => { setFocused(false); reveal?.blur(block.current); }}
-          selectionColor={c.accent}
-          cursorColor={c.accent}
+          selectionColor={c.muted}
+          cursorColor={c.text}
           placeholderTextColor={c.muted}
           textAlignVertical="top"
           style={{ ...typography.input, color: c.text, minHeight: typography.input.lineHeight * 2 + space.m * 2, paddingVertical: space.m }}
         />
       </View>
-      <Text variant="label" tone="muted" style={{ alignSelf: 'flex-end' }} accessibilityLabel={t.counterA11y(value.length, DREAM_MAX_LENGTH)}>
+      <Text variant="telemetry" tone="muted" style={{ alignSelf: 'flex-end' }} accessibilityLabel={t.counterA11y(value.length, DREAM_MAX_LENGTH)}>
         {t.counter(value.length, DREAM_MAX_LENGTH)}
       </Text>
     </View>

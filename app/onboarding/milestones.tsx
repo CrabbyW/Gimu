@@ -68,7 +68,8 @@ export default function MilestonesStep() {
       onContinue={() => router.push('/onboarding/weight')}
     >
       <View style={{ gap: space.m }}>
-        <Text variant="label" tone={limitHit > 0 ? 'accent' : 'muted'} accessibilityLiveRegion="polite">
+        {/* R42: limit se zvýrazní kontrastem (muted → text), ne akcentem. */}
+        <Text variant="telemetry" tone={limitHit > 0 ? 'text' : 'muted'} accessibilityLiveRegion="polite">
           {t.pickCount(selected.length, MILESTONES_MAX)}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s }}>

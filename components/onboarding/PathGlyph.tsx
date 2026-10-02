@@ -2,7 +2,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { useTheme } from '@/theme';
 import type { PathId } from '@/types';
 
-interface Props { path: PathId; /** Barva tvaru (`text`, u vybrané karty `accent`). */ color: string; /** Barva podkladu karty, prosvítá otvorem kotouče. */ bg: string }
+interface Props { path: PathId; /** Barva tvaru (`muted`, u vybrané karty `text`). */ color: string; /** Barva podkladu karty, prosvítá otvorem kotouče. */ bg: string }
 
 // Rozměr glyfu je token `size.glyph`.
 

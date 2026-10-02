@@ -1,19 +1,14 @@
-import { View } from 'react-native';
+import { Telemetry } from '@/components/ui/Telemetry';
 import { copy } from '@/data/copy';
 import { useNow } from '@/hooks/useNow';
 import { formatCountdown } from '@/logic/league';
-import { useTheme } from '@/theme';
-import { Text } from '@/components/ui/Text';
 
-/** Odpočet do konce týdne `3D 14H 22M`, překresluje se každých 30 s (useNow). */
+/** Odpočet do konce týdne jako telemetrický pruh `KONEC TÝDNE: 3D 14H 22M` (R42), překresluje se
+ *  každých 30 s (useNow). Tichý údaj pod hlavním číslem (pozice), ne druhý hero. */
 export function Countdown({ endsAt }: { endsAt: Date }) {
-  const { space } = useTheme();
   const now = useNow(30_000);
   const { d, h, m } = formatCountdown(endsAt.getTime() - now.getTime());
   return (
-    <View accessible accessibilityLabel={copy.league.countdownA11y(d, h, m)} style={{ gap: space.xs }}>
-      <Text variant="label" tone="muted">{copy.league.endsIn}</Text>
-      <Text variant="counter" maxFontSizeMultiplier={1}>{copy.league.countdown(d, h, m)}</Text>
-    </View>
+    <Telemetry items={[{ key: copy.league.endsIn, value: copy.league.countdown(d, h, m), a11y: copy.league.countdownA11y(d, h, m) }]} />
   );
 }

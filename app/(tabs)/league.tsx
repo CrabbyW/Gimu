@@ -78,7 +78,7 @@ function Standings({ view }: { view: LeagueWeekView }) {
         contentContainerStyle={{ paddingBottom: space.xxl }}
         ListHeaderComponent={
           <View>
-            <View style={{ padding: space.l, gap: space.l }}>
+            <View style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
                 <TierBadge tierName={name} />
                 <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size="L" />
