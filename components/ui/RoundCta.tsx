@@ -4,7 +4,11 @@ import { useTheme } from '@/theme';
 import { Text } from './Text';
 import { usePressFeedback } from './usePressFeedback';
 
-export interface CtaAction { label: string; onPress(): void; disabled?: boolean }
+export interface CtaAction {
+  label: string; onPress(): void; disabled?: boolean;
+  /** Na akcentové ploše oslavy: plocha `onAccent`, popisek v akcentu; neaktivní = obrys `onAccent`. */
+  onAccent?: boolean;
+}
 
 const DIAMETER = 88;
 // Inter SemiBold 16 pt má průměrnou šířku znaku ≈ 0.55 em, tj. ~9 pt: 7 znaků
@@ -15,7 +19,7 @@ const MAX_ROUND_CHARS = 7;
 export const fitsRoundCta = (label: string): boolean => label.length <= MAX_ROUND_CHARS;
 
 /** Hlavní CTA spodní lišty: kulaté 88 pt, plná světlá plocha (R42); delší popisek → pilulka 64 pt na šířku buňky. */
-export function RoundCta({ label, onPress, disabled = false }: CtaAction) {
+export function RoundCta({ label, onPress, disabled = false, onAccent = false }: CtaAction) {
   const { c, space, radius } = useTheme();
   const feedback = usePressFeedback(0.96);
   const round = fitsRoundCta(label);
@@ -35,12 +39,16 @@ export function RoundCta({ label, onPress, disabled = false }: CtaAction) {
           paddingHorizontal: round ? 0 : space.l,
           borderRadius: radius.full,
           // R42: plná `text` plocha místo akcentu. Neaktivní přejde na neutrální plochu jako Button.
-          backgroundColor: disabled ? c.surface : c.text,
+          backgroundColor: onAccent ? (disabled ? 'transparent' : c.onAccent) : disabled ? c.surface : c.text,
+          borderWidth: onAccent && disabled ? 1 : 0,
+          borderColor: c.onAccent,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Text variant="bodyStrong" tone={disabled ? 'muted' : 'inverse'} numberOfLines={1}>{label}</Text>
+        {onAccent
+          ? <Text variant="bodyStrong" numberOfLines={1} style={{ color: disabled ? c.onAccent : c.accent }}>{label}</Text>
+          : <Text variant="bodyStrong" tone={disabled ? 'muted' : 'inverse'} numberOfLines={1}>{label}</Text>}
       </Pressable>
     </Animated.View>
   );

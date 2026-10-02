@@ -16,11 +16,25 @@ export const size = {
   leagueRow: 56, rankCol: 40, rowMascot: 32, tierBadge: 72, ownStripe: 3,
   // Instrument vrstva (R42): koncový tik MeasureLine, rameno registrační značky `+`, Lucide ikona v hlavičce.
   tick: 8, regMark: 8, icon: 20,
+  // Progres (§7.6): stopa milníku 4, graf váhy 200 vysoký s osou Y 40 vlevo, bod 4 (poslední 6 + prstenec 10).
+  meter: 4, chartHeight: 200, chartAxis: 40, chartPoint: 4, chartPointLast: 6, chartPointRing: 10,
+  // Toggle 52×32 s knoflíkem 24 (Task 29), segment slotu Šatníku min. 104 (5 slotů se scrolluje).
+  toggleWidth: 52, toggleHeight: 32, toggleKnob: 24, slotSegment: 104,
+  // Šatník a profil: náhled opice v Šatníku 160, mini opice na dlaždici 64, šířka kotoučového rámu 14.
+  wardrobePreview: 160, tileMascot: 64, frameRing: 14, badgeIcon: 12,
+  // Sezóna (§7.7): tečka DotGrid 10 a mezera 6 (spec), odznak sezóny v kartě odměny a v recapu,
+  // úlomek prasknutí kruhu ve stage-up (r = 6). ProgressBar sdílí stopu `meter`.
+  dot: 10, dotGap: 6, seasonBadge: 56, seasonBadgeLarge: 88, shard: 12,
 } as const;
+// Průhlednost zamčené položky v Šatníku (silueta náhledu pod zámkem).
+// `disabled` = neaktivní ovládací prvek (stejná hodnota, jakou má Button).
+export const opacity = { locked: 0.32, disabled: 0.4 } as const;
+// Přerušovaná cílová linie grafu váhy (SVG strokeDasharray).
+export const dash = { target: '4 6' } as const;
 // Tloušťky čar instrument vrstvy: Lucide obrys 1.5, aktivní úsek měřicí linky 2,
 // fokus/výběr bez akcentu (spodní linka pole, proužek vybrané karty) 2, prstenec výdrže 3
 // (měřidlo v `text` na stopě `rule`; tenčí než dřív, protože už ho nenese barva, ale kontrast).
-export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3 } as const;
+export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 export const material = { collarRadius: 2 } as const;
@@ -66,6 +80,8 @@ export const type = {
 export const svgType = {
   // Popisek "BOSS" na ose v BarbellBoss: stejné vlastnosti jako `type.label`.
   label: { fontFamily: font.mono, fontSize: 11, letterSpacing: 2 },
+  // Osa Y grafu váhy: mono 11 bez rozpalu (tabulární čísla, `fontVariant` SVG nezná, JetBrains Mono je tabulární sám).
+  axis: { fontFamily: font.mono, fontSize: 11, letterSpacing: 0 },
   // Číslo kg uprostřed kotouče v Plate.
   // Inter Light je širší než Bebas: 20 jednotek ve viewBoxu 100 drží „25“ uvnitř vnějšího prstence.
   plateKg: { fontFamily: font.display, fontSize: 20, letterSpacing: ls(20, tracking.display) },

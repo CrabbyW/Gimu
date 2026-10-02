@@ -61,8 +61,10 @@
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/docs/"
-    ]
+      "/docs/",
+      "/video/"
+    ],
+    "modulePathIgnorePatterns": ["<rootDir>/video/"]
   },
   "private": true
 }

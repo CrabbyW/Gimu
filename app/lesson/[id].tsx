@@ -67,6 +67,11 @@ export default function LessonScreen() {
   const onContinue = useCallback((r: LessonResult) => {
     if (leaving.current) return;
     leaving.current = true;
+    // Task 26: přechod na vyšší stage vede přes oslavu růstu, ta pak pokračuje stejně na mapu.
+    if (r.stageAfter > r.stageBefore) {
+      router.replace({ pathname: '/stage-up', params: { from: String(r.stageBefore), to: String(r.stageAfter), unlocked: r.unlockedLessonId ?? '' } });
+      return;
+    }
     router.dismissTo({ pathname: '/(tabs)', params: r.unlockedLessonId ? { unlocked: r.unlockedLessonId } : {} });
   }, []);
 

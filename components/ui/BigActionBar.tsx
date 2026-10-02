@@ -18,7 +18,13 @@ export function BigActionBar({ primary, secondary }: Props) {
   const keyboardVisible = useKeyboardVisible();
   const primaryFlex = fitsRoundCta(primary.label) ? 1 : 2;
   return (
-    <View style={{ flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule, paddingBottom: keyboardVisible ? 0 : insets.bottom, backgroundColor: c.base }}>
+    <View
+      style={{
+        flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingBottom: keyboardVisible ? 0 : insets.bottom,
+        // Na akcentové ploše oslavy (stage-up) lišta plochu nepřerušuje: průhledná, linka v `onAccent`.
+        borderTopColor: primary.onAccent ? c.onAccent : c.rule, backgroundColor: primary.onAccent ? 'transparent' : c.base,
+      }}
+    >
       {secondary ? (
         <Pressable
           onPress={secondary.onPress}

@@ -11,6 +11,9 @@ interface Props {
   onPress(): void;
   variant?: ButtonVariant;
   disabled?: boolean;
+  /** Tlačítko leží na plné akcentové ploše oslavy (stage-up, odměna v recapu): inkoust `onAccent`
+   *  místo `text`, primární = plocha `onAccent` s popiskem v akcentu (stejný kontrastní pár). */
+  onAccent?: boolean;
   /** Jen pro umístění v layoutu (šířka, zarovnání), ne pro vzhled. */
   style?: StyleProp<ViewStyle>;
 }
@@ -18,9 +21,35 @@ interface Props {
 // R42: primární akce nese stav kontrastem (světlá plocha na tmavém), ne akcentem.
 const labelTone: Record<ButtonVariant, TextTone> = { primary: 'inverse', secondary: 'text', ghost: 'text' };
 
-export function Button({ label, onPress, variant = 'primary', disabled = false, style }: Props) {
+export function Button({ label, onPress, variant = 'primary', disabled = false, onAccent = false, style }: Props) {
   const { c, space, radius, size } = useTheme();
   const feedback = usePressFeedback(0.97);
+  if (onAccent) {
+    // Neaktivní primární na akcentu = obrys (stav „hotovo“, např. Převzato), ne šedá plocha.
+    const solid = variant === 'primary' && !disabled;
+    return (
+      <Animated.View style={[feedback.style, style]}>
+        <Pressable
+          onPress={onPress}
+          onPressIn={feedback.onPressIn}
+          onPressOut={feedback.onPressOut}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ disabled }}
+          style={{
+            minHeight: size.hitLarge, borderRadius: radius.full, paddingHorizontal: space.l,
+            alignItems: 'center', justifyContent: 'center',
+            backgroundColor: solid ? c.onAccent : 'transparent',
+            borderWidth: solid || variant === 'ghost' ? 0 : 1,
+            borderColor: c.onAccent,
+          }}
+        >
+          <Text variant="bodyStrong" numberOfLines={1} style={{ color: solid ? c.accent : c.onAccent }}>{label}</Text>
+        </Pressable>
+      </Animated.View>
+    );
+  }
   return (
     <Animated.View style={[feedback.style, style]}>
       <Pressable

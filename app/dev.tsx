@@ -57,6 +57,10 @@ export default function DevScreen() {
           ]}
         />
         <Group>
+          <Button
+            label={copy.dev.demo} disabled={busy}
+            onPress={run(async () => { setDevTimeOffset(0); await services.user.loadDemo(now()); router.replace('/(tabs)'); })}
+          />
           <Button variant="secondary" label={copy.dev.xp} disabled={busy} onPress={run(() => services.user.grantDevXp(500, now()))} />
           <Button variant="secondary" label={copy.dev.stage(stage)} disabled={busy} onPress={run(() => setStageOverride(nextStageOverride(stage)))} />
         </Group>

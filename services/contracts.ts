@@ -24,6 +24,8 @@ export interface UserService {
   /** Dev menu: přidá XP jako událost `dev-xp` (ne lekce, ruling 17). */
   grantDevXp(amount: number, now: Date): Promise<void>;
   reset(): Promise<void>;
+  /** Dev menu: nahradí profil demo profilem (`services/mock/demoData.ts`). */
+  loadDemo(now: Date): Promise<void>;
 }
 export interface LessonService {
   getPath(pathId: PathId, now: Date): Promise<LessonPathView>;

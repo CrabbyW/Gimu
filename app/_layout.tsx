@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { useActiveSeason } from '@/hooks/useActiveSeason';
 import { useHydrated } from '@/hooks/useHydrated';
+import { useReminderSync } from '@/hooks/useReminderSync';
 import { ThemeProvider, useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -36,6 +37,7 @@ export default function RootLayout() {
 }
 
 function RootStack() {
+  useReminderSync();
   const { c, scheme, font } = useTheme();
   // Navigátory dostanou barvy z tokenů, aby při přechodech neprosvítalo výchozí bílé pozadí.
   const navigationTheme = useMemo(() => {
@@ -59,6 +61,11 @@ function RootStack() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.base }, animation: 'fade', animationDuration: 250 }}>
             {/* UX2: lekce vyjede zespodu za 350 ms (výchozí iOS 500 ms působí líně). */}
             <Stack.Screen name="lesson/[id]" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom', animationDuration: 350, gestureEnabled: false }} />
+            <Stack.Screen name="stage-up" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
+            <Stack.Screen name="season-goal" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="season-recap" options={{ presentation: 'fullScreenModal' }} />
+            <Stack.Screen name="wardrobe" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
             <Stack.Screen name="dev" options={{ presentation: 'modal' }} />
           </Stack>
         </NavigationThemeProvider>

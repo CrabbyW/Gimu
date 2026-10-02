@@ -10,3 +10,10 @@ export function stageProgress(xp: number, t: readonly number[]): { stage: Mascot
   const from = t[stage - 1] ?? 0; const to = t[stage];
   return { stage, into: xp - from, span: to === undefined ? null : to - from };
 }
+
+/** Parametr routy stage-up → stage, nebo null (neplatný vstup = rovnou na mapu). */
+export function parseStageParam(s: string | string[] | undefined): MascotStage | null {
+  const raw = Array.isArray(s) ? s[0] : s;
+  if (raw === undefined || !/^[1-3]$/.test(raw)) return null;
+  return Number(raw) as MascotStage;
+}

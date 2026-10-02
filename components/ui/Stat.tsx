@@ -19,12 +19,14 @@ const opticalInset = (value: string | number): number => (String(value).replace(
 export function Stat({ value, unit, label, size = 'M', tone = 'text' }: Props) {
   const { space } = useTheme();
   const px = statSize[size];
+  // Na akcentové ploše oslavy by `muted` jednotka zanikla: štítek i jednotka přejdou do `onAccent`.
+  const quiet: TextTone = tone === 'onAccent' ? 'onAccent' : 'muted';
   return (
     <View accessible accessibilityLabel={[label, `${value} ${unit}`].filter(Boolean).join(', ')}>
-      {label ? <Text variant="label" tone="muted" style={{ marginBottom: space.xs }}>{label}</Text> : null}
+      {label ? <Text variant="label" tone={quiet} style={{ marginBottom: space.xs }}>{label}</Text> : null}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.xs }}>
         <Text variant="display" tone={tone} maxFontSizeMultiplier={1} style={{ fontSize: px, lineHeight: px * 1.05, letterSpacing: px * tracking.display, marginLeft: -px * opticalInset(value) }}>{value}</Text>
-        <Text variant="caption" tone="muted" style={{ marginBottom: px * 0.18 }}>{unit}</Text>
+        <Text variant="caption" tone={quiet} style={{ marginBottom: px * 0.18 }}>{unit}</Text>
       </View>
     </View>
   );

@@ -7,6 +7,7 @@ import { toISODate, weekStart } from '@/logic/dates';
 import { now as clockNow } from '@/lib/clock';
 import { useDb } from '@/store/db';
 import type { MilestoneUpdateResult, UserService } from '../contracts';
+import { buildDemoProfile } from './demoData';
 import { ownershipCtx } from './ownership';
 
 const requireProfile = () => {
@@ -46,4 +47,5 @@ export class MockUserService implements UserService {
     useDb.getState().setProfile({ ...p, activity: [...p.activity, event] });
   }
   async reset() { useDb.getState().setProfile(null); }
+  async loadDemo(now: Date) { useDb.getState().setProfile(buildDemoProfile(now)); }
 }

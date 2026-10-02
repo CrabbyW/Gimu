@@ -10,14 +10,19 @@ interface Props {
   /** Hodnota vpravo nad linkou, např. „03/08“. */
   value?: string;
   accessibilityLabel: string;
+  /** Linka leží na akcentové ploše oslavy: vše v `onAccent`, prošlý úsek odliší jen tloušťka. */
+  onAccent?: boolean;
   /** Jen pro umístění v layoutu. */
   style?: StyleProp<ViewStyle>;
 }
 
 /** Měřicí linka (R42): vlasová osa v `rule` s koncovými tiky, prošlý úsek v `text`
  *  zakončený vlastním tikem. Progres nese kontrast, ne akcent. */
-export function MeasureLine({ progress, label, value, accessibilityLabel, style }: Props) {
-  const { c, space, size, stroke } = useTheme();
+export function MeasureLine({ progress, label, value, accessibilityLabel, onAccent = false, style }: Props) {
+  const { c: theme, space, size, stroke } = useTheme();
+  // Na akcentu je jediný čitelný inkoust `onAccent`: osa, tiky i prošlý úsek.
+  const c = onAccent ? { ...theme, rule: theme.onAccent, muted: theme.onAccent, text: theme.onAccent } : theme;
+  const tone = onAccent ? 'onAccent' : undefined;
   const p = Math.min(Math.max(Number.isFinite(progress) ? progress : 0, 0), 1);
   const pct = `${p * 100}%` as const;
   const tick = (left: ViewStyle['left'], color: string) => (
@@ -33,8 +38,8 @@ export function MeasureLine({ progress, label, value, accessibilityLabel, style 
     >
       {label || value ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space.s }}>
-          <Text variant="telemetry" tone="muted" numberOfLines={1} style={{ flexShrink: 1 }}>{label ?? ''}</Text>
-          {value ? <Text variant="telemetry" tone="text">{value}</Text> : null}
+          <Text variant="telemetry" tone={tone ?? 'muted'} numberOfLines={1} style={{ flexShrink: 1 }}>{label ?? ''}</Text>
+          {value ? <Text variant="telemetry" tone={tone ?? 'text'}>{value}</Text> : null}
         </View>
       ) : null}
       <View style={{ height: size.tick }}>
