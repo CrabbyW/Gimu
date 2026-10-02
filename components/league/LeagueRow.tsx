@@ -40,8 +40,9 @@ export function LeagueRow({ entry, rank, index }: Props) {
         {rank}
       </Text>
       {/* Maskot bez interakce; dech běží dál (reanimated na UI vlákně). */}
-      <View pointerEvents="none">
-        <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" size={size.rowMascot} />
+      {/* Pro čtečku skrytá: řádek je jeden prvek s `rowA11y`, cizí opice nesmí číst „Tvoje opice“. */}
+      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
+        <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" size={size.rowMascot} decorative />
       </View>
       <Text variant="bodyStrong" numberOfLines={1} style={{ flex: 1 }}>{entry.name}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.xs }}>

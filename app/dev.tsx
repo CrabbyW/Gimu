@@ -46,7 +46,10 @@ export default function DevScreen() {
       <ScrollView contentContainerStyle={{ paddingVertical: space.l, gap: space.l }} showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text variant="title" accessibilityRole="header">{copy.dev.title}</Text>
-          <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={space.s}>
+          <Pressable
+            onPress={() => router.back()} accessibilityRole="button"
+            style={{ minHeight: size.hit, minWidth: size.hit, justifyContent: 'center', alignItems: 'flex-end' }}
+          >
             <Text variant="label" tone="muted">{copy.common.back}</Text>
           </Pressable>
         </View>

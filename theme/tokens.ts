@@ -73,7 +73,19 @@ export const type = {
   telemetry: { fontFamily: font.mono, fontSize: 11, lineHeight: 16, letterSpacing: ls(11, tracking.telemetry), textTransform: 'uppercase' as const },
   // Iniciála v kruhovém odznaku ligy (TopBar TierBadge): stejný jazyk jako `label`, menší a bez rozpalu.
   badgeLabel: { fontFamily: font.mono, fontSize: 10, lineHeight: 12, letterSpacing: 0, textTransform: 'uppercase' as const },
+  // Popisek tab baru na úzkém displeji (< breakpoint.compact): mono 10 s rozpalem 0.05 em.
+  // „TRÉNINK“ 7 × (0.6 × 10 + 0.5) ≈ 46 pt se vejde do pětiny 320 pt (64 pt minus vnitřní okraje).
+  tabLabelCompact: { fontFamily: font.mono, fontSize: 10, lineHeight: 12, letterSpacing: ls(10, 0.05), textTransform: 'uppercase' as const },
 } as const;
+
+// Šířkové zlomy v pt. `compact` = displeje užší než 375 (iPhone SE 1. gen., 320 pt): menší stupně
+// u prvků, které jinak ořezávají (tab bar, název sezóny, oslava lekce).
+export const breakpoint = { compact: 375 } as const;
+
+// Odhad šířky glyfů pro rozpočet layoutu (ne vykreslování). Inter Light, tabulární číslice a „+“
+// ≈ 0.6 em, po trackingu display −0.03 em; 0.62 nechává rezervu na rozdíly renderu.
+// `unit`: malá jednotka (caption) za číslem Statu včetně mezery, v pt.
+export const glyph = { displayDigit: 0.62, statUnit: 32 } as const;
 
 // Typografie pro SVG text (react-native-svg `<Text>` nepoužije lineHeight/textTransform,
 // proto samostatně od `type`, které pohání `<Text>` z `components/ui/Text.tsx`).

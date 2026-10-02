@@ -14,7 +14,7 @@ const maxScale: Partial<Record<TypeVariant, number>> = { displayXL: 1, display: 
 // takže běžný text („muscle-up“, „-3 kg“) má proporcionální číslice.
 const TABULAR: Record<TypeVariant, boolean> = {
   displayXL: true, display: true, title: true, choiceTitle: false, label: true, body: false, bodyStrong: false, caption: false,
-  input: false, inputLarge: false, counter: true, badgeLabel: true, tierName: false, telemetry: true,
+  input: false, inputLarge: false, counter: true, badgeLabel: true, tierName: false, telemetry: true, tabLabelCompact: true,
 };
 const tabular = { fontVariant: ['tabular-nums' as const] };
 

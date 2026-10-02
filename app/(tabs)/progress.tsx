@@ -41,7 +41,7 @@ export default function ProgressScreen() {
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <TabHeader title={copy.tabs.progress} />
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
-        : profile.status === 'error' ? <ErrorState what={copy.progress.errorWhat} onRetry={profile.retry} />
+        : profile.status === 'error' ? <ErrorState edges={[]} what={copy.progress.errorWhat} onRetry={profile.retry} />
           : <ProgressBody profile={profile.data!} />}
     </View>
   );

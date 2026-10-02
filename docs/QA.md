@@ -56,3 +56,54 @@ Datum: 2026-09-30 · qa-agent · větev `faze1/core-loop` · rozsah: celý spec 
 - **README.md** stav (ř. 44–49) byl zastaralý dle RATING kolo 1 — mimo rozsah QA, viz LOG boss.
 
 Snímky: `.superpowers/sdd/2026-09-29-opice-faze1-core-loop/tools/shots/qa-a3` (nové, tento gate), dříve `qa-step3`, `qa-a2`, `qa-a2-r2`, `qa-a2-rm`. Dočasné flow skripty jsou mimo repo (`tools/flows/qa-a3.mjs`), appka beze změny krom oprav popsaných níže. Server ukončen, `web-build` smazán.
+
+---
+
+# Demo fáze 4, kolo 1 (qa-agent, 2026-10-02)
+
+**Verdikt: NESCHVÁLENO** (logika, persist a dvojí tapy na nákup a převzetí jsou v pořádku; layout na 320 a 375 pt a dvojí tap na CTA oslavy ne)
+
+## Automaticky
+- `npm test` 391/391, `npm run typecheck` čistý, `npm run lint` čistý, `npx expo-doctor` 21/21.
+- Boundary grep `rg -P "@/(store|data/(?!copy)|services/mock)" app components`: jediný nález je `components/mascot/__tests__/cosmetics.test.ts` (test, ten smí). OK.
+- Hardcoded hex a čísla ve stylech v `app/` a `components/`: nic (jen hex v komentáři `palette.ts`).
+- Playwright: flow `tools/flows/qa-f4.mjs` (celý průchod + všech 7 akcí dev menu + aria snapshoty `*.ax.txt` + detekce ploch < 44 pt), `qa-f4b.mjs` (dvojí tap na Koupit a Pokračovat, prázdný profil), `qa-f4c.mjs` (profil bez vah). Harness `tools/shoot-vp.mjs` (env `VW`/`VH`). Viewporty 390×844, 375×667, 320×568, 430×932, light i dark. Snímky v `shots/demo-f4/`.
+
+## Co funguje
+- Průchod onboarding → mapa → lekce → oslava → stage-up (Stage 02 · Teenager) → mapa; liga, sezóna, progres, profil, šatník, nastavení se načtou bez pageerror ve všech 4 viewportech a obou tématech.
+- Dev menu: všech 7 akcí funguje (demo, +500 XP, stage auto/1/2/3, skok na konec sezóny, ztráta streaku, reset posunu, reset appky s potvrzením → onboarding).
+- Konec sezóny: tab Sezóna → recap 5/5 → „Převzít odměnu“ dvojklikem → „Převzato“, převzetí proběhne jednou (guard `claimed || claiming` + idempotentní claim v logice).
+- Šatník: dvojklik na „Tílko Ember“ (60) → jeden dialog, banány 96 → 36, strženo jednou. Málo banánů → věta místo dialogu.
+- Persist: po reloadu zůstane stav (mapa, XP, liga).
+- Profil bez vah (cíl lose, `weights: []`): Progres nepadá, prázdný graf s cílovou linií + „Zatím bez záznamu“ + CTA zápisu.
+- Notifikace na webu (≈ denied): toggle neaktivní s vysvětlením, test tlačítko neaktivní.
+
+## Bugy
+### Critical
+- žádný
+
+### Important
+1. **Dvojí tap na „Pokračovat“ v oslavě propadne do tab baru.** Postup: lekce `bc-1-8` → oslava → rychlý dvojklik na „Pokračovat“ (SE i 430). Výsledek: skončí na tabu **Sezóna** místo na mapě nebo stage-upu (druhý klik dopadne na tab bar pod místem CTA). Soubory `components/lesson/LessonCompleteScene.tsx` / CTA bar. Potřeba guard (jedna navigace) nebo blokovat vstup během přechodu. Boss.
+2. **Liga: auto-scroll na vlastní řádek odroluje hlavičku.** Postup: demo → tab Liga na 375×667. Odznak úrovně, POZICE 6/16, TVOJE XP a odpočet nejsou vidět, první řádek je oříznutý pod hlavičkou. `app/(tabs)/league.tsx:58` (`scrollToIndex viewPosition 0.5`). Návrh: scrollovat jen když vlastní řádek není ve viewportu, nebo hlavičku nechat mimo FlatList. Design-agent / boss.
+3. **Oslava na 320 pt:** titulek „Kotouč na ose.“ se zalomí a druhý řádek „ose.“ překryje kotouče; opice překrývá číslici „4“ v +44 (s 3 ciframi to bude horší); rozpis XP se zalomí na dva řádky. `shots/demo-f4/dark-xs-15-celebrate.png`. Design-agent (layout), motion-agent (slam 1.2× musí mít rezervu).
+4. **320 pt: popisky tab baru se ořezávají** („TRÉNI…“, „PROGR…“) a název sezóny „WINTER A…“. `shots/demo-f4/light-xs-04-season.png`. Design-agent.
+
+### Minor
+5. **Dev menu: telemetrie posunu se zalamuje** („POSUN: +0 / D 0 H“) už na 375 pt. `app/dev.tsx` (Telemetry). Design-agent (nezalomitelné mezery nebo dva řádky).
+6. **Web a11y ligy:** každá opice v řádku má label „Tvoje opice“ i u cizích hráčů a `accessible` řádku na webu nespojí obsah (aria strom čte „1“, „Kuba_Shyb 358 XP 2“ … rozsekaně). Nadpisy „LIGA“ i „POSTUP“ jsou oba `heading level 1`. Na nativu `accessible` obsah sloučí (ověřit ručně). `components/league/LeagueRow.tsx`, `SvgMascot.tsx`. Boss/design.
+7. **Přímý vstup na tab bez profilu** (deep link `/progress` po resetu) = nekonečný DotLoader místo přesměrování na onboarding. `app/(tabs)/progress.tsx:43` (a obdobně ostatní taby). Boss.
+8. Recap slide Odměna: opice bez nasazené kosmetiky (mikina chybí), na mapě ji má. Ověřit záměr (design-agent).
+9. CTA „Pokračovat“ v oslavě je zarovnané doprava s prázdnou levou částí lišty; zkontrolovat, že to je záměr (design-agent).
+
+## Opraveno v tomto kole
+- `ErrorState` dostal prop `edges`; v tabech pod `TabHeader` se předává `[]`, na mapě (bez hlavičky) `['top']`. Dřív se safe-area zdvojovala. `components/ui/ErrorState.tsx`, `app/(tabs)/{index,league,profile,progress,season}.tsx`.
+- Dev menu „Zpět“ měl plochu 34×14 pt → `minHeight/minWidth size.hit`. `app/dev.tsx`.
+- Po opravách: test 391/391, typecheck a lint čisté.
+
+## K ruční kontrole (zařízení)
+- VoiceOver/TalkBack: pořadí v recapu (šipka „Předchozí snímek“ je v aria stromu až za obsahem), modální fokus v recapu, stage-upu, šatníku a dialogu nákupu, sloučení řádku ligy, oznámení `accessibilityLiveRegion` v dev menu.
+- Dvojí tap na „Pokračovat“ (bug 1) na fyzickém zařízení (rychlost tapu ~150 ms).
+- Reduce motion na nových animacích (web snímky motion-agenta existují, systémové nastavení na iOS/Android ne).
+- Skutečné `denied` notifikace na iOS/Android (web vrací „nejde“).
+- Na 320×568 byla CTA oslavy na snímku 1.8 s po dokončení oříznutá spodním okrajem (na 375 a 430 po 5 s v pořádku) — ověřit, že po doběhnutí nástupu je celá vidět.
+- Haptika a zvuk v rámu dopadu.

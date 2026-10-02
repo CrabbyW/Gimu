@@ -3,7 +3,7 @@ import { Stat } from '@/components/ui/Stat';
 import { Telemetry } from '@/components/ui/Telemetry';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { useTheme } from '@/theme';
+import { useCompact, useTheme } from '@/theme';
 import type { Season } from '@/types';
 import { shortDate } from './format';
 
@@ -20,6 +20,7 @@ interface Props {
  */
 export function SeasonHeader({ season, daysLeft }: Props) {
   const { c, space, seasonal } = useTheme();
+  const compact = useCompact();
   return (
     <View
       style={{
@@ -28,7 +29,8 @@ export function SeasonHeader({ season, daysLeft }: Props) {
       }}
     >
       <View style={{ gap: space.s }}>
-        <Text variant="display" accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>{season.name.toUpperCase()}</Text>
+        {/* Na 320 pt o stupeň menší (title): adjustsFontSizeToFit na webu nefunguje a „WINTER ARC“ v display ořízl. */}
+        <Text variant={compact ? 'title' : 'display'} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>{season.name.toUpperCase()}</Text>
         <Telemetry items={[{ key: copy.tabs.season.toUpperCase(), value: copy.season.range(shortDate(season.startDate), shortDate(season.endDate)) }]} />
       </View>
       {daysLeft === null ? (

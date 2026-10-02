@@ -25,7 +25,7 @@ export default function ProfileScreen() {
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <TabHeader title={copy.tabs.profile} />
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
-        : profile.status === 'error' ? <ErrorState what={copy.profile.errorWhat} onRetry={profile.retry} />
+        : profile.status === 'error' ? <ErrorState edges={[]} what={copy.profile.errorWhat} onRetry={profile.retry} />
           : <ProfileBody profile={profile.data!} />}
     </View>
   );

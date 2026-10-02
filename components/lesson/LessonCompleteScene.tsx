@@ -11,7 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { celebration, ease, motion, useMotionSafe } from '@/lib/motion';
 import { useClickSound } from '@/lib/sound';
 import type { LessonResult } from '@/services';
-import { useTheme } from '@/theme';
+import { useCompact, useTheme } from '@/theme';
 import type { CosmeticSlot, Lesson, Mood } from '@/types';
 import { Barbell, type BarbellMotion, type PlateFlight } from './Barbell';
 import { barbellLayout, COLLAR_TRAVEL, splitPlates, xpBreakdownLabel } from './celebration';
@@ -34,8 +34,6 @@ const COLLAR_MS = 120;
 const SHAKE_DEPTH = 3;
 // Omezený pohyb (spec §6.7): místo pružin se konečný stav jen prolne.
 const REDUCED_FADE = motion.calmFade;
-// Opice (M = 120 pt) zarovnaná chodidly k účaří velkého čísla XP.
-const MASCOT_LIFT = 32;
 
 interface Props {
   result: LessonResult;
@@ -49,6 +47,8 @@ interface Props {
 export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: Props) {
   const { c, space } = useTheme();
   const { width } = useWindowDimensions();
+  const compact = useCompact();
+  const contentWidth = width - 2 * space.l;
   const { reduced } = useMotionSafe();
   // Sekvence se rozhodne jednou při vstupu; přepnutí omezení pohybu uprostřed ji nerestartuje.
   const [calm] = useState(reduced);
@@ -144,20 +144,25 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
     <View style={{ flex: 1, backgroundColor: c.base, overflow: 'hidden' }}>
       <Animated.View style={[{ flex: 1 }, sceneStyle, punchStyle]}>
         <Screen edges={['top']}>
-          <Animated.View style={[{ paddingTop: space.xl }, titleStyle]}>
-            <Text variant="display" accessibilityRole="header">{title}</Text>
+          {/* Na 320 pt o stupeň menší titulek a těsnější rytmus: display by se zalomil a střed by
+              přetekl nahoru přes titulek. Titulek i střed jsou v toku, nic se nepřekrývá. */}
+          <Animated.View style={[{ paddingTop: compact ? space.l : space.xl }, titleStyle]}>
+            <Text variant={compact ? 'title' : 'display'} accessibilityRole="header">{title}</Text>
           </Animated.View>
-          <View style={{ flex: 1, justifyContent: 'center', paddingBottom: space.xl }}>
-            <Animated.View style={[{ marginBottom: space.xl }, shakeStyle]}>
-              <Barbell width={width - 2 * space.l} layout={layout} motion={bar} />
+          <View style={{ flex: 1, justifyContent: 'center', paddingBottom: compact ? space.m : space.xl }}>
+            <Animated.View style={[{ marginBottom: compact ? space.l : space.xl }, shakeStyle]}>
+              <Barbell width={contentWidth} layout={layout} motion={bar} />
             </Animated.View>
-            {/* Opice stojí vpravo u čísla, které právě vydřela: odměna a její svědek v jednom pohledu. */}
-            <View>
-              <View style={{ position: 'absolute', right: 0, top: -MASCOT_LIFT }}>
-                <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size="M" />
-              </View>
-              <XpPop total={result.xp.total} breakdown={xpBreakdownLabel(result.xp, XP_LABELS)} shown={xpShown} calm={calm} />
-            </View>
+            {/* Opice stojí vpravo u čísla, které právě vydřela: odměna a její svědek v jednom pohledu.
+                Je v toku řádku (ne absolutně), velikost čísla i opice rozpočítá XpPop i se slamem 1.2. */}
+            <XpPop
+              total={result.xp.total}
+              breakdown={xpBreakdownLabel(result.xp, XP_LABELS)}
+              shown={xpShown}
+              calm={calm}
+              width={contentWidth}
+              aside={(px) => <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={px} />}
+            />
           </View>
         </Screen>
       </Animated.View>

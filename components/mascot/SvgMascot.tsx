@@ -80,7 +80,7 @@ const BICEP_R = 0.6;
 const WINTER_SCARF_ID = 'outfit-winter-arc-scarf';
 
 /** Geometrická opice stage 1–3 z `STAGE_GEOMETRY` (spec §8) s kosmetickými vrstvami na kotvách z `anchors.ts`. */
-export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: MascotProps) {
+export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, decorative }: MascotProps) {
   const { c, seasonThemeId } = useTheme();
   const { reduced } = useMotionSafe();
   const px = resolveMascotSize(size);
@@ -243,9 +243,9 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel }: 
 
   return (
     <Animated.View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={accessibilityLabel ?? copy.mascot.label[mood]}
+      {...(decorative
+        ? { accessible: false, accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const, 'aria-hidden': true }
+        : { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel: accessibilityLabel ?? copy.mascot.label[mood] })}
       style={[{ width: px, height: px }, bodyStyle]}
     >
       <Svg width={px} height={px} viewBox="0 0 200 200">

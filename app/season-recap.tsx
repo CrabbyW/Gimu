@@ -15,6 +15,7 @@ import { MeasureLine } from '@/components/ui/MeasureLine';
 import { Telemetry } from '@/components/ui/Telemetry';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
+import { useProfile } from '@/hooks/useProfile';
 import { seasonActions, useRecap, useSeasonStatus } from '@/hooks/useSeason';
 import { haptics } from '@/lib/haptics';
 import { motion, useMotionSafe } from '@/lib/motion';
@@ -68,6 +69,7 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   const [claimError, setClaimError] = useState(false);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const { reduced } = useMotionSafe();
+  const profile = useProfile();
   // Směr posledního listování (null = první snímek při otevření, ten nenastupuje).
   const [dir, setDir] = useState<1 | -1 | null>(null);
 
@@ -108,6 +110,9 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   slides.push({ key: 'growth', celebrate: false, render: () => <GrowthSlide from={recap.stageStart} to={recap.stageEnd} /> });
   const earned = recap.rewardEarned;
   const outfit = recap.rewardCosmeticIds[0];
+  // Konzistence s mapou: opice nese nasazenou kosmetiku; při splnění si navíc obleče šálu (slot outfit).
+  const equipped = profile.status === 'ready' && profile.data ? profile.data.equipped : {};
+  const rewardLook = earned && outfit ? { ...equipped, outfit } : equipped;
   slides.push({
     key: 'reward', celebrate: earned,
     render: () => (
@@ -126,7 +131,7 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
         }
       >
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
-          <Mascot stage={recap.stageEnd} mood={earned ? 'celebrate' : 'idle'} size="L" cosmetics={earned && outfit ? { outfit } : {}} />
+          <Mascot stage={recap.stageEnd} mood={earned ? 'celebrate' : 'idle'} size="L" cosmetics={rewardLook} />
           {seasonName ? <SeasonBadge seasonName={seasonName} large onAccent={earned} /> : null}
         </View>
       </RecapSlide>

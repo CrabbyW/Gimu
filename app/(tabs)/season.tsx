@@ -33,7 +33,7 @@ export default function SeasonScreen() {
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <TabHeader title={copy.tabs.season} />
       {status.status === 'loading' ? <DotLoaderScreen />
-        : status.status === 'error' ? <ErrorState what={copy.season.errorWhat} onRetry={status.retry} />
+        : status.status === 'error' ? <ErrorState edges={[]} what={copy.season.errorWhat} onRetry={status.retry} />
           : status.data === null ? <NoSeason />
             : <SeasonBody status={status.data} />}
     </View>

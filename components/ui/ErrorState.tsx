@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import type { Edge } from 'react-native-safe-area-context';
 import { copy } from '@/data/copy';
 import { useTheme } from '@/theme';
 import { Button } from './Button';
@@ -13,13 +14,15 @@ interface Props {
   /** Popisek akčního tlačítka; výchozí je `copy.common.retry`. */
   actionLabel?: string;
   onRetry(): void;
+  /** Safe-area hrany; uvnitř tabu pod `TabHeader` předat `[]`, jinak se inset zdvojí. */
+  edges?: readonly Edge[];
 }
 
 /** Jednotný chybový stav obrazovky (spec §9): co selhalo a jak to zkusit znovu. Zarovnáno vlevo. */
-export function ErrorState({ what, message, actionLabel, onRetry }: Props) {
+export function ErrorState({ what, message, actionLabel, onRetry, edges }: Props) {
   const { space } = useTheme();
   return (
-    <Screen>
+    <Screen edges={edges}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: space.l }}>
         <Text variant="title" accessibilityRole="alert">{message ?? copy.common.loadError(what ?? '')}</Text>
         <Button label={actionLabel ?? copy.common.retry} onPress={onRetry} variant="secondary" />

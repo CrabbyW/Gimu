@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { View } from 'react-native';
 import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue,
@@ -116,8 +116,11 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
   const textStyle = useAnimatedStyle(() => ({ opacity: textOpacity.value }));
 
   const name = copy.stageUp.names[to];
+  // Ref, ne jen stav: dva tapy ve stejném snímku by oba prošly, než se `leaving` překreslí (QA demo f4, bug 1).
+  const left = useRef(false);
   const onContinue = () => {
-    if (!ready || leaving) return;
+    if (!ready || leaving || left.current) return;
+    left.current = true;
     setLeaving(true);
     toMap(unlocked);
   };

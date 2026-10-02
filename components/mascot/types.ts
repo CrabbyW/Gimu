@@ -9,6 +9,8 @@ export interface MascotProps {
   /** Strana čtvercového plátna v pt, nebo pojmenovaná velikost z `MASCOT_SIZES`. */
   size: MascotSize;
   accessibilityLabel?: string;
+  /** Dekorativní opice (např. v řádku ligy, kde label nese celý řádek): skrytá pro čtečku. */
+  decorative?: boolean;
 }
 
 export const MASCOT_SIZES = { S: 56, M: 120, L: 200, XL: 280 } as const;

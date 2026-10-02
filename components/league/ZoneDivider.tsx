@@ -9,7 +9,8 @@ export function ZoneDivider({ kind }: { kind: 'promote' | 'demote' }) {
   const [glyph, ...word] = (kind === 'promote' ? copy.league.promote : copy.league.demote).split(' ');
   return (
     <View
-      accessibilityRole="header"
+      // Zóna je popisek v tabulce, ne nadpis: jediný nadpis obrazovky je „LIGA“ v TabHeaderu.
+      accessible
       accessibilityLabel={word.join(' ')}
       style={{ height: size.hit, flexDirection: 'row', alignItems: 'center', gap: space.s, paddingHorizontal: space.l }}
     >

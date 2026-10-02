@@ -196,7 +196,7 @@ export const copy = {
     title: 'Dev menu', demo: 'Načíst demo profil', reset: 'Reset appky', resetConfirm: 'Smazat všechna data? Téma zůstane.', xp: '+500 XP',
     stage: (s: number | null) => `Stage opice: ${s ?? 'auto'}`, seasonEnd: 'Skok na konec sezóny',
     streakLoss: 'Simulace ztráty streaku', resetTime: 'Reset časového posunu', now: 'TEĎ', offset: 'POSUN',
-    offsetValue: (d: number, h: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)} D ${h} H`,
+    offsetValue: (d: number, h: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)} D ${h} H`, // nezlomitelné mezery: telemetrie se nesmí zalomit
     noSeason: 'Teď neběží sezóna, kterou by šlo přeskočit.', done: 'Hotovo',
   },
   season: {

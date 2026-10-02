@@ -33,8 +33,9 @@ export function Telemetry({ items, icon, style }: Props) {
       <Text variant="telemetry" tone="muted" style={{ flexShrink: 1 }}>
         {items.map((i, n) => (
           <Text key={i.key} variant="telemetry" tone="muted">
-            {n > 0 ? '  ·  ' : ''}{i.key}:{' '}
-            <Text variant="telemetry" tone="text">{i.unit ? `${i.value} ${i.unit}` : String(i.value)}</Text>
+            {n > 0 ? '  ·  ' : ''}{i.key}:{' '}
+            {/* Nezlomitelné mezery: dvojice klíč–hodnota se zalamuje jen jako celek (mezi položkami). */}
+            <Text variant="telemetry" tone="text">{i.unit ? `${i.value} ${i.unit}` : String(i.value)}</Text>
           </Text>
         ))}
       </Text>

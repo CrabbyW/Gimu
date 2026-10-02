@@ -35,8 +35,8 @@ export default function TrainingScreen() {
   // Po sekvenci se parametr smaže, aby se při návratu na tab nepřehrála znovu.
   const clearUnlocked = useCallback(() => router.setParams({ unlocked: undefined }), []);
 
-  if (profile.status === 'error') return <ErrorState what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
-  if (view.status === 'error') return <ErrorState what={copy.common.loadTarget.path} onRetry={view.retry} />;
+  if (profile.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
+  if (view.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.path} onRetry={view.retry} />;
   if (view.status !== 'ready' || !stats || !data) return <DotLoaderScreen />;
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>

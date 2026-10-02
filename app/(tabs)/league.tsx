@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { Countdown } from '@/components/league/Countdown';
 import { LeagueResultBanner } from '@/components/league/LeagueResultBanner';
 import { LeagueRow } from '@/components/league/LeagueRow';
@@ -37,21 +37,21 @@ export default function LeagueScreen() {
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <TabHeader title={copy.tabs.league} />
       {league.status === 'loading' ? <DotLoaderScreen />
-        : league.status === 'error' ? <ErrorState what={copy.league.errorWhat} onRetry={league.retry} />
+        : league.status === 'error' ? <ErrorState edges={[]} what={copy.league.errorWhat} onRetry={league.retry} />
           : <Standings view={league.data} />}
     </View>
   );
 }
 
 function Standings({ view }: { view: LeagueWeekView }) {
-  const { space } = useTheme();
+  const { c, space } = useTheme();
   const list = useRef<FlatList<Item>>(null);
   const items = useMemo(() => buildItems(view), [view]);
   const myIndex = items.findIndex((it) => it.kind === 'row' && it.entry.isMe);
   const myXp = view.entries[view.myRank - 1]?.xpThisWeek ?? 0;
   const name = tierName(view.tier);
 
-  // Po otevření tabu dojet tak, aby vlastní řádek byl uprostřed. S 0 XP (začátek týdne) se nescrolluje:
+  // Po otevření tabu dojet tak, aby vlastní řádek byl uprostřed seznamu (hlavička je mimo scroll, zůstává). S 0 XP (začátek týdne) se nescrolluje:
   // přednost má hlavička s výzvou, vlastní řádek je stejně poslední.
   useEffect(() => {
     if (myIndex < 0 || myXp === 0) return;
@@ -69,6 +69,16 @@ function Standings({ view }: { view: LeagueWeekView }) {
           onDismiss={() => { void services.league.dismissLastResult(); }}
         />
       ) : null}
+      {/* Hlavička mimo FlatList (sticky): odznak, pozice, XP a odpočet zůstanou vidět i po dojetí na vlastní řádek. */}
+      <View style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
+          <TierBadge tierName={name} />
+          <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size="L" />
+          <Stat label={copy.league.myXp} value={myXp} unit={copy.league.xp} size="M" />
+        </View>
+        <Countdown endsAt={view.endsAt} />
+        {myXp === 0 ? <Text variant="body" tone="muted">{copy.league.emptyWeek}</Text> : null}
+      </View>
       <FlatList
         ref={list}
         data={items}
@@ -76,19 +86,6 @@ function Standings({ view }: { view: LeagueWeekView }) {
         keyExtractor={(it) => (it.kind === 'row' ? it.entry.userId : it.zone)}
         onScrollToIndexFailed={() => undefined}
         contentContainerStyle={{ paddingBottom: space.xxl }}
-        ListHeaderComponent={
-          <View>
-            <View style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l }}>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
-                <TierBadge tierName={name} />
-                <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size="L" />
-                <Stat label={copy.league.myXp} value={myXp} unit={copy.league.xp} size="M" />
-              </View>
-              <Countdown endsAt={view.endsAt} />
-              {myXp === 0 ? <Text variant="body" tone="muted">{copy.league.emptyWeek}</Text> : null}
-            </View>
-          </View>
-        }
         renderItem={({ item, index }) => (item.kind === 'row'
           ? <LeagueRow entry={item.entry} rank={item.rank} index={index} />
           : <ZoneDivider kind={item.zone} />)}

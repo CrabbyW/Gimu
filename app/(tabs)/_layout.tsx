@@ -1,9 +1,11 @@
+import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { CalendarRange, CircleUser, Dumbbell, Trophy, TrendingUp, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { copy } from '@/data/copy';
-import { typography, useTheme } from '@/theme';
+import { useRequireProfile } from '@/hooks/useRequireProfile';
+import { typography, useCompact, useTheme } from '@/theme';
 
 const SHOW_TAB_BAR = true;
 
@@ -17,8 +19,11 @@ const TABS: { name: string; title: string; Icon: LucideIcon }[] = [
 const TAB_BAR_HEIGHT = 64;
 
 export default function TabsLayout() {
+  const gate = useRequireProfile();
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
+  const compact = useCompact();
+  if (gate === 'missing') return <Redirect href="/onboarding/path" />;
   return (
     <Tabs
       screenOptions={{
@@ -26,7 +31,8 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: c.base },
         tabBarActiveTintColor: c.text,
         tabBarInactiveTintColor: c.muted,
-        tabBarLabelStyle: typography.label,
+        // Na 320 pt by `label` (rozpal 2 pt) ořízl „TRÉNINK“/„PROGRES“; kompaktní stupeň drží celé slovo.
+        tabBarLabelStyle: compact ? typography.tabLabelCompact : typography.label,
         tabBarStyle: SHOW_TAB_BAR
           ? {
             height: TAB_BAR_HEIGHT + insets.bottom,
