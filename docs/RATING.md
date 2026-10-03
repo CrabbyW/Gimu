@@ -91,3 +91,53 @@ Zápis „otevřené“ v LOG.md odchylku od specifikace neomlouvá. Kritérium 
 ## Doporučení (mimo skóre)
 - `npx eslint .` hlásí 50 chyb, všechny v neverzované složce `.agents/skills/...` (Remotion ukázky). Přidat `.agents` do ignore v ESLint configu, ať je `lint` čistý i bez filtru.
 - `components/ui/StreakBarbell.tsx:36-37` geometrie SVG je v komponentě; zvážit přesun do theme (není jednoznačně porušení).
+
+---
+
+# R44 · UX/pocit · kolo 2
+
+**Skóre: 100/100** (commity 9ce438e..HEAD: 3114fac, cc4eb6c, cba5eef)
+
+| Kategorie | Body | Stav |
+|---|---|---|
+| 1. Funkčnost | 25/25 | QA kolo 3 SCHVÁLENO; jest 51 sad / 466 testů zelených; tsc 0 chyb; eslint 0 chyb |
+| 2. Shoda se specifikací | 15/15 | všech 5 nálezů z kola 1 opraveno (viz níže) |
+| 3. Architektura a kód | 15/15 | pohybové konstanty přesunuté do lib/motion, mrtvé texty odstraněné |
+| 4. Vizuální kvalita | 20/20 | dnešek v mřížce rozlišený, hlavička ligy s TierBadge 56 (`size.tierBadge`) |
+| 5. Motion | 15/15 | jantarová hrana šálu v oslavě (`scarfEdge` v LessonCompleteScene.tsx:283) |
+| 6. Dokumentace | 10/10 | README, docs/STATUS.md a LOG.md aktualizované |
+
+## Ověřené opravy z kola 1
+1. MonkeyBack/MonkeyFront se šálem: components/mascot/index.tsx, SvgMascot.tsx, použití v LessonMap.tsx, test v SvgMascot.test.tsx.
+2. Jantarová hrana šálu: `scarfEdge={mood === cheer}` v LessonCompleteScene.
+3. Dnešek v mřížce: `todayDone` v components/progress/ActivityGrid.tsx (plná tečka s prstencem), počet aktivních dní ho započítá.
+4. Minuty v připomínce: LocalNotificationService.ts:51 volá `reminder(streakNow(), nextLessonMinutes())`.
+5. Hlavička ligy: TierBadge 56 pt přes `size.tierBadge`, původní Stat/Telemetry v app/(tabs)/league.tsx už nejsou.
+6. README a STATUS doplněné.
+
+## K ruční kontrole (bez srážky bodů)
+- Vrstvení MonkeyBack/kotouč/MonkeyFront a šál na zařízení, viditelnost jantarové hrany při oslavě.
+- Haptika AHAP, odezva pod 100 ms, pocit pružin, reduce motion na zařízení.
+- Kontrast AA jantaru na tmavém povrchu, velký Dynamic Type u štítků uzlů.
+
+## Doporučení (mimo skóre)
+- Stav dneška se skládá ve view (`todayDone` prop) místo v `logic/progress.activityGrid`. Funguje to, ale čistší by byl stav `'todayDone'` přímo v GridCell.
+
+# R44 · kód/spec · kolo 2
+
+**Skóre: 100/100** (commity 9ce438e..HEAD: 3114fac, cc4eb6c, cba5eef)
+
+| Kategorie | Body | Stav |
+|---|---|---|
+| 1. Funkčnost | 25/25 | QA kolo 3 SCHVÁLENO; jest 51 sad / 466 testů zelených; `tsc --noEmit` 0 chyb; `npx eslint .` 0 chyb, 0 varování |
+| 2. Shoda se specifikací | 15/15 | změny kola 2 zapsané v LOG |
+| 3. Architektura a kód | 15/15 | PlateNode `BREATH = motion.breath` (lib/motion), BarbellBoss bez natvrdo opacit; mrtvé copy klíče odstraněny (0 výskytů); TODO jen s fází; žádné `any` |
+| 4. Vizuální kvalita | 20/20 | beze změny oproti kolu 1 (kód) |
+| 5. Motion | 15/15 | konstanty pohybu centralizované, reduce motion větve zachované |
+| 6. Dokumentace | 10/10 | README (+21 ř.), docs/STATUS.md (+13 ř.), LOG (+23 ř.) aktualizované |
+
+## Nesplněná kritéria
+Žádná.
+
+## K ruční kontrole
+- Pocit dechu uzlu/bosse a AHAP vzorů na iOS zařízení.
