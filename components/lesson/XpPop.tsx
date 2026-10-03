@@ -14,7 +14,7 @@ import { TIMELINE_A, xpTickStep, xpTickValue } from './celebration';
 // při ticku (nejvýš 8×, `xpTickStep`), každý tick = `feedback('xpTick')`. Slam z 1.2 na pružině `motion.slam`.
 // Fallback z §10.2 (re-render jen při ticku) místo `TextInput` s animovaným `text`: ten na Fabric není ověřený
 // a `Stat` drží typografii čísla.
-const SLAM_FROM = 1.2;
+const SLAM_FROM = motion.slamFrom;
 
 /** Kombinace velikostí od nejbohatší: číslo je subjekt, opice M má přednost před XL číslem,
  *  pak teprve se zmenšuje opice. Poslední položka je záchrana pro 320 pt a trojciferné XP. */

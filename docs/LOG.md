@@ -556,3 +556,10 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Progres: `ActivityGrid` prop `todayDone` (z `useProfileStats.todayDone`, tj. `todayStatus`), dnešek = plná tečka `text` + absolutní prstenec `accentGraphic` (nový token `size.todayRingGap 2`), počet aktivních dnů a prázdný stav dnešek započítají.
 - Testy maskota: nové testy šálu ve všech náladách, hrany, náhrady sezónní šálou a složení vrstev (proč: změnila se struktura SVG).
 - Otevřené: ověřit vizuálně sezení na všech stage (konec šálu přes čelo kotouče S 56); copy `league.headerTitle` / `endsInLine` přidal design (boss zkontroluje znění); jantarová hrana se v oslavě musí zapnout (`scarfEdge`) – motion-agent.
+
+## motion-agent — R44 nálezy ratingu (tokeny pohybu, hrana šálu)
+- Nový token `motion.breath { low 0.6, scale 1.03, still 0.8, periodMs 2400 }` v `lib/motion.ts`; PlateNode (`PULSE_MS = periodMs/2`) i BarbellBoss (BossPulse) ho čtou, žádná duplicitní čísla.
+- Další magická čísla pohybu přesunuta do `lib/motion.ts`: `motion.checkMs` (300), `lockedShake` (3 pt, 60/120 ms, dim 0.5), `nodeUnlock` (200/120/400 ms, z 0.92), `bossUnlock.from` (0.8), `mapHop` (120 ms, oblouk 28, přikrčení/propad 3 pt), `pathDrawMs` (420), `popover` (scale 0.94, posun 8 pt), `holdPulse` (posl. 3 s, 1.1, 90 ms), `slamFrom` (1.2), nový export `lessonDone` (titulek 8 pt, přílet x140/18°, objímka 120 ms, prohnutí 3 pt/50 ms, kotouč série 12 pt, rozkmit 1 pt/40 ms, seat pružina).
+- Hrana šálu v oslavě: `LessonCompleteScene` předává `scarfEdge={mood === 'celebrate'}` (zapne se s pózou ~950 ms). V `SvgMascot` je hrana malá komponenta `ScarfEdge`, která se při připojení prolne 0 → 1 (`motion.scarfEdge`, 200 ms ease.out, UI vlákno); prop zůstal boolean. Reduce Motion: opacita rovnou 1.
+- Rozhodnuto samo: rozměry (PW, GAP, ARROW, SIZE…) ponechány lokálně, nejsou to pohybové hodnoty; přesun do `theme/tokens.ts` nechávám design-agentovi.
+- Otevřené: nic. tsc, eslint (0 chyb), jest 466/466 OK.

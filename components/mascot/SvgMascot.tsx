@@ -408,11 +408,21 @@ function ScarfWrap({ g, wrapped, edge }: { g: StageGeometry; wrapped: boolean; e
     <G>
       <Rect x={x} y={y + SCARF.lip} width={half * 2} height={h} rx={rx} fill={MASCOT_COLORS.scarfShade} />
       <Rect x={x} y={y} width={half * 2} height={h} rx={rx} fill={MASCOT_COLORS.scarf} />
-      {edge ? (
-        <Path d={`M${x + rx} ${y + SCARF.edge / 2} L${100 + half - rx} ${y + SCARF.edge / 2}`} stroke={edge} strokeWidth={SCARF.edge} strokeLinecap="round" fill="none" />
-      ) : null}
+      {edge ? <ScarfEdge d={`M${x + rx} ${y + SCARF.edge / 2} L${100 + half - rx} ${y + SCARF.edge / 2}`} color={edge} /> : null}
     </G>
   );
+}
+
+/** Jantarová hrana šálu: při připojení se prolne 0 → 1 (`motion.scarfEdge`, 200 ms). Omezený pohyb: rovnou viditelná. */
+function ScarfEdge({ d, color }: { d: string; color: string }) {
+  const { reduced } = useMotionSafe();
+  const o = useSharedValue(reduced ? 1 : 0);
+  useEffect(() => {
+    if (!reduced) o.value = withTiming(1, motion.scarfEdge);
+    return () => cancelAnimation(o);
+  }, [reduced, o]);
+  const props = useAnimatedProps(() => ({ opacity: o.value }));
+  return <AnimatedPath d={d} stroke={color} strokeWidth={SCARF.edge} strokeLinecap="round" fill="none" animatedProps={props} />;
 }
 
 /** Konec šálu (přední vrstva). Klid/radost: visí přes kotvu sezení na čelo kotouče, roztřepený konec.

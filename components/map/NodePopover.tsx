@@ -44,7 +44,7 @@ export function NodePopover({ title, minutes, exerciseCount, xp, state, anchor, 
   const toward = above ? 1 : -1;
   const style = useAnimatedStyle(() => ({
     opacity: open.value,
-    transform: reduced ? [] : [{ translateY: toward * 8 * (1 - open.value) }, { scale: 0.94 + 0.06 * open.value }],
+    transform: reduced ? [] : [{ translateY: toward * motion.popover.shift * (1 - open.value) }, { scale: motion.popover.from + (1 - motion.popover.from) * open.value }],
   }));
 
   const width = Math.min(POPOVER_W, mapWidth - EDGE * 2);

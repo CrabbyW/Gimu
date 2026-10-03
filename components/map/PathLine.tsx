@@ -10,7 +10,7 @@ const EDGE_GAP = 6;
 const bottomOf = (p: NodePosition): Point => ({ x: p.x, y: p.y + p.size / 2 + EDGE_GAP });
 const topOf = (p: NodePosition): Point => ({ x: p.x, y: p.y - p.size / 2 - EDGE_GAP });
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const DRAW_MS = 420;
+const DRAW_MS = motion.pathDrawMs;
 const DOTS = { strokeWidth: 3, strokeDasharray: '2 10', strokeLinecap: 'round' as const, fill: 'none' };
 
 interface Props {

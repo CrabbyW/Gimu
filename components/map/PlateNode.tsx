@@ -20,15 +20,11 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 /** Půlperioda dechu prstence (perioda 2.4 s, motion spec §3.1). */
-export const PULSE_MS = 1200;
-/** Dech prstence: opacita 1 ↔ `low`, scale 1 → `scale`; s omezeným pohybem statická opacita `still`. */
-const BREATH = { low: 0.6, scale: 1.03, still: 0.8 };
-/** Trim fajfky hotového uzlu (§3.1): 300 ms ease.out. */
-const CHECK_MS = 300;
-/** Zamčený tap: 3 pt, 4 × 60 ms; omezený pohyb opacita na 0.5 a zpět (2 × 120 ms). */
-const SHAKE = { px: 3, stepMs: 60, ms: 120, dim: 0.5 };
-/** Odemčení (§3.1): fade obrysu a litiny 200 ms, Lock 120 ms, trim prstence 400 ms, scale z 0.92. */
-const UNLOCK = { fade: { duration: 200, easing: ease.out }, lockMs: 120, trimMs: 400, from: 0.92 };
+export const PULSE_MS = motion.breath.periodMs / 2;
+const BREATH = motion.breath;
+const CHECK_MS = motion.checkMs;
+const SHAKE = motion.lockedShake;
+const UNLOCK = { ...motion.nodeUnlock, fade: { duration: motion.nodeUnlock.fadeMs, easing: ease.out } };
 
 interface Props {
   kg: PlateKg;

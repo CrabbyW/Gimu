@@ -109,6 +109,45 @@ export const motion = {
   slideShift: 24,
   /** Count-up čísla při prvním zobrazení (Stat progresu sezóny). */
   countFirstMs: 400,
+  /** Dech prstence aktuálního uzlu a bosse (motion spec §3.1): perioda 2.4 s ease.sine, opacita 1 ↔ `low`,
+   *  scale 1 → `scale`; s omezeným pohybem statická opacita `still`. Jediný zdroj pro PlateNode i BarbellBoss. */
+  breath: { low: 0.6, scale: 1.03, still: 0.8, periodMs: 2400 },
+  /** Trim fajfky hotového uzlu (§3.1). */
+  checkMs: 300,
+  /** Zamčený tap: 3 pt, 4 × 60 ms; omezený pohyb opacita na 0.5 a zpět (2 × 120 ms). */
+  lockedShake: { px: 3, stepMs: 60, ms: 120, dim: 0.5 },
+  /** Odemčení uzlu (§3.1): fade obrysu a litiny 200 ms, Lock 120 ms, trim prstence 400 ms, scale z 0.92. */
+  nodeUnlock: { fadeMs: 200, lockMs: 120, trimMs: 400, from: 0.92 },
+  /** Boss se odemyká ze scale `from` (ostatní jako uzel). */
+  bossUnlock: { from: 0.8 },
+  /** Přeskok opičky na nový uzel (§3.1): zpoždění po dosednutí, výška oblouku, přikrčení a propad (pt). */
+  mapHop: { delay: 120, arc: 28, crouch: 3, dip: 3 },
+  /** Kreslení tečkované cesty mapy. */
+  pathDrawMs: 420,
+  /** Popover uzlu: vyroste z `from` a přisune se o `shift` pt. */
+  popover: { from: 0.94, shift: 8 },
+  /** Výdrž: tep posledních `fromS` sekund (scale `to`, náběh `inMs`). */
+  holdPulse: { fromS: 3, to: 1.1, inMs: 90 },
+  /** +XP slam začíná na tomto scale. */
+  slamFrom: 1.2,
+  /** Jantarová hrana šálu: prolnutí při vstupu do celebrate. */
+  scarfEdge: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
+};
+
+/** Oslava lekce: posuny a délky kotoučů (motion spec §4.1, §3.6). */
+export const lessonDone = {
+  titleRise: 8,
+  /** Odkud kotouč přilétá (pravá strana; levá zrcadlově), pt a stupně. */
+  from: { x: 140, rotate: 18 },
+  collarMs: 120,
+  /** Prohnutí osy po dopadu (pt) a jeho náběh. */
+  shakeDepth: 3,
+  shakeInMs: 50,
+  /** Kotouč série: pád z `drop` pt, rozkmit `rattle` pt za `rattleMs`. */
+  seriesDrop: 12,
+  seriesRattle: 1,
+  seriesRattleMs: 40,
+  seriesSeat: { damping: 25, stiffness: 520, mass: 1 } satisfies WithSpringConfig,
 };
 
 /**

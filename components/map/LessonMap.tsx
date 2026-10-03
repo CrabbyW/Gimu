@@ -30,7 +30,7 @@ const MASCOT_VIEWBOX = 200;
 /** Přeskok opičky na nový uzel (motion spec §3.1): start po dosednutí odemčeného uzlu +120 ms, přikrčení,
  *  oblouk po dobu `motion.fall` (vodorovně rovnoměrně, svisle parabola = gravitace), dopad: propad o `dip`
  *  a dosednutí `motion.settle`, soft (`monkeyHop`). */
-const HOP = { delay: 120, arc: 28, crouch: 3, dip: 3 };
+const HOP = motion.mapHop;
 const POPOVER_ROOM = 220; // odhad výšky popoveru (i se zavírací ikonou) pro volbu strany
 const TEXTURE_STEP = 24;
 

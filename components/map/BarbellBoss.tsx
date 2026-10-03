@@ -5,7 +5,7 @@ import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
 import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { copy } from '@/data/copy';
 import { feedback as fb } from '@/lib/feedback';
-import { ease, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import { svgType, useTheme } from '@/theme';
 import { BOSS_SIZE } from './geometry';
@@ -83,7 +83,7 @@ function Barbell({ state }: { state: NodeState }) {
 function UnlockingBarbell({ reduced, onUnlocked }: { reduced: boolean; onUnlocked?(): void }) {
   const p = useUnlockProgress(reduced, onUnlocked);
   const outline = useAnimatedStyle(() => ({ opacity: 1 - Math.min(p.value, 1) }));
-  const solid = useAnimatedStyle(() => ({ opacity: Math.min(p.value, 1), transform: [{ scale: reduced ? 1 : 0.8 + 0.2 * p.value }] }));
+  const solid = useAnimatedStyle(() => ({ opacity: Math.min(p.value, 1), transform: [{ scale: reduced ? 1 : motion.bossUnlock.from + (1 - motion.bossUnlock.from) * p.value }] }));
   return (
     <View style={{ width: W, height: H }}>
       <Animated.View style={[{ position: 'absolute' }, outline]}><Barbell state="locked" /></Animated.View>
@@ -99,8 +99,9 @@ function BossPulse({ reduced }: { reduced: boolean }) {
     t.value = withRepeat(withTiming(1, { duration: PULSE_MS, easing: ease.sine }), -1, true);
     return () => cancelAnimation(t);
   }, [reduced, t]);
-  // Stejný dech jako prstenec uzlu (§3.1): opacita 1↔0.6, scale 1→1.03; omezený pohyb statický 0.8.
-  const style = useAnimatedStyle(() => (reduced ? { opacity: 0.8 } : { opacity: 1 - t.value * 0.4, transform: [{ scale: 1 + t.value * 0.03 }] }));
+  // Stejný dech jako prstenec uzlu (§3.1): `motion.breath`.
+  const b = motion.breath;
+  const style = useAnimatedStyle(() => (reduced ? { opacity: b.still } : { opacity: 1 - t.value * (1 - b.low), transform: [{ scale: 1 + t.value * (b.scale - 1) }] }));
   return (
     <Animated.View
       pointerEvents="none"

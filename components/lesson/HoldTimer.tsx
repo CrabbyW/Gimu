@@ -15,7 +15,7 @@ const SIZE = 220;
 const STROKE = stroke.ring;
 const R = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * R;
-const PULSE_FROM = 3;
+const PULSE_FROM = motion.holdPulse.fromS;
 
 /** Kruhový odpočet výdrže: prstenec v `text` na stopě `rule` se vyprazdňuje, uprostřed zbývající sekundy.
  *  R42: bez akcentu, měřidlo nese kontrast; useknutý konec (butt) čte jako měřicí čára, ne jako pilulka.
@@ -44,7 +44,7 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
   // Konec výdrže (UX2): číslo i prstenec jednou tvrdě „dosednou“ spolu s haptikou Medium (1 → 1.1 → 1).
   useEffect(() => {
     if (reduced || status !== 'done') return;
-    scale.set(withSequence(withTiming(1.1, { duration: 90, easing: ease.punch }), withTiming(1, motion.release)));
+    scale.set(withSequence(withTiming(motion.holdPulse.to, { duration: motion.holdPulse.inMs, easing: ease.punch }), withTiming(1, motion.release)));
   }, [status, reduced, scale]);
   const pulse = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 

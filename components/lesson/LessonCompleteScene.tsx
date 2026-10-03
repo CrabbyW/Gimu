@@ -17,7 +17,7 @@ import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { feedback } from '@/lib/feedback';
 import { play, stopPattern, type Scheduler } from '@/lib/haptics';
-import { celebration, ease, motion, spring, useMotionSafe } from '@/lib/motion';
+import { celebration, ease, lessonDone, motion, spring, useMotionSafe } from '@/lib/motion';
 import { playSfx, setDucking } from '@/lib/sound';
 import { nextLessonId } from '@/logic/map';
 import type { LessonResult } from '@/services';
@@ -36,16 +36,9 @@ const XP_LABELS = { lesson: t.xpLesson, boss: t.xpBoss, replay: t.xpReplay, firs
 // časová osa úrovně (a) `TIMELINE_A` (motion spec §4.1). Vše se plánuje z UI vlákna (`withDelay` →
 // `scheduleOnRN`), ne JS časovači: haptika, zvuk i vizuál téhož kroku startují ze stejného snímku.
 const { launch: LAUNCH_AT, leftLag: LEFT_LAG } = celebration;
-const TITLE_RISE = 8;
-// Odkud kotouč přilétá (pravá strana; levá zrcadlově).
-const FROM = { x: 140, rotate: 18 };
-const COLLAR_MS = 120;
-// Osa se po dopadu prohne o 3 pt dolů a pružinou (motion.rattle) vrátí.
-const SHAKE_DEPTH = 3;
-// Kotouč série přiletí 12 pt shora a osa malé činky se rozkmitne o 1 pt (§3.6).
-const SERIES_DROP = 12;
-const SERIES_RATTLE = 1;
-const SERIES_SEAT = { damping: 25, stiffness: 520, mass: 1 };
+// Posuny a délky: `lessonDone` (lib/motion). Osa se po dopadu prohne a pružinou (motion.rattle) vrátí;
+// kotouč série přiletí shora a osa malé činky se rozkmitne (§3.6).
+const { titleRise: TITLE_RISE, from: FROM, collarMs: COLLAR_MS, shakeDepth: SHAKE_DEPTH, seriesDrop: SERIES_DROP, seriesRattle: SERIES_RATTLE, seriesSeat: SERIES_SEAT } = lessonDone;
 // Omezený pohyb (spec §7.1): celá scéna jedním prolnutím, konečné stavy hned.
 const REDUCED_FADE = motion.calmFade;
 
@@ -191,7 +184,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
       return;
     }
     setFigureDrawn(true);
-    shake.set(withSequence(withTiming(SHAKE_DEPTH, { duration: 50 }), withSpring(0, motion.rattle)));
+    shake.set(withSequence(withTiming(SHAKE_DEPTH, { duration: lessonDone.shakeInMs }), withSpring(0, motion.rattle)));
     punch.set(withSequence(withTiming(motion.punch.scale, { duration: motion.punch.inMs, easing: ease.out }), withTiming(1, motion.release)));
     dim.set(withTiming(1, { duration: A.dimMs, easing: ease.out }));
     center.set(withDelay(A.center, withSpring(1, spring.kotouc)));
@@ -202,7 +195,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
       at(A.seriesPlate, () => {
         setSeriesLanded(true);
         feedback('seriesPlate');
-        seriesY.set(withSequence(withTiming(-SERIES_DROP, { duration: 0 }), withSpring(0, SERIES_SEAT), withTiming(SERIES_RATTLE, { duration: 40 }), withSpring(0, motion.rattle)));
+        seriesY.set(withSequence(withTiming(-SERIES_DROP, { duration: 0 }), withSpring(0, SERIES_SEAT), withTiming(SERIES_RATTLE, { duration: lessonDone.seriesRattleMs }), withSpring(0, motion.rattle)));
       });
     }
     at(A.pose, () => setMood(cheer));
@@ -287,7 +280,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
                 calm={calm}
                 final={ended}
                 width={contentWidth}
-                aside={(px) => <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={px} hop={false} />}
+                aside={(px) => <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={px} hop={false} scarfEdge={mood === cheer} />}
               />
               <Animated.View style={[{ marginTop: space.m, flexDirection: 'row', alignItems: 'center', gap: space.s }, seriesStyle]}>
                 <StreakBarbell variant="sm" streak={seriesLanded ? result.streak : result.streak - 1} longest={result.streak} todayDone={seriesLanded} />
