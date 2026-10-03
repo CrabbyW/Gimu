@@ -1,25 +1,29 @@
 import { router } from 'expo-router';
-import { ChevronRight, Medal, Settings, Shirt } from 'lucide-react-native';
+import { ChevronRight, Shirt } from 'lucide-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { ProfileFrame } from '@/components/cosmetics/ProfileFrame';
 import { Mascot, MASCOT_SIZES } from '@/components/mascot';
+import { BadgeTile } from '@/components/ui/BadgeTile';
+import { Card } from '@/components/ui/Card';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Stat } from '@/components/ui/Stat';
+import { SectionLabel } from '@/components/ui/SectionLabel';
+import { StatGrid } from '@/components/ui/StatGrid';
+import { StreakBarbell } from '@/components/ui/StreakBarbell';
 import { TabHeader } from '@/components/ui/TabHeader';
-import { Telemetry } from '@/components/ui/Telemetry';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
+import { useBadgeProgress } from '@/hooks/useBadgeProgress';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useDisplayStage } from '@/hooks/useDisplayStage';
 import { usePathOptions } from '@/hooks/useOnboardingDraft';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { layout, useTheme } from '@/theme';
 import type { UserProfile } from '@/types';
 
 export default function ProfileScreen() {
@@ -27,7 +31,7 @@ export default function ProfileScreen() {
   const profile = useProfile();
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
-      <TabHeader title={copy.tabs.profile} />
+      <TabHeader title={copy.tabs.profile} onSettings={() => router.push('/settings')} />
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.profile.errorWhat} onRetry={profile.retry} />
           : <ProfileBody profile={profile.data!} />}
@@ -49,55 +53,70 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
   const T = intro.tab;
   const xp = stats?.totalXp ?? 0;
   const xpShown = useCountUp(xp, P.countMs, 0, { enabled: first, delayMs: P.xpAt });
+  const badges = useBadgeProgress(profile);
+  const streak = stats?.streak ?? 0;
+  const longest = stats?.longestStreak ?? 0;
+  const todayDone = stats?.todayDone ?? false;
+  const { width } = useWindowDimensions();
+  const stacked = width < layout.narrow;
 
   return (
     <ScrollView contentContainerStyle={{ padding: space.l, paddingBottom: space.xxl, gap: space.xl }}>
-      <View style={{ alignItems: 'center' }}>
+      {/* Hrdina: opička M v rámu vedle cesty. Pod `layout.narrow` pod sebe. */}
+      <View style={{ flexDirection: stacked ? 'column' : 'row', alignItems: stacked ? 'flex-start' : 'center', gap: space.l }}>
         <FrameIn play={first}>
           {(mascotStyle) => (
-            <ProfileFrame frameId={profile.equipped.profileFrame} size={MASCOT_SIZES.L}>
+            <ProfileFrame frameId={profile.equipped.profileFrame} size={MASCOT_SIZES.M}>
               <Animated.View style={mascotStyle}>
-                <Mascot stage={stage} mood="idle" size="L" cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
+                <Mascot stage={stage} mood="idle" size="M" cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
               </Animated.View>
             </ProfileFrame>
           )}
         </FrameIn>
+        <Text variant="body" tone="muted" style={{ flexShrink: 1 }}>{copy.profile.pathLine(pathName)}</Text>
       </View>
 
-      <View style={{ gap: space.m }}>
-        <Reveal play={first} delay={P.xpAt} rise={T.rise}>
-          <Stat label={copy.profile.xp} value={xpShown} a11yValue={xp} unit={copy.league.xp} size="L" />
-        </Reveal>
-        <Reveal play={first} delay={P.xpAt + T.step} rise={T.rise}>
-        <Telemetry
+      {/* Karta série: jediný nositel streaku na profilu (StreakBarbell lg + číslo `display` v accentText). */}
+      <Reveal play={first} delay={P.xpAt} rise={T.rise}>
+        <Card style={{ gap: space.m }}>
+          <SectionLabel>{copy.profile.streakLabel}</SectionLabel>
+          <View
+            accessible
+            accessibilityLabel={streak > 0 ? (todayDone ? copy.streak.a11yDone(streak) : copy.streak.a11yPending(streak)) : copy.streak.none}
+            style={{ flexDirection: stacked ? 'column' : 'row', alignItems: stacked ? 'flex-start' : 'center', justifyContent: 'space-between', gap: space.m }}
+          >
+            <StreakBarbell variant="lg" streak={streak} longest={longest} todayDone={todayDone} />
+            <Text variant="display" tone={streak > 0 ? 'accent' : 'muted'}>{copy.profile.streakDays(streak)}</Text>
+          </View>
+          <Text variant="caption" tone="muted">
+            {longest > 0 ? `${copy.streak.longest(longest)} · ${todayDone ? copy.today.done : copy.today.pending}` : copy.today.pending}
+          </Text>
+        </Card>
+      </Reveal>
+
+      <Reveal play={first} delay={P.xpAt + T.step} rise={T.rise}>
+        <StatGrid
           items={[
-            { key: copy.profile.stage, value: stage },
-            { key: copy.profile.path, value: pathName },
-            { key: copy.profile.streak, value: stats?.streak ?? 0, unit: copy.profile.days },
+            { label: copy.profile.statXp, value: copy.profile.xpValue(xpShown), a11y: `${copy.profile.statXp}: ${xp}` },
+            { label: copy.profile.statStage, value: copy.profile.stageValue(stage) },
           ]}
         />
-        </Reveal>
-      </View>
+      </Reveal>
 
       <Reveal play={first} delay={P.xpAt + T.step * 2} rise={T.rise} style={{ gap: space.m }}>
-        <Text variant="label" tone="muted" accessibilityRole="header">{copy.profile.badges}</Text>
-        {profile.badges.length === 0 ? (
-          <Text variant="body" tone="muted">{copy.profile.noBadges}</Text>
-        ) : (
-          <View accessible accessibilityLabel={copy.profile.badgeCount(profile.badges.length)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s, alignItems: 'center' }}>
-            {profile.badges.map((b) => (
-              <View key={b} style={{ width: size.hit, height: size.hit, borderRadius: size.hit / 2, backgroundColor: c.seasonGold, alignItems: 'center', justifyContent: 'center' }}>
-                <Medal size={size.icon} color={c.onSeasonGold} strokeWidth={stroke.icon} />
-              </View>
-            ))}
-            <Text variant="label" tone="muted">{copy.profile.badgeCount(profile.badges.length)}</Text>
-          </View>
-        )}
+        <View accessible accessibilityLabel={copy.profile.badgeRatioA11y(badges.earned, badges.total)}>
+          <SectionLabel value={copy.profile.badgeRatio(badges.earned, badges.total)}>{copy.profile.badges}</SectionLabel>
+        </View>
+        {/* Získané první, zamčené za nimi: siluety ukazují, co dál, ne co chybí. */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.m }}>
+          {[...badges.items].sort((a, b) => Number(b.earned) - Number(a.earned)).map((b) => (
+            <BadgeTile key={b.id} name={b.name} condition={b.condition} earned={b.earned} />
+          ))}
+        </View>
       </Reveal>
 
       <Reveal play={first} delay={P.xpAt + T.step * 3} rise={T.rise} style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule }}>
         <LinkRow label={copy.profile.wardrobe} icon={<Shirt size={size.icon} color={c.text} strokeWidth={stroke.icon} />} onPress={() => router.push('/wardrobe')} />
-        <LinkRow label={copy.profile.settings} icon={<Settings size={size.icon} color={c.text} strokeWidth={stroke.icon} />} onPress={() => router.push('/settings')} />
       </Reveal>
     </ScrollView>
   );

@@ -1,14 +1,7 @@
 import { View } from 'react-native';
-import { useTheme } from '@/theme';
+import { opacity, useTheme } from '@/theme';
 
-/**
- * Stav tečky:
- * - `filled`  plná v `text` (odcvičený den)
- * - `soft`    plná v `muted` (dohnaný den)
- * - `outline` obrys v `muted` (zameškaný den)
- * - `empty`   malá tečka v `rule` (budoucí den: místo v mřížce, ne stav)
- * - `today`   prstenec v `text` s jádrem: stav nese tvar a kontrast, ne akcent (R42 místo plánovaného `accent`).
- */
+/** Stav tečky: odcvičeno (`filled`), dohnáno (`soft`), zmeškáno (`outline`), budoucí (`empty`), dnes (`today`). Vzhled viz `Dot`. */
 export type DotState = 'filled' | 'soft' | 'outline' | 'empty' | 'today';
 export interface DotCell { key: string; state: DotState }
 
@@ -38,24 +31,26 @@ export function DotGrid({ cells, columns, size: dotProp, accessibilityLabel }: P
   );
 }
 
+/** Teplá litina §3.4: tečky mluví stejným jazykem jako `DayDot` v legendě (tvar, ne barva):
+ *  filled = plná `text`, soft = plná s vnitřním prstencem `base`, outline = obrys `faint`, today = prstenec `accentGraphic`,
+ *  empty (budoucí) = třetinová tečka `faint` na `opacity.future` (rastr, nenese informaci k přečtení). */
 export function Dot({ state, dot }: { state: DotState; dot: number }) {
   const { c, radius, stroke } = useTheme();
-  const box = { width: dot, height: dot, alignItems: 'center', justifyContent: 'center' } as const;
+  const box = { width: dot, height: dot, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full } as const;
   switch (state) {
     case 'filled':
-      return <View style={[box, { borderRadius: radius.full, backgroundColor: c.text }]} />;
+      return <View style={[box, { backgroundColor: c.text }]} />;
     case 'soft':
-      return <View style={[box, { borderRadius: radius.full, backgroundColor: c.muted }]} />;
-    case 'outline':
-      return <View style={[box, { borderRadius: radius.full, borderWidth: 1, borderColor: c.muted }]} />;
-    case 'empty':
-      // Budoucnost je rastr, ne stav: třetinová tečka v `rule`, aby mřížka měla tvar a nekřičela.
-      return <View style={box}><View style={{ width: dot / 3, height: dot / 3, borderRadius: radius.full, backgroundColor: c.rule }} /></View>;
-    case 'today':
       return (
-        <View style={[box, { borderRadius: radius.full, borderWidth: stroke.focus, borderColor: c.text }]}>
-          <View style={{ width: dot / 3, height: dot / 3, borderRadius: radius.full, backgroundColor: c.text }} />
+        <View style={[box, { backgroundColor: c.text }]}>
+          <View style={{ width: dot / 2, height: dot / 2, borderRadius: radius.full, borderWidth: stroke.slot, borderColor: c.base }} />
         </View>
       );
+    case 'outline':
+      return <View style={[box, { borderWidth: stroke.icon, borderColor: c.faint }]} />;
+    case 'empty':
+      return <View style={box}><View style={{ width: dot / 3, height: dot / 3, borderRadius: radius.full, backgroundColor: c.faint, opacity: opacity.future }} /></View>;
+    case 'today':
+      return <View style={[box, { borderWidth: stroke.icon, borderColor: c.accentGraphic }]} />;
   }
 }

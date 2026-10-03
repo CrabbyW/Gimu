@@ -85,7 +85,8 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
 
         <Section label={copy.progress.activityLabel} play={first} delay={T.step}>
           <ActivityGrid cells={grid} play={first} />
-          <Telemetry items={[{ key: copy.progress.activeKey, value: copy.progress.activeDays(activeCount) }]} />
+          {/* Prázdný stav nese věta v mřížce; „0 dní“ by jen opakovalo prázdno. */}
+          {activeCount > 0 ? <Telemetry items={[{ key: copy.progress.activeKey, value: copy.progress.activeDays(activeCount) }]} /> : null}
         </Section>
 
         <Section label={copy.progress.milestonesLabel} play={first} delay={T.step * 2}>

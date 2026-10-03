@@ -1,11 +1,14 @@
+import { router } from 'expo-router';
 import { useEffect, useMemo, useRef } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { Countdown } from '@/components/league/Countdown';
 import { LeagueResultBanner } from '@/components/league/LeagueResultBanner';
 import { LeagueRow } from '@/components/league/LeagueRow';
 import { TierBadge } from '@/components/league/TierBadge';
 import { ZoneDivider } from '@/components/league/ZoneDivider';
+import { Button } from '@/components/ui/Button';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
+import { LockedPreview } from '@/components/ui/LockedPreview';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Stat } from '@/components/ui/Stat';
@@ -14,6 +17,8 @@ import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useLeague } from '@/hooks/useLeague';
+import { useProfile } from '@/hooks/useProfile';
+import { isLeagueLocked } from '@/logic/league';
 import { intro, motion, stagger } from '@/lib/motion';
 import { tierName } from '@/hooks/useTierName';
 import { services, type LeagueWeekView } from '@/services';
@@ -33,16 +38,42 @@ function buildItems(v: LeagueWeekView): Item[] {
   return out;
 }
 
+/** Na mapu (aktuální lekce sedí na mapě s primary „Začít lekci“). */
+const toMap = () => router.navigate('/(tabs)');
+
 export default function LeagueScreen() {
   const { c } = useTheme();
   const league = useLeague();
+  const profile = useProfile();
+  // Teplá litina §3.2: zamčeno jen bez jediné lekce v historii (`logic/league`), ne při 0 XP tento týden.
+  const locked = profile.status === 'ready' && profile.data ? isLeagueLocked(profile.data.activity) : false;
+  const loading = league.status === 'loading' || profile.status === 'loading';
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <TabHeader title={copy.tabs.league} />
-      {league.status === 'loading' ? <DotLoaderScreen />
+      {loading ? <DotLoaderScreen />
         : league.status === 'error' ? <ErrorState edges={[]} what={copy.league.errorWhat} onRetry={league.retry} />
-          : <Standings view={league.data} />}
+          : locked ? <LockedLeague view={league.data} />
+            : <Standings view={league.data} />}
     </View>
+  );
+}
+
+/** Zamčená liga: odznak úrovně ve `faint` a odpočet nad kartou, LockedPreview bez maskota a primary na mapu. */
+function LockedLeague({ view }: { view: LeagueWeekView }) {
+  const { space } = useTheme();
+  return (
+    <ScrollView contentContainerStyle={{ padding: space.l, paddingBottom: space.xxl, gap: space.l }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.l }}>
+        <TierBadge tierName={tierName(view.tier)} dim />
+        <Countdown endsAt={view.endsAt} />
+      </View>
+      <LockedPreview
+        title={copy.league.lockedTitle}
+        body={copy.league.lockedBody(view.entries.length)}
+        cta={{ label: copy.league.lockedCta, onPress: toMap }}
+      />
+    </ScrollView>
   );
 }
 
@@ -54,6 +85,7 @@ function Standings({ view }: { view: LeagueWeekView }) {
   const myIndex = items.findIndex((it) => it.kind === 'row' && it.entry.isMe);
   const myXp = view.entries[view.myRank - 1]?.xpThisWeek ?? 0;
   const name = tierName(view.tier);
+  const inPromoteZone = view.promoteCount > 0 && view.myRank <= view.promoteCount;
   // Motion: úvodní sled jen při prvním zobrazení tabu: hlavička (XP napočítá), řádky po 45 ms,
   // vlastní řádek jako vyvrcholení po dojetí scrollu.
   const first = useFirstShow('tab:league');
@@ -99,7 +131,11 @@ function Standings({ view }: { view: LeagueWeekView }) {
           ? <LeagueRow entry={item.entry} rank={item.rank} index={index} play={first} />
           : <Reveal play={first} delay={intro.league.rows + stagger(index)} rise={0}><ZoneDivider kind={item.zone} /></Reveal>)}
         ListFooterComponent={
-          <Text variant="caption" tone="muted" style={{ paddingHorizontal: space.l, paddingTop: space.l }}>{copy.league.explainer}</Text>
+          <View style={{ paddingHorizontal: space.l, paddingTop: space.l, gap: space.m }}>
+            {/* Výzva jen mimo postupovou zónu; v ní by slibovala něco, co už platí. */}
+            {!inPromoteZone ? <Button label={copy.league.climb} variant="secondary" onPress={toMap} /> : null}
+            <Text variant="caption" tone="muted">{copy.league.explainer}</Text>
+          </View>
         }
       />
     </View>

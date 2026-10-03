@@ -40,12 +40,16 @@ export const size = {
   nodeLabel: 200, previewPlate: 48, badgeTile: 64, ghostRow: 12, wheelVisible: 5,
   // Zámek vedle titulku zamčené karty 16, v náboji zamčeného uzlu a u zamčeného odznaku 12 (`badgeIcon`).
   lockIcon: 16, sheetGripH: 4,
+  // Progres: sloupec data týdne vlevo od mřížky aktivity („29. 12.“ v caption).
+  weekCol: 48,
 } as const;
 // Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
-export const layout = { narrow: 360, fontScale: 1.3 } as const;
+// `statMaxScale` = strop zvětšení tokenu `stat` (1.4): pevné sloupce čísel (XP v lize) rostou jen do něj.
+export const layout = { narrow: 360, fontScale: 1.3, statMaxScale: 1.4 } as const;
 // Průhlednost zamčené položky v Šatníku (silueta náhledu pod zámkem).
 // `disabled` = neaktivní ovládací prvek (stejná hodnota, jakou má Button).
-export const opacity = { locked: 0.32, disabled: 0.4 } as const;
+// `future` = budoucí dny v DotGridu sezóny (`faint` na 40 %, Teplá litina §3.4).
+export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4 } as const;
 // Přerušovaná cílová linie grafu váhy (SVG strokeDasharray).
 export const dash = { target: '4 6' } as const;
 // Tloušťky čar instrument vrstvy: Lucide obrys 1.5, aktivní úsek měřicí linky 2,

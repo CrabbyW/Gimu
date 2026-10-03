@@ -1,9 +1,7 @@
-import { StyleSheet, View } from 'react-native';
-import { Stat } from '@/components/ui/Stat';
-import { Telemetry } from '@/components/ui/Telemetry';
+import { View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { useCompact, useTheme } from '@/theme';
+import { layout, useTheme } from '@/theme';
 import type { Season } from '@/types';
 import { shortDate } from './format';
 
@@ -14,30 +12,32 @@ interface Props {
 }
 
 /**
- * Hlavička sezóny (§7.7) v sezónním neutrálu `seasonal.headerBase`: název sezóny jako display řádek,
- * rozsah dat v telemetrii, vpravo dole obří odpočet dní. Odpočet je jediné velké číslo hlavičky;
- * progres cíle pod ní má vlastní, větší Stat, takže hlavička ho nepřehluší (L proti XL).
+ * Hlavička sezóny (Teplá litina §3.4): vlevo mono název sezóny a termín `caption muted`, vpravo `hero` počet dní
+ * + `caption` „dní do konce“. Pod `layout.narrow` nebo při fontScale > `layout.fontScale` se skládá pod sebe:
+ * název a termín nahoře, číslo pod nimi zarovnané vlevo (hero by jinak vytlačil název).
  */
 export function SeasonHeader({ season, daysLeft }: Props) {
-  const { c, space, seasonal } = useTheme();
-  const compact = useCompact();
+  const { space, seasonal } = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < layout.narrow || fontScale > layout.fontScale;
   return (
     <View
       style={{
-        backgroundColor: seasonal.headerBase, paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l,
-        borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule,
+        backgroundColor: seasonal.headerBase, paddingHorizontal: space.l, paddingTop: space.l, paddingBottom: space.l,
+        flexDirection: stacked ? 'column' : 'row', alignItems: stacked ? 'flex-start' : 'flex-end',
+        justifyContent: 'space-between', gap: stacked ? space.m : space.l,
       }}
     >
-      <View style={{ gap: space.s }}>
-        {/* Na 320 pt o stupeň menší (title): adjustsFontSizeToFit na webu nefunguje a „WINTER ARC“ v display ořízl. */}
-        <Text variant={compact ? 'title' : 'display'} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>{season.name.toUpperCase()}</Text>
-        <Telemetry items={[{ key: copy.tabs.season.toUpperCase(), value: copy.season.range(shortDate(season.startDate), shortDate(season.endDate)) }]} />
+      <View style={{ gap: space.xs, flexShrink: 1 }}>
+        <Text variant="label" accessibilityRole="header">{season.name.toUpperCase()}</Text>
+        <Text variant="caption" tone="muted">{copy.season.range(shortDate(season.startDate), shortDate(season.endDate))}</Text>
       </View>
       {daysLeft === null ? (
         <Text variant="bodyStrong">{copy.season.ended}</Text>
       ) : (
-        <View accessible accessibilityLabel={copy.season.daysLeftA11y(daysLeft)}>
-          <Stat label={copy.season.daysLeftLabel} value={daysLeft} unit={copy.season.daysLeftUnit} size="M" />
+        <View accessible accessibilityLabel={copy.season.daysLeftA11y(daysLeft)} style={{ alignItems: stacked ? 'flex-start' : 'flex-end' }}>
+          <Text variant="hero" tone="accent">{daysLeft}</Text>
+          <Text variant="caption" tone="muted">{copy.season.daysLeftCaption}</Text>
         </View>
       )}
     </View>

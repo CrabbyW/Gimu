@@ -39,7 +39,7 @@ export default function WeightStep() {
   const onContinue = () => {
     const next = validate(true);
     setErrors(next);
-    if (next.current === null && next.target === null) router.push('/onboarding/birth');
+    if (next.current === null && next.target === null) router.push('/onboarding/reminder');
   };
 
   const bothFilled = currentKg.trim() !== '' && targetKg.trim() !== '';

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Button } from '@/components/ui/Button';
-import { MeasureLine } from '@/components/ui/MeasureLine';
-import { Stat } from '@/components/ui/Stat';
-import { Telemetry } from '@/components/ui/Telemetry';
+import { Card } from '@/components/ui/Card';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { SectionLabel } from '@/components/ui/SectionLabel';
 import { Text } from '@/components/ui/Text';
-import { TextField } from '@/components/ui/TextField';
+import { ValueWheelSheet, type WheelOption } from '@/components/ui/ValueWheelSheet';
 import { copy } from '@/data/copy';
 import { useCountUp } from '@/hooks/useCountUp';
 import { motion } from '@/lib/motion';
@@ -16,7 +16,7 @@ import { decimal } from './format';
 
 interface Props {
   progress: SeasonProgress;
-  /** Jen u milníku: zápis aktuální hodnoty. Chyba (reject) se ukáže pod polem. */
+  /** Jen u milníku: zápis aktuální hodnoty. Chyba (reject) se ukáže pod tlačítkem. */
   onRecord?(current: number): Promise<void>;
 }
 
@@ -29,9 +29,12 @@ const unitOf = (g: SeasonGoal): string => {
   }
 };
 
+/** Rezerva nad cílem v kole hodnot (milník se dá i překonat). */
+const WHEEL_HEADROOM = 10;
+
 /**
- * Progres cíle sezóny. Nejdůležitější údaj tabu: obří `34 / 60 DNÍ` (Stat L), pod ním měřicí linka
- * se stejným poměrem. Typ cíle je telemetrie nad číslem, ne nadpis: číslo mluví samo.
+ * Progres cíle sezóny (Teplá litina §3.4): karta, typ cíle jako SectionLabel, `display` „{hodnota} / {cíl} jednotka“
+ * + progress bar. U milníku primary „Zapsat hodnotu“ přes celou šířku karty → ValueWheelSheet.
  */
 export function SeasonGoalCard({ progress, onRecord }: Props) {
   const { space } = useTheme();
@@ -40,60 +43,49 @@ export function SeasonGoalCard({ progress, onRecord }: Props) {
   const shown = decimal(value);
   // Count-up při prvním zobrazení (400 ms); popisek pro čtečku nese vždy konečnou hodnotu.
   const counted = decimal(useCountUp(value, motion.countFirstMs, Number.isInteger(value) ? 0 : 1));
-  const ratio = target > 0 ? value / target : 0;
+  const a11y = copy.season.progressA11y(shown, decimal(target), unit);
   return (
-    <View style={{ gap: space.l }}>
-      <View style={{ gap: space.s }}>
-        <Telemetry items={[{ key: copy.season.goalLabel, value: copy.season.goalKinds[goal.kind] }]} />
-        {goal.kind === 'milestone' ? <Text variant="bodyStrong">{goal.label}</Text> : null}
+    <Card style={{ gap: space.m }}>
+      <SectionLabel>{copy.season.goalLabel}</SectionLabel>
+      <Text variant="headline">{goal.kind === 'milestone' ? goal.label : copy.season.goalKinds[goal.kind]}</Text>
+      <View accessible accessibilityLabel={a11y} style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: space.s }}>
+        <Text variant="display">{counted}</Text>
+        <Text variant="caption" tone="muted">{copy.season.progressOf(decimal(target), unit)}</Text>
       </View>
-      <View accessible accessibilityLabel={copy.season.progressA11y(shown, decimal(target), unit)}>
-        <Stat value={counted} unit={copy.season.progressOf(decimal(target), unit)} size="L" />
-      </View>
-      {/* Motion: linka se natáhne souběžně s count-upem čísla (400 ms), jeden úder. */}
-      <MeasureLine progress={ratio} accessibilityLabel={copy.season.progressA11y(shown, decimal(target), unit)} drawFrom={0} drawMs={motion.countFirstMs} />
+      <ProgressBar value={value} max={target} accessibilityLabel={a11y} />
       {met ? <Text variant="body" tone="muted">{copy.season.met}</Text> : null}
-      {goal.kind === 'milestone' && onRecord ? <RecordValue initial={goal.current} onRecord={onRecord} /> : null}
-    </View>
+      {goal.kind === 'milestone' && onRecord ? <RecordValue initial={goal.current} target={goal.target} onRecord={onRecord} /> : null}
+    </Card>
   );
 }
 
-/** „Zapsat hodnotu“: tlačítko se rozbalí v pole s uložením. Celé číslo ≥ 0. */
-function RecordValue({ initial, onRecord }: { initial: number; onRecord(current: number): Promise<void> }) {
+/** „Zapsat hodnotu“: plné primary přes šířku karty, výběr v ValueWheelSheet (celá čísla 0 … cíl + rezerva). */
+function RecordValue({ initial, target, onRecord }: { initial: number; target: number; onRecord(current: number): Promise<void> }) {
   const { space } = useTheme();
   const [open, setOpen] = useState(false);
-  const [raw, setRaw] = useState(String(initial));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const max = Math.max(target, initial) + WHEEL_HEADROOM;
+  const options: WheelOption[] = Array.from({ length: max + 1 }, (_, i) => ({ key: String(i), label: String(i) }));
 
-  if (!open) {
-    return <Button label={copy.season.record} variant="secondary" onPress={() => { setRaw(String(initial)); setError(null); setOpen(true); }} style={{ alignSelf: 'flex-start' }} />;
-  }
-
-  const save = async () => {
+  const save = async (i: number) => {
     if (busy) return;
-    const n = /^\d+$/.test(raw.trim()) ? Number(raw.trim()) : NaN;
-    if (!Number.isInteger(n) || n < 0) { setError(copy.season.recordError); return; }
-    setBusy(true);
-    try { await onRecord(n); setOpen(false); } catch { setError(copy.season.saveError); } finally { setBusy(false); }
+    setBusy(true); setError(null);
+    try { await onRecord(i); setOpen(false); } catch { setError(copy.season.saveError); } finally { setBusy(false); }
   };
 
   return (
-    <View style={{ gap: space.m }}>
-      <TextField
-        label={copy.season.recordField}
-        value={raw}
-        onChangeText={(t) => { setRaw(t); setError(null); }}
-        keyboardType="number-pad"
-        returnKeyType="done"
-        onSubmitEditing={() => { void save(); }}
-        error={error}
-        autoFocus
+    <View style={{ gap: space.s, marginTop: space.s }}>
+      <Button label={copy.season.record} onPress={() => { setError(null); setOpen(true); }} loading={busy} />
+      {error ? <Text variant="caption" tone="muted" accessibilityRole="alert">{error}</Text> : null}
+      <ValueWheelSheet
+        visible={open}
+        title={copy.season.recordField}
+        options={options}
+        selectedIndex={Math.max(0, Math.round(initial))}
+        onSave={(i) => { void save(i); }}
+        onClose={() => setOpen(false)}
       />
-      <View style={{ flexDirection: 'row', gap: space.s }}>
-        <Button label={copy.season.recordSave} onPress={() => { void save(); }} disabled={busy} />
-        <Button label={copy.season.recordCancel} variant="ghost" onPress={() => setOpen(false)} />
-      </View>
     </View>
   );
 }

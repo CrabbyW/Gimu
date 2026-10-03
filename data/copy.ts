@@ -72,6 +72,12 @@ export const copy = {
       current: 'Aktuální váha', target: 'Cílová váha', unit: 'kg',
       errors: { invalid: 'Zadej číslo mezi 30 a\u00A0250 kg.', loseDirection: 'Při hubnutí musí být cíl nižší než aktuální váha.', gainDirection: 'Při nabírání musí být cíl vyšší než aktuální váha.' },
     },
+    // Teplá litina §3.7: poslední krok před zrozením opice.
+    reminder: {
+      title: 'Kdy ti máme připomenout lekci?', lead: 'Jedna zpráva denně, jen když ještě nemáš hotovo.',
+      timeLabel: 'Čas připomínky', change: 'Změnit čas', skip: 'Bez připomínky',
+      timeA11y: (time: string) => `Čas připomínky ${time}. Klepni pro změnu.`,
+    },
     birth: {
       title: 'Tohle je tvoje opice.', lead: 'Poroste s\u00A0každou lekcí.', cta: 'Jdeme trénovat', bornLabel: (date: string) => `NAROZENA ${date}`,
       saveError: 'Opici se nepodařilo uložit. Zkus to znovu.',
@@ -124,6 +130,8 @@ export const copy = {
   },
   header: { settings: 'Nastavení' },
   lesson: {
+    tomorrow: (title: string, minutes: number) => `Zítra: ${title} · ${minutes} min`,
+    sectionDone: 'Sekce hotová. Další se odemkne v mapě.',
     reps:'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',
     quitConfirm: 'Ukončit', quitCancel: 'Trénovat dál', holdReady: 'Připrav se', nextExercise: 'Další cvik',
     close: 'Ukončit lekci',
@@ -139,7 +147,14 @@ export const copy = {
   },
   leagueTier: 'LIGA',
   league: {
-    me: 'Ty', promote: '▲ POSTUP', demote: '▼ SESTUP', explainer: 'XP za lekce a pravidelnost, ne za výkon.',
+    // Teplá litina §3.2: zamčená liga (žádná lekce v historii) a výzva mimo postupovou zónu.
+    lockedTitle: 'Liga se odemkne po první lekci',
+    lockedBody: (n: number) => `Lekce ti dá XP a místo mezi ${n} lidmi na tvé úrovni.`,
+    lockedCta: 'Začít první lekci',
+    climb: 'Jedna lekce tě posune nahoru',
+    // XP ve sloupci: tisíce oddělené nezlomitelnou mezerou („9 999“), aby se číslo nezalomilo.
+    xpValue: (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
+    me: 'Ty', promote: 'POSTUP', demote: 'SESTUP', explainer: 'XP za lekce a pravidelnost, ne za výkon.',
     endsIn: 'KONEC TÝDNE',
     result: {
       promote: (tier: string) => `Postup do ligy ${tier}.`,
@@ -161,7 +176,7 @@ export const copy = {
     rowA11y: (rank: number, name: string, xp: number) => `${rank}. místo, ${name}, ${xp} XP`,
   },
   progress: {
-    dreamLabel: 'DREAM BODY', activityLabel: 'POSLEDNÍCH 5 TÝDNŮ', milestonesLabel: 'MILNÍKY', weightLabel: 'VÁHA',
+    dreamLabel: 'DREAM BODY', activityLabel: 'AKTIVITA', milestonesLabel: 'MILNÍKY', weightLabel: 'VÁHA',
     logWeight: 'Zapsat váhu tento týden', save: 'Uložit', cancel: 'Zrušit',
     targetLine: (kg: number) => `CÍL ${kg} KG`, milestoneDone: 'Splněno.', errorWhat: 'progres',
     // Pondělí až neděle, hlavička mřížky aktivity.
@@ -180,6 +195,13 @@ export const copy = {
     weightLatest: 'POSLEDNÍ ZÁPIS', weightTarget: 'CÍL',
     chartA11y: (latest: number | null, target: number) =>
       latest === null ? `Graf váhy bez záznamů, cíl ${target} kg` : `Graf váhy, poslední zápis ${latest} kg, cíl ${target} kg`,
+    // Teplá litina §3.3: prázdná mřížka (jeden týden + věta), popisek týdne „29. 9.“, plné názvy dní pro čtečku.
+    activityEmpty: 'Tady uvidíš každý den, kdy jsi trénoval. První tečka přibude po lekci.',
+    weekShort: (d: number, m: number) => `${d}. ${m}.`,
+    weekdaysShort: ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'],
+    // Binární milník (ano/ne) jako číslo 0 / 1, stejná gramatika jako číselný.
+    milestoneBinaryTitle: 'Splněno?', milestoneYes: 'Ano', milestoneNo: 'Zatím ne',
+    milestoneSheetTitle: (label: string) => `${label}: aktuální hodnota`,
     newCosmetic: 'NOVÁ KOSMETIKA', toWardrobe: 'Otevřít Šatník', dismiss: 'Zavřít',
     saveError: 'Uložení se nepovedlo. Zkus to znovu.',
   },
@@ -207,11 +229,25 @@ export const copy = {
     wardrobe: 'Šatník', settings: 'Nastavení', noBadges: 'Zatím žádné odznaky.',
     badgeCount: (n: number) => `${n} ${czPlural(n, 'odznak', 'odznaky', 'odznaků')}`,
     days: 'D', errorWhat: 'profil',
+    // Teplá litina §3.5: StatGrid, karta série a sekce odznaků.
+    statXp: 'XP celkem', statStage: 'Stage', statBadges: 'Odznaky',
+    xpValue: (n: number) => `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} XP`,
+    stageValue: (n: number) => `Stage ${n}`,
+    badgeRatio: (earned: number, total: number) => `${earned} / ${total}`,
+    badgeRatioA11y: (earned: number, total: number) => `Získáno ${earned} z ${total} odznaků`,
+    streakLabel: 'Série',
+    streakDays: (n: number) => `${n} ${czPlural(n, 'den', 'dny', 'dní')}`,
+    pathLine: (name: string) => `Cesta: ${name}`,
   },
   notifications: {
     title: 'Opice',
-    // Emoji jen v systémové notifikaci, v UI ne (spec §6.8).
-    reminder: (n: number) => (n > 0 ? `Opice čeká. Streak ${n} ${czPlural(n, 'den', 'dny', 'dní')} je v ohrožení 🐒` : 'Opice čeká. Dnešní lekce ještě chybí 🐒'),
+    // Emoji jen v systémové notifikaci, v UI ne (spec §6.8). Platilo do Teplé litiny.
+    // Teplá litina §3.7 (nahrazuje řádek níž): tichý tón, bez emoji. Při nulové sérii nabídne délku lekce, když ji volající zná.
+    reminder: (n: number, minutes?: number) => (n > 0
+      ? `Opice čeká na dnešní lekci. Série ${n} ${czPlural(n, 'den', 'dny', 'dní')}.`
+      : typeof minutes === 'number' && Number.isFinite(minutes)
+        ? `Opice čeká na dnešní lekci. Stačí ${minutes} ${czPlural(minutes, 'minuta', 'minuty', 'minut')}.`
+        : 'Opice čeká na dnešní lekci.'),
   },
   settings: {
     title: 'Nastavení', theme: 'Téma', themeOptions: { system: 'Systém', light: 'Světlý', dark: 'Tmavý' },
@@ -219,6 +255,10 @@ export const copy = {
     denied: 'Notifikace jsou v systému vypnuté.', openSettings: 'Otevřít nastavení', dev: 'Dev menu',
     unsupported: 'Na webu notifikace nejdou. Zkus to v telefonu.', hourValue: (h: number) => `${String(h).padStart(2, '0')}:00`,
     sent: 'Odesláno.', hourDown: 'Připomínka dřív', hourUp: 'Připomínka později',
+    // Motion spec §6.2: dva nezávislé přepínače.
+    feedback: 'Odezva', haptics: 'Haptika', hapticsLine: 'Jemné vibrace při klepnutí a oslavě.',
+    sound: 'Zvuky', soundLine: 'Krátké zvuky kotoučů a oslavy.',
+    hourPick: 'Čas připomínky', appearance: 'Vzhled', reminderSection: 'Připomínka',
   },
   dev: {
     title: 'Dev menu', demo: 'Načíst demo profil', reset: 'Reset appky', resetConfirm: 'Smazat všechna data? Téma zůstane.', xp: '+500 XP',
@@ -234,10 +274,10 @@ export const copy = {
     // Hlavička: „28. 9. – 26. 12.“ (data skládá obrazovka z čísel).
     dateShort: (d: number, m: number) => `${d}. ${m}.`,
     range: (from: string, to: string) => `${from} – ${to}`,
-    daysLeftUnit: 'DNÍ', daysLeftLabel: 'DO KONCE',
+    daysLeftUnit: 'DNÍ', daysLeftLabel: 'DO KONCE', daysLeftCaption: 'dní do konce',
     daysLeftA11y: (n: number) => `Do konce sezóny ${n} ${czPlural(n, 'den', 'dny', 'dní')}`,
     ended: 'Sezóna skončila.', endedBody: 'Spočítali jsme, co jsi za ni odmakal.',
-    lockIn: 'Lock in', lockInBody: 'Vyber si jeden cíl na celou sezónu.', lockInCta: 'Vybrat cíl',
+    lockIn: 'Lock in', lockInBody: 'Vyber si jeden cíl na celou sezónu.', lockInCta: 'Nastavit cíl',
     goalLabel: 'CÍL SEZÓNY',
     goalKinds: { activeDays: 'Dny bez vynechání', lessons: 'Počet lekcí', milestone: 'Milník', weight: 'Váha' },
     goalKindLines: {

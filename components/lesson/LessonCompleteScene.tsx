@@ -68,7 +68,8 @@ function tomorrowOf(view: LessonPathView | null, minutes: Record<string, number>
   const nodes = view.sections.flatMap((s) => s.nodes);
   const id = nextLessonId(nodes.map((n) => n.lesson), new Set(nodes.filter((n) => n.state === 'done').map((n) => n.lesson.id)));
   const next = nodes.find((n) => n.lesson.id === id);
-  return next ? copy.lesson.tomorrow(next.lesson.title, minutes[next.lesson.id] ?? 1) : null;
+  // Bez další lekce (konec cesty) příslib zítřka nahradí věta o sekci (design spec §3.6).
+  return next ? copy.lesson.tomorrow(next.lesson.title, minutes[next.lesson.id] ?? 1) : copy.lesson.sectionDone;
 }
 
 interface Props {

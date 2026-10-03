@@ -15,8 +15,9 @@ interface Props {
   play?: boolean; delay?: number;
 }
 
-/** Řádek milníku: název, hodnota `12 / 15` (tabulární) a měřicí stopa 4 pt (`rule` → výplň `text`).
- *  Splněný (R42 bez akcentu): plná stopa, ikona Check a štítek „Splněno.“ — stav nese tvar, ne barva. */
+/** Řádek milníku (Teplá litina §3.3): název `body` vlevo, číslo `caption` tabulárně vpravo, progress bar
+ *  (stopa `raised`, výplň `accentGraphic`). Binární milník = 0 / 1, žádná zvláštní větev vzhledu.
+ *  Splněný: plná stopa a fajfka Check v `text`. */
 export function MilestoneRow({ milestone: m, onPress, play = false, delay = 0 }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
   const done = isMilestoneDone(m);
@@ -45,13 +46,14 @@ export function MilestoneRow({ milestone: m, onPress, play = false, delay = 0 }:
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
         {done ? <Check size={size.icon} color={c.text} strokeWidth={stroke.icon} /> : null}
-        <Text variant="bodyStrong" style={{ flex: 1 }} numberOfLines={2}>{m.label}</Text>
-        <Text variant="label" tone={done ? 'text' : 'muted'}>
-          {done ? copy.progress.milestoneDone : isBinary ? '' : copy.progress.milestoneValue(m.current, m.target)}
+        <Text variant="body" style={{ flex: 1 }} numberOfLines={2}>{m.label}</Text>
+        {/* Binární milník mluví stejnou gramatikou jako číselný: 0 / 1 → 1 / 1. */}
+        <Text variant="caption" tone={done ? 'text' : 'muted'} style={{ fontVariant: ['tabular-nums'] }}>
+          {copy.progress.milestoneValue(isBinary ? Math.min(m.current, 1) : m.current, isBinary ? 1 : m.target)}
         </Text>
       </View>
-      <View style={{ height: size.meter, borderRadius: radius.full, backgroundColor: c.rule, overflow: 'hidden' }}>
-        <Animated.View style={[fill, { height: '100%', backgroundColor: c.text }]} />
+      <View style={{ height: size.meter, borderRadius: radius.full, backgroundColor: c.raised, overflow: 'hidden' }}>
+        <Animated.View style={[fill, { height: '100%', borderRadius: radius.full, backgroundColor: c.accentGraphic }]} />
       </View>
     </Pressable>
   );
