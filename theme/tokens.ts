@@ -1,9 +1,11 @@
 // Spacing, radiusy a typografie podle spec §6.4 a §6.6, upraveno rulingem R42 (§6.8).
 // Škála 4 8 16 24 40 64 104 168: za 24 roste zhruba Fibonacciho krokem.
+// Zlatý řez: zdroj všech R43 proporcí (typová škála, kotouč, mapa, figura oslavy).
+export const PHI = (1 + Math.sqrt(5)) / 2;
 export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 40, xxl: 64, xxxl: 104, xxxxl: 168 } as const;
-// R42: střídmější radiusy. Karta 12 působí jako obrobený kov, ne jako bublina; `s` drží poměr 1:2.
+// R43: radiusy v poměru φ (8/5 ≈ 1.6). Karta 8 působí jako obrobený kov, ne jako bublina; `s` drží poměr 1:2.
 // `full` zůstává pro kruhové tvary (kotouč, kulaté CTA, odznak), kde tvar nese význam.
-export const radius = { s: 6, l: 12, full: 999 } as const;
+export const radius = { s: 5, l: 8, full: 999 } as const;
 // Rozměry dotykových ploch a ovládacích prvků podle spec §6.6. `hit` je jediný zdroj
 // minima 44 pt (dřív duplikované natvrdo ve třech komponentách).
 export const size = {
@@ -12,7 +14,7 @@ export const size = {
   choiceCard: 80, choiceGlyph: 40, glyph: 48,
   // DotLoader: rozměr mřížky a průměr tečky (uživatelské zadání size={32} dotSize={4}).
   loader: 32, loaderDot: 4,
-  // Liga (§7.5): řádek 56, sloupec pořadí 32, mini opice 32, odznak úrovně 72, proužek vlastního řádku 3 (v `text`, R42).
+  // Liga (§7.5): řádek 56, sloupec pořadí 40, mini opice 32, odznak úrovně 72, proužek vlastního řádku 3 (v `text`, R42).
   leagueRow: 56, rankCol: 40, rowMascot: 32, tierBadge: 72, ownStripe: 3,
   // Instrument vrstva (R42): koncový tik MeasureLine, rameno registrační značky `+`, Lucide ikona v hlavičce.
   tick: 8, regMark: 8, icon: 20,
@@ -34,7 +36,8 @@ export const dash = { target: '4 6' } as const;
 // Tloušťky čar instrument vrstvy: Lucide obrys 1.5, aktivní úsek měřicí linky 2,
 // fokus/výběr bez akcentu (spodní linka pole, proužek vybrané karty) 2, prstenec výdrže 3
 // (měřidlo v `text` na stopě `rule`; tenčí než dřív, protože už ho nenese barva, ale kontrast).
-export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5 } as const;
+// R43: `plate` = lem a náboj kotouče, `check` = fajfka přes otvor, `hairline` = konstrukční figura oslavy.
+export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 export const material = { collarRadius: 2 } as const;
@@ -47,14 +50,16 @@ export const font = {
 // Tracking v em; RN letterSpacing je v pt, proto `ls(size, em)`.
 export const tracking = { display: -0.03, label: 0.18, telemetry: 0.2 } as const;
 const ls = (fontSize: number, em: number) => Math.round(fontSize * em * 100) / 100;
+// R43 typová škála 16·√φⁿ (dva kroky = φ): 16 · 20 · 26 · 33 · 42 · 53 · 68 · 87 · 110.
+// Utility stupně (label 11, caption 14, mono 10, input) stojí mimo škálu kvůli čitelnosti.
 export const type = {
   // Inter má proti Bebas širší znaky a vyšší x-height: menší stupeň v pt dává větší vizuální hmotu.
   // lineHeight ≥ 1.0 em, aby Android neořízl horní dotahy Interu (Bebas snesl 0.9).
-  displayXL: { fontFamily: font.display, fontSize: 104, lineHeight: 108, letterSpacing: ls(104, tracking.display) },
-  display: { fontFamily: font.display, fontSize: 48, lineHeight: 52, letterSpacing: ls(48, tracking.display) },
-  title: { fontFamily: font.display, fontSize: 32, lineHeight: 36, letterSpacing: ls(32, tracking.display) },
+  displayXL: { fontFamily: font.display, fontSize: 110, lineHeight: 114, letterSpacing: ls(110, tracking.display) },
+  display: { fontFamily: font.display, fontSize: 42, lineHeight: 46, letterSpacing: ls(42, tracking.display) },
+  title: { fontFamily: font.display, fontSize: 33, lineHeight: 38, letterSpacing: ls(33, tracking.display) },
   // Titulek kompaktní karty volby (onboarding, vize těla): o stupeň pod `title`.
-  choiceTitle: { fontFamily: font.display, fontSize: 24, lineHeight: 28, letterSpacing: ls(24, tracking.display) },
+  choiceTitle: { fontFamily: font.display, fontSize: 26, lineHeight: 30, letterSpacing: ls(26, tracking.display) },
   body: { fontFamily: font.body, fontSize: 16, lineHeight: 24 },
   bodyStrong: { fontFamily: font.bodyStrong, fontSize: 16, lineHeight: 24 },
   // letterSpacing 0.18em při 11 pt ≈ 2.
@@ -64,7 +69,7 @@ export const type = {
   input: { fontFamily: font.body, fontSize: 20, lineHeight: 28 },
   inputLarge: { fontFamily: font.body, fontSize: 22, lineHeight: 32 },
   // Číslo v řádku ligy (pořadí, XP) a odpočet: display font, menší řez než `title`.
-  // Tabulární číslice Interu ≈ 0.6 em: „12“ při 26 pt ≈ 31 pt, vejde se do sloupce pořadí 32 pt.
+  // Tabulární číslice Interu ≈ 0.6 em: „12“ při 26 pt ≈ 31 pt, vejde se do sloupce pořadí 40 pt.
   counter: { fontFamily: font.display, fontSize: 26, lineHeight: 32, letterSpacing: ls(26, tracking.display) },
   // Název úrovně v kruhu TierBadge (72 pt): Inter je širší než Bebas, „DIAMANT“ (7 verzálek ≈ 4.6 em)
   // se do vnitřních ~64 pt vejde až při 13 pt.
@@ -100,11 +105,11 @@ export const svgType = {
 } as const;
 
 // Velikosti čísla ve `Stat` (M/L/XL) podle spec §6.6.
-export const statSize = { M: 56, L: 88, XL: 120 } as const;
+export const statSize = { M: 53, L: 87, XL: 110 } as const;
 
 // Barvy opice (srst, obličej) — stejné v obou režimech, viz spec §8.
-// `tankRim`: lem tílka Ember. Patří materiálu opice, ne UI akcentu (R42: ember jen v oslavě lekce);
-// pálená siena z rodiny srsti, tlumenější než UI ember, nesleduje sezónní přepis akcentu.
+// `tankRim`: lem tílka Ember. Patří materiálu opice, ne UI akcentu (R43: akcent jen v oslavě lekce);
+// pálená siena z rodiny srsti, tlumenější než UI akcent, nesleduje sezónní přepis akcentu.
 export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0', tankRim: '#B4532A' } as const;
 
 export type Space = typeof space;

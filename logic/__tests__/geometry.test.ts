@@ -1,4 +1,6 @@
 import { layoutNodes, plateSize, popoverSide, segmentLength } from '@/components/map/geometry';
+import { PHI } from '@/theme/tokens';
+import type { PlateKg } from '@/types';
 
 const nodes = Array.from({ length: 9 }, (_, i) => ({ id: `n${i}`, plateKg: ([5, 5, 10, 10, 15, 15, 20, 20, 25] as const)[i]!, isBoss: i === 8 }));
 
@@ -38,4 +40,15 @@ describe('popoverSide', () => {
     expect(popoverSide({ ...base, done: false, viewportTop: 250, viewportBottom: 600 })).toBe('above');
     expect(popoverSide({ ...base, done: true, viewportTop: 350, viewportBottom: 600 })).toBe('below');
   });
+});
+
+// R43: krok 104 = 64·φ; pulzující prstenec aktuálního uzlu (PlateNode: size + 14, scale až 1.08,
+// okraj stroke.focus 2 uvnitř) nesmí sáhnout na sousední kotouč ani u největšího uzlu 80.
+test('krok uzlů je 64·φ a pulz prstence nepřesáhne na souseda', () => {
+  const nodes = [25, 25, 25].map((kg, i) => ({ id: `n${i}`, plateKg: kg as PlateKg, isBoss: false }));
+  const { positions } = layoutNodes(nodes, 390);
+  const step = positions[1]!.y - positions[0]!.y;
+  expect(step).toBeCloseTo(64 * PHI, -1);
+  const ringOuter = ((plateSize(25) + 14) * 1.08) / 2;
+  expect(ringOuter + plateSize(25) / 2).toBeLessThan(step);
 });

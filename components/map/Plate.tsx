@@ -3,7 +3,7 @@ import { useId } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Defs, Path, Pattern, RadialGradient, Rect, Stop, Text as SvgText } from 'react-native-svg';
 import type { NodeState } from '@/logic/map';
-import { inkOn, svgType, useTheme } from '@/theme';
+import { inkOn, PHI, stroke, svgType, useTheme } from '@/theme';
 import type { PlateKg } from '@/types';
 
 interface Props {
@@ -18,6 +18,13 @@ interface Props {
 export const CHECK_PATH = 'M44 50 l4 4 l8 -9';
 export const CHECK_LENGTH = 18;
 
+/** R43 proporce kotouče (viewBox 100): vnější R, náboj R/φ², otvor R/φ³. Lem 40 je fyzický lem, ne φ.
+ *  Sdílí je i konstrukční figura oslavy (`GoldenFigure`). */
+export const PLATE_R = 48;
+export const PLATE_RIM = 40;
+export const PLATE_HUB = PLATE_R / PHI ** 2;
+export const PLATE_HOLE = PLATE_R / PHI ** 3;
+
 /** Kotouč zepředu: plný kruh, vnitřní prstenec, díra, kg v display řezu (Inter Light). Hloubku dělá radiální světlo a jemné zrno. */
 export function Plate({ kg, size, state, check = true }: Props) {
   const { c, seasonal } = useTheme();
@@ -31,9 +38,9 @@ export function Plate({ kg, size, state, check = true }: Props) {
     return (
       <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
-          <Circle cx={50} cy={50} r={48} fill="none" stroke={c.rule} strokeWidth={2} />
+          <Circle cx={50} cy={50} r={PLATE_R} fill="none" stroke={c.rule} strokeWidth={stroke.focus} />
         </Svg>
-        <Lock size={icon} color={c.muted} strokeWidth={1.5} />
+        <Lock size={icon} color={c.muted} strokeWidth={stroke.icon} />
       </View>
     );
   }
@@ -53,16 +60,16 @@ export function Plate({ kg, size, state, check = true }: Props) {
           <Rect x={2} y={3} width={1} height={1} fill={c.shadow} opacity={0.1} />
         </Pattern>
       </Defs>
-      <Circle cx={50} cy={50} r={48} fill={fill} />
-      <Circle cx={50} cy={50} r={48} fill={`url(#${light})`} />
-      <Circle cx={50} cy={50} r={48} fill={`url(#${grain})`} />
-      <Circle cx={50} cy={50} r={40} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
-      <Circle cx={50} cy={50} r={20} fill="none" stroke={c.plateRim} strokeWidth={1.2} />
-      <Circle cx={50} cy={50} r={9} fill={seasonal.mapBase} />
-      <SvgText x={50} y={36} fontFamily={svgType.plateKg.fontFamily} fontSize={svgType.plateKg.fontSize} letterSpacing={svgType.plateKg.letterSpacing} fill={ink} textAnchor="middle">{kg}</SvgText>
+      <Circle cx={50} cy={50} r={PLATE_R} fill={fill} />
+      <Circle cx={50} cy={50} r={PLATE_R} fill={`url(#${light})`} />
+      <Circle cx={50} cy={50} r={PLATE_R} fill={`url(#${grain})`} />
+      <Circle cx={50} cy={50} r={PLATE_RIM} fill="none" stroke={c.plateRim} strokeWidth={stroke.plate} />
+      <Circle cx={50} cy={50} r={PLATE_HUB} fill="none" stroke={c.plateRim} strokeWidth={stroke.plate} />
+      <Circle cx={50} cy={50} r={PLATE_HOLE} fill={seasonal.mapBase} />
+      <SvgText x={50} y={29} fontFamily={svgType.plateKg.fontFamily} fontSize={svgType.plateKg.fontSize} letterSpacing={svgType.plateKg.letterSpacing} fill={ink} textAnchor="middle">{kg}</SvgText>
       {/* R42: fajfka v `text` (bílá na tmavém otvoru), akcent patří jen oslavě dokončení. */}
       {state === 'done' && check ? (
-        <Path d={CHECK_PATH} stroke={c.text} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d={CHECK_PATH} stroke={c.text} strokeWidth={stroke.check} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       ) : null}
     </Svg>
   );

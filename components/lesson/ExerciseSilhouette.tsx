@@ -36,7 +36,7 @@ function Head({ h0, h1, t, color }: { h0: P; h1: P; t: SharedValue<number>; colo
 
 /** Postava cviku kmitající mezi dvěma pózami. Při omezeném pohybu stojí v póze A. */
 export function ExerciseSilhouette({ id }: { id: SilhouetteId }) {
-  const { c } = useTheme();
+  const { c, stroke } = useTheme();
   const { reduced } = useMotionSafe();
   const t = useSharedValue(0);
   useEffect(() => {
@@ -52,7 +52,7 @@ export function ExerciseSilhouette({ id }: { id: SilhouetteId }) {
   return (
     <View style={{ flex: 1, alignSelf: 'stretch' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
     <Svg width="100%" height="100%" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMax meet">
-      <Line x1={vb.x - 200} y1={GROUND_Y + STROKE / 2} x2={vb.x + vb.w + 200} y2={GROUND_Y + STROKE / 2} stroke={c.rule} strokeWidth={1.5} strokeLinecap="round" />
+      <Line x1={vb.x - 200} y1={GROUND_Y + STROKE / 2} x2={vb.x + vb.w + 200} y2={GROUND_Y + STROKE / 2} stroke={c.rule} strokeWidth={stroke.icon} strokeLinecap="round" />
       {BONES.map(([from, to]) => (
         <Bone key={`${from}-${to}`} a0={a.joints[from]} a1={b.joints[from]} b0={a.joints[to]} b1={b.joints[to]} t={t} color={c.text} />
       ))}

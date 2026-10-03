@@ -45,7 +45,7 @@ hodnocení v [`docs/RATING.md`](./docs/RATING.md).
 
 1. `npx expo start --web` (nebo Expo Go), otevři `/dev` (v appce: Profil → Nastavení → Dev menu).
 2. **Načíst demo profil**: 12denní streak, 7 hotových lekcí, XP 460 (těsně pod stage 2), rozpracované milníky, cíl váhy a cíl sezóny Winter Arc.
-3. Mapa → lekce 8 → oslava (kotouč, ember) → **stage-up** opice → mapa s odemčeným bossem.
+3. Mapa → lekce 8 → oslava (kotouč, IWF červená, φ figura) → **stage-up** opice → mapa s odemčeným bossem.
 4. Liga, Progres, Sezóna, Profil, Šatník, Nastavení. **Skok na konec sezóny** v dev menu otevře recap a převzetí odměny.
 
 Všechna demo data jsou v jediném souboru `services/mock/demoData.ts`. Výměna za API = nové implementace `services/contracts.ts` v `services/index.ts`.

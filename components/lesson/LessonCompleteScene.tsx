@@ -11,10 +11,11 @@ import { haptics } from '@/lib/haptics';
 import { celebration, ease, motion, useMotionSafe } from '@/lib/motion';
 import { useClickSound } from '@/lib/sound';
 import type { LessonResult } from '@/services';
-import { useCompact, useTheme } from '@/theme';
+import { PHI, useCompact, useTheme } from '@/theme';
 import type { CosmeticSlot, Lesson, Mood } from '@/types';
 import { Barbell, type BarbellMotion, type PlateFlight } from './Barbell';
-import { barbellLayout, COLLAR_TRAVEL, splitPlates, xpBreakdownLabel } from './celebration';
+import { AXIS, barbellLayout, COLLAR_TRAVEL, splitPlates, xpBreakdownLabel } from './celebration';
+import { GoldenFigure } from './GoldenFigure';
 import { XpPop } from './XpPop';
 
 const t = copy.complete;
@@ -54,6 +55,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
   const [calm] = useState(reduced);
   const [mood, setMood] = useState<Mood>('idle');
   const [xpShown, setXpShown] = useState(false);
+  const [figureDrawn, setFigureDrawn] = useState(false);
   const [ctaReady, setCtaReady] = useState(false);
   const impacted = useRef(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -62,6 +64,12 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
     const { loaded, flying } = splitPlates(result.completedPlates, lesson.plateKg);
     return barbellLayout(loaded, flying, (width - 2 * space.l) / 2);
   });
+  // R43 §3: největší kružnice figury má průměr (šířka obsahu)/φ; na 320 pt o stupeň φ menší, aby
+  // vlasové linky zůstaly v pásu činky a nesahaly do titulku ani do XP.
+  // Průměr největší kružnice = šířka/φ, ale nejvýš výška pásu činky (R ≤ AXIS.mid), aby figura
+  // na běžných šířkách nesahala k titulku nad činkou (QA R43 kolo 1).
+  const figureR = Math.min(contentWidth / PHI / 2 / (compact ? PHI : 1), AXIS.mid);
+  const figureCx = contentWidth / 2 + layout.flying.offset + layout.flying.w / 2;
   const cheer: Mood = lesson.isBoss || result.stageAfter > result.stageBefore ? 'celebrate' : 'happy';
   const title = result.xp.baseKind === 'replay' ? t.replayTitle : t.title;
 
@@ -87,6 +95,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
   const onImpact = () => {
     if (impacted.current) return;
     impacted.current = true;
+    setFigureDrawn(true);
     haptics.impact();
     click();
     if (!calm) {
@@ -151,6 +160,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
           </Animated.View>
           <View style={{ flex: 1, justifyContent: 'center', paddingBottom: compact ? space.m : space.xl }}>
             <Animated.View style={[{ marginBottom: compact ? space.l : space.xl }, shakeStyle]}>
+              <GoldenFigure r={figureR} cx={figureCx} cy={AXIS.mid} drawn={figureDrawn} calm={calm} />
               <Barbell width={contentWidth} layout={layout} motion={bar} />
             </Animated.View>
             {/* Opice stojí vpravo u čísla, které právě vydřela: odměna a její svědek v jednom pohledu.

@@ -30,7 +30,7 @@ function Dot({ state }: { state: DotState }) {
 }
 
 /** Řada teček průběhu: hotové plné tečky, aktuální plná pilulka (stav nese tvar, ne barva), budoucí obrys.
- *  Bez akcentu (R42: ember jen v oslavě dokončení lekce). */
+ *  Bez akcentu (R42/R43: akcent jen v oslavě dokončení, stage-up a recapu). */
 export function DotSteps({ total, current }: Props) {
   const { space } = useTheme();
   return (

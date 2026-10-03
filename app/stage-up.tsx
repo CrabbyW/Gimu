@@ -52,7 +52,7 @@ function BlankAccent() {
 }
 
 /**
- * Stage-up (§7.4): celá plocha v akcentu (§6.8 výjimka, oslava = povolený ember). Stará opice se smrští
+ * Stage-up (§7.4): celá plocha v akcentu (§6.8 výjimka, oslava = povolený akcent, R43 IWF červená). Stará opice se smrští
  * do kruhu, kruh praskne, vyskočí nová stage v celebrate. Opice uprostřed (výjimka pro maskota),
  * štítek a titulek pod ní vlevo jako popisek exponátu. Inkoust všude `onAccent`.
  */

@@ -105,12 +105,12 @@ function BirthScene() {
     circleScale.value = withDelay(INFLATE_AT, withSpring(1, motion.pop));
     at(BURST_AT - TENSE_MS, () => { circleScale.value = withTiming(TENSE_SCALE, { duration: TENSE_MS, easing: ease.press }); });
     // Prasknutí: kruh se roztáhne a od středu vyprázdní do mizejícího prstence, ze kterého vyskočí opice.
-    // Kruh je v `text` (R42: světelný objekt v černé, ember patří jen oslavě lekce). Vyprázdní ho díra
+    // Kruh je v `text` (R42: světelný objekt v černé, akcent patří jen oslavám). Vyprázdní ho díra
     // v barvě pozadí a prstenec přitom dohasne.
     at(BURST_AT, () => {
       circleScale.value = withTiming(BURST_SCALE, { duration: BURST_MS, easing: ease.punch });
       holeScale.value = withTiming(1, { duration: BURST_MS, easing: ease.punch });
-      // R42: kruh je světlý (`text`), ne ember. Prstenec proto při otevírání díry zároveň zhasíná
+      // R42: kruh je světlý (`text`), ne akcent. Prstenec proto při otevírání díry zároveň zhasíná
       // (ease-out, stejný takt), aby po prasknutí nezůstal ostrý světlý obrys na OLED černé.
       circleOpacity.value = withTiming(0, { duration: BURST_MS, easing: ease.out });
       mascotOpacity.value = 1;

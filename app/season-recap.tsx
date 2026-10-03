@@ -151,7 +151,7 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
     : reduced ? FadeIn.duration(motion.slide.duration).reduceMotion(ReduceMotion.Never)
       : (dir === 1 ? FadeInRight : FadeInLeft).duration(motion.slide.duration).easing(motion.slide.easing)
         .withInitialValues({ opacity: 0, transform: [{ translateX: dir * motion.slideShift }] });
-  // Plocha oslavy (ember u splněné odměny) se prolne stejným taktem jako snímek, ne skokem.
+  // Plocha oslavy (akcent u splněné odměny) se prolne stejným taktem jako snímek, ne skokem.
   const flood = useSharedValue(celebrate ? 1 : 0);
   useEffect(() => { flood.set(withTiming(celebrate ? 1 : 0, motion.slide)); }, [celebrate, flood]);
   const floodStyle = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(flood.value, [0, 1], [c.base, c.accent]) }));

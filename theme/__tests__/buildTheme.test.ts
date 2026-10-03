@@ -28,7 +28,7 @@ describe('buildTheme', () => {
   it('sezóna přepíše jen sezónní neutrály, paleta a akcent zůstávají', () => {
     const t = buildTheme('dark', 'winterArc');
     expect(t.c).toBe(dark);
-    expect(t.c.accent).toBe('#FF6B35');
+    expect(t.c.accent).toBe('#EF3E31');
     expect(t.seasonal).toBe(SEASON_OVERRIDES.winterArc.dark);
     expect(buildTheme('light', 'summerBody').seasonal).toBe(SEASON_OVERRIDES.summerBody.light);
   });

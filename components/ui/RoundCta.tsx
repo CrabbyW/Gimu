@@ -35,7 +35,8 @@ export function RoundCta({ label, onPress, disabled = false, onAccent = false }:
         accessibilityState={{ disabled }}
         style={{
           width: round ? DIAMETER : '100%',
-          height: round ? DIAMETER : 64,
+          // Pilulka = krok škály `xxl` (64); kruh 88 drží spec §6.6 (= seasonBadgeLarge), ne φ-stupeň 87.
+          height: round ? DIAMETER : space.xxl,
           paddingHorizontal: round ? 0 : space.l,
           borderRadius: radius.full,
           // R42: plná `text` plocha místo akcentu. Neaktivní přejde na neutrální plochu jako Button.

@@ -84,7 +84,7 @@ function Shadowed({ on, size, children }: { on: boolean; size: number; children:
 }
 
 function PulseRing({ size, reduced }: { size: number; reduced: boolean }) {
-  const { c, radius } = useTheme();
+  const { c, radius, stroke } = useTheme();
   const t = useSharedValue(0);
   useEffect(() => {
     if (reduced) { cancelAnimation(t); t.value = 0; return; }
@@ -97,7 +97,7 @@ function PulseRing({ size, reduced }: { size: number; reduced: boolean }) {
     <Animated.View
       pointerEvents="none"
       // R42: aktuální uzel nese stav kontrastem (`text`), ne akcentem.
-      style={[{ position: 'absolute', width: ring, height: ring, borderRadius: radius.full, borderWidth: 2, borderColor: c.text }, style]}
+      style={[{ position: 'absolute', width: ring, height: ring, borderRadius: radius.full, borderWidth: stroke.focus, borderColor: c.text }, style]}
     />
   );
 }
@@ -121,7 +121,7 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked }: { kg: PlateKg; size: 
 /** Shock kruh odemčení (UX2): při dopadu se od kotouče rozběhne prstenec v `text` (R42) a zmizí
  *  (`motion.shock`: 1 → 1.45, opacita 0.7 → 0, 420 ms punch). Spouští ho první dosažení cíle pružinou. */
 export function ShockRing({ size, progress, width }: { size: number; progress: SharedValue<number>; width?: number }) {
-  const { c, radius } = useTheme();
+  const { c, radius, stroke } = useTheme();
   const k = useSharedValue(0);
   useAnimatedReaction(
     () => progress.value >= 1,
@@ -135,7 +135,7 @@ export function ShockRing({ size, progress, width }: { size: number; progress: S
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', left: 0, top: 0, width: w, height: size, borderRadius: radius.full, borderWidth: 2, borderColor: c.text }, style]}
+      style={[{ position: 'absolute', left: 0, top: 0, width: w, height: size, borderRadius: radius.full, borderWidth: stroke.focus, borderColor: c.text }, style]}
     />
   );
 }

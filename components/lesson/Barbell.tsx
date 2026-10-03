@@ -14,7 +14,7 @@ const SHEEN = 'plateSheen';
  *    a vrátí, bez odskoku nad osu),
  *  - `x`, `rotate`: odchylky od cílové polohy,
  *  - `collar`: odstup objímky této strany v pt (0 = zacvaknuto),
- *  - `heat`: žár kotouče 0–1 (ember přes ocel). Rozsvítí se v rámu dotyku osy a chladne; do té doby 0,
+ *  - `heat`: žár kotouče 0–1 (akcent, IWF červená, přes litinu). Rozsvítí se v rámu dotyku osy a chladne; do té doby 0,
  *    takže scéna je až do dopadu monochromní. */
 export interface PlateFlight {
   drop: SharedValue<number>;
@@ -120,7 +120,7 @@ function FlyingPlate({ kg, x, w, h, flight, opacity }: FlyingProps) {
         <SheenDefs />
         <SidePlate kg={kg} x={0} y={0} w={w} h={h} />
       </Svg>
-      {/* Žár dopadu: ember přes kotouč (stejný tvar), chladne do oceli. */}
+      {/* Žár dopadu: akcent přes kotouč (stejný tvar), chladne do litiny. */}
       <Animated.View style={[StyleSheet.absoluteFill, { borderRadius: 3, backgroundColor: c.accent }, heatStyle]} />
     </Animated.View>
   );

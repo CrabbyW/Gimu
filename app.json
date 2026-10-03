@@ -14,7 +14,7 @@
     "android": {
       "package": "app.opice",
       "adaptiveIcon": {
-        "backgroundColor": "#0E0D0C",
+        "backgroundColor": "#100E0D",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -31,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B0B0C",
+          "backgroundColor": "#100E0D",
           "image": "./assets/splash-icon.png",
           "imageWidth": 120
         }

@@ -5,6 +5,6 @@ import { mascot, type Colors } from '@/theme';
 export const MASCOT_COLORS = mascot;
 
 /** Barva detailu (oči, nos, pusa). Detaily leží na světlém `face`, který je v obou režimech
- *  stejný, takže `c.text` by v dark režimu (#EFEDE8) na obličeji zmizel. Bere se proto tmavý
- *  inkoust tématu `onAccent` (#131316 v obou režimech): stejná role, obsah na světlé výplni. */
+ *  stejný, takže `c.text` by v dark režimu (#F0EEE9) na obličeji zmizel. Bere se proto tmavý
+ *  inkoust tématu `onAccent` (#181613 v obou režimech): stejná role, obsah na světlé výplni. */
 export const mascotInk = (c: Colors): string => c.onAccent;

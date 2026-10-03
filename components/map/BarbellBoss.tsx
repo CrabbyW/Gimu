@@ -90,7 +90,7 @@ function UnlockingBarbell({ reduced, onUnlocked }: { reduced: boolean; onUnlocke
   );
 }
 function BossPulse({ reduced }: { reduced: boolean }) {
-  const { c, radius } = useTheme();
+  const { c, radius, stroke } = useTheme();
   const t = useSharedValue(0);
   useEffect(() => {
     if (reduced) { cancelAnimation(t); t.value = 0; return; }
@@ -101,7 +101,7 @@ function BossPulse({ reduced }: { reduced: boolean }) {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', width: W + PULSE_PAD * 2, height: H + PULSE_PAD * 2, borderRadius: radius.l, borderWidth: 2, borderColor: c.text }, style]}
+      style={[{ position: 'absolute', width: W + PULSE_PAD * 2, height: H + PULSE_PAD * 2, borderRadius: radius.l, borderWidth: stroke.focus, borderColor: c.text }, style]}
     />
   );
 }

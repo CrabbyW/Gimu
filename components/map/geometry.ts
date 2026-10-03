@@ -1,19 +1,21 @@
 // Čistá geometrie mapy (bez Reactu), pokrytá testem v logic/__tests__/geometry.test.ts.
+import { PHI, space } from '@/theme/tokens';
 import type { PlateKg } from '@/types';
 
 const SIZES: Record<PlateKg, number> = { 5: 56, 10: 60, 15: 64, 20: 72, 25: 80 };
 export const plateSize = (kg: PlateKg) => SIZES[kg];
 export const BOSS_SIZE = { w: 220, h: 88 };
-const STEP = 112;
+// R43: krok uzlů = 64·φ (token xxxl), amplituda sinusoidy = šířka/φ³.
+const STEP = space.xxxl;
 const TOP = 96;
 const GUTTER = 16;
 
 export interface NodePosition { id: string; x: number; y: number; size: number }
 
-/** Uzly shora dolů po sinusoidě (amplituda ~28 % šířky), boss na středu. */
+/** Uzly shora dolů po sinusoidě (amplituda šířka/φ³ ≈ 24 %), boss na středu. */
 export function layoutNodes(nodes: { id: string; plateKg: PlateKg; isBoss: boolean }[], width: number) {
   const cx = width / 2;
-  const amp = Math.min(width * 0.28, 120);
+  const amp = Math.min(width / PHI ** 3, 120);
   const positions: NodePosition[] = nodes.map((n, i) => {
     const size = n.isBoss ? BOSS_SIZE.h : plateSize(n.plateKg);
     const half = n.isBoss ? BOSS_SIZE.w / 2 : size / 2;

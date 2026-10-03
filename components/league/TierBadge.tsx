@@ -5,7 +5,7 @@ import { Text } from '@/components/ui/Text';
 
 interface Props { tierName: string; /** Skrýt mono štítek „LIGA“ (v banneru výsledku je kontext jasný). */ bare?: boolean }
 
-/** Odznak úrovně ligy (§7.5): kruh 72 pt s obrysem `rule` 1.5, název úrovně v Bebas uvnitř, štítek LIGA nad ním. */
+/** Odznak úrovně ligy (§7.5): kruh 72 pt s obrysem `rule` 1.5, název úrovně (`tierName`, Inter Light 13) uvnitř, štítek LIGA nad ním. */
 export function TierBadge({ tierName, bare = false }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
   return (

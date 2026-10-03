@@ -17,7 +17,7 @@ interface Props {
 }
 
 /**
- * Řádek tabulky 56 pt: pořadí (Bebas, tabulární, 32), mini opice 32, jméno Inter 600, XP vpravo.
+ * Řádek tabulky 56 pt: pořadí (`counter` 26, Inter Light tabulární, sloupec `rankCol` 40), mini opice 32, jméno Inter 600, XP vpravo.
  * Vlastní řádek: pozadí `raised` + proužek 3 pt v `text` vlevo a pořadí v `text` (ostatní `muted`).
  * R42: bez akcentu, vlastní řádek nese kontrast a tvar. Žádné linky mezi řádky.
  */

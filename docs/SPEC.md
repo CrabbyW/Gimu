@@ -253,38 +253,54 @@ Všechny konstanty jsou v `data/xp.ts` a `data/leagues.ts`.
 
 ## 6. Design systém
 
-### 6.1 Směr: Chalk & Ember, light + dark
+### 6.1 Směr: Chalk & Iron, light + dark (R42 + R43)
 
-Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic`:
-- monochromní základ + přesně jeden akcent (ember oranžová)
-- typografie nese obrazovku
-- ornament vždy nese informaci
+Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic` (Kurogane kostra + instrument vrstva),
+barvy odvozené z materiálů posilovny, ne z menu skillu
+(`docs/superpowers/specs/2026-10-03-chalk-iron-geometry-design.md`):
+- **železo** (litina kotouče, OKLCH h 65°, chroma ≤ 0.008) = tmavé neutrály,
+- **křída** (magnézium, h 95°) = text v dark, podklad v light,
+- přesně jeden akcent: **IWF červená 25kg kotouče** `#EF3E31` (OKLCH 0.63 0.215 29), v obou režimech stejná,
+- typografie nese obrazovku, ornament vždy nese informaci,
+- skrytý proporční systém φ (§6.9), jediná viditelná figura v oslavě dokončení lekce.
+
+**Kde smí akcent svítit:** jen oslava dokončení lekce (+XP, žár kotouče při dopadu), stage-up (plocha)
+a recap sezóny (plocha u splněné odměny). Všude jinde nese stav kontrast a tvar (`text` vs `muted`,
+proužek, prstenec, fajfka v `text`).
 
 **Z referencí přebírám:**
 - obří tabulární čísla s malou jednotkou (`20 kg`, `12 dní`)
-- mřížku teček jako kalendář, kde akcent má jen „dnes“
+- mřížku teček jako kalendář („dnes“ = prstenec v `text`)
 - plochá geometrická kolečka jako hlavní vizuál: kotouč je kruh
 - spodní akční lištu rozdělenou na buňky s velkým kulatým CTA
-- tmavé zaoblené karty s jedním údajem na kartu
+- tmavé karty s jedním údajem na kartu
 
-### 6.2 Palety (`theme/palettes.ts`)
+### 6.2 Palety (`theme/palettes.ts`, zdroj pravdy)
+
+Neutrály ve stejných perceptuálních krocích (ΔL 0.035 base → surface → raised), kotouče dark po ΔL 0.065.
 
 | Token | Dark | Light |
 |---|---|---|
-| `base` | `#0E0D0C` | `#EFEEEA` |
-| `surface` | `#171615` | `#E5E4DF` |
-| `raised` | `#201E1C` | `#F6F5F2` |
-| `rule` | `#2C2926` | `#C9C7C0` |
-| `text` | `#EFEDE8` | `#131316` |
-| `muted` | `#8C8780` | `#5E5E63` |
-| `accent` (výplně, CTA, „dnes“, aktuální uzel) | `#FF6B35` | `#FF6B35` |
-| `onAccent` | `#131316` | `#131316` |
-| `accentText` (akcent jako text) | `#FF6B35` | `#AE3A0B` |
-| `plate5 → plate25` | `#6B6660 → #2A2724`, světlý okraj `#3A3632` | `#A29E97 → #131316` |
-| `danger` / `success` | `#EB5E62` / `#46A758` (tlumené, jen liga a chyby) | `#B42328` / `#2A7E3B` |
+| `base` | `#100E0D` | `#F1F0EB` |
+| `surface` | `#181614` | `#E8E6E0` |
+| `raised` | `#201E1B` | `#F9F8F5` |
+| `rule` | `#302D2A` | `#C9C7C0` |
+| `text` | `#F0EEE9` | `#181613` |
+| `muted` | `#A09A95` | `#625D58` |
+| `accent` (jen oslavy, viz §6.1) | `#EF3E31` | `#EF3E31` |
+| `onAccent` | `#181613` | `#181613` |
+| `accentText` (akcent jako text) | `#F45343` | `#B71B14` |
+| `plate5 → plate25` | `#6F6B67 · #5D5955 · #4B4743 · #393633 · #292623` | `#A9A39E · #918B86 · #5C5753 · #383532 · #181613` |
+| `plateRim` | `#403C39` | `#8B8580` |
+| `plateHighlight` / `plateShade` | `rgba(255,250,240,0.10)` / `rgba(0,0,0,0.28)` | `rgba(255,250,240,0.18)` / `rgba(24,22,19,0.22)` |
+| `scrim` | `rgba(16,14,13,0.72)` | `rgba(241,240,235,0.76)` |
+| `danger` / `success` | `#EF6661` / `#53AF65` (tlumené, jen liga a chyby) | `#B32228` / `#1D7635` |
+| `shadow` (inkoust stínu uzlu a kotouče) | `#040303` | `#181613` |
+| `seasonGold` / `onSeasonGold` (materiál sezónní odměny) | `#C6A15B` / `#181613` | `#C6A15B` / `#181613` |
 
-- Všechny kombinace textu a pozadí mají kontrast alespoň 4.5:1 (hlídá `theme/__tests__/contrast.test.ts`). Po úpravě R12 splňuje `muted` 4.5:1 na všech podkladech, takže smí i na malé mono štítky.
+- Kontrasty hlídá `theme/__tests__/contrast.test.ts`: text/base 16.6 (dark) a 15.8 (light), `muted` ≥ 5.2, `accentText` ≥ 4.88, `onAccent` na `accent` 4.65, inkoust čísla (`inkOn`) na všech kotoučích ≥ 4.5.
 - Téma se řídí systémem (`userInterfaceStyle: automatic`). V Nastavení jde přepnout Systém / Světlý / Tmavý.
+- Light = stejné materiály, obrácené role (křídový papír, železný inkoust), ne zesvětlený dark.
 
 ### 6.3 Sezónní override (`theme/seasons.ts`)
 
@@ -296,34 +312,49 @@ Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic`:
 
 | Role | Font | Použití |
 |---|---|---|
-| Display | Bebas Neue (jediný display font) | Nadpisy, čísla na kotoučích, velké statistiky |
+| Display | Inter 300 Light (jediný display řez, R42), tracking −0.03 em | Nadpisy, čísla na kotoučích, velké statistiky |
 | Text | Inter 400 / 600 | Běžný text |
-| Utility | JetBrains Mono 11 pt, velká písmena, tracking 0.18em | Štítky (`STREAK`, `LIGA · ŽELEZO`, `TÝDEN 40`) |
+| Utility | JetBrains Mono 500, 10–11 pt, velká písmena, tracking 0.18–0.2 em | Štítky a telemetrie (`XP: 340 · LIGA: BRONZ`) |
 
-- Čísla jsou vždy `tabular-nums`.
-- Z instrument vrstvy používám jen tři prvky: mono štítky, tabulární čísla a tečkové mřížky.
+**φ škála (R43)**: řada 16·√φⁿ, každé dva kroky = φ: 16 · 20 · 26 · 33 · 42 · 53 · 68 · 87 · 110 (`theme/tokens.ts`).
+
+| Token | pt / řádek | Použití |
+|---|---|---|
+| `displayXL` | 110 / 114 | rezerva škály (Stat XL má stejný stupeň) |
+| `display` | 42 / 46 | titulek oslavy, název sezóny (na < 375 pt o stupeň níž: `title`) |
+| `title` | 33 / 38 | nadpisy karet a stavů, streak v hlavičce mapy |
+| `choiceTitle`, `counter` | 26 | karta volby, čísla v řádku ligy a odpočet |
+| `body`, `bodyStrong` | 16 / 24 | běžný text |
+| `input` | 20 / 28 | víceřádkové pole |
+| Stat `M` / `L` / `XL` | 53 / 87 / 110 | obří tabulární čísla s malou jednotkou |
+
+- Utility stupně stojí mimo škálu kvůli čitelnosti: `label` 11, `caption` 14, `telemetry` 11, `badgeLabel`/`tabLabelCompact` 10, `tierName` 13, `inputLarge` 22.
+- Čísla jsou vždy `tabular-nums`. Rozpočty šířky počítají s `glyph.displayDigit` 0.62 em.
+- Instrument vrstva: mono štítky + telemetrický pruh, tabulární čísla, měřicí linka s tiky, `+` registrační značky (R42).
 
 ### 6.5 Kotouče
 
-- Čelní pohled: plný kruh, díra uprostřed, soustředný vnitřní prstenec, číslo kg v Bebas.
-- Hmotnost dodává radiální světlo (gradient, který pracuje s hloubkou), jemný šum (SVG pattern) a jeden měkký stín dole.
-- Velikost uzlu roste s kg: 56 → 64 → 72 → 80 pt. Boss je širší osa.
-- Tmavost roste s kg (tokeny `plateXX`).
+- Čelní pohled (viewBox 100): vnější kruh R = 48, fyzický lem 40, náboj R/φ² ≈ 18.3, otvor R/φ³ ≈ 11.3 (`components/map/Plate.tsx`), číslo kg v display řezu (`svgType.plateKg` 20 jednotek, nad nábojem).
+- Hmotnost dodává radiální světlo (gradient, který pracuje s hloubkou) a jemné zrno (SVG pattern); stín uzlu v `shadow`.
+- Kotouče jsou litina, monochromní; tmavost roste s kg (tokeny `plateXX`). Velikost uzlu roste s kg: 56 · 60 · 64 · 72 · 80 pt. Boss je činka 220 × 88.
+- Mapa: krok uzlů 104 (= 64·φ, `space.xxxl`), amplituda sinusoidy šířka/φ³ (≈ 0.236 w, max 120).
 
-**Stavy uzlu:**
+**Stavy uzlu (R42: bez akcentu):**
 
 | Stav | Vzhled |
 |---|---|
-| Zamčený | Obrysový kruh v barvě `rule` + zámek, bez výplně (jako prázdná kolečka v ref. 1) |
-| Aktuální | Plný kotouč + akcentový prstenec, který pomalu pulzuje |
-| Dokončený | Plný kotouč + fajfka v akcentu na středovém otvoru |
+| Zamčený | Obrysový kruh v `rule` + zámek v `muted`, bez výplně |
+| Aktuální | Plný kotouč + prstenec v `text` (`stroke.focus`), který pomalu pulzuje |
+| Dokončený | Plný kotouč + fajfka v `text` na středovém otvoru |
 
 ### 6.6 Tvary a spacing
 
-- Spacing `4 8 16 24 40 64 104`.
-- Radiusy 8 (malé prvky), 20 (karty), full (kulaté CTA, uzly).
+- Spacing `4 8 16 24 40 64 104 168` (od 24 výš ≈ φ).
+- Radiusy `s` 5 (štítky, buňky mřížky), `l` 8 (karty, popover, sheet) — poměr 8/5 ≈ φ, obrobený kov místo bubliny; `full` jen pro tvary, kde kruh nese význam (kotouč, kulaté CTA, odznak, tečka).
+- Materiál činky stojí mimo škálu radiusů (`material.collarRadius` 2, rx 2–3 v SVG čince): je to fyzický tvar, ne UI.
+- Tloušťky čar `stroke`: ikona 1.5, výběr/fokus/prstenec uzlu 2, prstenec výdrže 3.
 - Každý prvek odděluje jen jedna věc: buď pozadí, nebo linka, nebo stín.
-- Dotykové plochy mají minimálně 44 pt.
+- Dotykové plochy mají minimálně 44 pt (`size.hit`).
 
 ### 6.7 Motion
 
@@ -341,10 +372,17 @@ Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic`:
 | Konflikt | Rozhodnutí |
 |---|---|
 | Pružiny | Jen na herní odměny, ne na UI ovládání. |
-| Display font | Tučný kondenzovaný sans (Bebas) podle zadání. Pravidlo o tučném *serifu* neporušuje. |
-| Akcent pod 5 % plochy | Kotouče jsou monochromní. Akcent označuje stav, CTA a „dnes“. Výjimkou jsou celoobrazovkové oslavy, kde je akcent záměrně plošný (ref. 3). |
+| Display font | Inter 300 Light (R42) místo Bebas: skill chce lehký display, kondenzovanou hutnost nese velikost a těsný tracking. |
+| Akcent pod 5 % plochy | Kotouče, CTA, uzly i „dnes“ jsou monochromní (stav nese kontrast). Akcent jen v oslavě dokončení lekce, stage-up a recapu sezóny; stage-up a recap jsou záměrně plošné (ref. 3). |
+| Akcent z menu skillu | R43: ember `#FF6B35` nahrazen IWF červenou 25kg kotouče `#EF3E31` (barva ze světa předmětu). |
 | Emoji | Jen v textu systémové notifikace, v UI appky ne. |
-| Zarovnání | Výchozí je asymetrie a zarovnání vlevo. Na střed jen maskot a oslavné scény. |
+| Zarovnání | Výchozí je asymetrie a zarovnání vlevo. Na střed jen maskot, kruhové odznaky a oslavné scény. |
+
+### 6.9 Posvátná geometrie (R43)
+
+- φ = 1.618 (`PHI` v `theme/tokens.ts`). Pravidlo: každá nová míra je φ-odvozená, nebo má komentář, proč ne (čitelnost, fyzický tvar, dotyková plocha).
+- Skrytě: typová škála (§6.4), Stat M/L/XL, radiusy 5/8, kotouč R/φ²/φ³ (§6.5), krok mapy 64·φ a amplituda w/φ³.
+- **Viditelná figura jen v oslavě dokončení lekce** (`components/lesson/GoldenFigure.tsx`): konstrukční kresba kotouče, který právě zacvakl — soustředné kružnice R, R/φ, R/φ², R/φ³ se středem v pravém kotouči + zlatá spirála ze čtvrtkruhů ve zlatém obdélníku kolem osy. Vlasová linka 1 pt v `rule`, bez výplně, bez akcentu. Dokreslí se od dopadu (600 ms, `ease.out`, kružnice od nejmenší); omezený pohyb = fade 200 ms. Nikde jinde v appce.
 
 ## 7. Obrazovky a chování
 

@@ -372,3 +372,56 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - **Otevřené:** dvojtap, haptika a zvuk na fyzickém zařízení, VoiceOver a TalkBack (K ruční kontrole).
 
 - qa-agent (demo f4, kolo 3): ověřen bug 1 (dvojtap na oslavě i stage-upu končí na mapě, 320 i 390, dark) a bug 10 (4ciferné XP v lize na 320 pt bez ořezu). Testy/typecheck/lint zelené. Přidán flow `tools/flows/bug10.mjs`. Verdikt SCHVÁLENO. Otevřené: nic.
+
+## 2026-10-03 · motion-agent · R43 figura oslavy
+- **Hotovo:** `components/lesson/GoldenFigure.tsx` (kružnice R, R/φ, R/φ², R/φ³ přes `PLATE_R/PLATE_HUB/PLATE_HOLE`, zlatá spirála z 5 čtvrtkruhů s limitou ve středu pravého kotouče, obrys zlatého obdélníku R·φ × R; vlasová linka 1 pt `c.rule`, bez výplně, pointerEvents none, skrytá čtečce). Zapojeno v `LessonCompleteScene` za osou (v rámci rozkmitu osy). Start v `onImpact`: strokeDashoffset 600 ms `ease.out`, kružnice od nejmenší s odstupem 60 ms, spirála současně; calm = jen fade `motion.calmFade` (200 ms). Test `components/lesson/__tests__/GoldenFigure.test.tsx`.
+- **Rozhodl sám:** R = (šířka obsahu)/φ/2 (průměr největší kružnice = šířka/φ), na 320 pt ještě /φ, aby figura zůstala v pásu činky. Plátno figury přesahuje rodiče o R·φ (bez ořezu na Androidu), ořez dělá kořen scény. Obrys obdélníku je kreslený hned (nedokresluje se), viditelný až s fade/dopadem. Test mockuje `lucide-react-native` (Plate.tsx tahá ESM ikony).
+- **Otevřené:** vizuální kontrola na zařízení (390 i 320 pt, dark/light), zda vlasové linky nekolidují s XP pod osou; obdélník je posunutý podle limity spirály, ne symetricky k ose (K ruční kontrole).
+
+## 2026-10-03 · design-agent · R43 Chalk & Iron sweep
+- **Hotovo:**
+  - Rozpočty na 320 pt přepočítány pro φ stupně. Všechny Stat stupně (53/87/110) a `display` 42 jsou menší než dřív, takže nic neroste; rostou jen `title` 32 → 33, `choiceTitle` 24 → 26 a `displayXL` 104 → 110 (nikde v UI přímo nepoužitý). Ověřeno: liga compact (TierBadge 72 + Stat M „12 / 20“ ≈ 102 pt se vejde, XP dál zalamuje), LeagueRow (`counter` 26 „12“ ≈ 31 pt ve sloupci 40), XpPop (`xpPopFit` počítá z tokenů: „+20 XP“ na 320 pt padne na M + opice S, jako dřív), SeasonHeader compact (`title` 33 „WINTER ARC“ ≈ 205 pt < 272), SeasonBadge (rozpočet doplněn do komentáře), kotouč 56 pt (kg 11 pt mezi lemem 40 a nábojem 18.3, účaří 30 ve viewBoxu).
+  - Zastaralé komentáře opraveny: LeagueRow (Bebas, sloupec 32 → `counter` 26 / `rankCol` 40), TierBadge (Bebas → Inter Light 13), SeasonBadge, Barbell, stage-up, season-recap, birth, DotSteps (ember → akcent / IWF červená).
+  - Natvrdo `borderWidth: 2` → `stroke.focus` (PulseRing, ShockRing v `PlateNode`, BossPulse v `BarbellBoss`); pilulka RoundCta 64 → `space.xxl`.
+  - SPEC §6.1–6.6 a 6.8 přepsán na Chalk & Iron + R43, nová §6.9 Posvátná geometrie (figura oslavy).
+- **Rozhodl sám:**
+  - RoundCta kruh 88 nechávám (ne φ 87): spec §6.6 a rozpočet popisku 7 znaků; φ by ubral 1 pt bez přínosu.
+  - Slop audit: žádný prvek nemá stín + linku + pozadí zároveň (stíny v UI nejsou vůbec, tab bar má jen linku), karty se oddělují jen pozadím, výběr proužkem. RegMark nad kartou Sezóny ponechán — je to registrační značka bloku (instrument vrstva), ne druhé oddělení. Nic dalšího jsem neodstraňoval.
+  - Akcent ověřen: `c.accent`/`tone="accent"` jen v XpPop + žáru kotouče (oslava lekce), stage-up a recapu; Button/RoundCta/MeasureLine/BigActionBar ho berou jen přes `onAccent` větev oslav.
+  - Materiálové rx 2–3 v `Barbell` a velikosti uzlů 56–80 nechány: fyzický tvar, ne UI škála (viz SPEC §6.6).
+- **Chyby v souborech bosse (needitováno, jen popis):**
+  - `theme/tokens.ts`: komentář u `size` „sloupec pořadí 32“ neodpovídá `rankCol: 40`; komentář u `counter` „vejde se do sloupce pořadí 32 pt“ taky (sloupec je 40); komentáře u `type`/`svgType.plateKg` srovnávají s Bebas (historické, ne chyba hodnot); `mascot.tankRim` komentář „R42: ember jen v oslavě lekce“ → dnes akcent IWF červená.
+  - `components/map/Plate.tsx`: zámek `strokeWidth={1.5}` a obrys `strokeWidth={2}` natvrdo (mají být `stroke.icon` / `stroke.focus`).
+  - Chybí tokeny `size.roundCta` (88) a `size.ctaPill` (64) — RoundCta drží 88 v lokální konstantě.
+- **Otevřené (K ruční kontrole):** krok mapy 104 s uzlem 80 + pulzující prstenec (scale 1.08) nechává ~16 pt mezi sousedy — zkontrolovat na zařízení, že se prstenec nedotýká dalšího kotouče; účaří kg 30 je 1.7 jednotky nad nábojem 18.3 (těsné, ověřit na 56 pt kotouči v light); SeasonBadge se 3 iniciálami na webu (adjustsFontSizeToFit nefunguje).
+
+## 2026-10-03 · qa-agent · R43 kolo 1
+
+**Verdikt: SCHVÁLENO** (s položkami k ruční kontrole).
+
+- tsc čisté, jest 47 sad / 395 testů zelených (+1 nový), eslint na změněných souborech bez chyb.
+- Palety: `theme/palettes.ts` = SPEC §6.2 do posledního hexu (dark i light). Kontrastní testy pokrývají text/muted/accentText/danger × base/surface/raised, onAccent/accent, seasonGold, success/danger ≥ 3:1, inkOn na všech 5 kotoučích. Staré hexy (#FF6B35, #0B0B0C, #131316, #EFEEEA, #0E0D0C) v kódu, app.json ani SPEC nejsou; zůstávají jen v archivních briefech `.superpowers/sdd/2026-09-29-*` (historie, neměněno) a jako zmínka „nahrazen“ v SPEC §6.8.
+- φ tokeny: typová škála 20·26·33·42·53·68·87·110, statSize 53/87/110, radius 5/8, krok `space.xxxl` 104, amplituda w/φ³ (max 120) — kód, komentáře i SPEC §6.4–6.6 sedí.
+- Kotouč (viewBox 100): lem vrchol y = 10 (+0.6 tah), čísla kg 20 j., účaří 30, horní dotah ≈ 15.5 → u „25“ (x 38–62) lem v rohu y ≈ 11.8, mezera ≈ 3.7. Náboj vrchol 50 − 18.3 = 31.7 (− 0.6 tah = 31.1), účaří 30 → mezera ≈ 1.1 j. Nekoliduje, ale je těsné (K ruční kontrole).
+- Pulz prstence: uzel 80, prstenec 94 × 1.08 = 101.5 → poloměr 50.8; + soused 40 = 90.8 < krok 104 (rezerva 13). Boss (+24 posun, půlvýška 44): 94.8 < 128. Doplněn test v `logic/__tests__/geometry.test.ts`.
+- GoldenFigure: střed = střed pravého kotouče (contentWidth/2 + flying.offset + w/2, cy AXIS.mid), poloměry R, R/φ, R/φ², R/φ³ (= proporce Plate), spirála konverguje do středu (test). Start jen v `onImpact` (setFigureDrawn, guard `impacted`). Calm cesta: fade `motion.calmFade`, dashoffset 0. Pod osou (render před Barbell), `pointerEvents none`, a11y skrytá, barva jen `c.rule`, žádný akcent ani hardcoded barva.
+- Compact 320: contentWidth 272 → R = 272/φ/2/φ ≈ 51.9 → svisle 90 ± 52 = 38…142, celé uvnitř pásu činky 0…180 → titulek ani XP nepřekrývá. Spirálový obdélník (84 × 52) má výšku R, také uvnitř.
+- Akcent: jen Barbell heat (oslava), XpPop, stage-up, season-recap a `onAccent` varianty Button/RoundCta (používané na akcentních plochách). OK.
+
+**Drobnosti (neopraveno, neblokuje):**
+- GoldenFigure při unmountu explicitně neruší `withTiming` (cancelAnimation). Reanimated je při uvolnění shared values zahodí, únik nevzniká; motion-agent může doplnit pro konzistenci s PlateNode.
+- Necompact šířky: R = contentWidth/φ/2 (390 pt → 105.7) přesahuje pás činky 180 o ≈ 16 nahoru i dolů. Dolů kryje marginBottom 40; nahoru závisí na volném místě ve flex středu (design-agent, K ruční kontrole na 375 × 667).
+
+**K ruční kontrole (zařízení):**
+1. Oslava na 375 × 667 a 390 × 844: horní kružnice figury nesahá do titulku; vlasové linky `rule` jsou čitelné, ne rušivé, v dark i light.
+2. Android: figura s negativním absolutním odsazením se nevykreslí oříznutá rodičem.
+3. Kotouč 25 kg v obou režimech: číslo kg vizuálně nedotýká náboje (mezera ≈ 1 j. viewBoxu).
+4. Reduce motion: figura jen prolne, bez dokreslování.
+5. Pulz aktuálního uzlu u kotouče 80 vedle souseda — opticky rezerva.
+
+## 2026-10-03 · boss · R43 Chalk & Iron + posvátná geometrie
+- Zadání uživatele: méně „AI slop“, studium barev, směr 1 Chalk & Iron, „holy geometry“ varianta C, light režim A. Spec `docs/superpowers/specs/2026-10-03-chalk-iron-geometry-design.md`.
+- Základ: `theme/palettes.ts` přepočítané v OKLCH (železo h 65°, křída h 95°, rovnoměrné ΔL; akcent = IWF červená 25kg kotouče `#EF3E31`), `PHI` a φ typová škála 16·√φⁿ, statSize 53/87/110, radius 5/8, `stroke.plate/check/hairline`; `Plate` náboj R/φ², otvor R/φ³; mapa krok `space.xxxl` (104), amplituda w/φ³; `app.json` pozadí `#100E0D`; testy s pevnými hexy aktualizované.
+- Opravy po QA kolo 1: `GoldenFigure` ruší animace při unmountu (`cancelAnimation`); poloměr figury `min(šířka/φ/2, AXIS.mid)`, aby na 390 pt nesahala nad pás činky k titulku; účaří kg na kotouči z y 30 na 29 (víc vzduchu nad nábojem, hodnoty v QA záznamu jsou pro 30).
+- Opravy po rating kolo 1: natvrdo tloušťky v `Plate`, `GoldenFigure`, `ExerciseSilhouette` → `stroke` tokeny; README bez „ember“.
+- Otevřené: vizuální kontrola na zařízení (viz K ruční kontrole v QA a RATING).
