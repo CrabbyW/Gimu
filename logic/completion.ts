@@ -39,6 +39,9 @@ export function applyLessonCompletion(a: Args): { profile: UserProfile; result: 
   const isFirstToday = !events.some((e) => isLessonEvent(e) && e.day === day);
   const daysAfter = activeDays([...events, { day }]);
   const streak = currentStreak(daysAfter, day);
+  if (a.outcome && (a.outcome.done.length !== a.outcome.exercises.length || a.outcome.extras.length !== a.outcome.exercises.length)) {
+    throw new Error('Výsledek lekce nesedí na počet cviků.');
+  }
   if (a.outcome && !lessonCounts(a.outcome.done)) throw new Error('Lekce se nezapočítá: odcvič aspoň polovinu cviků.');
   const full = lessonXp({ isBoss: a.lesson.isBoss, isReplay, isFirstToday, streakDays: streak }, a.rules);
   // Přeskočené cviky: základ lekce poměrně, bonus dne a série zůstávají (série se počítá, lekce platí).

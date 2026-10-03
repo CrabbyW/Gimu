@@ -185,3 +185,28 @@ Verdikt: **SCHVÁLENO** (bugy 2–9 ověřeny v kole 2).
 - MINOR (design-agent): popisek tabu nemá `numberOfLines={1}` / `adjustsFontSizeToFit`; při velkém Dynamic Type se může zalomit. Ověřit na zařízení 320 pt s největším písmem.
 - INFO (motion-agent): AppState reaguje jen na `background`, ne `inactive` (Control Center na iOS animaci nepřeskočí). Spec to připouští; ověřit ručně.
 - K ruční kontrole: haptika AHAP na fyzickém iPhonu, ducking hudby, zamčená liga (dev-xp, přelom týdne) a StreakBarbell stavy (×K, čeká, přerušený) vizuálně — logika testy prošla, vizuál jsem neověřoval na zařízení.
+
+## R44 kolo 2 (přeskočení)
+
+Kontroly: `tsc --noEmit` 0 chyb; jest 51 suites / 458 testů zelených; eslint na změněných souborech 0 chyb (50 chyb celého repa je jen v `.agents/skills/**`, mimo appku).
+
+Ověřeno ✅
+- Matematika dluhu: 50 s → 5 × 10 s → 0; strop dluhu 150 s / 40 opak.; strop na cvik min(15 s / 4 opak., 25 % základu, aspoň 1); malý zbytek doběhne (minShare / min s dluhem); smíšený hold+reps doběhne nezávisle, lekce bez daného typu dluh nemění (nový test).
+- Přeskočený cvik s navýšením: navýšení se neodečte, přičte se jen základ (test).
+- Idempotence retry: `isRetry` vrací původní profil dřív, než se sahá na `trainingDebt` → dluh se nezapočítá dvakrát (nový test přes službu, profil je identický objekt).
+- canSkip: lekce s 1 cvikem nejde přeskočit, slepá ulička nevznikne (2 cviky: jen první).
+- Skip jen v idle/paused výdrži, ne v countdown/running/done; před skipem `pause()`.
+- Migrace: profil bez `trainingDebt` projde, poškozený dluh (záporný, string, bez share, null, číslo) se zahodí a profil zůstane (nový test).
+- XP: base = round(full × poměr), boss z 40 (nový test), bonusy dne a série beze změny.
+- Texty „Přeskočit“, „+N s za přeskočené cviky“, „+N opak. za přeskočené cviky“ česky v `data/copy.ts`.
+
+Opraveno v tomto kole
+- `logic/completion.ts`: odmítnutí výsledku, jehož `done`/`extras` nesedí na počet cviků (dřív by nesouhlasná délka tiše zkreslila dluh i „platí od poloviny“).
+- `services/__tests__/MockLessonService.test.ts`: tautologická aserce `base < base/(2/3)+1` nahrazena přesnou hodnotou 13.
+
+Drobnosti (neblokují)
+- Retry vrací XP přepočítané z aktuálního `done`, ne `prior.xp`; při stejném attemptId z UI je `done` vždy stejné, takže v praxi shodné. (boss/logika)
+- Běžící výdrž skrývá „Přeskočit“, uživatel musí nejdřív pauznout — záměr, ale UX zvážit (design-agent).
+- Navýšení platí i na replay a boss lekci; spec to neřeší, ponecháno.
+
+Verdikt: SCHVÁLENO

@@ -1,3 +1,4 @@
+import { LESSONS_BY_PATH } from '@/data/lessons';
 import { services } from '@/services';
 import { useDb } from '@/store/db';
 
@@ -51,11 +52,34 @@ test('přeskočení (R44): lekce platí od poloviny, XP základu poměrně, dluh
   // bc-1-1: plank 30 s, hollow-hold 20 s, glute-bridge 12 opak.
   await expect(services.lessons.completeLesson('bc-1-1', 'att-s0', new Date(2026, 8, 29, 10), [true, false, false])).rejects.toThrow();
   const r = await services.lessons.completeLesson('bc-1-1', 'att-s1', new Date(2026, 8, 29, 10), [true, false, true]);
-  expect(r.xp.base).toBeLessThan(r.xp.base / (2 / 3) + 1);
+  expect(r.xp.base).toBe(Math.round(20 * (2 / 3))); // XP_RULES.lesson 20 → 13
   expect(r.unlockedLessonId).toBe('bc-1-2');
   expect(useDb.getState().profile?.trainingDebt).toMatchObject({ holdS: 20, share: { holdS: 5 } });
   // bc-1-2: plank, superman, side-plank — první výdrž dostane podíl dluhu, cviky drží i původní objem.
   const next = await services.lessons.getLesson('bc-1-2');
   expect(next.extras[0]).toBe(5);
   expect(next.exercises[0]!.amount).toBe(next.baseAmounts[0]! + 5);
+});
+
+test('QA R44-2: retry se stejným attemptId nezapočítá dluh dvakrát; špatná délka done se odmítne', async () => {
+  await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+  const a = await services.lessons.completeLesson('bc-1-1', 'att-r', new Date(2026, 8, 29, 10), [true, false, true]);
+  const after = useDb.getState().profile!;
+  const b = await services.lessons.completeLesson('bc-1-1', 'att-r', new Date(2026, 8, 29, 12), [true, false, true]);
+  expect(useDb.getState().profile).toBe(after);
+  expect(after.trainingDebt).toMatchObject({ holdS: 20 });
+  expect(b.xp.total).toBe(a.xp.total);
+  await expect(services.lessons.completeLesson('bc-1-2', 'att-len', new Date(2026, 8, 29, 13), [true])).rejects.toThrow();
+  expect(useDb.getState().profile).toBe(after);
+});
+
+test('QA R44-2: boss lekce se skipem — XP základu poměrně z 40', async () => {
+  await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+  const all = LESSONS_BY_PATH.bodyControl; const ids = all.slice(0, all.findIndex((l) => l.isBoss)).map((l) => l.id);
+  for (const [i, id] of ids.entries()) await services.lessons.completeLesson(id, `att-${i}`, new Date(2026, 8, 29, 10 + i));
+  const boss = await services.lessons.getLesson('bc-1-boss');
+  const n = boss.exercises.length;
+  const done = boss.exercises.map((_, i) => i !== 0);
+  const r = await services.lessons.completeLesson('bc-1-boss', 'att-b', new Date(2026, 8, 29, 18), done);
+  expect(r.xp.base).toBe(Math.round(40 * ((n - 1) / n)));
 });

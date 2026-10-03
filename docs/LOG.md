@@ -542,3 +542,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Služba: `getLesson` vrací navýšené `exercises` + `extras` + `baseAmounts`; `completeLesson(…, done?)`.
 - UI: v lekci sekundární „Přeskočit“ (ne během běžící výdrže), pod kartou „+N s za přeskočené cviky“.
 - Rozhodl boss: konkrétní stropy a min. podíl; navýšení jde na cviky stejného typu (výdrž/opakování), ne nutně na tentýž cvik.
+
+### qa-agent — R44 kolo 2 (přeskočení)
+- tsc/jest (458) zelené, lint změněných souborů čistý. Dluh, stropy, retry idempotence, canSkip, migrace, XP poměr ověřeny; přidány testy (retry, boss XP, migrace dluhu, smíšené typy).
+- Opraveno: kontrola délky `done`/`extras` v applyLessonCompletion; tautologický test XP.
+- Otevřené: retry XP z aktuálního done místo prior.xp (drobnost); skip skrytý při běžící výdrži (UX). Verdikt SCHVÁLENO.

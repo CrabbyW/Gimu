@@ -54,3 +54,16 @@ test('canSkip: přeskočení jen dokud jde lekci ještě započítat', () => {
   expect(canSkip([false], 1, 3)).toBe(false);
   expect(canSkip([], 0, 1)).toBe(false);
 });
+
+test('QA R44-2: smíšený dluh hold+reps doběhne nezávisle; lekce bez typu dluh nemění', () => {
+  let debt = addSkipped(EMPTY_DEBT, [hold(30), reps(10)]);
+  const onlyReps = [reps(12)];
+  const e = lessonExtras(onlyReps, debt);
+  debt = settleDebt(debt, onlyReps, e, [true]);
+  expect(debt.holdS).toBe(30);
+  const mixed = [hold(40), reps(12)];
+  for (let i = 0; i < 20 && (debt.holdS > 0 || debt.reps > 0); i++) debt = settleDebt(debt, mixed, lessonExtras(mixed, debt), [true, true]);
+  expect(debt).toEqual(EMPTY_DEBT);
+  expect(canSkip([], 0, 2)).toBe(true);
+  expect(canSkip([false], 1, 2)).toBe(false);
+});

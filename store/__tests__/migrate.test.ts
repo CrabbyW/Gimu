@@ -136,3 +136,15 @@ test('v2 profil bez nových polí se zahodí', () => {
   expect(migrateDb({ profile: validV1Profile }, 2)).toEqual({ profile: null });
   warn.mockRestore();
 });
+
+test('QA R44-2: profil bez trainingDebt projde, poškozený dluh se zahodí, platný zůstane', () => {
+  const p = buildInitialProfile({ path: 'strength', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } }, new Date(2026, 8, 29, 10));
+  expect(migrateDb({ profile: p }, DB_VERSION).profile).not.toHaveProperty('trainingDebt');
+  for (const bad of [{ holdS: -5, reps: 0, share: { holdS: 0, reps: 0 } }, { holdS: 'x', reps: 0 }, { holdS: 10, reps: 0 }, null, 7]) {
+    const out = migrateDb({ profile: { ...p, trainingDebt: bad } }, DB_VERSION).profile;
+    expect(out).not.toBeNull();
+    expect(out).not.toHaveProperty('trainingDebt');
+  }
+  const ok = { holdS: 20, reps: 3, share: { holdS: 5, reps: 1 } };
+  expect(migrateDb({ profile: { ...p, trainingDebt: ok } }, DB_VERSION).profile?.trainingDebt).toEqual(ok);
+});
