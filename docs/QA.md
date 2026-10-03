@@ -210,3 +210,17 @@ Drobnosti (neblokují)
 - Navýšení platí i na replay a boss lekci; spec to neřeší, ponecháno.
 
 Verdikt: SCHVÁLENO
+
+## R44 kolo 3 (opravy po ratingu: 3114fac, cc4eb6c)
+
+- `npx tsc --noEmit`: 0 chyb. `npx eslint .`: 0 chyb, 13 varování (nevyužité importy, např. `CosmeticSlot`; neblokuje). `npx jest`: 51 sad, 466 testů, vše zelené.
+- Přesun pohybových konstant do `lib/motion.ts`: `git diff 9ce438e..HEAD -- components/map components/lesson` ✅ všechny hodnoty jsou stejné (breath 0.6/1.03/0.8, perioda 2400 → PULSE_MS 1200, check 300, shake 3/60/120/0.5, unlock 200/120/400/0.92, boss 0.8, hop 120/28/3/3, path 420, popover 0.94/8, hold 3/1.1/90, slam 1.2, lessonDone 8, {140,18}, 120, 3/50, 12/1/40, seat 25/520/1).
+- `hooks/useNow.ts` ✅ změna dev posunu se propíše odvozeným stavem hned při renderu (bez setState v efektu), interval s úklidem zůstává, závisí jen na `intervalMs`.
+- Dokončení lekce ✅ `scarfEdge` se zapne jen při náladě cheer, prolne se přes `motion.scarfEdge` (200 ms). Při Reduce Motion je hrana viditelná hned, test v `SvgMascot.test.tsx` to pokrývá.
+- Opička na uzlu ✅ MonkeyBack i MonkeyFront jsou ve stejné kotvě (`mascotSeatY`) a obě vrstvy mají `pointerEvents="none"`, takže kotouč zůstává klikatelný. Smutná opička a opička u bosse sedí vedle uzlu jako jeden celek (`Mascot`, dech zapnutý).
+- Dnešek v mřížce Progresu ✅ `todayDone` se předává z `progress.tsx` a započítává se do počtu aktivních dní.
+- Hlavička ligy ✅ TierBadge `bare` a pod 360 pt nebo při velkém písmu jde odpočet pod název (`stacked`, `minWidth: 0`, `flexShrink`). Na 320 pt kód přetečení nepřipouští. Vizuálně to ověř ručně.
+- Připomínka ✅ obsahuje minuty včetně navýšení z dluhu.
+- K ruční kontrole: vzhled hlavičky ligy na 320 pt a šál na uzlu na zařízení.
+
+**Verdikt: SCHVÁLENO.**

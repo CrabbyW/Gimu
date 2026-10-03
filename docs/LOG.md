@@ -563,3 +563,5 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Hrana šálu v oslavě: `LessonCompleteScene` předává `scarfEdge={mood === 'celebrate'}` (zapne se s pózou ~950 ms). V `SvgMascot` je hrana malá komponenta `ScarfEdge`, která se při připojení prolne 0 → 1 (`motion.scarfEdge`, 200 ms ease.out, UI vlákno); prop zůstal boolean. Reduce Motion: opacita rovnou 1.
 - Rozhodnuto samo: rozměry (PW, GAP, ARROW, SIZE…) ponechány lokálně, nejsou to pohybové hodnoty; přesun do `theme/tokens.ts` nechávám design-agentovi.
 - Otevřené: nic. tsc, eslint (0 chyb), jest 466/466 OK.
+
+- qa-agent, R44 kolo 3: tsc a jest zelené, eslint 0 chyb (13 varování). Ověřeno, že přesun konstant do lib/motion zachoval hodnoty, a zkontrolovány useNow, scarfEdge + Reduce Motion, z-order a pointerEvents opičky, todayDone a hlavička ligy. Nic jsem neopravoval. SCHVÁLENO. Otevřené: vizuální kontrola na 320 pt, úklid lint varování.

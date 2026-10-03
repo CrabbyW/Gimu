@@ -9,7 +9,6 @@ import { useSettings } from '@/store/settings';
 
 /* Zvuky: Kenney (kenney.nl), licence CC0, z knihovny SFX skillu brag. Převod ffmpeg do WAV 44.1 kHz mono 16 bit
  * (hraje iOS i Android), postup v docs/LOG.md. */
-/* eslint-disable @typescript-eslint/no-require-imports -- Metro asset */
 const SOURCES = {
   /** Nacvaknutí kotouče: impactPlate_heavy_003 (kov) + impactSoft_medium_001 (tělo úderu), lowpass 9 kHz. */
   plateSnap: require('../assets/sounds/plate-snap.wav'),
@@ -24,7 +23,6 @@ const SOURCES = {
   /** Tlumený gong (rekord, stage-up): impactBell_heavy_000 o kvintu níž, 1.8 s, lowpass 3.5 kHz. */
   gong: require('../assets/sounds/gong.wav'),
 } satisfies Record<string, AudioSource>;
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 export type SfxName = keyof typeof SOURCES;
 

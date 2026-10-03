@@ -3,7 +3,7 @@ import type { NodeState } from '@/logic/map';
 import type { DayState, RecapBeforeAfter, SeasonProgress, SeasonRecap } from '@/logic/season';
 import type {
   Cosmetic, CosmeticSlot, Exercise, LeagueEntry, LeagueTierId, LeagueWeekResult, Lesson, OnboardingInput, PathId, PathMeta,
-  Season, SeasonGoal, UserProfile, ISODate, MascotStage,
+  Season, SeasonGoal, UserProfile, ISODate, 
 } from '@/types';
 
 import type { BuyCheck } from '@/logic/cosmetics';

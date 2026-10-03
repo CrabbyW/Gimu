@@ -1,6 +1,6 @@
 import { COSMETICS } from '@/data/cosmetics';
 import { weekStart } from '@/logic/dates';
-import type { CosmeticSlot, PathId, UserProfile } from '@/types';
+import type { PathId, UserProfile } from '@/types';
 import { sanitizeEquipped } from '@/logic/cosmetics';
 import { activeDays, longestStreak } from '@/logic/streak';
 

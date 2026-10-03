@@ -1,7 +1,7 @@
+import { dur, motion, stagger } from '@/lib/motion';
 /* eslint-disable @typescript-eslint/no-require-imports -- oficiální jest mock knihovny */
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { dur, motion, stagger } from '@/lib/motion';
 
 const zeta = (s: { damping: number; stiffness: number; mass?: number }) => s.damping / (2 * Math.sqrt(s.stiffness * (s.mass ?? 1)));
 

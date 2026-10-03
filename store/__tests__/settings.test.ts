@@ -1,5 +1,6 @@
-jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 import { migrateSettings } from '@/store/settings';
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- oficiální jest mock AsyncStorage
+jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 
 test('settings v1 → v2 doplní připomínku a stageOverride, zachová téma a posun času', () => {
   expect(migrateSettings({ theme: 'dark', devTimeOffsetMs: 3600_000 })).toEqual({

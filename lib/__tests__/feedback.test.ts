@@ -1,3 +1,9 @@
+import * as Haptics from 'expo-haptics';
+import { feedback } from '@/lib/feedback';
+import { APPROX, play, stopPattern } from '@/lib/haptics';
+import { playSfx } from '@/lib/sound';
+import { useSettings } from '@/store/settings';
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- oficiální jest mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy', Rigid: 'rigid', Soft: 'soft' },
@@ -5,11 +11,6 @@ jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()), selectionAsync: jest.fn(() => Promise.resolve()), notificationAsync: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('@/lib/sound', () => ({ playSfx: jest.fn() }));
-import * as Haptics from 'expo-haptics';
-import { feedback } from '@/lib/feedback';
-import { APPROX, play, stopPattern } from '@/lib/haptics';
-import { playSfx } from '@/lib/sound';
-import { useSettings } from '@/store/settings';
 
 beforeEach(() => { jest.useFakeTimers(); jest.clearAllMocks(); useSettings.setState({ hapticsEnabled: true, soundEnabled: true }); });
 afterEach(() => { stopPattern(); jest.useRealTimers(); });
