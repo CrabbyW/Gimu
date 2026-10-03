@@ -147,7 +147,7 @@ function ExerciseStep({ exercise, busy, suspended, onDone }: StepProps) {
 
   const primary = !hold
     ? { label: copy.common.done, onPress: onDone }
-    : timer.status === 'running'
+    : timer.status === 'running' || timer.status === 'countdown'
       ? { label: copy.common.pause, onPress: timer.pause }
       : timer.status === 'paused'
         ? { label: copy.common.resume, onPress: timer.start }

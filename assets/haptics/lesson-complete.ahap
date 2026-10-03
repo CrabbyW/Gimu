@@ -1,0 +1,16 @@
+{
+  "Version": 1.0,
+  "Metadata": { "Project": "Opice", "Created": "2026-10-03", "Description": "Lesson complete: impact, lock, ring swell, success" },
+  "Pattern": [
+    { "Event": { "Time": 0.0, "EventType": "HapticTransient",
+      "EventParameters": [ { "ParameterID": "HapticIntensity", "ParameterValue": 1.0 }, { "ParameterID": "HapticSharpness", "ParameterValue": 0.5 } ] } },
+    { "Event": { "Time": 0.08, "EventType": "HapticTransient",
+      "EventParameters": [ { "ParameterID": "HapticIntensity", "ParameterValue": 0.7 }, { "ParameterID": "HapticSharpness", "ParameterValue": 0.9 } ] } },
+    { "Event": { "Time": 0.16, "EventType": "HapticContinuous", "EventDuration": 0.7,
+      "EventParameters": [ { "ParameterID": "HapticIntensity", "ParameterValue": 0.6 }, { "ParameterID": "HapticSharpness", "ParameterValue": 0.2 } ] } },
+    { "ParameterCurve": { "ParameterID": "HapticIntensityControl", "Time": 0.16,
+      "ParameterCurveControlPoints": [ { "Time": 0.0, "ParameterValue": 0.33 }, { "Time": 0.55, "ParameterValue": 1.0 }, { "Time": 0.7, "ParameterValue": 0.0 } ] } },
+    { "Event": { "Time": 1.25, "EventType": "HapticTransient",
+      "EventParameters": [ { "ParameterID": "HapticIntensity", "ParameterValue": 0.9 }, { "ParameterID": "HapticSharpness", "ParameterValue": 0.6 } ] } }
+  ]
+}
