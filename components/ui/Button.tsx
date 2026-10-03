@@ -1,7 +1,9 @@
-import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useTheme } from '@/theme';
-import { Text, type TextTone } from './Text';
+import { feedback } from '@/lib/feedback';
+import { opacity, useTheme, type Colors } from '@/theme';
+import { DotLoader } from './DotLoader';
+import { Text } from './Text';
 import { usePressFeedback } from './usePressFeedback';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -11,69 +13,67 @@ interface Props {
   onPress(): void;
   variant?: ButtonVariant;
   disabled?: boolean;
-  /** Tlačítko leží na plné akcentové ploše oslavy (stage-up, odměna v recapu): inkoust `onAccent`
-   *  místo `text`, primární = plocha `onAccent` s popiskem v akcentu (stejný kontrastní pár). */
+  /** Akce běží: místo popisku DotLoader v barvě textu, šířka se nemění. */
+  loading?: boolean;
+  /** Tlačítko leží na plné akcentové ploše (stage-up): primární = plocha `onAccent` s popiskem v akcentu,
+   *  ostatní obrys/text v `onAccent`. */
   onAccent?: boolean;
   /** Jen pro umístění v layoutu (šířka, zarovnání), ne pro vzhled. */
   style?: StyleProp<ViewStyle>;
 }
 
-// R42: primární akce nese stav kontrastem (světlá plocha na tmavém), ne akcentem.
-const labelTone: Record<ButtonVariant, TextTone> = { primary: 'inverse', secondary: 'text', ghost: 'text' };
+// Teplá litina §2.7: stisk = změna výplně, ne glow. Ghost má plochu jen ve stisku.
+const FILL: Record<ButtonVariant, { idle: keyof Colors | null; pressed: keyof Colors; ink: keyof Colors }> = {
+  primary: { idle: 'accent', pressed: 'accentPressed', ink: 'onAccent' },
+  secondary: { idle: 'raised', pressed: 'raisedPressed', ink: 'text' },
+  ghost: { idle: null, pressed: 'raised', ink: 'text' },
+};
 
-export function Button({ label, onPress, variant = 'primary', disabled = false, onAccent = false, style }: Props) {
+export function Button({ label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, style }: Props) {
   const { c, space, radius, size } = useTheme();
-  const feedback = usePressFeedback(0.97);
-  if (onAccent) {
-    // Neaktivní primární na akcentu = obrys (stav „hotovo“, např. Převzato), ne šedá plocha.
-    const solid = variant === 'primary' && !disabled;
-    return (
-      <Animated.View style={[feedback.style, style]}>
-        <Pressable
-          onPress={onPress}
-          onPressIn={feedback.onPressIn}
-          onPressOut={feedback.onPressOut}
-          disabled={disabled}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          accessibilityState={{ disabled }}
-          style={{
-            minHeight: size.hitLarge, borderRadius: radius.full, paddingHorizontal: space.l,
-            alignItems: 'center', justifyContent: 'center',
-            backgroundColor: solid ? c.onAccent : 'transparent',
-            borderWidth: solid || variant === 'ghost' ? 0 : 1,
-            borderColor: c.onAccent,
-          }}
-        >
-          <Text variant="bodyStrong" numberOfLines={1} style={{ color: solid ? c.accent : c.onAccent }}>{label}</Text>
-        </Pressable>
-      </Animated.View>
-    );
-  }
+  const press = usePressFeedback(0.97);
+  const f = FILL[variant];
+  const ink = onAccent ? (variant === 'primary' ? c.accent : c.onAccent) : c[f.ink];
+  const fill = (pressed: boolean) => {
+    if (onAccent) return variant === 'primary' ? c.onAccent : 'transparent';
+    if (pressed) return c[f.pressed];
+    return f.idle ? c[f.idle] : 'transparent';
+  };
+  const inactive = disabled || loading;
   return (
-    <Animated.View style={[feedback.style, style]}>
+    <Animated.View style={[press.style, style]}>
       <Pressable
         onPress={onPress}
-        onPressIn={feedback.onPressIn}
-        onPressOut={feedback.onPressOut}
-        disabled={disabled}
+        onPressIn={() => { press.onPressIn(); feedback(variant === 'primary' ? 'cta' : 'tapLight'); }}
+        onPressOut={press.onPressOut}
+        disabled={inactive}
         accessibilityRole="button"
         accessibilityLabel={label}
-        accessibilityState={{ disabled }}
-        style={{
-          minHeight: size.hitLarge,
-          borderRadius: radius.full,
+        accessibilityState={{ disabled, busy: loading }}
+        style={({ pressed }) => ({
+          minHeight: size.button,
+          minWidth: size.hit,
+          borderRadius: radius.s,
           paddingHorizontal: space.l,
+          // 14 pt svisle = (52 − 24) / 2: jeden řádek drží min. výšku, dva řádky ji zvětší.
+          paddingVertical: (size.button - space.l) / 2,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: variant === 'primary' ? (disabled ? c.surface : c.text) : 'transparent',
-          borderWidth: variant === 'secondary' ? 1 : 0,
-          borderColor: c.rule,
-          // Neaktivní primární nezprůhledňuje plnou plochu (vznikl by nový odstín), přejde na neutrální plochu.
-          opacity: disabled && variant !== 'primary' ? 0.4 : 1,
-        }}
+          backgroundColor: fill(pressed),
+          borderWidth: onAccent && variant === 'secondary' ? 1 : 0,
+          borderColor: c.onAccent,
+          opacity: disabled ? opacity.disabled : 1,
+        })}
       >
-        <Text variant="bodyStrong" tone={disabled && variant === 'primary' ? 'muted' : labelTone[variant]} numberOfLines={1}>{label}</Text>
+        {loading ? (
+          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+            {/* Neviditelný popisek drží šířku, DotLoader leží přes něj. */}
+            <Text variant="bodyStrong" numberOfLines={2} style={{ color: ink, opacity: 0, textAlign: 'center' }}>{label}</Text>
+            <View style={{ position: 'absolute' }}><DotLoader color={ink} size={size.loaderDot * 6} /></View>
+          </View>
+        ) : (
+          <Text variant="bodyStrong" numberOfLines={2} style={{ color: ink, textAlign: 'center' }}>{label}</Text>
+        )}
       </Pressable>
     </Animated.View>
   );

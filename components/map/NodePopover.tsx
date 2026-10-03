@@ -8,7 +8,6 @@ import { copy } from '@/data/copy';
 import { motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import { useTheme } from '@/theme';
-import type { PlateKg } from '@/types';
 
 export const POPOVER_W = 296;
 const ARROW = 14;
@@ -18,7 +17,8 @@ const CLOSE_ICON = 20;
 
 interface Props {
   title: string;
-  kg: PlateKg;
+  /** Odhad délky lekce (`estMinutes`). */
+  minutes: number;
   exerciseCount: number;
   xp: number;
   state: NodeState;
@@ -34,7 +34,7 @@ interface Props {
 }
 
 /** Karta k uzlu: název, kg · cviky · XP a akce. Otevírá se timingem (UI), bez pružiny. */
-export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above, mapWidth, mapHeight, onStart, onClose }: Props) {
+export function NodePopover({ title, minutes, exerciseCount, xp, state, anchor, above, mapWidth, mapHeight, onStart, onClose }: Props) {
   const { c, space, radius, size } = useTheme();
   const CLOSE_HIT = size.hit;
   const { reduced } = useMotionSafe();
@@ -66,7 +66,7 @@ export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above
     >
       <View style={{ backgroundColor: c.raised, borderRadius: radius.l, padding: space.m, gap: space.s }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.s }}>
-          <Text variant="title" numberOfLines={2} style={{ flex: 1 }}>{title}</Text>
+          <Text variant="headline" numberOfLines={2} style={{ flex: 1 }}>{title}</Text>
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
@@ -77,12 +77,12 @@ export function NodePopover({ title, kg, exerciseCount, xp, state, anchor, above
             <X size={CLOSE_ICON} color={c.muted} strokeWidth={1.5} />
           </Pressable>
         </View>
-        <Text variant="label" tone="muted">{copy.map.nodeMeta(kg, copy.map.exercises(exerciseCount), xp)}</Text>
+        <Text variant="caption" tone="muted">{`${copy.map.nodeInfo(exerciseCount, minutes)} · ${copy.map.xpGain(xp)}`}</Text>
         {state === 'locked' ? (
-          <Text variant="caption" tone="muted" style={{ marginTop: space.xs }} accessibilityRole="alert">{copy.map.locked}</Text>
+          <Text tone="muted" style={{ marginTop: space.xs }} accessibilityRole="alert">{copy.map.locked}</Text>
         ) : (
           <Button
-            label={state === 'done' ? copy.map.replay : copy.map.start}
+            label={state === 'done' ? copy.map.replayLesson : copy.map.startLesson}
             variant={state === 'done' ? 'secondary' : 'primary'}
             onPress={onStart}
             style={{ marginTop: space.s }}

@@ -8,10 +8,10 @@ interface Props {
   accessibilityLabel?: string;
 }
 
-/** Plná stopa průběhu (R42): `rule` stopa, prošlý úsek v `text`, hrany rovné (obrobený kov, ne pilulka).
- *  Pro průběh s popiskem a tiky je `MeasureLine`; ProgressBar je jeho tichý bratr do řádků. */
+/** Progress bar (Teplá litina §2.7): stopa 6 pt v `raised` (i v kartě drží `accentGraphic` ≥ 3:1),
+ *  výplň `accentGraphic`, radius full. Nula = jen stopa; číslo nad pruhem kreslí volající. */
 export function ProgressBar({ value, max, accessibilityLabel }: Props) {
-  const { c, size } = useTheme();
+  const { c, size, radius } = useTheme();
   const p = max > 0 && Number.isFinite(value) ? Math.min(Math.max(value / max, 0), 1) : 0;
   return (
     <View
@@ -19,9 +19,9 @@ export function ProgressBar({ value, max, accessibilityLabel }: Props) {
       accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}
       accessibilityValue={{ min: 0, max: 100, now: Math.round(p * 100) }}
-      style={{ height: size.meter, backgroundColor: c.rule, overflow: 'hidden' }}
+      style={{ height: size.meter, borderRadius: radius.full, backgroundColor: c.raised, overflow: 'hidden' }}
     >
-      <View style={{ width: `${p * 100}%` as const, height: '100%', backgroundColor: c.text }} />
+      {p > 0 ? <View style={{ width: `${p * 100}%` as const, height: '100%', borderRadius: radius.full, backgroundColor: c.accentGraphic }} /> : null}
     </View>
   );
 }

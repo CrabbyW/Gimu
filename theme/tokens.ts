@@ -19,7 +19,7 @@ export const size = {
   // Instrument vrstva (R42): koncový tik MeasureLine, rameno registrační značky `+`, Lucide ikona v hlavičce.
   tick: 8, regMark: 8, icon: 20,
   // Progres (§7.6): stopa milníku 4, graf váhy 200 vysoký s osou Y 40 vlevo, bod 4 (poslední 6 + prstenec 10).
-  meter: 4, chartHeight: 200, chartAxis: 40, chartPoint: 4, chartPointLast: 6, chartPointRing: 10,
+  meter: 6, chartHeight: 200, chartAxis: 40, chartPoint: 4, chartPointLast: 6, chartPointRing: 10,
   // Toggle 52×32 s knoflíkem 24 (Task 29), segment slotu Šatníku min. 104 (5 slotů se scrolluje).
   toggleWidth: 52, toggleHeight: 32, toggleKnob: 24, slotSegment: 104,
   // Šatník a profil: náhled opice v Šatníku 160, mini opice na dlaždici 64, šířka kotoučového rámu 14.
@@ -35,6 +35,11 @@ export const size = {
   streakSmW: 28, streakSmH: 16, streakLgW: 160, streakLgH: 56,
   // Pevná šířka sloupce XP v lize pro „9 999“ (stat 20 pt, tabulární číslice ≈ 0.6 em).
   leagueXpCol: 64,
+  // Mapa (Teplá litina): šířka popisku pod uzlem, náhled kotouče v kartě první lekce, dlaždice odznaku,
+  // výška ghost řádku LockedPreview, počet viditelných řádků kola hodnot.
+  nodeLabel: 200, previewPlate: 48, badgeTile: 64, ghostRow: 12, wheelVisible: 5,
+  // Zámek vedle titulku zamčené karty 16, v náboji zamčeného uzlu a u zamčeného odznaku 12 (`badgeIcon`).
+  lockIcon: 16, sheetGripH: 4,
 } as const;
 // Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
 export const layout = { narrow: 360, fontScale: 1.3 } as const;
@@ -48,10 +53,11 @@ export const dash = { target: '4 6' } as const;
 // (měřidlo v `text` na stopě `rule`; tenčí než dřív, protože už ho nenese barva, ale kontrast).
 // R43: `plate` = lem a náboj kotouče, `check` = fajfka přes otvor, `hairline` = konstrukční figura oslavy.
 // Teplá litina: `nodeRing` 2 = prstenec aktuálního uzlu, `streakAxis` osa StreakBarbell sm.
-export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1, nodeRing: 2, streakAxis: 1.5 } as const;
+export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1, nodeRing: 2, streakAxis: 1.5, streakAxisLg: 3, todayDot: 1.5, slot: 1 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
-export const material = { collarRadius: 2 } as const;
+// StreakBarbell: radius kotouče sm 1 / lg 2 (spec §2.7).
+export const material = { collarRadius: 2, streakPlateSm: 1, streakPlateLg: 2 } as const;
 // Názvy rodin = klíče předané do useFonts v app/_layout.tsx. Váha je součást rodiny:
 // fontWeight se s nimi nekombinuje (Android u vlastních fontů váhu nesyntetizuje).
 // R42: display je Inter 300 Light (místo Bebas Neue), bez nové závislosti.

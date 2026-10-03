@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { Mascot, MASCOT_SIZES } from '@/components/mascot';
+import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
@@ -13,7 +14,7 @@ import type { LessonPathView, MapNode } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
 import { BarbellBoss } from './BarbellBoss';
-import { BOSS_SIZE, layoutNodes, popoverSide, type NodePosition } from './geometry';
+import { BOSS_SIZE, LABEL_GAP, SECTION_LABEL_OFFSET, layoutNodes, popoverSide, type NodePosition } from './geometry';
 import { NodePopover } from './NodePopover';
 import { PathLine } from './PathLine';
 import { PlateNode } from './PlateNode';
@@ -21,14 +22,18 @@ import { HAPPY_MS, UNLOCK_STEPS, findUnlockPair, unlockFrame, type UnlockPhase }
 
 const MASCOT = MASCOT_SIZES.S;
 const MASCOT_GAP = 16;
+/** Jak hluboko opička sedí přes horní hranu kotouče (podíl své výšky): nohy visí přes čelo kotouče. */
+const MASCOT_SEAT = 0.3;
 const HOP_MS = 360;
-const SECTION_LABEL_OFFSET = 32;
 const POPOVER_ROOM = 220; // odhad výšky popoveru (i se zavírací ikonou) pro volbu strany
 const TEXTURE_STEP = 24;
 
 interface Props {
   view: LessonPathView;
-  stats: { stage: MascotStage; streakBroken: boolean };
+  /** `mood` = klidová nálada z aktivity (`logic/mascotMood`); skok při odemčení ji dočasně přebije. */
+  stats: { stage: MascotStage; mood: Mood };
+  /** Odhad minut na lekci podle id (`estMinutes` z cviků). */
+  minutesOf: Record<string, number>;
   cosmetics: Partial<Record<CosmeticSlot, string>>;
   /** Právě odemčená lekce z route param `?unlocked=`; spustí odemykací sekvenci. */
   unlockedLessonId?: string | null;
@@ -39,15 +44,17 @@ interface Props {
   intro?: boolean;
 }
 
-/** Opice sedí vedle uzlu na opačné straně vlny. */
-const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean) => {
+/** Teplá litina §2.7: opička SEDÍ na horní hraně kotouče (sourozenec kotouče, ne dítě: kotouč smí pulzovat,
+ *  opička ne). Smutná a u bosse sedí vedle uzlu na opačné straně vlny. */
+const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolean) => {
+  if (!isBoss && !beside) return { x: p.x, y: p.y - p.size / 2 - MASCOT / 2 + MASCOT * MASCOT_SEAT };
   const half = isBoss ? BOSS_SIZE.w / 2 : p.size / 2;
   const side = p.x < cx ? 1 : -1;
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false }: Props) {
-  const { c, space, seasonal } = useTheme();
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false }: Props) {
+  const { c, space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -58,7 +65,8 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
 
   const flat = useMemo(() => view.sections.flatMap((s) => s.nodes.map((n) => ({ ...n, section: s }))), [view]);
   const layout = useMemo(
-    () => layoutNodes(flat.map((n) => ({ id: n.lesson.id, plateKg: n.lesson.plateKg, isBoss: n.lesson.isBoss })), width),
+    // Layout podle cílového stavu (ne mezisnímku odemčení), aby uzly během sekvence neposkakovaly.
+    () => layoutNodes(flat.map((n) => ({ id: n.lesson.id, isBoss: n.lesson.isBoss, state: n.state, sectionStart: n.section.nodes[0]?.lesson.id === n.lesson.id })), width),
     [flat, width],
   );
   const height = layout.height + insets.bottom;
@@ -128,12 +136,12 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
   const mascotNodeId = pair ? (frame.mascotOn === 'prev' ? pair.prevId : pair.nextId) : view.currentLessonId;
   const mascotNode = flat.find((n) => n.lesson.id === mascotNodeId);
   const mascotPos = mascotNode ? posOf(mascotNode.lesson.id) : undefined;
-  const spot = mascotPos && mascotNode ? mascotSpot(mascotPos, cx, mascotNode.lesson.isBoss) : null;
-  const mx = useSharedValue(spot?.x ?? 0);
-  const my = useSharedValue(spot?.y ?? 0);
   const hopping = pair !== null && !reduced && phase === 5;
   // Fáze 5 trvá HAPPY_MS: po celou dobu skoku a doskoku má opice radost.
-  const mood: Mood = hopping ? 'happy' : stats.streakBroken ? 'sad' : 'idle';
+  const mood: Mood = hopping ? 'happy' : stats.mood;
+  const spot = mascotPos && mascotNode ? mascotSpot(mascotPos, cx, mascotNode.lesson.isBoss, mood === 'sad') : null;
+  const mx = useSharedValue(spot?.x ?? 0);
+  const my = useSharedValue(spot?.y ?? 0);
   useEffect(() => {
     if (!spot) return;
     if (!hopping) { mx.value = spot.x; my.value = spot.y; return; }
@@ -173,6 +181,8 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
   const [selected, setSelected] = useState<{ id: string; above: boolean } | null>(null);
   const [shakes, setShakes] = useState<Record<string, number>>({});
   const onNodePress = (n: MapNode, shown: NodeState) => {
+    // Aktuální uzel má vlastní „Začít lekci“; tap na kotouč dělá totéž (popover jen pro zamčené a hotové).
+    if (shown === 'current') { setSelected(null); onOpenLesson(n.lesson.id); return; }
     const p = posOf(n.lesson.id);
     // Dokončený uzel nahoru (nepřekryje aktuální uzel ani opici), jinak dolů; podle místa ve výřezu.
     const above = p
@@ -209,7 +219,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
       <PathLine width={width} height={height} positions={layout.positions} reached={reached} drawing={drawing} />
 
       {selected ? (
-        <Scrim width={width} height={height} color={c.scrim} onPress={() => setSelected(null)} />
+        <Scrim width={width} height={height} color={c.scrimSoft} onPress={() => setSelected(null)} />
       ) : null}
 
       {view.sections.map((s) => {
@@ -222,7 +232,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
             variant="label"
             tone="muted"
             accessibilityRole="header"
-            style={{ position: 'absolute', left: space.m, top: p.y - p.size / 2 - SECTION_LABEL_OFFSET }}
+            style={{ position: 'absolute', left: space.l, right: space.l, top: p.top - SECTION_LABEL_OFFSET }}
           >
             {copy.map.sectionLabel(s.index, s.title)}
           </Text>
@@ -237,13 +247,17 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
         const onUnlocked = () => advance(5);
         const isPrev = pair?.prevId === n.lesson.id;
         const w = n.lesson.isBoss ? BOSS_SIZE.w : p.size;
+        // Sloupec uzlu: kotouč nahoře, popisek pod ním. Šířka popisku je pevná, sloupec se drží v okrajích mapy.
+        const colW = Math.max(w, Math.min(size.nodeLabel, width - space.m * 2));
+        const colLeft = Math.min(Math.max(p.x - colW / 2, space.m), width - space.m - colW);
         return (
           <SettleIn
             key={n.lesson.id}
             at={plan ? (i > plan.ci ? -1 : plan.at(i)) : null}
             fadeAt={plan ? plan.at(plan.ci) ?? 0 : 0}
-            style={{ position: 'absolute', left: p.x - w / 2, top: p.y - p.size / 2, zIndex: selected?.id === n.lesson.id ? 2 : 0 }}
+            style={{ position: 'absolute', left: colLeft, width: colW, top: p.y - p.size / 2, zIndex: selected?.id === n.lesson.id ? 2 : 0 }}
           >
+            <View pointerEvents="box-none" style={{ marginLeft: p.x - w / 2 - colLeft, width: w }}>
             {n.lesson.isBoss ? (
               <BarbellBoss
                 state={state} accessibilityLabel={label} onPress={() => onNodePress(n, state)}
@@ -257,6 +271,14 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
                 justCompleted={isPrev && frame.prevCheck === 'draw'} checkHidden={isPrev && frame.prevCheck === 'hidden'}
               />
             )}
+            </View>
+            <NodeLabel
+              node={n}
+              state={state}
+              minutes={minutesOf[n.lesson.id] ?? 1}
+              bossAfter={n.section.nodes.filter((m) => !m.lesson.isBoss).length}
+              onStart={() => onOpenLesson(n.lesson.id)}
+            />
           </SettleIn>
         );
       })}
@@ -271,7 +293,7 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
         <NodePopover
           key={selectedNode.lesson.id}
           title={selectedNode.lesson.title}
-          kg={selectedNode.lesson.plateKg}
+          minutes={minutesOf[selectedNode.lesson.id] ?? 1}
           exerciseCount={selectedNode.exerciseCount}
           xp={selectedNode.xp}
           state={shownState(selectedNode)}
@@ -284,6 +306,52 @@ export function LessonMap({ view, stats, cosmetics, unlockedLessonId = null, onO
         />
       ) : null}
     </ScrollView>
+  );
+}
+
+const center = { textAlign: 'center' as const };
+
+/** Popisek pod uzlem (Teplá litina §2.7, tabulka stavů). Metadata z dat: počet cviků, `estMinutes`, XP.
+ *  current = název `headline` + metadata + „+N XP“ a primary „Začít lekci“; locked = název a metadata
+ *  `caption muted`; done = jen název `caption muted`; boss = „Boss sekce“ + podmínka odemčení. */
+function NodeLabel({ node, state, minutes, bossAfter, onStart }: {
+  node: MapNode; state: NodeState; minutes: number; bossAfter: number; onStart(): void;
+}) {
+  const { space } = useTheme();
+  const info = copy.map.nodeInfo(node.exerciseCount, minutes);
+  const withXp = `${info} · ${copy.map.xpGain(node.xp)}`;
+  const current = state === 'current';
+  const isBoss = node.lesson.isBoss;
+  let lines: ReactNode;
+  if (isBoss && state !== 'done') {
+    lines = (
+      <>
+        <Text variant="headline" style={center}>{copy.map.bossTitle}</Text>
+        <Text variant="caption" tone="muted" style={center}>{state === 'locked' ? copy.map.bossUnlock(bossAfter) : withXp}</Text>
+      </>
+    );
+  } else if (current) {
+    lines = (
+      <>
+        <Text variant="headline" numberOfLines={2} style={center}>{node.lesson.title}</Text>
+        <Text variant="caption" tone="muted" style={center}>{withXp}</Text>
+      </>
+    );
+  } else if (state === 'locked') {
+    lines = (
+      <>
+        <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{node.lesson.title}</Text>
+        <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{info}</Text>
+      </>
+    );
+  } else {
+    lines = <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{isBoss ? copy.map.bossTitle : node.lesson.title}</Text>;
+  }
+  return (
+    <View pointerEvents="box-none" style={{ marginTop: LABEL_GAP, alignItems: 'center' }}>
+      {lines}
+      {current ? <Button label={copy.map.startLesson} onPress={onStart} style={{ marginTop: space.s, alignSelf: 'stretch' }} /> : null}
+    </View>
   );
 }
 

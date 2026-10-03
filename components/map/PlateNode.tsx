@@ -6,6 +6,7 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 import { usePressFeedback } from '@/components/ui/usePressFeedback';
+import { feedback as fb } from '@/lib/feedback';
 import { haptics } from '@/lib/haptics';
 import { ease, motion, useMotionSafe } from '@/lib/motion';
 import { useSfx } from '@/lib/sound';
@@ -17,7 +18,6 @@ import type { PlateKg } from '@/types';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export const PULSE_MS = 1100;
-const RING_GAP = 14;
 const CHECK_MS = 280;
 const SHAKE = 6;
 
@@ -38,7 +38,8 @@ interface Props {
   shakeKey?: number;
 }
 
-/** Kulatý uzel mapy: kotouč, u aktuálního pulzující prstenec v `text` (R42), jeden měkký stín. */
+/** Kulatý uzel mapy: kotouč, u aktuálního prstenec 2 pt `accentGraphic` s mezerou 4 (Teplá litina), jeden stín.
+ *  Popisek a opička nejsou děti uzlu (kreslí je LessonMap jako sourozence), takže pulz kotouče je nehýbe. */
 export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0 }: Props) {
   const { size } = useTheme();
   const { reduced } = useMotionSafe();
@@ -51,7 +52,7 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
       <Animated.View style={feedback.style}>
       <Pressable
         onPress={onPress}
-        onPressIn={feedback.onPressIn}
+        onPressIn={() => { feedback.onPressIn(); fb(state === 'current' ? 'cta' : state === 'locked' ? 'locked' : 'tapLight'); }}
         onPressOut={feedback.onPressOut}
         hitSlop={slop}
         accessibilityRole="button"
@@ -84,7 +85,7 @@ function Shadowed({ on, size, children }: { on: boolean; size: number; children:
 }
 
 function PulseRing({ size, reduced }: { size: number; reduced: boolean }) {
-  const { c, radius, stroke } = useTheme();
+  const { c, radius, stroke, size: tokens } = useTheme();
   const t = useSharedValue(0);
   useEffect(() => {
     if (reduced) { cancelAnimation(t); t.value = 0; return; }
@@ -92,12 +93,12 @@ function PulseRing({ size, reduced }: { size: number; reduced: boolean }) {
     return () => cancelAnimation(t);
   }, [reduced, t]);
   const style = useAnimatedStyle(() => ({ opacity: 1 - t.value * 0.6, transform: [{ scale: 1 + t.value * 0.08 }] }));
-  const ring = size + RING_GAP;
+  // Teplá litina §2.7: prstenec 2 pt `accentGraphic` s mezerou 4 pt od hrany kotouče. Žádný glow.
+  const ring = size + 2 * (tokens.nodeRingGap + stroke.nodeRing);
   return (
     <Animated.View
       pointerEvents="none"
-      // R42: aktuální uzel nese stav kontrastem (`text`), ne akcentem.
-      style={[{ position: 'absolute', width: ring, height: ring, borderRadius: radius.full, borderWidth: stroke.focus, borderColor: c.text }, style]}
+      style={[{ position: 'absolute', width: ring, height: ring, borderRadius: radius.full, borderWidth: stroke.nodeRing, borderColor: c.accentGraphic }, style]}
     />
   );
 }

@@ -93,10 +93,38 @@ export const copy = {
     // Telemetrický pruh a měřicí linka v hlavičce mapy (R42).
     tier: 'LIGA',
     sectionProgress: (done: number, total: number) => `${String(done).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
+    // Teplá litina §3.1: popisky uzlů z dat (počet cviků, odhad minut, XP).
+    startLesson: 'Začít lekci', replayLesson: 'Zopakovat lekci',
+    nodeInfo: (exercises: number, minutes: number) => `${exercises} ${czPlural(exercises, 'cvik', 'cviky', 'cviků')} · ${minutes} min`,
+    xpGain: (xp: number) => `+${xp} XP`,
+    xpTotal: (xp: number) => `${xp} XP`,
+    bossTitle: 'Boss sekce',
+    bossUnlock: (n: number) => `Odemkne se po ${n} ${czPlural(n, 'lekci', 'lekcích', 'lekcích')}`,
+    firstTitle: (min: number) => `První lekce: ${min} ${czPlural(min, 'minuta', 'minuty', 'minut')}`,
+    firstBody: (xp: number) => `Za dokončení dostaneš kotouč na činku a +${xp} XP.`,
+    brokenTitle: 'Série se přerušila',
+    brokenBody: (n: number) => `Nejdelší série ${n} ${czPlural(n, 'den', 'dny', 'dní')} zůstává v profilu. Jedna lekce rozjede novou.`,
     sectionProgressA11y: (n: number, title: string, done: number, total: number) => `Sekce ${n}, ${title}: hotovo ${done} z ${total} lekcí`,
   },
+  // StreakBarbell a pilulka série (Teplá litina §2.7). Plamen se nepoužívá.
+  streak: {
+    days: (n: number) => czPlural(n, 'den', 'dny', 'dní'),
+    a11yDone: (n: number) => `Série ${n} ${czPlural(n, 'den', 'dny', 'dní')}, dnes hotovo`,
+    a11yPending: (n: number) => `Série ${n} ${czPlural(n, 'den', 'dny', 'dní')}, dnes čeká`,
+    none: 'Žádná série',
+    overflow: (k: number) => `×${k}`,
+    longest: (n: number) => `Nejdelší série: ${n} ${czPlural(n, 'den', 'dny', 'dní')}`,
+  },
+  today: { done: 'Dnes hotovo', pending: 'Dnes čeká' },
+  wheel: { save: 'Uložit', close: 'Zavřít výběr' },
+  legend: { done: 'Odcvičeno', caught: 'Dohnáno', missed: 'Zmeškáno', today: 'Dnes' },
+  badgeTile: {
+    earnedA11y: (name: string) => `Odznak ${name}, získaný`,
+    lockedA11y: (name: string, condition: string) => `Odznak ${name}, zamčený. Podmínka: ${condition}`,
+  },
+  header: { settings: 'Nastavení' },
   lesson: {
-    reps: 'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',
+    reps:'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',
     quitConfirm: 'Ukončit', quitCancel: 'Trénovat dál', holdReady: 'Připrav se', nextExercise: 'Další cvik',
     close: 'Ukončit lekci',
     // Měřicí linka lekce (R42): mono štítek a pozice „02/05“ (tabulární číslice).

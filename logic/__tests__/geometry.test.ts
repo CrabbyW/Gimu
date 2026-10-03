@@ -1,8 +1,8 @@
-import { layoutNodes, plateSize, popoverSide, segmentLength } from '@/components/map/geometry';
+import { BOSS_SIZE, LABEL_GAP, MONKEY_ROOM, RING_OUT, labelHeight, layoutNodes, nodeSize, popoverSide, segmentLength, type LayoutInput } from '@/components/map/geometry';
 import { PHI } from '@/theme/tokens';
-import type { PlateKg } from '@/types';
 
-const nodes = Array.from({ length: 9 }, (_, i) => ({ id: `n${i}`, plateKg: ([5, 5, 10, 10, 15, 15, 20, 20, 25] as const)[i]!, isBoss: i === 8 }));
+const state = (i: number): LayoutInput['state'] => (i < 3 ? 'done' : i === 3 ? 'current' : 'locked');
+const nodes: LayoutInput[] = Array.from({ length: 9 }, (_, i) => ({ id: `n${i}`, isBoss: i === 8, state: state(i), sectionStart: i === 0 }));
 
 test('uzly jdou shora dolů a vlní se do stran v mezích šířky', () => {
   const { positions, height } = layoutNodes(nodes, 390);
@@ -15,7 +15,8 @@ test('uzly jdou shora dolů a vlní se do stran v mezích šířky', () => {
   expect(height).toBeGreaterThan(positions.at(-1)!.y);
 });
 
-test('plateSize roste s kg', () => { expect(plateSize(5)).toBeLessThan(plateSize(25)); });
+// Teplá litina §2.7: velikost uzlu nese stav (72 / aktuální 88), ne kg (dřív test „plateSize roste s kg“).
+test('aktuální uzel je větší než ostatní', () => { expect(nodeSize(true)).toBeGreaterThan(nodeSize(false)); });
 
 test('segmentLength: svislý úsek má délku rozdílu y, křivka je delší než přímka', () => {
   expect(segmentLength({ x: 100, y: 0 }, { x: 100, y: 112 })).toBeCloseTo(112, 0);
@@ -42,13 +43,19 @@ describe('popoverSide', () => {
   });
 });
 
-// R43: krok 104 = 64·φ; pulzující prstenec aktuálního uzlu (PlateNode: size + 14, scale až 1.08,
-// okraj stroke.focus 2 uvnitř) nesmí sáhnout na sousední kotouč ani u největšího uzlu 80.
-test('krok uzlů je 64·φ a pulz prstence nepřesáhne na souseda', () => {
-  const nodes = [25, 25, 25].map((kg, i) => ({ id: `n${i}`, plateKg: kg as PlateKg, isBoss: false }));
+// Teplá litina: pod každým uzlem je popisek (a u aktuálního tlačítko „Začít lekci“), nad aktuálním opička.
+// Krok proto už není pevně 64·φ (R43), ale aspoň 64·φ a tak velký, aby se popisek nepotkal s dalším uzlem.
+test('krok uzlů je aspoň 64·φ a popisek nepřekryje další uzel ani opičku', () => {
   const { positions } = layoutNodes(nodes, 390);
-  const step = positions[1]!.y - positions[0]!.y;
-  expect(step).toBeCloseTo(64 * PHI, -1);
-  const ringOuter = ((plateSize(25) + 14) * 1.08) / 2;
-  expect(ringOuter + plateSize(25) / 2).toBeLessThan(step);
+  positions.slice(1).forEach((p, j) => {
+    const prev = positions[j]!;
+    const n = nodes[j]!;
+    expect(p.y - prev.y).toBeGreaterThanOrEqual(64 * PHI - 0.5);
+    const labelBottom = prev.y + prev.size / 2 + LABEL_GAP + labelHeight(n.state, n.isBoss);
+    expect(labelBottom).toBeLessThan(p.top);
+  });
+  const cur = positions[3]!;
+  expect(cur.size).toBe(nodeSize(true));
+  expect(cur.y - cur.top).toBeGreaterThanOrEqual(cur.size / 2 + Math.max(MONKEY_ROOM, RING_OUT));
+  expect(positions[8]!.size).toBe(BOSS_SIZE.h);
 });

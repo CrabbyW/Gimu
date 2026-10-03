@@ -1,12 +1,14 @@
 import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { CalendarRange, CircleUser, Dumbbell, Trophy, TrendingUp, type LucideIcon } from 'lucide-react-native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useRequireProfile } from '@/hooks/useRequireProfile';
+import { feedback } from '@/lib/feedback';
 import { isNavigationGuarded } from '@/lib/navGuard';
-import { typography, useCompact, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 const SHOW_TAB_BAR = true;
 
@@ -17,27 +19,33 @@ const TABS: { name: string; title: string; Icon: LucideIcon }[] = [
   { name: 'season', title: copy.tabs.season, Icon: CalendarRange },
   { name: 'profile', title: copy.tabs.profile, Icon: CircleUser },
 ];
-const TAB_BAR_HEIGHT = 64;
 
+/** Tab bar (Teplá litina §2.7): `base`, vlasová linka `rule` nahoře, Lucide 24 / 1.5, popisek `tab`
+ *  sentence case bez oříznutí. Aktivní = `text` + tečka 4 pt `accentGraphic` 4 pt nad ikonou;
+ *  neaktivní = `muted` a tečka se nevykreslí vůbec. Barvy jsou explicitní, systémový tint se nepoužije. */
 export default function TabsLayout() {
   const gate = useRequireProfile();
-  const { c } = useTheme();
+  const { c, size, space, stroke, radius } = useTheme();
   const insets = useSafeAreaInsets();
-  const compact = useCompact();
   if (gate === 'missing') return <Redirect href="/onboarding/path" />;
   return (
     <Tabs
-      screenListeners={{ tabPress: (e) => { if (isNavigationGuarded()) e.preventDefault(); } }}
+      screenListeners={{
+        tabPress: (e) => {
+          if (isNavigationGuarded()) { e.preventDefault(); return; }
+          feedback('tab');
+        },
+      }}
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: c.base },
         tabBarActiveTintColor: c.text,
         tabBarInactiveTintColor: c.muted,
-        // Na 320 pt by `label` (rozpal 2 pt) ořízl „TRÉNINK“/„PROGRES“; kompaktní stupeň drží celé slovo.
-        tabBarLabelStyle: compact ? typography.tabLabelCompact : typography.label,
+        tabBarActiveBackgroundColor: c.base,
+        tabBarInactiveBackgroundColor: c.base,
         tabBarStyle: SHOW_TAB_BAR
           ? {
-            height: TAB_BAR_HEIGHT + insets.bottom,
+            height: size.tabBar + insets.bottom,
             paddingBottom: insets.bottom,
             backgroundColor: c.base,
             borderTopWidth: StyleSheet.hairlineWidth,
@@ -52,7 +60,26 @@ export default function TabsLayout() {
         <Tabs.Screen
           key={name}
           name={name}
-          options={{ title, tabBarIcon: ({ color, size }) => <Icon color={color} size={size} strokeWidth={1.5} /> }}
+          options={{
+            title,
+            tabBarAccessibilityLabel: title,
+            tabBarIcon: ({ focused }) => (
+              <View style={{ width: size.tabIcon, height: size.tabIcon, alignItems: 'center' }}>
+                {focused ? (
+                  <View
+                    style={{
+                      position: 'absolute', top: -(size.tabDot + space.xs), width: size.tabDot, height: size.tabDot,
+                      borderRadius: radius.full, backgroundColor: c.accentGraphic,
+                    }}
+                  />
+                ) : null}
+                <Icon size={size.tabIcon} color={focused ? c.text : c.muted} strokeWidth={stroke.icon} />
+              </View>
+            ),
+            tabBarLabel: ({ focused }) => (
+              <Text variant="tab" style={{ color: focused ? c.text : c.muted }}>{title}</Text>
+            ),
+          }}
         />
       ))}
     </Tabs>

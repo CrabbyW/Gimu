@@ -27,20 +27,21 @@ export const PLATE_HOLE = PLATE_R / PHI ** 3;
 
 /** Kotouč zepředu: plný kruh, vnitřní prstenec, díra, kg v display řezu (Inter Light). Hloubku dělá radiální světlo a jemné zrno. */
 export function Plate({ kg, size, state, check = true }: Props) {
-  const { c, seasonal } = useTheme();
+  const { c, seasonal, size: tokens } = useTheme();
   // ID defs musí být v dokumentu unikátní (na webu je víc kotoučů v jednom DOM).
   const uid = useId().replace(/[^\w-]/g, '');
   const light = `plate-light-${uid}`;
   const grain = `plate-grain-${uid}`;
 
   if (state === 'locked') {
-    const icon = Math.round(size * 0.3);
+    // Teplá litina §2.7: obrys `faint` 1.5 pt (přepočet z pt do viewBoxu 100), `Lock` 12 `muted` v náboji, bez stínu.
+    const outline = (stroke.icon * 100) / size;
     return (
       <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
         <Svg width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
-          <Circle cx={50} cy={50} r={PLATE_R} fill="none" stroke={c.rule} strokeWidth={stroke.focus} />
+          <Circle cx={50} cy={50} r={PLATE_R} fill="none" stroke={c.faint} strokeWidth={outline} />
         </Svg>
-        <Lock size={icon} color={c.muted} strokeWidth={stroke.icon} />
+        <Lock size={tokens.badgeIcon} color={c.muted} strokeWidth={stroke.icon} />
       </View>
     );
   }

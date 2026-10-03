@@ -11,3 +11,10 @@ if (new Date(2026, 8, 30, 0, 1).getUTCDate() !== 29) {
     'TZ guard selhal: proces neběží v Europe/Prague. Zkontroluj jest.global-setup.ts.',
   );
 }
+
+// expo-audio nativní modul v jestu neexistuje: singletony přehrávačů z `lib/sound.ts` dostanou atrapu.
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: () => ({ volume: 1, play: () => undefined, seekTo: () => Promise.resolve() }),
+  setAudioModeAsync: () => Promise.resolve(),
+  useAudioPlayer: () => ({ volume: 1, play: () => undefined, seekTo: () => Promise.resolve() }),
+}));

@@ -4,6 +4,7 @@ import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat
 import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
 import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { copy } from '@/data/copy';
+import { feedback as fb } from '@/lib/feedback';
 import { useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import { svgType, useTheme } from '@/theme';
@@ -39,7 +40,7 @@ export function BarbellBoss({ state, accessibilityLabel, onPress, shakeKey = 0, 
     <Animated.View style={[{ width: W, height: H, alignItems: 'center', justifyContent: 'center' }, shake]}>
       {state === 'current' && !unlocking ? <BossPulse reduced={reduced} /> : null}
       <Animated.View style={feedback.style}>
-        <Pressable onPress={onPress} onPressIn={feedback.onPressIn} onPressOut={feedback.onPressOut} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
+        <Pressable onPress={onPress} onPressIn={() => { feedback.onPressIn(); fb(state === 'current' ? 'cta' : state === 'locked' ? 'locked' : 'tapLight'); }} onPressOut={feedback.onPressOut} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
           {unlocking ? <UnlockingBarbell reduced={reduced} onUnlocked={onUnlocked} /> : <Barbell state={state} />}
         </Pressable>
       </Animated.View>
@@ -48,10 +49,11 @@ export function BarbellBoss({ state, accessibilityLabel, onPress, shakeKey = 0, 
 }
 
 function Barbell({ state }: { state: NodeState }) {
-  const { c, seasonal } = useTheme();
+  const { c, seasonal, stroke: tokens } = useTheme();
   const locked = state === 'locked';
   // Zamčená osa je obrys; výplň podkladem mapy zakryje tyč za kotouči, aby se čáry nekřížily.
-  const stroke = locked ? { fill: seasonal.mapBase, stroke: c.rule, strokeWidth: 1.5 } : null;
+  // Teplá litina §2.7: zamčený boss v obrysu `faint` (grafika ≥ 3:1 na base), ne `rule`.
+  const stroke = locked ? { fill: seasonal.mapBase, stroke: c.faint, strokeWidth: tokens.icon } : null;
   const side = (dir: -1 | 1) => PLATES.map((p, i) => {
     const inner = W / 2 + dir * (COLLAR_X + i * (PW + GAP));
     const px = dir === 1 ? inner : inner - PW;
@@ -101,7 +103,7 @@ function BossPulse({ reduced }: { reduced: boolean }) {
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', width: W + PULSE_PAD * 2, height: H + PULSE_PAD * 2, borderRadius: radius.l, borderWidth: stroke.focus, borderColor: c.text }, style]}
+      style={[{ position: 'absolute', width: W + PULSE_PAD * 2, height: H + PULSE_PAD * 2, borderRadius: radius.l, borderWidth: stroke.nodeRing, borderColor: c.accentGraphic }, style]}
     />
   );
 }

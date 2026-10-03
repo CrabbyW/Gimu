@@ -1,29 +1,72 @@
 // Čistá geometrie mapy (bez Reactu), pokrytá testem v logic/__tests__/geometry.test.ts.
-import { PHI, space } from '@/theme/tokens';
+import { PHI, size as sz, space, stroke, type as t } from '@/theme/tokens';
+import type { NodeState } from '@/logic/map';
 import type { PlateKg } from '@/types';
 
+/** Velikost kotouče podle kg: na mapě se už nepoužívá (Teplá litina, velikost nese stav), zůstává
+ *  pro proporce kotouče v oslavě lekce (`components/lesson/celebration.ts`). */
 const SIZES: Record<PlateKg, number> = { 5: 56, 10: 60, 15: 64, 20: 72, 25: 80 };
 export const plateSize = (kg: PlateKg) => SIZES[kg];
 export const BOSS_SIZE = { w: 220, h: 88 };
-// R43: krok uzlů = 64·φ (token xxxl), amplituda sinusoidy = šířka/φ³.
+/** Teplá litina §2.7: všechny kotouče 72, aktuální 88 (velikost nese stav, ne kg). */
+export const nodeSize = (current: boolean) => (current ? sz.nodeCurrent : sz.node);
+// R43: minimální krok uzlů = 64·φ (token xxxl), amplituda sinusoidy = šířka/φ³.
 const STEP = space.xxxl;
-const TOP = 96;
-const GUTTER = 16;
+const GUTTER = space.m;
+/** Prostor nad prvním uzlem sekce pro mono nadpis (řádek 14 + odstup). */
+export const SECTION_ROOM = space.xl;
+/** Odstup nadpisu sekce nad horní hranou uzlu (včetně opičky). */
+export const SECTION_LABEL_OFFSET = space.l + space.s;
+/** Opička (S 56) sedí na horní hraně aktuálního kotouče: nad hranou vyčnívá zhruba 5/8 její výšky. */
+export const MONKEY_ROOM = space.xl;
+/** Prstenec aktuálního uzlu: mezera 4 + tah 2 vně kotouče. */
+export const RING_OUT = sz.nodeRingGap + stroke.nodeRing;
+/** Odstup popisku od spodní hrany kotouče (za prstencem). */
+export const LABEL_GAP = RING_OUT + space.xs;
 
-export interface NodePosition { id: string; x: number; y: number; size: number }
+export type LayoutState = NodeState;
+export interface LayoutInput { id: string; isBoss: boolean; state: LayoutState; sectionStart: boolean }
+/** `top` = nejvyšší bod uzlu včetně opičky (pro nadpis sekce). */
+export interface NodePosition { id: string; x: number; y: number; size: number; top: number }
 
-/** Uzly shora dolů po sinusoidě (amplituda šířka/φ³ ≈ 24 %), boss na středu. */
-export function layoutNodes(nodes: { id: string; plateKg: PlateKg; isBoss: boolean }[], width: number) {
+/** Výška popisku pod uzlem při 1.0× písmu: current = headline + metadata + mezera + tlačítko,
+ *  locked = název + metadata, done = jen název, boss = headline + podmínka. */
+export function labelHeight(state: LayoutState, isBoss: boolean): number {
+  if (state === 'current') return t.headline.lineHeight + t.caption.lineHeight + space.s + sz.button;
+  if (isBoss) return t.headline.lineHeight + t.caption.lineHeight;
+  if (state === 'locked') return t.caption.lineHeight * 2;
+  return t.caption.lineHeight;
+}
+
+const extents = (n: LayoutInput) => {
+  const size = n.isBoss ? BOSS_SIZE.h : nodeSize(n.state === 'current');
+  const ring = n.state === 'current' ? RING_OUT : 0;
+  const up = size / 2 + Math.max(ring, n.state === 'current' && !n.isBoss ? MONKEY_ROOM : 0);
+  const down = size / 2 + LABEL_GAP + labelHeight(n.state, n.isBoss);
+  return { size, up, down };
+};
+
+/** Uzly shora dolů po sinusoidě (amplituda šířka/φ³ ≈ 24 %), boss na středu. Svislý krok je aspoň 64·φ,
+ *  ale roste tak, aby se popisek uzlu (a tlačítko aktuálního) nepřekrýval s opičkou a kotoučem dalšího uzlu. */
+export function layoutNodes(nodes: LayoutInput[], width: number) {
   const cx = width / 2;
   const amp = Math.min(width / PHI ** 3, 120);
-  const positions: NodePosition[] = nodes.map((n, i) => {
-    const size = n.isBoss ? BOSS_SIZE.h : plateSize(n.plateKg);
-    const half = n.isBoss ? BOSS_SIZE.w / 2 : size / 2;
+  const positions: NodePosition[] = [];
+  let prev: { y: number; down: number } | null = null;
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i]!;
+    const e = extents(n);
+    const half = n.isBoss ? BOSS_SIZE.w / 2 : e.size / 2;
     const raw = n.isBoss ? cx : cx + Math.sin(i * 0.9) * amp;
     const x = Math.min(Math.max(raw, GUTTER + half), width - GUTTER - half);
-    return { id: n.id, x, y: TOP + i * STEP + (n.isBoss ? 24 : 0), size };
-  });
-  return { positions, height: (positions.at(-1)?.y ?? 0) + 160 };
+    const room = n.sectionStart ? SECTION_ROOM : 0;
+    const y: number = prev === null
+      ? space.l + SECTION_ROOM + e.up
+      : Math.max(prev.y + STEP, prev.y + prev.down + space.l + room + e.up);
+    positions.push({ id: n.id, x, y, size: e.size, top: y - e.up });
+    prev = { y, down: e.down };
+  }
+  return { positions, height: (prev ? prev.y + prev.down : 0) + space.xxl };
 }
 
 /** Kubická Bézierova křivka mezi dvěma středy, kontrolní body svisle v polovině mezery. */
