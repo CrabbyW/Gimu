@@ -528,3 +528,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Kotouč série při prvním zobrazení mapy po přeskočené oslavě (§3.6) není; hotový uzel bez následující lekce (konec cesty) trim fajfky nedostane (není odemykací pár).
 - Pilulka série v oslavě je jen řádek činka + číslo; vzhled pilulky patří design-agentovi.
 - K ruční kontrole na zařízení: sync haptiky s ringem, ducking hudby, AppState skip.
+
+## 2026-10-03 qa-agent: R44 kolo 1
+- tsc/lint/jest zelené (445 testů). Verdikt SCHVÁLENO.
+- Opraveno: dvojí tap v onboarding kroku připomínky (guard + reset při focusu).
+- Otevřené: tab label bez numberOfLines (design), AppState `inactive` (motion), ruční kontrola haptiky/duckingu na zařízení.

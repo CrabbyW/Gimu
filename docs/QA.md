@@ -150,3 +150,38 @@ Blokuje bug 1 (dvojí tap → tab Sezóna, reprodukovatelné na webu) a 10 (oře
 - `npm test` 46/46 suites, 391/391 testů; `npm run typecheck` čisté; `npm run lint` čisté.
 
 Verdikt: **SCHVÁLENO** (bugy 2–9 ověřeny v kole 2).
+
+## R44 kolo 1 (Teplá litina + pohyb/haptika, 9901140..a553e9e)
+
+**Verdikt: SCHVÁLENO** (s poznámkami níže; žádný blokující nález)
+
+### Automatické kontroly
+- `npx tsc --noEmit`: 0 chyb · `npx expo lint`: 0 · `npx jest`: 50 sad / 445 testů prošlo.
+- grep `#[0-9A-Fa-f]{6}` v app/ components/ (mimo palettes/tokens/mascot/testy): 0 výskytů.
+- `Flame` ikona: 0 · systémová modrá (`#007AFF`/systemBlue): 0.
+
+### Dokončení lekce (LessonCompleteScene)
+- ✅ XP uložené před scénou: `completeLesson` se čeká v `app/lesson/[id].tsx`, scéna dostává hotový `result`; dvojí „Hotovo“ hlídá `completing` ref, dvojí „Pokračovat“ `leaving` ref.
+- ✅ skipToEnd idempotentní (`once` gate), bez haptiky/zvuku; ruší kroky z UI vlákna i haptický vzor.
+- ✅ AppState `background` → skipToEnd; listener odebrán při unmountu.
+- ✅ Ducking: `setDucking(true)` při vstupu, `teardown` (once) vrací `false` při skipu i unmountu.
+- ✅ Přerušený pád (`done === false` u vedoucího kotouče) → skipToEnd.
+- ✅ Reduce Motion: rozhodnuto jednou (`useState(reduced)`), konečné stavy hned, haptika a zvuk zachovány, CTA po prolnutí.
+- ✅ Max 8 XP ticků (`xpTickStep`, testováno v celebrationMotion.test.ts); skip = bez ticků.
+- ✅ „Zítra: …“ přes `nextLessonId` + estMinutes; konec cesty → `copy.lesson.sectionDone`.
+- ✅ Kotouč série jen při `firstOfDay > 0`.
+
+### Ostatní
+- ✅ Nálada opičky: `sad` jen při přerušené sérii a `longestStreak ≥ 2` (logic/mascotMood.ts).
+- ✅ Přepínače haptika/zvuk nezávislé (lib/haptics.ts `hapticsEnabled`, lib/sound.ts `soundEnabled`).
+- ✅ Onboarding připomínka: odmítnuté oprávnění / chyba neblokuje (try/catch, pokračuje na zrození).
+- ✅ badgeProgress, estMinutes: pokryto v logic/__tests__/redesign.test.ts.
+- ✅ Tab bar 320 pt: nejdelší popisek „Trénink“/„Progres“ v 11 pt se vejde do 64 pt slotu.
+
+### Opraveno v tomto kole (drobnosti)
+1. `app/onboarding/reminder.tsx`: rychlé dvojí ťuknutí na „Pokračovat“ / „Bez připomínky“ pushlo `/onboarding/birth` dvakrát. Přidán `leaving` ref, reset přes `useFocusEffect` (návrat Zpět funguje).
+
+### Nálezy (nezávažné, k ruční kontrole)
+- MINOR (design-agent): popisek tabu nemá `numberOfLines={1}` / `adjustsFontSizeToFit`; při velkém Dynamic Type se může zalomit. Ověřit na zařízení 320 pt s největším písmem.
+- INFO (motion-agent): AppState reaguje jen na `background`, ne `inactive` (Control Center na iOS animaci nepřeskočí). Spec to připouští; ověřit ručně.
+- K ruční kontrole: haptika AHAP na fyzickém iPhonu, ducking hudby, zamčená liga (dev-xp, přelom týdne) a StreakBarbell stavy (×K, čeká, přerušený) vizuálně — logika testy prošla, vizuál jsem neověřoval na zařízení.

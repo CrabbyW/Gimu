@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { Button } from '@/components/ui/Button';
@@ -25,8 +25,14 @@ export default function ReminderStep() {
   const [open, setOpen] = useState(false);
   const time = copy.settings.hourValue(hour);
 
+  // Dvojí tap (Pokračovat i Bez připomínky) nesmí pushnout zrození dvakrát (QA R44 kolo 1).
+  const leaving = useRef(false);
+  // Po návratu Zpět ze zrození musí krok znovu reagovat.
+  useFocusEffect(useCallback(() => { leaving.current = false; }, []));
   const toBirth = () => router.push('/onboarding/birth');
   const onContinue = async () => {
+    if (leaving.current) return;
+    leaving.current = true;
     try {
       await prefs.setHour(hour);
       await prefs.setEnabled(true);
@@ -36,6 +42,8 @@ export default function ReminderStep() {
     toBirth();
   };
   const onSkip = () => {
+    if (leaving.current) return;
+    leaving.current = true;
     void prefs.setEnabled(false);
     toBirth();
   };
