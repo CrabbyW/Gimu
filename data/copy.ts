@@ -168,6 +168,9 @@ export const copy = {
     // Odpočet „3D 14H 22M“ (velká písmena, tabulární číslice).
     countdown: (d: number, h: number, m: number) => `${d}D ${String(h).padStart(2, '0')}H ${String(m).padStart(2, '0')}M`,
     countdownA11y: (d: number, h: number, m: number) => `Do konce týdne ${d} d, ${h} h, ${m} min`,
+    // Teplá litina §3.2: hlavička = odznak + název ligy + tichý odpočet větou (bez telemetrie).
+    headerTitle: (tier: string) => `Liga ${tier}`,
+    endsInLine: (d: number, h: number, m: number) => `Týden končí za ${d} d ${h} h ${m} min`,
     xp: 'XP', rank: 'POZICE', myXp: 'TVOJE XP',
     // Prázdný stav: uživatel má tento týden 0 XP (soupeři už mohou mít).
     emptyWeek: 'Tenhle týden zatím bez XP. Jedna lekce tě posune nahoru.',
@@ -203,8 +206,7 @@ export const copy = {
     weekShort: (d: number, m: number) => `${d}. ${m}.`,
     weekdaysShort: ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'],
     // Binární milník (ano/ne) jako číslo 0 / 1, stejná gramatika jako číselný.
-    milestoneBinaryTitle: 'Splněno?', milestoneYes: 'Ano', milestoneNo: 'Zatím ne',
-    milestoneSheetTitle: (label: string) => `${label}: aktuální hodnota`,
+    milestoneYes: 'Ano', milestoneNo: 'Zatím ne',
     newCosmetic: 'NOVÁ KOSMETIKA', toWardrobe: 'Otevřít Šatník', dismiss: 'Zavřít',
     saveError: 'Uložení se nepovedlo. Zkus to znovu.',
   },
@@ -277,7 +279,7 @@ export const copy = {
     // Hlavička: „28. 9. – 26. 12.“ (data skládá obrazovka z čísel).
     dateShort: (d: number, m: number) => `${d}. ${m}.`,
     range: (from: string, to: string) => `${from} – ${to}`,
-    daysLeftUnit: 'DNÍ', daysLeftLabel: 'DO KONCE', daysLeftCaption: 'dní do konce',
+    daysLeftLabel: 'DO KONCE', daysLeftCaption: 'dní do konce',
     daysLeftA11y: (n: number) => `Do konce sezóny ${n} ${czPlural(n, 'den', 'dny', 'dní')}`,
     ended: 'Sezóna skončila.', endedBody: 'Spočítali jsme, co jsi za ni odmakal.',
     lockIn: 'Lock in', lockInBody: 'Vyber si jeden cíl na celou sezónu.', lockInCta: 'Nastavit cíl',

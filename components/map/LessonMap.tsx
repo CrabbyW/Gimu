@@ -4,7 +4,7 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withD
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
-import { Mascot, MASCOT_SIZES } from '@/components/mascot';
+import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY } from '@/components/mascot';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -25,8 +25,8 @@ import { HAPPY_MS, UNLOCK_STEPS, findUnlockPair, unlockFrame, type UnlockPhase }
 
 const MASCOT = MASCOT_SIZES.S;
 const MASCOT_GAP = 16;
-/** Jak hluboko opička sedí přes horní hranu kotouče (podíl své výšky): nohy visí přes čelo kotouče. */
-const MASCOT_SEAT = 0.3;
+/** Plátno maskota má viewBox 200; kotva sezení (`mascotSeatY`) je v jeho jednotkách. */
+const MASCOT_VIEWBOX = 200;
 /** Přeskok opičky na nový uzel (motion spec §3.1): start po dosednutí odemčeného uzlu +120 ms, přikrčení,
  *  oblouk po dobu `motion.fall` (vodorovně rovnoměrně, svisle parabola = gravitace), dopad: propad o `dip`
  *  a dosednutí `motion.settle`, soft (`monkeyHop`). */
@@ -52,8 +52,10 @@ interface Props {
 
 /** Teplá litina §2.7: opička SEDÍ na horní hraně kotouče (sourozenec kotouče, ne dítě: kotouč smí pulzovat,
  *  opička ne). Smutná a u bosse sedí vedle uzlu na opačné straně vlny. */
-const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolean) => {
-  if (!isBoss && !beside) return { x: p.x, y: p.y - p.size / 2 - MASCOT / 2 + MASCOT * MASCOT_SEAT };
+const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolean, stage: MascotStage) => {
+  // Kotva (spec §2.7, z-order): spodní hrana trupu leží na středu horní hrany kotouče; nohy a konec šálu
+  // (MonkeyFront) visí přes čelo kotouče.
+  if (!isBoss && !beside) return { x: p.x, y: p.y - p.size / 2 - (mascotSeatY(stage) / MASCOT_VIEWBOX - 0.5) * MASCOT };
   const half = isBoss ? BOSS_SIZE.w / 2 : p.size / 2;
   const side = p.x < cx ? 1 : -1;
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
@@ -151,7 +153,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const hopping = pair !== null && !reduced && phase === 5;
   // Fáze 5 trvá HAPPY_MS: po celou dobu skoku a doskoku má opice radost.
   const mood: Mood = hopping ? 'happy' : stats.mood;
-  const spot = mascotPos && mascotNode ? mascotSpot(mascotPos, cx, mascotNode.lesson.isBoss, mood === 'sad') : null;
+  const spot = mascotPos && mascotNode ? mascotSpot(mascotPos, cx, mascotNode.lesson.isBoss, mood === 'sad', stats.stage) : null;
   const seated = mascotNode !== undefined && !mascotNode.lesson.isBoss && mood !== 'sad';
   const mx = useSharedValue(spot?.x ?? 0);
   const my = useSharedValue(spot?.y ?? 0);
@@ -314,7 +316,19 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       {spot ? (
         <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0 }, mascotStyle]}>
           {/* Na uzlu dýchá prstenec, ne opička (§3.1); vedle uzlu (smutná, boss) dech zůstává. */}
-          <Mascot stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={!seated} />
+          {seated ? (
+            // Sedí na kotouči: dvě vrstvy se stejnou kotvou, kotouč je pod oběma (spec §2.7 z-order).
+            <View pointerEvents="none" style={{ width: MASCOT, height: MASCOT }}>
+              <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0 }}>
+                <MonkeyBack stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={false} />
+              </View>
+              <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0 }}>
+                <MonkeyFront stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={false} />
+              </View>
+            </View>
+          ) : (
+            <Mascot stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe />
+          )}
         </Animated.View>
       ) : null}
 

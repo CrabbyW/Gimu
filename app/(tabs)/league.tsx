@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef } from 'react';
-import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Countdown } from '@/components/league/Countdown';
 import { LeagueResultBanner } from '@/components/league/LeagueResultBanner';
 import { LeagueRow } from '@/components/league/LeagueRow';
@@ -11,18 +11,16 @@ import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { LockedPreview } from '@/components/ui/LockedPreview';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Stat } from '@/components/ui/Stat';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { useCountUp } from '@/hooks/useCountUp';
 import { useLeague } from '@/hooks/useLeague';
 import { useProfile } from '@/hooks/useProfile';
 import { isLeagueLocked } from '@/logic/league';
-import { intro, motion, stagger } from '@/lib/motion';
+import { intro, stagger } from '@/lib/motion';
 import { tierName } from '@/hooks/useTierName';
 import { services, type LeagueWeekView } from '@/services';
-import { useCompact, useTheme } from '@/theme';
+import { layout, useTheme } from '@/theme';
 import type { LeagueEntry } from '@/types';
 
 type Item = { kind: 'row'; entry: LeagueEntry; rank: number } | { kind: 'divider'; zone: 'promote' | 'demote' };
@@ -79,17 +77,17 @@ function LockedLeague({ view }: { view: LeagueWeekView }) {
 
 function Standings({ view }: { view: LeagueWeekView }) {
   const { c, space } = useTheme();
-  const compact = useCompact();
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < layout.narrow || fontScale > layout.fontScale;
   const list = useRef<FlatList<Item>>(null);
   const items = useMemo(() => buildItems(view), [view]);
   const myIndex = items.findIndex((it) => it.kind === 'row' && it.entry.isMe);
   const myXp = view.entries[view.myRank - 1]?.xpThisWeek ?? 0;
   const name = tierName(view.tier);
   const inPromoteZone = view.promoteCount > 0 && view.myRank <= view.promoteCount;
-  // Motion: úvodní sled jen při prvním zobrazení tabu: hlavička (XP napočítá), řádky po 45 ms,
+  // Motion: úvodní sled jen při prvním zobrazení tabu: hlavička, řádky po 45 ms,
   // vlastní řádek jako vyvrcholení po dojetí scrollu.
   const first = useFirstShow('tab:league');
-  const xpShown = useCountUp(myXp, motion.countFirstMs + 200, 0, { enabled: first, delayMs: intro.league.header + 80 });
 
   // Po otevření tabu dojet tak, aby vlastní řádek byl uprostřed seznamu (hlavička je mimo scroll, zůstává). S 0 XP (začátek týdne) se nescrolluje:
   // přednost má hlavička s výzvou, vlastní řádek je stejně poslední.
@@ -111,13 +109,15 @@ function Standings({ view }: { view: LeagueWeekView }) {
       ) : null}
       {/* Hlavička mimo FlatList (sticky): odznak, pozice, XP a odpočet zůstanou vidět i po dojetí na vlastní řádek. */}
       <Reveal play={first} delay={intro.league.header} rise={intro.tab.rise} style={{ paddingHorizontal: space.l, paddingTop: space.xl, paddingBottom: space.l, gap: space.l, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
-        {/* Na 320 pt by se XP s jednotkou nevešlo (QA bug 10): pozice o stupeň menší, menší mezery; delší XP (4+ cifry) zalomí na další řádek. */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', columnGap: compact ? space.m : space.l, rowGap: space.m }}>
-          <TierBadge tierName={name} />
-          <Stat label={copy.league.rank} value={view.myRank} unit={`/ ${view.entries.length}`} size={compact ? 'M' : 'L'} />
-          <Stat label={copy.league.myXp} value={xpShown} a11yValue={myXp} unit={copy.league.xp} size="M" />
+        {/* Teplá litina §3.2: odznak 56 + název ligy `title` + odpočet `caption muted`. Pozice a XP nese vlastní
+            řádek tabulky, hlavička je jen kontext. Pod 360 pt / při velkém písmu odpočet pod název, ne vedle. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
+          <TierBadge tierName={name} bare />
+          <View style={{ flex: 1, minWidth: 0, flexDirection: stacked ? 'column' : 'row', flexWrap: 'wrap', alignItems: stacked ? 'flex-start' : 'baseline', columnGap: space.m, rowGap: space.xs }}>
+            <Text variant="title" accessibilityRole="header" style={{ flexShrink: 1 }}>{copy.league.headerTitle(name)}</Text>
+            <Countdown endsAt={view.endsAt} />
+          </View>
         </View>
-        <Countdown endsAt={view.endsAt} />
         {myXp === 0 ? <Text variant="body" tone="muted">{copy.league.emptyWeek}</Text> : null}
       </Reveal>
       <FlatList

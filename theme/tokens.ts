@@ -15,7 +15,7 @@ export const size = {
   // DotLoader: rozměr mřížky a průměr tečky (uživatelské zadání size={32} dotSize={4}).
   loader: 32, loaderDot: 4,
   // Liga (§7.5): řádek 56, sloupec pořadí 40, mini opice 32, odznak úrovně 72, proužek vlastního řádku 3 (v `text`, R42).
-  leagueRow: 56, rankCol: 40, rowMascot: 32, tierBadge: 72, ownStripe: 3,
+  leagueRow: 56, rankCol: 40, rowMascot: 32, tierBadge: 56, ownStripe: 3,
   // Instrument vrstva (R42): koncový tik MeasureLine, rameno registrační značky `+`, Lucide ikona v hlavičce.
   tick: 8, regMark: 8, icon: 20,
   // Progres (§7.6): stopa milníku 4, graf váhy 200 vysoký s osou Y 40 vlevo, bod 4 (poslední 6 + prstenec 10).
@@ -42,6 +42,8 @@ export const size = {
   lockIcon: 16, sheetGripH: 4,
   // Progres: sloupec data týdne vlevo od mřížky aktivity („29. 12.“ v caption).
   weekCol: 48,
+  // Mřížka aktivity (§3.3): odcvičený dnešek = plná tečka + prstenec `accentGraphic` s touto mezerou.
+  todayRingGap: 2,
 } as const;
 // Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
 // `statMaxScale` = strop zvětšení tokenu `stat` (1.4): pevné sloupce čísel (XP v lize) rostou jen do něj.
@@ -142,7 +144,10 @@ export const statSize = { M: 53, L: 87, XL: 110 } as const;
 // `tankRim`: lem tílka Ember. Patří materiálu opice, ne UI akcentu (R43: akcent jen v oslavě lekce);
 // pálená siena z rodiny srsti, tlumenější než UI akcent, nesleduje sezónní přepis akcentu.
 // `ink`: detail obličeje (oči, nos, pusa) na světlém `face`, stejný v obou režimech.
-export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0', tankRim: '#B4532A', ink: '#1E1813' } as const;
+export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0', tankRim: '#B4532A', ink: '#1E1813',
+  // Šál opičky (Teplá litina §4): šedomodrá ocel, tónově opačná k jantarovému akcentu, aby akcent
+  // zůstal jen na horní hraně šálu v oslavě. Stín = spodní lem a uzel (plochý, bez gradientu).
+  scarf: '#6F7C86', scarfShade: '#56626B' } as const;
 
 export type Space = typeof space;
 export type Radius = typeof radius;

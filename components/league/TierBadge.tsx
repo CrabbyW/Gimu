@@ -11,7 +11,7 @@ interface Props {
   dim?: boolean;
 }
 
-/** Odznak úrovně ligy (§7.5): kruh 72 pt s obrysem `rule` 1.5, název úrovně (`tierName`, Inter Light 13) uvnitř, štítek LIGA nad ním. */
+/** Odznak úrovně ligy (§7.5): kruh 56 pt (`size.tierBadge`, Teplá litina §3.2) s obrysem `rule` 1.5, název úrovně (`tierName`, Inter Light 13) uvnitř, štítek LIGA nad ním. */
 export function TierBadge({ tierName, bare = false, dim = false }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
   return (

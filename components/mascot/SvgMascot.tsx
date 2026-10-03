@@ -79,9 +79,35 @@ const BICEP_AT = 0.4;
 const BICEP_R = 0.6;
 const WINTER_SCARF_ID = 'outfit-winter-arc-scarf';
 
+/** Která část opice se kreslí: `all` = celá (výchozí `<Mascot>`), `back`/`front` = dvě vrstvy pro sezení
+ *  na kotouči (Teplá litina §2.7). Obě vrstvy mají stejný viewBox i animaci těla, složené dají `all`. */
+type Layer = 'all' | 'back' | 'front';
+
 /** Geometrická opice stage 1–3 z `STAGE_GEOMETRY` (spec §8) s kosmetickými vrstvami na kotvách z `anchors.ts`. */
-export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, decorative, breathe = true, hop: hopEnabled = true }: MascotProps) {
+export function SvgMascot(props: MascotProps) {
+  return <MascotSvg {...props} layer="all" />;
+}
+
+/** Zadní vrstva sedící opice: trup, hlava, paže, ovinutí šálu. Nese popisek pro čtečku. Kotouč leží pod ní. */
+export function MonkeyBack(props: MascotProps) {
+  return <MascotSvg {...props} layer="back" />;
+}
+
+/** Přední vrstva sedící opice: nohy přes hranu kotouče a konec šálu přes jeho čelo. Vždy dekorativní. */
+export function MonkeyFront(props: MascotProps) {
+  return <MascotSvg {...props} decorative layer="front" />;
+}
+
+/** Obdélník přes celé plátno minus zaoblený trup (evenodd): nohy přední vrstvy jen tam, kde je trup nezakrývá. */
+function outsideTorsoPath({ x, y, w, h, rx }: StageGeometry['torso']): string {
+  return `M0 0 H200 V200 H0 Z M${x + rx} ${y} H${x + w - rx} A${rx} ${rx} 0 0 1 ${x + w} ${y + rx} V${y + h - rx} `
+    + `A${rx} ${rx} 0 0 1 ${x + w - rx} ${y + h} H${x + rx} A${rx} ${rx} 0 0 1 ${x} ${y + h - rx} V${y + rx} A${rx} ${rx} 0 0 1 ${x + rx} ${y} Z`;
+}
+
+function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorative, breathe = true, hop: hopEnabled = true, scarfEdge = false, layer }: MascotProps & { layer: Layer }) {
   const { c, seasonThemeId } = useTheme();
+  const drawBack = layer !== 'front';
+  const drawFront = layer !== 'back';
   const { reduced } = useMotionSafe();
   const px = resolveMascotSize(size);
   const pose = MOOD_POSE[mood];
@@ -89,7 +115,7 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
   const ink = mascotInk(c);
   // ID ořezů musí být v dokumentu unikátní (na webu je víc opic v jednom DOM).
   const uid = useId().replace(/[^\w-]/g, '');
-  const clip = { body: `mascot-body-${uid}`, head: `mascot-head-${uid}`, deltL: `mascot-delt-l-${uid}`, deltR: `mascot-delt-r-${uid}` };
+  const clip = { body: `mascot-body-${uid}`, head: `mascot-head-${uid}`, deltL: `mascot-delt-l-${uid}`, deltR: `mascot-delt-r-${uid}`, legs: `mascot-legs-${uid}` };
   const g = STAGE_GEOMETRY[stage];
   const { head, ears, torso, shoulders, legs } = g;
   const faceScale = head.r / FACE_REF.r;
@@ -106,6 +132,10 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
   const renderLayers = (ls: LayerPart[], anchor: Anchor) =>
     ls.map(({ Component }, i) => <Component key={i} anchor={anchor} stage={stage} ink={ink} />);
   const backLayers = layers.filter((l) => l.z === 'back');
+  // Vlastní šál opičky (§4). Sezónní nebo nasazená zimní šála ho nahradí, dvě šály přes sebe nedávají smysl.
+  const ownScarf = seasonScarf.length === 0 && cosmetics.outfit !== WINTER_SCARF_ID;
+  const wrapped = pose.face === 'sad';
+  const scarfWrap = ownScarf ? <ScarfWrap g={g} wrapped={wrapped} edge={scarfEdge ? c.accentGraphic : null} /> : null;
 
   // Dýchání celého těla; smutek dýchá pomaleji a mělčeji. Střed škálování je uprostřed plátna,
   // translateY vrací spodní hranu zpět: opice stojí na místě a dýchá nahoru.
@@ -265,16 +295,26 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
               <ClipPath id={clip.deltR}><AnimatedCircle r={shoulders.r} animatedProps={deltR} /></ClipPath>
             </>
           )}
+          {layer === 'front' && (
+            <ClipPath id={clip.legs}><Path d={outsideTorsoPath(torso)} clipRule="evenodd" /></ClipPath>
+          )}
         </Defs>
 
+        {drawBack && (
+        <>
         {/* Zadní vrstvy kosmetiky (kapuce) leží za celou opicí. */}
         {backLayers.map(({ Component, anchor }, i) => (
           <Component key={i} anchor={anchor === 'hands' ? anchors.handL : anchors[anchor]} stage={stage} ink={ink} />
         ))}
 
-        {/* Hmotu dává jen plochý stín srsti dole: nohy, paže a srpky pod hlavou, tělem a čenichem. Bez gradientu. */}
-        <Circle cx={100 - legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
-        <Circle cx={100 + legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
+        {/* Hmotu dává jen plochý stín srsti dole: nohy, paže a srpky pod hlavou, tělem a čenichem. Bez gradientu.
+            Celá opice kreslí nohy tady (za trupem); sedící dvojice je přesune do přední vrstvy. */}
+        {layer === 'all' && (
+          <>
+            <Circle cx={100 - legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
+            <Circle cx={100 + legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
+          </>
+        )}
         {/* Ramena paží leží uvnitř obrysu těla: horní konec paže zajede pod tělo, bez mezery. */}
         <Arm limb={g.armL} side={-1} bicep={bicep} raise={arms} upAngle={ARMS_UP_ANGLE[stage]} />
         <Arm limb={g.armR} side={1} bicep={bicep} raise={arms} upAngle={ARMS_UP_ANGLE[stage]} />
@@ -305,6 +345,8 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
         />
         <Ellipse cx={100} cy={torso.y + torso.h / 2 - 2} rx={torso.w / 4} ry={torso.h * 0.23} fill={MASCOT_COLORS.face} />
         <G clipPath={`url(#${clip.body})`}>{renderLayers(pick('front', 'body'), anchors.body)}</G>
+        {/* Šál volně pod bradou: hlava ho kreje, vidět je jen pod ní. Smutná ho má omotaný přes bradu (níž). */}
+        {!wrapped && scarfWrap}
 
         <AnimatedCircle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={MASCOT_COLORS.fur} animatedProps={earLeftProps} />
         <AnimatedCircle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={MASCOT_COLORS.fur} animatedProps={earRightProps} />
@@ -331,10 +373,75 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
           <AnimatedPath d={SAD_MOUTH} stroke={ink} strokeWidth={3} strokeLinecap="round" fill="none" animatedProps={sadMouthProps} />
         </G>
 
+        {wrapped && scarfWrap}
         {renderLayers(pick('front', 'neck'), anchors.neck)}
         <G clipPath={`url(#${clip.head})`}>{renderLayers(pick('front', 'head'), anchors.head)}</G>
+        </>
+        )}
+
+        {/* Přední vrstva sedící opice: nohy jen mimo obrys trupu (stejné pixely jako v celé opici), přes hranu kotouče. */}
+        {layer === 'front' && (
+          <G clipPath={`url(#${clip.legs})`}>
+            <Circle cx={100 - legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
+            <Circle cx={100 + legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
+          </G>
+        )}
+        {drawFront && ownScarf ? <ScarfTail g={g} mood={mood} /> : null}
       </Svg>
     </Animated.View>
+  );
+}
+
+/** Šál (jednotky viewBoxu 200): výška ovinutí volně / omotaně k bradě, spodní lem stínu, přesah přes trup,
+ *  tloušťka jantarové hrany, šířka konce, o kolik konec visí pod kotvou sezení (přes čelo kotouče). */
+const SCARF = { h: 12, hWrapped: 20, lip: 3, over: 4, edge: 3, tailW: 13, tailBelowSeat: 22, fringe: 4 };
+
+/** Ovinutí šálu kolem krku: plochá šedomodrá páska se stínovým lemem dole, volitelně jantarová horní hrana. */
+function ScarfWrap({ g, wrapped, edge }: { g: StageGeometry; wrapped: boolean; edge: string | null }) {
+  const chin = g.head.cy + g.head.r;
+  const h = wrapped ? SCARF.hWrapped : SCARF.h;
+  const y = wrapped ? chin - 14 : chin - 6;
+  const half = g.torso.w / 2 + SCARF.over;
+  const x = 100 - half;
+  const rx = h / 2;
+  return (
+    <G>
+      <Rect x={x} y={y + SCARF.lip} width={half * 2} height={h} rx={rx} fill={MASCOT_COLORS.scarfShade} />
+      <Rect x={x} y={y} width={half * 2} height={h} rx={rx} fill={MASCOT_COLORS.scarf} />
+      {edge ? (
+        <Path d={`M${x + rx} ${y + SCARF.edge / 2} L${100 + half - rx} ${y + SCARF.edge / 2}`} stroke={edge} strokeWidth={SCARF.edge} strokeLinecap="round" fill="none" />
+      ) : null}
+    </G>
+  );
+}
+
+/** Konec šálu (přední vrstva). Klid/radost: visí přes kotvu sezení na čelo kotouče, roztřepený konec.
+ *  Oslava: vlaje do strany. Smutek: krátký, zastrčený na hrudi. */
+function ScarfTail({ g, mood }: { g: StageGeometry; mood: Mood }) {
+  const chin = g.head.cy + g.head.r;
+  const w = SCARF.tailW;
+  if (mood === 'celebrate') {
+    const x = 100 + g.torso.w / 2 + SCARF.over - 6;
+    const y = chin - 4;
+    return (
+      <Path
+        d={`M${x} ${y} L${x + 24} ${y - 12} L${x + 30} ${y - 4} L${x + 24} ${y} L${x + 30} ${y + 4} L${x} ${y + 10} Z`}
+        fill={MASCOT_COLORS.scarf}
+      />
+    );
+  }
+  const x = 100 + g.torso.w * 0.12;
+  const top = chin + 2;
+  const bottom = mood === 'sad' ? g.torso.y + g.torso.h * 0.6 : g.torso.y + g.torso.h + SCARF.tailBelowSeat;
+  const f = SCARF.fringe;
+  return (
+    <G>
+      <Path
+        d={`M${x} ${top} L${x + w} ${top} L${x + w + 2} ${bottom} L${x + w - f} ${bottom - f} L${x + w / 2} ${bottom} L${x + 2} ${bottom - f} L${x - 2} ${bottom} Z`}
+        fill={MASCOT_COLORS.scarf}
+      />
+      <Rect x={x - 1} y={top - 2} width={w + 2} height={6} rx={3} fill={MASCOT_COLORS.scarfShade} />
+    </G>
   );
 }
 

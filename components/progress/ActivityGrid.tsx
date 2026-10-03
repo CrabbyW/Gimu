@@ -10,6 +10,8 @@ import type { GridCell } from '@/logic/progress';
 
 interface Props {
   cells: GridCell[];
+  /** Dnes je odcvičeno (`todayDone` z `useProfileStats` → `logic/mascotMood.todayStatus`): dnešek = plná tečka s prstencem. */
+  todayDone?: boolean;
   /** Úvodní sled (motion): buňky se vyplní po dnech od nejstaršího. */
   play?: boolean;
 }
@@ -26,10 +28,12 @@ function weekLabel(day: string): string {
  *  Tečky ve stejném jazyce jako DayDot: plná `text` = aktivní, prstenec `accentGraphic` = dnes,
  *  obrys `faint` = bez aktivity, budoucí dny se nekreslí (slot zůstane prázdný, mřížka nepřeskočí).
  *  Prázdný stav (žádný aktivní den): jen aktuální týden + jedna věta, ne pět řad prázdných koleček. */
-export function ActivityGrid({ cells, play = false }: Props) {
+export function ActivityGrid({ cells, todayDone = false, play = false }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
-  const active = cells.filter((x) => x.state === 'active').length;
+  // Odcvičený dnešek je aktivní den (počet pro čtečku i prázdný stav), jen vypadá jinak.
+  const active = cells.filter((x) => x.state === 'active').length + (todayDone && cells.some((x) => x.state === 'today') ? 1 : 0);
   const empty = active === 0;
+  const ring = size.dot + 2 * (size.todayRingGap + stroke.todayDot);
   const weeks: GridCell[][] = [];
   for (let i = 0; i < cells.length; i += COLS) weeks.push(cells.slice(i, i + COLS));
   const shown = empty ? weeks.slice(-1) : weeks;
@@ -53,7 +57,23 @@ export function ActivityGrid({ cells, play = false }: Props) {
             </Text>
             {week.map((x, di) => (
               <View key={x.day} style={{ flex: 1, alignItems: 'center' }}>
-                {x.state === 'future' ? <View style={{ width: d, height: d }} /> : (
+                {x.state === 'future' ? <View style={{ width: d, height: d }} /> : x.state === 'today' && todayDone ? (
+                  // Odcvičený dnešek: plná tečka `text` (je to aktivní den) + vnější prstenec `accentGraphic` (je to dnes).
+                  // Prstenec leží absolutně kolem tečky, řádek ani sloupec se nerozšíří.
+                  <View style={{ width: d, height: d, alignItems: 'center', justifyContent: 'center' }}>
+                    <View
+                      style={{
+                        position: 'absolute', width: ring, height: ring, borderRadius: radius.full,
+                        borderWidth: stroke.todayDot, borderColor: c.accentGraphic,
+                      }}
+                    />
+                    <Cell
+                      play={play}
+                      delay={intro.grid.at + (wi * COLS + di) * intro.grid.step}
+                      style={{ width: d, height: d, borderRadius: radius.full, backgroundColor: c.text }}
+                    />
+                  </View>
+                ) : (
                   <Cell
                     play={play}
                     delay={intro.grid.at + (wi * COLS + di) * intro.grid.step}

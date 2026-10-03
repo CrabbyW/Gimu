@@ -6,10 +6,12 @@ import { useSettings } from '@/store/settings';
 export function useNow(intervalMs = 30_000): Date {
   const offset = useSettings((s) => s.devTimeOffsetMs);
   const [value, setValue] = useState(() => now());
+  // Změna dev posunu: nový čas hned při renderu (odvozený stav), ne setState v efektu.
+  const [seenOffset, setSeenOffset] = useState(offset);
+  if (seenOffset !== offset) { setSeenOffset(offset); setValue(now()); }
   useEffect(() => {
-    setValue(now());
     const id = setInterval(() => setValue(now()), intervalMs);
     return () => clearInterval(id);
-  }, [intervalMs, offset]);
+  }, [intervalMs]);
   return value;
 }

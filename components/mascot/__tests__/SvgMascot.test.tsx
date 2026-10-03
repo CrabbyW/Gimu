@@ -7,7 +7,7 @@ import { SeasonScarf } from '../cosmetics';
 import { OutfitScarf } from '../cosmetics/OutfitScarf';
 import { OutfitTank } from '../cosmetics/OutfitTank';
 import { AccWristbands } from '../cosmetics/AccWristbands';
-import { Mascot, MASCOT_SIZES } from '..';
+import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront } from '..';
 import { MOOD_POSE } from '../SvgMascot';
 import { STAGE_GEOMETRY } from '../geometry';
 import type { MascotProps } from '../types';
@@ -100,6 +100,62 @@ test('stage 2 a 3 kreslí vlastní geometrii bez varování, hlava se zmenšuje'
   expect(headR(3)).toBe(STAGE_GEOMETRY[3].head.r);
   expect(new Set([headR(1), headR(2), headR(3)]).size).toBe(3);
   expect(warn).not.toHaveBeenCalled();
+});
+
+// R44: maskot se dělí na MonkeyBack/MonkeyFront (sezení na kotouči) a nově kreslí vlastní šál.
+// `<Mascot>` musí dál kreslit celou opici v jednom Svg (obě vrstvy).
+describe('šál a vrstvy pro sezení na kotouči', () => {
+  const SCARF = '#6F7C86';
+  const SCARF_SHADE = '#56626B';
+  const AMBER_DARK = buildTheme('dark', null).c.accentGraphic;
+  const renderLayer = (Comp: typeof MonkeyBack, props: Partial<MascotProps> = {}) => {
+    unmount();
+    act(() => {
+      renderer = TestRenderer.create(
+        <ThemeContext.Provider value={buildTheme('dark', null)}><Comp {...base} {...props} /></ThemeContext.Provider>,
+      );
+    });
+    return renderer!.root;
+  };
+  const fills = (root: ReactTestInstance) => root.findAll((n) => typeof n.props.fill === 'string').map((n) => n.props.fill as string);
+  const legCircles = (root: ReactTestInstance) => {
+    const { legs } = STAGE_GEOMETRY[1];
+    return root.findAllByType(Circle).filter((n) => n.props.cy === legs.y && n.props.r === legs.r);
+  };
+
+  test.each<Mood>(['idle', 'happy', 'celebrate', 'sad'])('šál se kreslí v náladě %s', (mood) => {
+    const f = fills(render({ mood }));
+    expect(f).toContain(SCARF);
+    expect(f).toContain(SCARF_SHADE);
+  });
+
+  test('jantarová hrana šálu jen se `scarfEdge`', () => {
+    const edge = (root: ReactTestInstance) => root.findAllByType(Path).filter((p) => p.props.stroke === AMBER_DARK);
+    expect(edge(render({ mood: 'celebrate' }))).toHaveLength(0);
+    expect(edge(render({ mood: 'celebrate', scarfEdge: true }))).toHaveLength(1);
+  });
+
+  test('sezónní šála nahradí vlastní šál (žádné dvě šály)', () => {
+    expect(fills(render({}, 'dark', 'winterArc'))).not.toContain(SCARF);
+  });
+
+  test('celá opice má nohy, zadní vrstva ne, přední jen nohy a konec šálu a je dekorativní', () => {
+    expect(legCircles(render({}))).toHaveLength(2);
+    const back = renderLayer(MonkeyBack);
+    expect(legCircles(back)).toHaveLength(0);
+    expect(labelOf(back)).toBe('Tvoje opice');
+    const front = renderLayer(MonkeyFront);
+    expect(legCircles(front)).toHaveLength(2);
+    expect(front.findAll((n) => n.props.accessibilityRole === 'image')).toHaveLength(0);
+    expect(front.findAllByType(Ellipse).filter((e) => e.props.rx === 5)).toHaveLength(0);
+    expect(fills(front)).toContain(SCARF);
+  });
+
+  test('obě vrstvy mají stejné plátno jako celá opice', () => {
+    const vb = (root: ReactTestInstance) => root.findByType(Svg).props.viewBox;
+    expect(vb(renderLayer(MonkeyBack))).toBe(vb(render({})));
+    expect(vb(renderLayer(MonkeyFront))).toBe(vb(render({})));
+  });
 });
 
 describe('kosmetické vrstvy', () => {

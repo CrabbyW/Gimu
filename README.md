@@ -33,6 +33,25 @@ npm run lint          # expo lint
 - `data/` — statický obsah (cviky, lekce, milníky, ligy, sezónní texty, copy)
 - `hooks/` — sdílené React hooky nad store/services
 
+## Vzhled a odezva (R44 „Teplá litina“)
+
+- Teplá hnědočerná báze, mléčná křída, jediný akcent jantar `#F2A33A` jen pro primární akci, sérii, progres a oslavu
+  (spec `docs/superpowers/specs/2026-10-03-tepla-litina-redesign-design.md`).
+- Série = činka, na kterou každý den přibude kotouč (`components/ui/StreakBarbell.tsx`).
+- Liga je zamčená do první lekce; ozubené kolo nastavení je jen na Profilu.
+- Pohyb, haptika a zvuk podle `docs/superpowers/specs/2026-10-03-motion-haptics-sound-design.md`: pružiny Kotouč / Šál
+  a timing Cvak v `lib/motion.ts`, `feedback(id)` v `lib/feedback.ts` (haptika + zvuk ve stejném ticku).
+  Oslavné vzory: AHAP soubory v `assets/haptics/` (pro budoucí dev build), v Expo Go jejich aproximace `APPROX` v `lib/haptics.ts`.
+- Nastavení: dva nezávislé přepínače **Haptika** a **Zvuky**; tichý režim iOS = ticho.
+- Onboarding končí krokem **Připomínka** (výběr hodiny).
+
+## Přeskočení cviku
+
+V lekci jde cvik přeskočit („Přeskočit“). Přeskočený objem se nezahodí: rozloží se rovnoměrně do dalších 5 lekcí
+(např. skip 50 s výdrže → 5 × +10 s), aby se plnil dlouhodobý cíl. Stropy: dluh max 150 s / 40 opakování,
+navýšení cviku max 15 s / 4 opakování a 25 % základu. Lekce platí (série, odemčení), když je odcvičená aspoň
+polovina cviků; „Přeskočit“ se nabídne jen dokud to jde. XP základu poměrně. Logika: `logic/adaptive.ts`.
+
 ## Tým a workflow
 
 Vývoj vede tým agentů popsaný v [`CLAUDE.md`](./CLAUDE.md): boss plánuje a integruje, design-agent
@@ -45,7 +64,7 @@ hodnocení v [`docs/RATING.md`](./docs/RATING.md).
 
 1. `npx expo start --web` (nebo Expo Go), otevři `/dev` (v appce: Profil → Nastavení → Dev menu).
 2. **Načíst demo profil**: 12denní streak, 7 hotových lekcí, XP 460 (těsně pod stage 2), rozpracované milníky, cíl váhy a cíl sezóny Winter Arc.
-3. Mapa → lekce 8 → oslava (kotouč, IWF červená, φ figura) → **stage-up** opice → mapa s odemčeným bossem.
+3. Mapa → lekce 8 → oslava (dopad kotouče, jantarový prstenec, +XP, kotouč série na činku, „Zítra: …“; přeskočitelná tapem) → **stage-up** opice → mapa s odemčeným bossem.
 4. Liga, Progres, Sezóna, Profil, Šatník, Nastavení. **Skok na konec sezóny** v dev menu otevře recap a převzetí odměny.
 
 Všechna demo data jsou v jediném souboru `services/mock/demoData.ts`. Výměna za API = nové implementace `services/contracts.ts` v `services/index.ts`.

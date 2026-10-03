@@ -16,6 +16,8 @@ export interface MascotProps {
   /** Poskoky nálady happy/celebrate (výchozí ano). Oslava lekce chce `celebrate` bez poskoku (§4.1),
    *  mapa kreslí přeskok na nový uzel sama (oblouk). */
   hop?: boolean;
+  /** Jantarová (`accentGraphic`) horní hrana šálu (spec §4: každá oslava). Prolnutí řídí motion. */
+  scarfEdge?: boolean;
 }
 
 export const MASCOT_SIZES = { S: 56, M: 120, L: 200, XL: 280 } as const;

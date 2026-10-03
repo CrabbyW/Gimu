@@ -39,6 +39,10 @@ export const STAGE_GEOMETRY: Record<MascotStage, StageGeometry> = {
   },
 };
 
+/** Kotva sezení (Teplá litina §2.7): spodní hrana trupu ve viewBoxu 200. Na mapě leží přesně na horní
+ *  hraně kotouče, pod ní visí jen nohy a konec šálu (`MonkeyFront`). */
+export const seatY = (stage: MascotStage): number => STAGE_GEOMETRY[stage].torso.y + STAGE_GEOMETRY[stage].torso.h;
+
 /** Bod na ose paže ve vzdálenosti `t` od ramene při úhlu `deg`; `side` −1 = levá, +1 = pravá. */
 export function armPoint(limb: Limb, side: -1 | 1, t: number, deg: number): { x: number; y: number } {
   'worklet';

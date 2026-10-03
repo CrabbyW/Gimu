@@ -65,7 +65,9 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
 
   if (!view) return null;
   const { grid, chart, milestones, dreamBody } = view;
-  const activeCount = grid.filter((g) => g.state === 'active').length;
+  // Dnešek má v mřížce vlastní stav `today`; když je dnes odcvičeno (`todayDone` z useProfileStats), počítá se.
+  const todayDone = stats?.todayDone ?? false;
+  const activeCount = grid.filter((g) => g.state === 'active').length + (todayDone ? 1 : 0);
   const latest = chart && chart.points.length > 0 ? chart.points[chart.points.length - 1]!.kg : null;
 
   const saveMilestone = async (current: number) => {
@@ -84,7 +86,7 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
         {dreamBody ? <Reveal play={first} rise={T.rise}><DreamBodyCard text={dreamBody} /></Reveal> : null}
 
         <Section label={copy.progress.activityLabel} play={first} delay={T.step}>
-          <ActivityGrid cells={grid} play={first} />
+          <ActivityGrid cells={grid} todayDone={todayDone} play={first} />
           {/* Prázdný stav nese věta v mřížce; „0 dní“ by jen opakovalo prázdno. */}
           {activeCount > 0 ? <Telemetry items={[{ key: copy.progress.activeKey, value: copy.progress.activeDays(activeCount) }]} /> : null}
         </Section>

@@ -1,6 +1,17 @@
 # Stav práce: fáze 1
 
-Aktualizováno: 2026-10-02. Větev `faze1/core-loop`.
+Aktualizováno: 2026-10-03. Větev `faze1/core-loop`.
+
+## R44 Teplá litina + pohyb/haptika/zvuk + přeskočení cviku (2026-10-03)
+
+- **Spec:** `docs/superpowers/specs/2026-10-03-tepla-litina-redesign-design.md`, `docs/superpowers/specs/2026-10-03-motion-haptics-sound-design.md`
+- **Hotovo:** paleta a typografie Teplá litina (jantar jen CTA/série/progres/oslava), komponenty (StreakBarbell, TodayStatus,
+  LockedPreview, ValueWheelSheet…), všech 5 záložek, liga zamčená do 1. lekce, ozubené kolo jen na Profilu, krok Připomínka
+  v onboardingu, přepínače Haptika/Zvuky; pohyb MVP (vtlačení, oslava lekce se skipToEnd, dech/odemčení uzlu, přeskok opičky,
+  odpočet 3-2-1 a haptika výdrže, AHAP vzory + aproximace v Expo Go, zvuky Kenney CC0); přeskočení cviku s adaptivním
+  dluhem (`logic/adaptive.ts`); katalog 12 odznaků (`data/badges.ts`).
+- **QA:** R44 kolo 1 a 2 SCHVÁLENO (`docs/QA.md`). **Rating:** viz `docs/RATING.md` (R44).
+- **K ruční kontrole:** haptika a ducking na fyzickém iPhonu, pocit pružin, 320 pt s velkým písmem.
 
 - **Plán A:** `docs/superpowers/plans/2026-09-29-opice-faze1-core-loop.md`
 - **Plán B:** `docs/superpowers/plans/2026-09-30-opice-faze1-planB.md`
