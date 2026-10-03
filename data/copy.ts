@@ -132,6 +132,9 @@ export const copy = {
   lesson: {
     tomorrow: (title: string, minutes: number) => `Zítra: ${title} · ${minutes} min`,
     sectionDone: 'Sekce hotová. Další se odemkne v mapě.',
+    skip: 'Přeskočit',
+    /** Navýšení cviku z dluhu přeskočených cviků (R44). */
+    extra: (n: number, hold: boolean) => (hold ? `+${n} s za přeskočené cviky` : `+${n} opak. za přeskočené cviky`),
     reps:'OPAKOVÁNÍ', seconds: 'SEKUND', quitTitle: 'Ukončit lekci?', quitBody: 'Progres této lekce se neuloží.',
     quitConfirm: 'Ukončit', quitCancel: 'Trénovat dál', holdReady: 'Připrav se', nextExercise: 'Další cvik',
     close: 'Ukončit lekci',

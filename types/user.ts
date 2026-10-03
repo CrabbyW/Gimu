@@ -10,6 +10,11 @@ export interface Milestone { id: string; label: string; target: number; unit: Mi
 export type WeightGoal = { kind: 'none' } | { kind: 'lose' | 'gain'; startKg: number; targetKg: number };
 export interface WeightEntry { weekStart: ISODate; kg: number }
 
+/** Objem tréninku: sekundy výdrže a opakování. */
+export interface Volume { holdS: number; reps: number }
+/** Dluh z přeskočených cviků (logic/adaptive.ts). `share` = navýšení na lekci, zafixované při přeskočení. */
+export interface TrainingDebt extends Volume { share: Volume }
+
 export interface UserProfile {
   path: PathId;
   dreamBody: string;
@@ -28,6 +33,8 @@ export interface UserProfile {
   lastLeagueResult: LeagueWeekResult | null;
   badges: string[];
   seasonClaims: Record<string, { at: string; cosmeticIds: string[]; badgeIds: string[] }>;
+  /** Chybí u profilů před R44 = žádný dluh. */
+  trainingDebt?: TrainingDebt;
 }
 
 export interface OnboardingInput {

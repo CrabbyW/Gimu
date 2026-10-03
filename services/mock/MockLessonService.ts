@@ -1,4 +1,5 @@
 import { EXERCISES } from '@/data/exercises';
+import { EMPTY_DEBT, lessonExtras } from '@/logic/adaptive';
 import { LESSONS, LESSONS_BY_PATH } from '@/data/lessons';
 import { PATHS } from '@/data/paths';
 import { SEASON_RULES, SEASONS } from '@/data/seasons';
@@ -41,12 +42,18 @@ export class MockLessonService implements LessonService {
     // Stav uzlu i tady (QA kolo 1) — deep link na zamčenou lekci ji nesmí ani otevřít, ne až při dokončení.
     const completed = new Set(useDb.getState().profile?.activity.map((e) => e.lessonId) ?? []);
     const state = nodeStates(LESSONS_BY_PATH[lesson.pathId], completed).get(lesson.id) ?? 'locked';
-    return { lesson, exercises, state };
+    // Dluh z přeskočených cviků navýší cviky této lekce (R44, logic/adaptive.ts).
+    const extras = lessonExtras(exercises, useDb.getState().profile?.trainingDebt ?? EMPTY_DEBT);
+    return {
+      lesson, state, extras, baseAmounts: exercises.map((e) => e.amount),
+      exercises: exercises.map((e, i) => ((extras[i] ?? 0) > 0 ? { ...e, amount: e.amount + (extras[i] ?? 0) } : e)),
+    };
   }
-  async completeLesson(id: string, attemptId: string, now: Date) {
+  async completeLesson(id: string, attemptId: string, now: Date, done?: readonly boolean[]) {
     const profile = useDb.getState().profile;
     if (!profile) throw new Error('Profil neexistuje.');
-    const { lesson } = await this.getLesson(id);
+    const detail = await this.getLesson(id);
+    const { lesson } = detail;
     // Spec §7.2: kromě current a dokončených je vše locked — ani deep link nesmí zamčenou lekci započítat.
     const completed = new Set(profile.activity.map((e) => e.lessonId));
     if (nodeStates(LESSONS_BY_PATH[lesson.pathId], completed).get(lesson.id) === 'locked') throw new Error(`Lekce ${id} je zamčená.`);
@@ -55,6 +62,10 @@ export class MockLessonService implements LessonService {
     const out = applyLessonCompletion({
       profile, lesson, pathLessons: LESSONS_BY_PATH[lesson.pathId], now, attemptId, rules: XP_RULES, thresholds: STAGE_THRESHOLDS,
       season, repairWindowDays: SEASON_RULES.repairWindowDays,
+      outcome: done ? {
+        done, extras: detail.extras,
+        exercises: detail.exercises.map((e, i) => ({ type: e.type, amount: detail.baseAmounts[i] ?? e.amount })),
+      } : undefined,
     });
     if (out.profile !== profile) useDb.getState().setProfile(out.profile);
     return out.result;

@@ -45,3 +45,17 @@ test('zamčenou lekci (např. přes deep link) nejde dokončit a nic se neulož�
   await services.lessons.completeLesson('bc-1-1', 'att-2', new Date(2026, 8, 29, 11));
   expect(useDb.getState().profile!.activity).toHaveLength(2);
 });
+
+test('přeskočení (R44): lekce platí od poloviny, XP základu poměrně, dluh navýší další lekci', async () => {
+  await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+  // bc-1-1: plank 30 s, hollow-hold 20 s, glute-bridge 12 opak.
+  await expect(services.lessons.completeLesson('bc-1-1', 'att-s0', new Date(2026, 8, 29, 10), [true, false, false])).rejects.toThrow();
+  const r = await services.lessons.completeLesson('bc-1-1', 'att-s1', new Date(2026, 8, 29, 10), [true, false, true]);
+  expect(r.xp.base).toBeLessThan(r.xp.base / (2 / 3) + 1);
+  expect(r.unlockedLessonId).toBe('bc-1-2');
+  expect(useDb.getState().profile?.trainingDebt).toMatchObject({ holdS: 20, share: { holdS: 5 } });
+  // bc-1-2: plank, superman, side-plank — první výdrž dostane podíl dluhu, cviky drží i původní objem.
+  const next = await services.lessons.getLesson('bc-1-2');
+  expect(next.extras[0]).toBe(5);
+  expect(next.exercises[0]!.amount).toBe(next.baseAmounts[0]! + 5);
+});

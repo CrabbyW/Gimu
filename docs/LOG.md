@@ -533,3 +533,12 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - tsc/lint/jest zelené (445 testů). Verdikt SCHVÁLENO.
 - Opraveno: dvojí tap v onboarding kroku připomínky (guard + reset při focusu).
 - Otevřené: tab label bez numberOfLines (design), AppState `inactive` (motion), ruční kontrola haptiky/duckingu na zařízení.
+
+## 2026-10-03 · boss · Přeskočení cviku s adaptivním dluhem (R44, zadání uživatele)
+- Uživatel: skip cviku → přeskočený objem se rozloží do dalších lekcí („v dalších 5 lekcích o 10 s delší“), aby se plnil dlouhodobý cíl, se stropem. Lekce platí (série, odemčení), když je odcvičená aspoň polovina cviků.
+- `logic/adaptive.ts`: dluh `{holdS, reps, share}`; `share` = dluh / 5 (min 5 s / 1 opak.) zafixovaný při skipu → rovnoměrně 5 × 10 s. Stropy: dluh 150 s / 40 opak., navýšení cviku min(15 s / 4 opak., 25 % základu). Odcvičené navýšení se odečte, přeskočený cvik přidá svůj základ. `canSkip` pustí skip jen dokud jde lekci započítat (žádná slepá ulička).
+- XP: základ lekce poměrně k odcvičeným cvikům, bonus dne a série beze změny.
+- `UserProfile.trainingDebt?` (volitelné, bez migrace verze); poškozený dluh se při načtení zahodí.
+- Služba: `getLesson` vrací navýšené `exercises` + `extras` + `baseAmounts`; `completeLesson(…, done?)`.
+- UI: v lekci sekundární „Přeskočit“ (ne během běžící výdrže), pod kartou „+N s za přeskočené cviky“.
+- Rozhodl boss: konkrétní stropy a min. podíl; navýšení jde na cviky stejného typu (výdrž/opakování), ne nutně na tentýž cvik.

@@ -65,6 +65,10 @@ function upgradeV1(p: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+const isVolume = (v: unknown): boolean =>
+  isPlainObject(v) && Number.isFinite(v.holdS) && Number.isFinite(v.reps) && (v.holdS as number) >= 0 && (v.reps as number) >= 0;
+const isDebt = (d: unknown): d is NonNullable<UserProfile['trainingDebt']> => isVolume(d) && isPlainObject(d) && isVolume(d.share);
+
 /** Zahodí nasazené položky s neznámým id, ve špatném slotu nebo už neodemčené. */
 function cleanEquipped(p: UserProfile): UserProfile['equipped'] {
   return sanitizeEquipped(p.equipped, COSMETICS, { owned: p.owned, milestones: p.milestones, longestStreak: longestStreak(activeDays(p.activity)) });
@@ -75,7 +79,11 @@ export function migrateDb(persisted: unknown, version: number): PersistedDb {
   let profile = (persisted as { profile?: unknown }).profile ?? null;
   if (profile === null) return EMPTY;
   if (version < 2 && isPlainObject(profile)) profile = upgradeV1(profile);
-  if (isProfile(profile)) return { profile: { ...profile, equipped: cleanEquipped(profile) } };
+  if (isProfile(profile)) {
+    // Poškozený dluh tréninku (R44) se zahodí, profil zůstává: dluh je jen doplněk, ne historie.
+    const { trainingDebt, ...rest } = profile;
+    return { profile: { ...rest, equipped: cleanEquipped(profile), ...(isDebt(trainingDebt) ? { trainingDebt } : {}) } };
+  }
   console.warn('[db] poškozený profil, reset na onboarding');
   return EMPTY;
 }

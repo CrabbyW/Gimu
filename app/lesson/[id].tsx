@@ -10,10 +10,12 @@ import { BigActionBar } from '@/components/ui/BigActionBar';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
+import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useLesson } from '@/hooks/useLesson';
 import { useProfile } from '@/hooks/useProfile';
 import { now } from '@/lib/clock';
+import { canSkip } from '@/logic/adaptive';
 import { nextPhase, type LessonPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
 import { useTheme } from '@/theme';
@@ -42,26 +44,30 @@ export default function LessonScreen() {
   const [quitOpen, setQuitOpen] = useState(false);
   const [attemptId] = useState(() => `${id}-${now().getTime()}`); // jeden pokus = jedno id (idempotence)
   const completing = useRef(false);
+  // Výsledek každého cviku (true = odcvičeno, false = přeskočeno).
+  const [done, setDone] = useState<boolean[]>([]);
   const leaving = useRef(false);
   const profile = useProfile();
   const cosmetics = profile.status === 'ready' ? profile.data?.equipped ?? NO_COSMETICS : NO_COSMETICS;
 
-  const advance = useCallback(async () => {
-    if (lesson.status !== 'ready') return;
+  const advance = useCallback(async (didIt: boolean = true) => {
+    if (lesson.status !== 'ready' || phase.kind !== 'exercise') return;
+    const outcome = [...done.slice(0, phase.index), didIt];
+    setDone(outcome);
     const next = nextPhase(phase, lesson.data.exercises.length);
     if (next.kind !== 'completing') { setPhase(next); return; }
     if (completing.current) return; // dvojí tap na „Hotovo“ (Review Focus 3)
     completing.current = true;
     setPhase(next);
     try {
-      setResult(await services.lessons.completeLesson(id, attemptId, now()));
+      setResult(await services.lessons.completeLesson(id, attemptId, now(), outcome));
       setPhase({ kind: 'celebrate' });
     } catch {
       completing.current = false;
       setPhase({ kind: 'exercise', index: lesson.data.exercises.length - 1 });
       Alert.alert(copy.common.loadError(copy.common.loadTarget.lessonResult), undefined, [{ text: copy.common.retry }]);
     }
-  }, [phase, lesson, id, attemptId]);
+  }, [phase, lesson, id, attemptId, done]);
 
   // Pokračovat z oslavy: zpět na mapu (pod modalem), s id odemčeného uzlu pro unlock sekvenci.
   // Cesta `/(tabs)`, ne `/`: přesměrování z indexu by query zahodilo (Ruling R22). Dvojí tap hlídá ref.
@@ -121,7 +127,9 @@ export default function LessonScreen() {
           exercise={exercise}
           busy={phase.kind !== 'exercise'}
           suspended={quitOpen}
-          onDone={advance}
+          extra={lesson.data.extras[index] ?? 0}
+          onDone={() => void advance(true)}
+          onSkip={canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
         />
       </Screen>
     </View>
@@ -134,11 +142,15 @@ interface StepProps {
   busy: boolean;
   /** Otevřený dialog ukončení: běžící výdrž se pauzne. */
   suspended: boolean;
+  /** O kolik je cvik navýšený z dluhu přeskočených cviků (0 = beze změny). */
+  extra: number;
   onDone(): void;
+  /** Přeskočení cviku; chybí, když by se lekce už nezapočítala (logic/adaptive canSkip). */
+  onSkip?: () => void;
 }
 
 /** Jeden cvik: karta a spodní lišta. Klíčovaný cvikem, takže odpočet výdrže začíná pro každý cvik znovu. */
-function ExerciseStep({ exercise, busy, suspended, onDone }: StepProps) {
+function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip }: StepProps) {
   const { space } = useTheme();
   const hold = exercise.type === 'hold';
   const timer = useHoldTimer(hold ? exercise.amount : 0, onDone);
@@ -157,9 +169,15 @@ function ExerciseStep({ exercise, busy, suspended, onDone }: StepProps) {
     <>
       <ScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: space.l, paddingBottom: space.xl }}>
         <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} />
+        {extra > 0 ? <Text variant="caption" tone="muted" style={{ marginTop: space.s }}>{copy.lesson.extra(extra, hold)}</Text> : null}
       </ScrollView>
       <View style={{ marginHorizontal: -space.l }}>
-        <BigActionBar primary={{ ...primary, disabled: busy || timer.status === 'done' }} />
+        <BigActionBar
+          primary={{ ...primary, disabled: busy || timer.status === 'done' }}
+          // Přeskočit jen před startem výdrže nebo u opakování; běžící výdrž se nejdřív pauzne.
+          secondary={onSkip && !busy && timer.status !== 'running' && timer.status !== 'countdown' && timer.status !== 'done'
+            ? { label: copy.lesson.skip, onPress: () => { pause(); onSkip(); } } : undefined}
+        />
       </View>
     </>
   );

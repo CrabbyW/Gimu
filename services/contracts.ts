@@ -13,7 +13,8 @@ export type { DayState, LessonResult, NodeState, RecapBeforeAfter, SeasonProgres
 /** `xp`: základní XP za dokončení teď (lekce/boss, u dokončené opakování), bez bonusů za den a streak. */
 export interface MapNode { lesson: Lesson; state: NodeState; exerciseCount: number; xp: number }
 export interface LessonPathView { path: PathMeta; sections: { index: number; title: string; nodes: MapNode[] }[]; currentLessonId: string | null }
-export interface LessonDetail { lesson: Lesson; exercises: Exercise[]; state: NodeState }
+/** `exercises` už mají `amount` navýšené z dluhu; `extras[i]` = o kolik (0 = beze změny), `baseAmounts[i]` = původní objem. */
+export interface LessonDetail { lesson: Lesson; exercises: Exercise[]; state: NodeState; extras: number[]; baseAmounts: number[] }
 
 export interface MilestoneUpdateResult { completed: boolean; unlockedCosmeticIds: string[] }
 export interface UserService {
@@ -30,7 +31,8 @@ export interface UserService {
 export interface LessonService {
   getPath(pathId: PathId, now: Date): Promise<LessonPathView>;
   getLesson(id: string): Promise<LessonDetail>;
-  completeLesson(id: string, attemptId: string, now: Date): Promise<LessonResult>;
+  /** `done[i]` = cvik i odcvičený (bez něj vše). Lekce platí od poloviny odcvičených, jinak odmítne. */
+  completeLesson(id: string, attemptId: string, now: Date, done?: readonly boolean[]): Promise<LessonResult>;
 }
 export interface LeagueWeekView {
   tier: LeagueTierId; entries: LeagueEntry[]; promoteCount: number; demoteCount: number;
