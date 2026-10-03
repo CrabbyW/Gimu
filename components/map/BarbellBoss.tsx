@@ -5,7 +5,7 @@ import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
 import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { copy } from '@/data/copy';
 import { feedback as fb } from '@/lib/feedback';
-import { useMotionSafe } from '@/lib/motion';
+import { ease, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import { svgType, useTheme } from '@/theme';
 import { BOSS_SIZE } from './geometry';
@@ -96,10 +96,11 @@ function BossPulse({ reduced }: { reduced: boolean }) {
   const t = useSharedValue(0);
   useEffect(() => {
     if (reduced) { cancelAnimation(t); t.value = 0; return; }
-    t.value = withRepeat(withTiming(1, { duration: PULSE_MS }), -1, true);
+    t.value = withRepeat(withTiming(1, { duration: PULSE_MS, easing: ease.sine }), -1, true);
     return () => cancelAnimation(t);
   }, [reduced, t]);
-  const style = useAnimatedStyle(() => ({ opacity: 1 - t.value * 0.6, transform: [{ scale: 1 + t.value * 0.04 }] }));
+  // Stejný dech jako prstenec uzlu (§3.1): opacita 1↔0.6, scale 1→1.03; omezený pohyb statický 0.8.
+  const style = useAnimatedStyle(() => (reduced ? { opacity: 0.8 } : { opacity: 1 - t.value * 0.4, transform: [{ scale: 1 + t.value * 0.03 }] }));
   return (
     <Animated.View
       pointerEvents="none"

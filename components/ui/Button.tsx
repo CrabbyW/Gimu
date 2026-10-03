@@ -1,10 +1,10 @@
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { feedback } from '@/lib/feedback';
+import { motion, useMotionSafe } from '@/lib/motion';
 import { opacity, useTheme, type Colors } from '@/theme';
 import { DotLoader } from './DotLoader';
 import { Text } from './Text';
-import { usePressFeedback } from './usePressFeedback';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
@@ -23,6 +23,9 @@ interface Props {
 }
 
 // Teplá litina §2.7: stisk = změna výplně, ne glow. Ghost má plochu jen ve stisku.
+/** Vtlačení (motion spec §10.1): o 2 pt dolů za `motion.press`, návrat `motion.cvak`, bez pružiny. */
+export const PRESS_DEPTH = 2;
+
 const FILL: Record<ButtonVariant, { idle: keyof Colors | null; pressed: keyof Colors; ink: keyof Colors }> = {
   primary: { idle: 'accent', pressed: 'accentPressed', ink: 'onAccent' },
   secondary: { idle: 'raised', pressed: 'raisedPressed', ink: 'text' },
@@ -31,7 +34,10 @@ const FILL: Record<ButtonVariant, { idle: keyof Colors | null; pressed: keyof Co
 
 export function Button({ label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, style }: Props) {
   const { c, space, radius, size } = useTheme();
-  const press = usePressFeedback(0.97);
+  const { reduced } = useMotionSafe();
+  // Omezený pohyb: bez posunu, stisk nese jen výplň (`accentPressed` / `raisedPressed`).
+  const y = useSharedValue(0);
+  const pressStyle = useAnimatedStyle(() => ({ transform: [{ translateY: reduced ? 0 : y.value }] }));
   const f = FILL[variant];
   const ink = onAccent ? (variant === 'primary' ? c.accent : c.onAccent) : c[f.ink];
   const fill = (pressed: boolean) => {
@@ -41,11 +47,11 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
   };
   const inactive = disabled || loading;
   return (
-    <Animated.View style={[press.style, style]}>
+    <Animated.View style={[pressStyle, style]}>
       <Pressable
         onPress={onPress}
-        onPressIn={() => { press.onPressIn(); feedback(variant === 'primary' ? 'cta' : 'tapLight'); }}
-        onPressOut={press.onPressOut}
+        onPressIn={() => { y.set(withTiming(PRESS_DEPTH, motion.press)); feedback(variant === 'primary' ? 'cta' : 'tapLight'); }}
+        onPressOut={() => { y.set(withTiming(0, motion.cvak)); }}
         disabled={inactive}
         accessibilityRole="button"
         accessibilityLabel={label}

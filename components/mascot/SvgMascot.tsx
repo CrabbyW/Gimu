@@ -80,7 +80,7 @@ const BICEP_R = 0.6;
 const WINTER_SCARF_ID = 'outfit-winter-arc-scarf';
 
 /** Geometrická opice stage 1–3 z `STAGE_GEOMETRY` (spec §8) s kosmetickými vrstvami na kotvách z `anchors.ts`. */
-export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, decorative }: MascotProps) {
+export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, decorative, breathe = true, hop: hopEnabled = true }: MascotProps) {
   const { c, seasonThemeId } = useTheme();
   const { reduced } = useMotionSafe();
   const px = resolveMascotSize(size);
@@ -113,10 +113,10 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
   useEffect(() => {
     cancelAnimation(breath);
     breath.value = 0;
-    if (reduced) return;
+    if (reduced || !breathe) return;
     breath.value = withRepeat(withTiming(1, { duration: pose.breathHalfMs, easing: Easing.inOut(Easing.sin) }), -1, true);
     return () => cancelAnimation(breath);
-  }, [reduced, breath, pose.breathHalfMs]);
+  }, [reduced, breathe, breath, pose.breathHalfMs]);
 
   // Mrknutí v náhodném intervalu 3–6 s; JS časovač spouští sekvenci na UI vlákně.
   const eyeRy = useSharedValue(EYE_RY_OPEN);
@@ -170,6 +170,9 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
     if (reduced) {
       hop.value = 0;
       squash.value = 0;
+    } else if (!hopEnabled) {
+      hop.value = withTiming(0, motion.moodShift);
+      squash.value = withTiming(0, motion.moodShift);
     } else if (p.hopRepeat) {
       const rest = motion.celebrateRestMs + h.landMs + h.recoverMs;
       hop.value = withRepeat(withSequence(jump(), withDelay(rest, withTiming(0, { duration: 0 }))), -1);
@@ -181,7 +184,7 @@ export function SvgMascot({ stage, mood, size, cosmetics, accessibilityLabel, de
       hop.value = withTiming(0, motion.moodShift);
       squash.value = withTiming(0, motion.moodShift);
     }
-  }, [mood, reduced, hop, squash]);
+  }, [mood, reduced, hopEnabled, hop, squash]);
   useEffect(() => () => { cancelAnimation(hop); cancelAnimation(squash); }, [hop, squash]);
 
   // Paže nahoru (celebrate), timing: pozornost nese poskok.

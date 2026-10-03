@@ -2,11 +2,13 @@ import { Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { CalendarRange, CircleUser, Dumbbell, Trophy, TrendingUp, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
+import Animated, { withTiming, type EntryExitAnimationFunction } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useRequireProfile } from '@/hooks/useRequireProfile';
 import { feedback } from '@/lib/feedback';
+import { motion } from '@/lib/motion';
 import { isNavigationGuarded } from '@/lib/navGuard';
 import { useTheme } from '@/theme';
 
@@ -19,6 +21,23 @@ const TABS: { name: string; title: string; Icon: LucideIcon }[] = [
   { name: 'season', title: copy.tabs.season, Icon: CalendarRange },
   { name: 'profile', title: copy.tabs.profile, Icon: CircleUser },
 ];
+
+// Tečka aktivního tabu (motion spec §3.7): příchod scale 0→1 + opacita 0→1 a odchod obráceně, Cvak 120 ms.
+// Layout animace na UI vlákně; s omezeným pohybem reanimated skočí na konec (ReduceMotion.System).
+const dotIn: EntryExitAnimationFunction = () => {
+  'worklet';
+  return {
+    initialValues: { opacity: 0, transform: [{ scale: 0 }] },
+    animations: { opacity: withTiming(1, motion.cvak), transform: [{ scale: withTiming(1, motion.cvak) }] },
+  };
+};
+const dotOut: EntryExitAnimationFunction = () => {
+  'worklet';
+  return {
+    initialValues: { opacity: 1, transform: [{ scale: 1 }] },
+    animations: { opacity: withTiming(0, motion.cvak), transform: [{ scale: withTiming(0, motion.cvak) }] },
+  };
+};
 
 /** Tab bar (Teplá litina §2.7): `base`, vlasová linka `rule` nahoře, Lucide 24 / 1.5, popisek `tab`
  *  sentence case bez oříznutí. Aktivní = `text` + tečka 4 pt `accentGraphic` 4 pt nad ikonou;
@@ -66,7 +85,9 @@ export default function TabsLayout() {
             tabBarIcon: ({ focused }) => (
               <View style={{ width: size.tabIcon, height: size.tabIcon, alignItems: 'center' }}>
                 {focused ? (
-                  <View
+                  <Animated.View
+                    entering={dotIn}
+                    exiting={dotOut}
                     style={{
                       position: 'absolute', top: -(size.tabDot + space.xs), width: size.tabDot, height: size.tabDot,
                       borderRadius: radius.full, backgroundColor: c.accentGraphic,

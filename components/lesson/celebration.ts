@@ -64,3 +64,39 @@ export function xpBreakdownLabel(xp: XpBreakdown, t: XpLabels): string {
   if (xp.streak > 0) parts.push(`${t.streak} +${xp.streak}`);
   return parts.join(' · ');
 }
+
+/** Časová osa oslavy úrovně (a) v ms od dopadu pravého kotouče (motion spec §4.1). Patří do `lib/motion`
+ *  jako `celebration.a`; do té doby (lib/* mimo motion-agenta) žije tady. */
+export const TIMELINE_A = {
+  dim: 0, dimMs: 240, center: 120, ring: 160, ringMs: 700, xp: 500, countMs: 650,
+  seriesPlate: 900, pose: 950, scarfMs: 200, title: 1000, tomorrow: 1100, cta: 1200,
+  /** Doběh na konečný stav při přeskočení. */
+  skipMs: 150,
+} as const;
+
+export const MAX_XP_TICKS = 8;
+
+/** Krok count-upu tak, aby ticků (zobrazených mezihodnot včetně poslední) bylo nejvýš `max`. */
+export function xpTickStep(total: number, max: number = MAX_XP_TICKS): number {
+  return Math.max(1, Math.ceil(Math.max(0, total) / max));
+}
+
+/** Hodnota zobrazená po `k`-tém ticku (poslední tick ukáže přesně `total`). */
+export const xpTickValue = (k: number, total: number, step: number) => Math.min(total, Math.max(0, k) * step);
+
+/** Hodnoty, které count-up postupně ukáže (pro test stropu ticků). */
+export function xpTickValues(total: number, max: number = MAX_XP_TICKS): number[] {
+  const step = xpTickStep(total, max);
+  const out: number[] = [];
+  for (let k = 1; xpTickValue(k - 1, total, step) < total; k++) out.push(xpTickValue(k, total, step));
+  return out;
+}
+
+/** Idempotentní brána: `run` provede akci jen poprvé, další volání nedělají nic (`skipToEnd`, cleanup). */
+export function once(fn: () => void): { run(): void; readonly done: boolean } {
+  let done = false;
+  return {
+    run() { if (done) return; done = true; fn(); },
+    get done() { return done; },
+  };
+}
