@@ -425,3 +425,44 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Opravy po QA kolo 1: `GoldenFigure` ruší animace při unmountu (`cancelAnimation`); poloměr figury `min(šířka/φ/2, AXIS.mid)`, aby na 390 pt nesahala nad pás činky k titulku; účaří kg na kotouči z y 30 na 29 (víc vzduchu nad nábojem, hodnoty v QA záznamu jsou pro 30).
 - Opravy po rating kolo 1: natvrdo tloušťky v `Plate`, `GoldenFigure`, `ExerciseSilhouette` → `stroke` tokeny; README bez „ember“.
 - Otevřené: vizuální kontrola na zařízení (viz K ruční kontrole v QA a RATING).
+
+## 2026-10-03 · design-agent · DRAFT spec Teplá litina
+- Napsán draft `docs/superpowers/specs/2026-10-03-tepla-litina-redesign-design.md` (jen dokument, žádný kód): paleta dark/light s kontrasty, typová škála, komponenty, 5 obrazovek s prázdnými stavy, denní cíl + připomínka, 3 varianty opičky, mapování na kód.
+- Rozhodl sám: liga pro nového uživatele zamčená („Odemkne se po první lekci“ + 3 ghost řádky), ne top 3 + vlastní řádek; nový token `faint` #6E665D pro ghost data a zamčené prvky; tab bar label Inter 600 11 sentence case (ruší kompaktní variantu); aktivní tab = 4 pt akcentová tečka; prstenec aktuálního uzlu v akcentu; opička sedí na kotouči; Profil maskot M 96 + stat grid 2×2; legenda dnů 2×2 rozlišená tvarem; RegMark/Telemetry/MeasureLine pryč z hlavních obrazovek.
+- Otevřené: zdroj modrého ozubeného kola (v kódu tabů nenalezen, potřeba screenshot); `seasonGold` vs. jantar; přepis SPEC §6 a zrušení R43 „akcent jen v oslavě“; denní cíl chybí v SPEC (logika boss); odhad minut lekce v `data/`; emoji v notifikaci; render kontrola palety.
+
+## motion-agent – DRAFT spec pohybu, haptiky a zvuku (2026-10-03)
+- Napsán dokument `docs/superpowers/specs/2026-10-03-motion-haptics-sound-design.md` (bez kódu v repu).
+- Rozhodl sám: pružiny Kotouč/Šál/Cvak a mapování na `lib/motion.ts` (`seat` ponechán jako výjimka ζ 0.55); `error` haptika nikde; CTA oslavy 1000 → 2000 ms se skipem; nové stavy `curious/focused/sleeping`; strop 8 XP ticků; `play(id)` s Expo Go aproximací AHAP.
+- Otevřené: pořadí rigid/heavy u dopadu (AHAP vs. scénář), výroba zvuků ring/gong/tick, implementace `logic/mascotMood.ts` (boss), barva jantaru podle spec „Teplá litina“.
+
+## qa-agent: recenze draftu Teplá litina (2026-10-03)
+- Jen čtení, kód ani spec neměněny. Kontrasty přepočítány: light `faint` 2.0:1 (draft 3.0), light jantar jako výplň/progress 1.8:1 na base, light `accentText` 4.25:1 na surface; několik dark hodnot uvedeno výš, než vychází.
+- Data: chybí délka lekce (min), katalog odznaků (14) i flag přerušeného streaku; boss se odemyká po 8 lekcích, ne po 6.
+- Otevřené: opravit kontrasty a čísla v draftu, rozhodnout odchylky od SPEC (liga zamčená, opička na kotouči, denní cíl, profil M).
+
+## qa-agent — recenze DRAFT motion/haptics/sound spec (2026-10-03)
+- Jen čtení, kód ani spec neměněny. API ověřena v node_modules (reanimated 4.5.1, worklets 0.10.1, expo-haptics 57.0.3, expo-audio 57.0.5): existují.
+- Hlavní nálezy: chybí implementace skipu/AppState v LessonCompleteScene; `tapLight` není v FeedbackId; XpPop count-up běží přes setState+rAF (JS re-rendery); ±10 ms z JS setTimeout nereálné; tichý režim vs. haptika jako primární kanál neřešen pro `duckOthers` přepínání; AHAP posun t=0 dle rozhodnutí bosse.
+- Otevřené: měření na iPhone SE, zvuky ring/gong/tick neexistují.
+
+## design-agent — recenze DRAFT motion spec vůči Teplé litině (2026-10-03)
+- Jen čtení, spec ani kód neměněny.
+- Hlavní nálezy: nekonečný jantarový glow aktivního uzlu porušuje „jantar vzácný“; konfety ze 70 % jantarové působí jako párty; token `textMuted` neexistuje (je `muted`); stín na řádku ligy a shimmer jdou proti pravidlům vizuální spec; stisk tlačítka je definovaný dvakrát (2 pt vs. světlejší výplň); scéna oslavy nemá sloty pro Denní cíl a kartu připomínky.
+- Otevřené: barvy ringu, jisker a shock kruhu jako tokeny (`celebrate.*`), rozhodnutí bosse o konfetách.
+
+## motion-agent – recenze vizuální spec „Teplá litina“ vs. motion spec (2026-10-03)
+- Jen čtení, bez změn kódu. 10 nálezů předáno bossovi (glow aktivního uzlu chybí ve vizuálu, dvojí dech opičky na kotouči, přeskok opičky mezi uzly, done uzel bez prstence pro trim, tečka tabu bez pohybu, sheet s kolečkem chybí ve vizuálu, `textMuted` → `muted`, scrim 0.76 vs dim 0.6, celebrate vs. kývnutí v oslavě (a), konfety jantar na jantarové ploše stage-up).
+- Otevřené: rozhodnutí bosse k nálezům 1–3 a 6.
+
+## motion-agent – motion/haptics/sound spec kolo 2 (2026-10-03)
+- Přepsán jen `docs/superpowers/specs/2026-10-03-motion-haptics-sound-design.md` (sekce „Změny v kole 2“). Kód beze změn.
+- Zapracováno: série = činka s kotouči (plamen a jiskry pryč, nový moment nacvaknutí kotouče série), AHAP/APPROX t=0 = dopad, oslava (a) s CTA v 1200 ms a řádkem „Zítra“, redukce haptiky, konfety v litinových tónech, nálady MVP idle/celebrate/sad, nálezy QA (sync ±1 snímek přes UI vlákno, idempotentní skipToEnd, jediný aktivní vzor, ducking, nezávislé přepínače, perfTier při startu, lokální chyba XP), nálezy review (opička jako sourozenec, přeskok, odemčení, fajfka, tečka tabu, prázdná liga/progres).
+- Rozhodl sám: kotouč série v (a) v t=900; titulek 1000, „Zítra“ 1100; (b) CTA 1600, (c) CTA 1800; zvuky ring ~900 ms, gong ~1.8 s; `tapLight` = bez haptiky.
+- Otevřené: výběr Kenney souborů, text „Zítra“, heuristika perfTier, ověření TextInput na Fabric, odstíny plate* pro konfety.
+
+## design-agent – spec Teplá litina kolo 2 (2026-10-03)
+- Přepsán jen `docs/superpowers/specs/2026-10-03-tepla-litina-redesign-design.md` (sekce „Změny v kole 2“). Kód beze změn.
+- Zapracováno: plamen → `StreakBarbell` (sm 6 slotů, lg 14, prázdný, dnes čeká, přetečení ×K, přerušený se spadlými kotouči), denní cíl → `TodayStatus`, připomínka v onboardingu, řádek „Zítra“ na oslavě, light `faint` #857B6E / `accentGraphic` #B86F12 / `accentText` #8A500C, všechny kontrasty přepočítány vzorcem WCAG + páry pro `theme/__tests__`, tokeny scrim×3, pressed×2, celebrate.ring/spark, `ValueWheelSheet`, z-order opičky (MonkeyBack/MonkeyFront jako sourozenci kotouče), mezistav odemčení, Dynamic Type, data místo konstant (estMinutes, bossUnlockAfter, xpBreakdown, badges).
+- Rozhodl sám: QA navrhované #8F8577 nestačí na surface (2.8:1) → #857B6E; dark `faint` se nesmí na `raised` (2.8:1); `accentPressed` #E8952A tmavší v obou režimech; smutná karta jen při longestStreak ≥ 2.
+- Otevřené: ozubené kolo (screenshot), seasonGold vs. jantar 1.1:1, emoji v notifikaci (SPEC §7.9), render plate* tónů.

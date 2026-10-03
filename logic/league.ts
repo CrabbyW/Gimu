@@ -1,5 +1,5 @@
-import type { CosmeticSlot, ISODate, LeagueEntry, LeagueOutcome, LeagueTierId, MascotStage, UserProfile } from '@/types';
-import { xpBetween } from './activity';
+import type { ActivityEvent, CosmeticSlot, ISODate, LeagueEntry, LeagueOutcome, LeagueTierId, MascotStage, UserProfile } from '@/types';
+import { isLessonEvent, xpBetween } from './activity';
 import { addDays, parseISODate, weekStart } from './dates';
 import { hashString, mulberry32 } from './random';
 
@@ -77,3 +77,6 @@ export function formatCountdown(ms: number): { d: number; h: number; m: number }
   const m = Math.max(0, Math.floor(ms / 60_000));
   return { d: Math.floor(m / 1440), h: Math.floor((m % 1440) / 60), m: m % 60 };
 }
+
+/** Liga je zamčená, dokud uživatel nedokončil žádnou lekci (dev-xp se nepočítá). Bez lekce by pořadí nic neměřilo. */
+export const isLeagueLocked = (activity: Pick<ActivityEvent, 'lessonId'>[]): boolean => !activity.some(isLessonEvent);
