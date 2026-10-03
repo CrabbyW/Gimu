@@ -1,4 +1,5 @@
 import type { LessonResult } from '@/logic/completion';
+import type { GoalsPatch } from '@/logic/goals';
 import type { NodeState } from '@/logic/map';
 import type { DayState, RecapBeforeAfter, SeasonProgress, SeasonRecap } from '@/logic/season';
 import type {
@@ -22,6 +23,8 @@ export interface UserService {
   completeOnboarding(input: OnboardingInput): Promise<UserProfile>;
   logWeight(kg: number, now: Date): Promise<void>;
   updateMilestone(id: string, current: number): Promise<MilestoneUpdateResult>;
+  /** Nastavení → Cíle: milníky, cíl váhy, vize těla, cesta. Neplatná změna vyhodí chybu s kódem `GoalsError`. */
+  updateGoals(patch: GoalsPatch): Promise<UserProfile>;
   /** Dev menu: přidá XP jako událost `dev-xp` (ne lekce, ruling 17). */
   grantDevXp(amount: number, now: Date): Promise<void>;
   reset(): Promise<void>;

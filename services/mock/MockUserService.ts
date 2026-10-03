@@ -1,3 +1,4 @@
+import { applyGoalsPatch, type GoalsPatch } from '@/logic/goals';
 import { buildInitialProfile } from '@/logic/onboarding';
 import { COSMETICS } from '@/data/cosmetics';
 import { DEV_XP_LESSON_ID } from '@/logic/activity';
@@ -39,6 +40,14 @@ export class MockUserService implements UserService {
     // Milestone kosmetika se odvozuje z pravidel (ruling 14); hlásí se jen nově odemčená.
     const unlockedCosmeticIds = newlyUnlocked(COSMETICS, ownershipCtx(p), ownershipCtx({ ...p, milestones }));
     return { completed: newlyCompleted(p.milestones, milestones).includes(id), unlockedCosmeticIds };
+  }
+  async updateGoals(patch: GoalsPatch) {
+    const p = requireProfile();
+    const r = applyGoalsPatch(p, patch);
+    if ('error' in r) throw new Error(r.error);
+    // Milestone kosmetika se odvozuje z pravidel; změna cílů ji jen přepočítá při dalším čtení.
+    useDb.getState().setProfile(r.profile);
+    return r.profile;
   }
   async grantDevXp(amount: number, now: Date) {
     if (!Number.isInteger(amount) || amount <= 0) throw new Error('Dev XP musí být kladné celé číslo.');
