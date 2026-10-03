@@ -36,7 +36,21 @@ export const dur = {
   reveal: 480,
   step: 45,
   staggerCap: 360,
+  // Časová škála (motion spec §1.3): mikro 80–150, standard 250–400, oslava 800–1600; nad 2 s jen přeskočitelné.
+  micro: 120,
+  standard: 320,
+  celebrate: 1200,
 };
+
+/** Tři pojmenované křivky Teplé litiny (motion spec §1.1). Pružina nikdy na tom, na co uživatel ťuká. */
+export const spring = {
+  /** Kotouč: těžký, krátký dozvuk (ζ ≈ 0.75). Přesuny karet, odemykání uzlů, kotouč do středu scény. */
+  kotouc: { damping: 26, stiffness: 300, mass: 1 } satisfies WithSpringConfig,
+  /** Šál: jemný, pomalý přestřel (ζ ≈ 0.64). Jen maskot (šál, hlava). */
+  sal: { damping: 14, stiffness: 120, mass: 1 } satisfies WithSpringConfig,
+};
+/** Cvak: okamžitý, bez překmitu. Tap, záložka, toggle, návrat tlačítka. */
+const cvak = { duration: dur.micro, easing: ease.out } satisfies WithTimingConfig;
 
 /** Zpoždění i-tého prvku sledu, s víčkem, aby sled četl jako jeden takt. */
 export const stagger = (i: number, step: number = dur.step, cap: number = dur.staggerCap) => Math.min(Math.max(0, i) * step, cap);
@@ -49,9 +63,12 @@ export const motion = {
   reveal: { duration: dur.reveal, easing: ease.out } satisfies WithTimingConfig,
   /** Stisk (UI vlákno): rychlé stlačení a rozhodný návrat, bez pružiny. */
   press: { duration: dur.press, easing: ease.press } satisfies WithTimingConfig,
-  release: { duration: dur.release, easing: ease.punch } satisfies WithTimingConfig,
+  /** Návrat tlačítka = Cvak (§1.2). */
+  release: cvak,
+  cvak,
   // Kotouč: pád jako gravitace (zrychluje, ease-in), dopad přebírá `seat`.
   fall: { duration: 440, easing: ease.gravity } satisfies WithTimingConfig,
+  // Jediná výjimka z pravidla ζ ≥ 0.6 (motion spec §1.2): zaboření kotouče je záměr.
   // Dosednutí kotouče na osu: pružina z 0 s rychlostí dopadu (pt/s, dolů). ζ ≈ 0.55 → zaboří se ~6 pt
   // a vrátí s přestřelem < 1 pt nad osu, doznění ~250 ms. Těžké, čisté zacvaknutí.
   seat: { damping: 25, stiffness: 520, mass: 1, velocity: 260 } satisfies WithSpringConfig,
@@ -64,8 +81,9 @@ export const motion = {
   /** Count-up +XP (expo.out: čísla naskočí a dojedou). */
   countMs: 700,
   // Odměny: pružiny jen tady (spec §6.7). Laděno na ζ 0.7–0.85 (hyperframes: fyzický dozvuk, ne kreslený zákmit).
-  pop: { damping: 21, stiffness: 220, mass: 1 } satisfies WithSpringConfig, // ζ ≈ 0.7, kruh zrození
-  unlock: { damping: 22, stiffness: 260 } satisfies WithSpringConfig, // ζ ≈ 0.68, odemčení uzlu
+  // Kruh zrození a odemčení uzlu = Kotouč (§1.2).
+  pop: spring.kotouc,
+  unlock: spring.kotouc,
   /** Dosednutí opice (zrození, návrat z pózy): ζ ≈ 0.85. */
   settle: { damping: 29, stiffness: 300 } satisfies WithSpringConfig,
   /** Poskok opice: přikrčení → odraz (ease-out) → pád (gravitace) → dopad (squash). Bez pružiny,
@@ -85,7 +103,7 @@ export const motion = {
   /** Omezený pohyb: místo pružiny a posunu jen krátké prolnutí (spec §6.7). */
   calmFade: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
   /** Mikrointerakce ovládání (Toggle, přechod slidu): timing, nikdy pružina (fáze 3: 150–250 ms). */
-  toggle: { duration: 180, easing: ease.out } satisfies WithTimingConfig,
+  toggle: cvak,
   slide: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
   /** Posun nového slidu recapu ve směru listování (pt). */
   slideShift: 24,

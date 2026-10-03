@@ -3,9 +3,9 @@
 // Zlatý řez: zdroj všech R43 proporcí (typová škála, kotouč, mapa, figura oslavy).
 export const PHI = (1 + Math.sqrt(5)) / 2;
 export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 40, xxl: 64, xxxl: 104, xxxxl: 168 } as const;
-// R43: radiusy v poměru φ (8/5 ≈ 1.6). Karta 8 působí jako obrobený kov, ne jako bublina; `s` drží poměr 1:2.
-// `full` zůstává pro kruhové tvary (kotouč, kulaté CTA, odznak), kde tvar nese význam.
-export const radius = { s: 5, l: 8, full: 999 } as const;
+// Teplá litina §2.5: `s` 8 tlačítko/chip/pole, `l` 14 karta/popover/sheet (měkčí, „comfy“, ale ne bublina),
+// `full` pro kruhové tvary (kotouč, avatar, pilulka), kde tvar nese význam.
+export const radius = { s: 8, l: 14, full: 999 } as const;
 // Rozměry dotykových ploch a ovládacích prvků podle spec §6.6. `hit` je jediný zdroj
 // minima 44 pt (dřív duplikované natvrdo ve třech komponentách).
 export const size = {
@@ -27,7 +27,17 @@ export const size = {
   // Sezóna (§7.7): tečka DotGrid 10 a mezera 6 (spec), odznak sezóny v kartě odměny a v recapu,
   // úlomek prasknutí kruhu ve stage-up (r = 6). ProgressBar sdílí stopu `meter`.
   dot: 10, dotGap: 6, seasonBadge: 56, seasonBadgeLarge: 88, shard: 12,
+  // Teplá litina §2.7: tlačítko min. 52, uzel mapy 72 (aktuální 88) s mezerou prstence 4, tab bar 64 a ikona 24,
+  // tečka aktivního tabu 4, řádek TodayStatus 44 a jeho tečka 8, pilulka série 36, řádek ValueWheelSheet 44.
+  button: 52, node: 72, nodeCurrent: 88, nodeRingGap: 4, tabBar: 64, tabIcon: 24, tabDot: 4,
+  todayRow: 44, todayDot: 8, streakPill: 36, wheelRow: 44, sheetGrip: 32,
+  // StreakBarbell: sm 28×16 (3 sloty na stranu), lg 160×56 (7 na stranu).
+  streakSmW: 28, streakSmH: 16, streakLgW: 160, streakLgH: 56,
+  // Pevná šířka sloupce XP v lize pro „9 999“ (stat 20 pt, tabulární číslice ≈ 0.6 em).
+  leagueXpCol: 64,
 } as const;
+// Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
+export const layout = { narrow: 360, fontScale: 1.3 } as const;
 // Průhlednost zamčené položky v Šatníku (silueta náhledu pod zámkem).
 // `disabled` = neaktivní ovládací prvek (stejná hodnota, jakou má Button).
 export const opacity = { locked: 0.32, disabled: 0.4 } as const;
@@ -37,7 +47,8 @@ export const dash = { target: '4 6' } as const;
 // fokus/výběr bez akcentu (spodní linka pole, proužek vybrané karty) 2, prstenec výdrže 3
 // (měřidlo v `text` na stopě `rule`; tenčí než dřív, protože už ho nenese barva, ale kontrast).
 // R43: `plate` = lem a náboj kotouče, `check` = fajfka přes otvor, `hairline` = konstrukční figura oslavy.
-export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1 } as const;
+// Teplá litina: `nodeRing` 2 = prstenec aktuálního uzlu, `streakAxis` osa StreakBarbell sm.
+export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1, nodeRing: 2, streakAxis: 1.5 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 export const material = { collarRadius: 2 } as const;
@@ -52,19 +63,29 @@ export const tracking = { display: -0.03, label: 0.18, telemetry: 0.2 } as const
 const ls = (fontSize: number, em: number) => Math.round(fontSize * em * 100) / 100;
 // R43 typová škála 16·√φⁿ (dva kroky = φ): 16 · 20 · 26 · 33 · 42 · 53 · 68 · 87 · 110.
 // Utility stupně (label 11, caption 14, mono 10, input) stojí mimo škálu kvůli čitelnosti.
+// Teplá litina §2.4: mono s rozpalem jen pro nadpisy sekcí (`label`/`section`), popisky a čísla Inter.
 export const type = {
+  // Jedno velké číslo obrazovky.
+  hero: { fontFamily: font.display, fontSize: 64, lineHeight: 68, letterSpacing: ls(64, -0.03) },
+  // Titulek karty, název lekce.
+  headline: { fontFamily: font.bodyStrong, fontSize: 18, lineHeight: 24 },
+  // Čísla statistik, XP v lize.
+  stat: { fontFamily: font.bodyStrong, fontSize: 20, lineHeight: 24 },
+  // Popisek tab baru: Inter 600 11, sentence case, bez rozpalu („Trénink“ ≈ 40 pt se vejde i na 320 pt).
+  tab: { fontFamily: font.bodyStrong, fontSize: 11, lineHeight: 14 },
   // Inter má proti Bebas širší znaky a vyšší x-height: menší stupeň v pt dává větší vizuální hmotu.
   // lineHeight ≥ 1.0 em, aby Android neořízl horní dotahy Interu (Bebas snesl 0.9).
   displayXL: { fontFamily: font.display, fontSize: 110, lineHeight: 114, letterSpacing: ls(110, tracking.display) },
-  display: { fontFamily: font.display, fontSize: 42, lineHeight: 46, letterSpacing: ls(42, tracking.display) },
-  title: { fontFamily: font.display, fontSize: 33, lineHeight: 38, letterSpacing: ls(33, tracking.display) },
+  display: { fontFamily: font.display, fontSize: 40, lineHeight: 44, letterSpacing: ls(40, -0.02) },
+  // Nadpis obrazovky: Inter 600 24 (Teplá litina; dřív Light 33).
+  title: { fontFamily: font.bodyStrong, fontSize: 24, lineHeight: 30, letterSpacing: ls(24, -0.01) },
   // Titulek kompaktní karty volby (onboarding, vize těla): o stupeň pod `title`.
   choiceTitle: { fontFamily: font.display, fontSize: 26, lineHeight: 30, letterSpacing: ls(26, tracking.display) },
   body: { fontFamily: font.body, fontSize: 16, lineHeight: 24 },
   bodyStrong: { fontFamily: font.bodyStrong, fontSize: 16, lineHeight: 24 },
   // letterSpacing 0.18em při 11 pt ≈ 2.
   label: { fontFamily: font.mono, fontSize: 11, lineHeight: 14, letterSpacing: 2, textTransform: 'uppercase' as const },
-  caption: { fontFamily: font.body, fontSize: 14, lineHeight: 20 },
+  caption: { fontFamily: font.body, fontSize: 13, lineHeight: 18 },
   // Volný text ve víceřádkovém poli (TextField, onboarding dream): tělový font, větší řez.
   input: { fontFamily: font.body, fontSize: 20, lineHeight: 28 },
   inputLarge: { fontFamily: font.body, fontSize: 22, lineHeight: 32 },
@@ -110,7 +131,8 @@ export const statSize = { M: 53, L: 87, XL: 110 } as const;
 // Barvy opice (srst, obličej) — stejné v obou režimech, viz spec §8.
 // `tankRim`: lem tílka Ember. Patří materiálu opice, ne UI akcentu (R43: akcent jen v oslavě lekce);
 // pálená siena z rodiny srsti, tlumenější než UI akcent, nesleduje sezónní přepis akcentu.
-export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0', tankRim: '#B4532A' } as const;
+// `ink`: detail obličeje (oči, nos, pusa) na světlém `face`, stejný v obou režimech.
+export const mascot = { fur: '#7A5236', furShade: '#5E3F29', face: '#E8C7A0', tankRim: '#B4532A', ink: '#1E1813' } as const;
 
 export type Space = typeof space;
 export type Radius = typeof radius;

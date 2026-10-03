@@ -85,7 +85,7 @@ test.each<[Mood, 'idle' | 'happy' | 'sad']>([
 test.each<Scheme>(['light', 'dark'])('detaily obličeje jsou tmavé i v režimu %s (leží na světlém obličeji)', (scheme) => {
   const eyes = render({}, scheme).findAllByType(Ellipse).filter((e) => e.props.rx === 5);
   expect(eyes).toHaveLength(2);
-  eyes.forEach((e) => expect(e.props.fill).toBe('#181613'));
+  eyes.forEach((e) => expect(e.props.fill).toBe('#1E1813'));
 });
 
 test('stage 2 a 3 kreslí vlastní geometrii bez varování, hlava se zmenšuje', () => {

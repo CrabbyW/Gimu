@@ -16,6 +16,7 @@ import { useActiveSeason } from '@/hooks/useActiveSeason';
 import { useHydrated } from '@/hooks/useHydrated';
 import { useReminderSync } from '@/hooks/useReminderSync';
 import { ThemeProvider, useTheme } from '@/theme';
+import { preloadSounds } from '@/lib/sound';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -27,6 +28,8 @@ export default function RootLayout() {
   // Splash drží, dokud nejsou fonty i uložená data (spec §9). Chyba fontů splash neblokuje.
   const ready = (fontsLoaded || fontError != null) && hydrated;
   useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => undefined); }, [ready]);
+  // Přehrávače jednou při startu: první zvuk oslavy bez latence dekódování (motion spec §6.2.5).
+  useEffect(preloadSounds, []);
   const seasonThemeId = season.status === 'ready' ? season.data?.themeId ?? null : null;
   // Na nativu brání splash; na webu (bez splashe) je tu místo prázdna DotLoader. Fonty nepotřebuje.
   return (

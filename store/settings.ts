@@ -10,12 +10,16 @@ interface PersistedSettings {
   reminderEnabled: boolean; reminderHour: number;
   /** Dev menu: zobrazená stage opice místo skutečné. */
   stageOverride: MascotStage | null;
+  /** Dva nezávislé přepínače (motion spec §6.2): vypnutí haptiky neumlčí zvuk a naopak. */
+  hapticsEnabled: boolean; soundEnabled: boolean;
 }
-const DEFAULTS: PersistedSettings = { theme: 'system', devTimeOffsetMs: 0, reminderEnabled: false, reminderHour: 18, stageOverride: null };
+const DEFAULTS: PersistedSettings = {
+  theme: 'system', devTimeOffsetMs: 0, reminderEnabled: false, reminderHour: 18, stageOverride: null, hapticsEnabled: true, soundEnabled: true,
+};
 const STAGES: readonly unknown[] = [1, 2, 3];
 const THEMES: readonly unknown[] = ['system', 'light', 'dark'];
 
-/** Doplní chybějící/poškozená pole výchozími hodnotami (v1 → v2 přidává připomínku a stageOverride). */
+/** Doplní chybějící/poškozená pole výchozími hodnotami (v1 → v2 přidává připomínku a stageOverride, v3 přepínače haptiky a zvuku). */
 export function migrateSettings(persisted: unknown): PersistedSettings {
   const o = typeof persisted === 'object' && persisted !== null ? (persisted as Record<string, unknown>) : {};
   const hour = o.reminderHour;
@@ -25,6 +29,8 @@ export function migrateSettings(persisted: unknown): PersistedSettings {
     reminderEnabled: typeof o.reminderEnabled === 'boolean' ? o.reminderEnabled : DEFAULTS.reminderEnabled,
     reminderHour: typeof hour === 'number' && Number.isInteger(hour) && hour >= 0 && hour <= 23 ? hour : DEFAULTS.reminderHour,
     stageOverride: STAGES.includes(o.stageOverride) ? (o.stageOverride as MascotStage) : null,
+    hapticsEnabled: typeof o.hapticsEnabled === 'boolean' ? o.hapticsEnabled : DEFAULTS.hapticsEnabled,
+    soundEnabled: typeof o.soundEnabled === 'boolean' ? o.soundEnabled : DEFAULTS.soundEnabled,
   };
 }
 interface SettingsState extends PersistedSettings {
@@ -35,6 +41,8 @@ interface SettingsState extends PersistedSettings {
   setReminderEnabled(enabled: boolean): void;
   setReminderHour(hour: number): void;
   setStageOverride(stage: MascotStage | null): void;
+  setHapticsEnabled(enabled: boolean): void;
+  setSoundEnabled(enabled: boolean): void;
   /** Dev menu „Reset appky“: vše zpět na výchozí, téma zůstává. */
   resetDev(): void;
 }
@@ -44,12 +52,15 @@ export const useSettings = create<SettingsState>()(persist((set) => ({
   setReminderEnabled: (reminderEnabled) => set({ reminderEnabled }),
   setReminderHour: (reminderHour) => set({ reminderHour }),
   setStageOverride: (stageOverride) => set({ stageOverride }),
+  setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
+  setSoundEnabled: (soundEnabled) => set({ soundEnabled }),
   resetDev: () => set((st) => ({ ...DEFAULTS, theme: st.theme })),
 }), {
-  name: 'opice-settings', version: 2, storage: createJSONStorage(() => AsyncStorage),
+  name: 'opice-settings', version: 3, storage: createJSONStorage(() => AsyncStorage),
   partialize: (s): PersistedSettings => ({
     theme: s.theme, devTimeOffsetMs: s.devTimeOffsetMs,
     reminderEnabled: s.reminderEnabled, reminderHour: s.reminderHour, stageOverride: s.stageOverride,
+    hapticsEnabled: s.hapticsEnabled, soundEnabled: s.soundEnabled,
   }),
   migrate: (persisted) => migrateSettings(persisted),
   onRehydrateStorage: () => (_state, error) => {

@@ -466,3 +466,14 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Zapracováno: plamen → `StreakBarbell` (sm 6 slotů, lg 14, prázdný, dnes čeká, přetečení ×K, přerušený se spadlými kotouči), denní cíl → `TodayStatus`, připomínka v onboardingu, řádek „Zítra“ na oslavě, light `faint` #857B6E / `accentGraphic` #B86F12 / `accentText` #8A500C, všechny kontrasty přepočítány vzorcem WCAG + páry pro `theme/__tests__`, tokeny scrim×3, pressed×2, celebrate.ring/spark, `ValueWheelSheet`, z-order opičky (MonkeyBack/MonkeyFront jako sourozenci kotouče), mezistav odemčení, Dynamic Type, data místo konstant (estMinutes, bossUnlockAfter, xpBreakdown, badges).
 - Rozhodl sám: QA navrhované #8F8577 nestačí na surface (2.8:1) → #857B6E; dark `faint` se nesmí na `raised` (2.8:1); `accentPressed` #E8952A tmavší v obou režimech; smutná karta jen při longestStreak ≥ 2.
 - Otevřené: ozubené kolo (screenshot), seasonGold vs. jantar 1.1:1, emoji v notifikaci (SPEC §7.9), render plate* tónů.
+
+## 2026-10-03 · boss · Teplá litina fáze 1 (základ)
+- Paleta Teplá litina (dark i light) podle design spec §2: jantar #F2A33A nahrazuje IWF červenou; nové tokeny `faint`, `raisedPressed`, `accentPressed`, `accentGraphic`, `scrimSoft/scrim/scrimDeep`. Light `accentGraphic` #B26A10 (o krok tmavší než #B86F12 ze spec kvůli rezervě 3:1 na surface). Dark `plate5` #6A6662 (křídové kg číslo ≥ 4.5:1 na světlejší křídě). Kontrastní testy rozšířené o páry spec §2.3.
+- Typografie §2.4: nové `hero`, `headline`, `stat`, `tab`; `title` Inter 600 24, `display` 40, `caption` 13; `maxFontSizeMultiplier` podle tokenu v `Text`. Radius s 8 / l 14. Nové velikosti (`button`, `node`, `tabBar`, StreakBarbell…) a `layout.narrow`.
+- `lib/motion.ts`: `spring.kotouc`, `spring.sal`, `motion.cvak`, `dur.micro/standard/celebrate`; `release`/`toggle` → Cvak, `pop`/`unlock` → Kotouč.
+- `lib/haptics.ts`: `fire`, `APPROX` (t=0 = dopad), `play()` s jedním aktivním vzorem, `stopPattern()`, `registerNativeHaptics()` pro budoucí dev build; přepínač `hapticsEnabled`. `lib/feedback.ts`: `feedback(id)` haptika + zvuk. `lib/sound.ts`: singletony `createAudioPlayer` při startu, `playSfx`, `setDucking`, přepínač `soundEnabled`.
+- Zvuky Kenney CC0 (brag SFX): `tick.wav` = impactWood_light_002 60 ms lowpass 7 kHz −3 dB; `ring.wav` = impactBell_heavy_003 ořez + fade-out, lowpass 7 kHz −6 dB; `gong.wav` = impactBell_heavy_000 asetrate 0.7, 1.8 s, lowpass 3.5 kHz −4 dB. WAV 44.1 kHz mono 16 bit.
+- Settings v3: `hapticsEnabled`, `soundEnabled` (nezávislé).
+- Logika: `estMinutes` (odvozeno z cviků: příprava 20 s + výdrž / 3 s na opakování), `mascotMood` + `todayStatus`, `isLeagueLocked`, katalog `data/badges.ts` (12 odznaků) + `badgeProgress`/`badgeCondition`.
+- Opice: detail obličeje má vlastní `mascot.ink` (onAccent se teď liší podle režimu).
+- Otevřené: AHAP soubory (motion-agent), obrazovky (design-agent), ozubené kolo (čeká na screenshot), katalog odznaků ke schválení uživatelem.
