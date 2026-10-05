@@ -629,3 +629,10 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
   - Jest: `lib/commonjs/mock` Skia exportuje jen továrnu `Mock(CanvasKit)`, takže `jest.setup.ts` mock by shodil každý render s Canvas. Nahrazen vlastní atrapou (komponenty = View s props).
   - Button: jen tvar pilulky (výška 56, radius full, hrana u sekundárního), popisky zůstávají Inter sentence case (vedlejší akce v obsahu); `[ZÁVORKY]` nese PillButton.
 - Otevřené: haptika primární pilulky je `cta` (medium), spec chce light (FeedbackId v `lib/` patří bossovi). Dev obrazovka „Tečky“ (plán úkol 5 krok 5) nepřidána. Popover uzlu a NodeLabel zůstaly Inter/Card. Ověřit na zařízení: Doto s diakritikou v titulku sekce, čitelnost `dotOff` pole v light.
+
+## 2026-10-05 · design-agent · Nothing Dot fáze 1, opravy po screenshotu bosse
+- Hero: pod dlaždicí mezera `space.m`, ScrollView mapy `overflow: hidden` (kotouč se ořízne hranou výřezu, ne hranou dlaždice).
+- Cesta: PathLine dostala `labelBottoms` a `ends`; úsek začíná pod popiskem uzlu a končí nad opičkou, u začátku sekce nad mono nadpisem sekce (tam se přeruší).
+- „Shluky teček“ nad CTA nebyly tečkové pole, ale vršky tečkové činky bosse pod pilulkou. Pilulka má teď pod sebou plnou plochu `base` (mapa pod ní mizí čistou hranou), `footerSpace` mapy = pilulka + 2 × `space.m`.
+- Tab bar: podložka je kulatá (průměr výška pilulky − 2 × vnitřní okraj), vystředěná ve slotu. Popisek pod ikonou zrušen (do podložky se nevešel), název nese čtečka.
+- Onboarding: Doto varianty dostaly řádek 1.3 em (`display` 52, `hero` 84, `dotStat` 36, `displayXL` 143), protože háčky a čárky nad verzálkami přetékaly box. Je to hypotéza příčiny překryvu leadu; díru mezi kartami v kódu nevidím (PathCard/ChoiceCard jsem neměnil). Potřebuje nový screenshot.

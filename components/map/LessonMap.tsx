@@ -17,7 +17,7 @@ import type { LessonPathView, MapNode } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
 import { BarbellBoss } from './BarbellBoss';
-import { BOSS_SIZE, LABEL_GAP, SECTION_LABEL_OFFSET, layoutNodes, popoverSide, type NodePosition } from './geometry';
+import { BOSS_SIZE, LABEL_GAP, SECTION_LABEL_OFFSET, labelHeight, layoutNodes, popoverSide, type NodePosition } from './geometry';
 import { NodePopover } from './NodePopover';
 import { PathLine } from './PathLine';
 import { PlateNode } from './PlateNode';
@@ -243,14 +243,19 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     <ScrollView
       ref={scroll}
       // Průhledná: pod mapou je `base` obrazovky (a tečkové pole hlavičky), UI zůstává monochromní (spec §2.1).
-      style={{ flex: 1 }}
+      style={{ flex: 1, overflow: 'hidden' }}
       contentContainerStyle={{ height }}
       onLayout={(e) => setViewportH(e.nativeEvent.layout.height)}
       onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }}
       scrollEventThrottle={32}
     >
       {seasonal.mapTexture ? <DotTexture width={width} height={height} color={seasonal.mapTexture} /> : null}
-      <PathLine width={width} height={height} positions={layout.positions} reached={reached} drawing={drawing} />
+      <PathLine
+        width={width} height={height} positions={layout.positions} reached={reached} drawing={drawing}
+        labelBottoms={layout.positions.map((p, i) => p.y + p.size / 2 + LABEL_GAP + labelHeight(flat[i]!.state, flat[i]!.lesson.isBoss))}
+        // Začátek sekce: cesta končí nad mono nadpisem sekce (přeruší se, text nekříží).
+        ends={layout.positions.map((p, i) => (flat[i]!.section.nodes[0]?.lesson.id === flat[i]!.lesson.id ? p.top - SECTION_LABEL_OFFSET : p.top))}
+      />
 
       {selected ? (
         <Scrim width={width} height={height} color={c.scrimSoft} onPress={() => setSelected(null)} />

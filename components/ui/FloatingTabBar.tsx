@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
-import { layout, useTheme } from '@/theme';
-import { Text } from './Text';
+import { useTheme } from '@/theme';
 
 interface Props extends BottomTabBarProps {
   /** Animovaný styl aktivní podložky (motion-agent: posun `left` za `motion.tabSlideMs`). Staticky stojí pod aktivním tabem. */
@@ -26,7 +25,7 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
   const count = state.routes.length;
   const inner = space.xs;
   const slot = (barW - inner * 2) / Math.max(1, count);
-  const showLabel = screenW >= layout.narrow;
+  const padD = Math.min(slot, size.tabPill - inner * 2);
   return (
     <View
       pointerEvents="box-none"
@@ -44,7 +43,9 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
           testID="tab-pad"
           pointerEvents="none"
           style={[{
-            position: 'absolute', top: inner, bottom: inner, left: inner + state.index * slot, width: slot,
+            // Kulatá podložka pevného průměru, vystředěná ve slotu (ne přes celou šířku slotu, ta u krajů
+            // narážela do zaoblení pilulky a opticky ujížděla).
+            position: 'absolute', top: inner, left: inner + state.index * slot + (slot - padD) / 2, width: padD, height: padD,
             borderRadius: radius.full, backgroundColor: c.tilePressed,
           }, padStyle]}
         />
@@ -66,10 +67,8 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
               accessibilityState={{ selected: focused }}
               style={{ flex: 1, height: size.tabPill - inner * 2, alignItems: 'center', justifyContent: 'center', gap: space.xs / 2 }}
             >
+              {/* Jen ikona (obr. 2): popisek „TRÉNINK“ se do kulaté podložky nevejde; název nese čtečka. */}
               {options.tabBarIcon?.({ focused, color, size: size.tabIcon })}
-              {focused && showLabel ? (
-                <Text variant="tabLabelCompact" numberOfLines={1} importantForAccessibility="no" style={{ color }}>{title}</Text>
-              ) : null}
             </Pressable>
           );
         })}

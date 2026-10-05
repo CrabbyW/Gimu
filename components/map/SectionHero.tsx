@@ -37,7 +37,8 @@ export function SectionHero({ view, intro = false }: { view: LessonPathView; int
       accessible
       accessibilityRole="summary"
       accessibilityLabel={copy.map.sectionProgressA11y(section.index, section.title, done, total)}
-      style={{ paddingHorizontal: space.l }}
+      // Mezera pod hero: mapa začíná až pod ní (horní hrana výřezu mapy nesmí sedět na hraně dlaždice).
+      style={{ paddingHorizontal: space.l, paddingBottom: space.m }}
     >
       <Tile style={{ minHeight: compact ? undefined : size.heroTile, justifyContent: 'space-between', gap: compact ? space.s : space.m }}>
         {/* Motion (úvodní sled mapy `intro.map.hero`): číslo → tečky → název, každý úder `motion.reveal`. */}

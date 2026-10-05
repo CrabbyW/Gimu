@@ -104,10 +104,12 @@ export default function TrainingScreen() {
             onOpenLesson={open}
             onUnlockSequenceEnd={clearUnlocked}
             intro={intro}
-            footerSpace={currentId ? size.pill + space.l : 0}
+            footerSpace={currentId ? size.pill + space.m * 2 : 0}
           />
           {currentId ? (
-            <View pointerEvents="box-none" style={{ position: 'absolute', left: space.l, right: space.l, bottom: space.m }}>
+            // Plná plocha `base` pod pilulkou: mapa pod ní mizí čistou hranou (dřív vykukovaly vršky tečkové činky
+            // bosse jako „shluky teček“ nad CTA).
+            <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.l, paddingTop: space.m, paddingBottom: space.m, backgroundColor: c.base }}>
               <PillButton label={copy.map.startLesson} onPress={() => open(currentId)} />
             </View>
           ) : null}

@@ -22,14 +22,28 @@ interface Props {
   reached: boolean[];
   /** Index úseku, který se právě dokresluje (odemykací sekvence). */
   drawing?: number | null;
+  /** Spodní hrana popisku pod každým uzlem (y): úsek začíná až pod ním, takže cesta text nikdy nekříží. */
+  labelBottoms?: number[];
+  /** Nejvyšší bod obsahu každého uzlu (opička, nadpis sekce): úsek do uzlu končí nad ním. */
+  ends?: number[];
 }
 
 /** Tečkovaná cesta mezi uzly (Nothing Dot): prošlé úseky až k aktuálnímu uzlu rozsvícené v `text`,
  *  cesta k zamčeným tlumená `dotDim`. Stejné tečky jako zbytek jazyka, ne přerušovaná čára. */
-export function PathLine({ width, height, positions, reached, drawing = null }: Props) {
+export function PathLine({ width, height, positions, reached, drawing = null, labelBottoms, ends }: Props) {
   const { c } = useTheme();
-  // Úsek vede od spodní hrany uzlu k horní hraně dalšího: čára nikdy nekříží kotouč ani text bosse.
-  const segments = positions.slice(1).map((b, i) => ({ i, a: bottomOf(positions[i]!), b: topOf(b) }));
+  // Úsek vede od spodní hrany popisku uzlu (bez popisku od hrany kotouče) k horní hraně dalšího:
+  // čára nikdy nekříží kotouč, popisek ani text bosse.
+  const startOf = (i: number): Point => {
+    const p = positions[i]!;
+    const lb = labelBottoms?.[i];
+    return lb === undefined ? bottomOf(p) : { x: p.x, y: lb + EDGE_GAP };
+  };
+  // Konec nad `ends[i]` (vrch uzlu včetně opičky, u začátku sekce nad jejím nadpisem): cesta je nekříží.
+  const segments = positions.slice(1).map((b, i) => {
+    const end = ends?.[i + 1];
+    return { i, a: startOf(i), b: end === undefined ? topOf(b) : { x: b.x, y: end - EDGE_GAP } };
+  });
   return (
     <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
       {segments.map(({ i, a, b }) => (

@@ -130,7 +130,9 @@ const ls = (fontSize: number, em: number) => Math.round(fontSize * em * 100) / 1
 export const type = {
   // Jedno velké číslo obrazovky.
   // Nothing Dot: velká čísla a titulky v Doto (tečky), bez záporného prostrkání (tečky by se slily).
-  hero: { fontFamily: font.dot, fontSize: 64, lineHeight: 72, letterSpacing: 0 },
+  // Doto má vysoký ascender a české háčky/čárky nad verzálkami: řádek 1.3 em, jinak glyfy přetečou box
+  // a sousední text se překryje (web onboarding, 2026-10-05).
+  hero: { fontFamily: font.dot, fontSize: 64, lineHeight: 84, letterSpacing: 0 },
   // Titulek karty, název lekce.
   headline: { fontFamily: font.bodyStrong, fontSize: 18, lineHeight: 24 },
   // Čísla statistik, XP v lize.
@@ -139,10 +141,10 @@ export const type = {
   tab: { fontFamily: font.bodyStrong, fontSize: 11, lineHeight: 14 },
   // Inter má proti Bebas širší znaky a vyšší x-height: menší stupeň v pt dává větší vizuální hmotu.
   // lineHeight ≥ 1.0 em, aby Android neořízl horní dotahy Interu (Bebas snesl 0.9).
-  displayXL: { fontFamily: font.dot, fontSize: 110, lineHeight: 120, letterSpacing: 0 },
-  display: { fontFamily: font.dot, fontSize: 40, lineHeight: 46, letterSpacing: 0 },
+  displayXL: { fontFamily: font.dot, fontSize: 110, lineHeight: 143, letterSpacing: 0 },
+  display: { fontFamily: font.dot, fontSize: 40, lineHeight: 52, letterSpacing: 0 },
   // Číslo dlaždice (obr. 2 „200 lbs“): Doto 28, nejmenší povolený stupeň písma Doto.
-  dotStat: { fontFamily: font.dot, fontSize: 28, lineHeight: 34, letterSpacing: 0 },
+  dotStat: { fontFamily: font.dot, fontSize: 28, lineHeight: 36, letterSpacing: 0 },
   // Nadpis obrazovky: Inter 600 24 (Teplá litina; dřív Light 33).
   title: { fontFamily: font.bodyStrong, fontSize: 24, lineHeight: 30, letterSpacing: ls(24, -0.01) },
   // Titulek kompaktní karty volby (onboarding, vize těla): o stupeň pod `title`.
