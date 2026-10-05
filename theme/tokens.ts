@@ -5,10 +5,13 @@ export const PHI = (1 + Math.sqrt(5)) / 2;
 export const space = { xs: 4, s: 8, m: 16, l: 24, xl: 40, xxl: 64, xxxl: 104, xxxxl: 168 } as const;
 // Teplá litina §2.5: `s` 8 tlačítko/chip/pole, `l` 14 karta/popover/sheet (měkčí, „comfy“, ale ne bublina),
 // `full` pro kruhové tvary (kotouč, avatar, pilulka), kde tvar nese význam.
-export const radius = { s: 8, l: 14, full: 999 } as const;
+// Nothing Dot §2.3: `tile` 28 = dlaždice-widget (obr. 2), `full` pro pilulky (CTA, tab bar) a kruhy.
+export const radius = { s: 8, l: 14, tile: 28, full: 999 } as const;
 // Rozměry dotykových ploch a ovládacích prvků podle spec §6.6. `hit` je jediný zdroj
 // minima 44 pt (dřív duplikované natvrdo ve třech komponentách).
 export const size = {
+  // Nothing Dot §2.3: pilulkové CTA 56, plovoucí tab bar 64, kulaté ikonové tlačítko 44, vnitřní okraj dlaždice 20.
+  pill: 56, tabPill: 64, iconButton: 44, tilePad: 20,
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
   // Karta volby v onboardingu (vize těla, R36) a její glyf; glyf cesty je `glyph`.
   choiceCard: 80, choiceGlyph: 40, glyph: 48,
@@ -89,6 +92,8 @@ export const material = {
 // fontWeight se s nimi nekombinuje (Android u vlastních fontů váhu nesyntetizuje).
 // R42: display je Inter 300 Light (místo Bebas Neue), bez nové závislosti.
 export const font = {
+  // Nothing Dot §2.2: `dot` = Doto 700 (dot-matrix), jen ≥ 28 pt (hero čísla, kg, titulek obrazovky).
+  dot: 'Doto_700Bold',
   display: 'Inter_300Light', body: 'Inter_400Regular', bodyStrong: 'Inter_600SemiBold', mono: 'JetBrainsMono_500Medium',
 } as const;
 // Tracking v em; RN letterSpacing je v pt, proto `ls(size, em)`.
@@ -99,7 +104,8 @@ const ls = (fontSize: number, em: number) => Math.round(fontSize * em * 100) / 1
 // Teplá litina §2.4: mono s rozpalem jen pro nadpisy sekcí (`label`/`section`), popisky a čísla Inter.
 export const type = {
   // Jedno velké číslo obrazovky.
-  hero: { fontFamily: font.display, fontSize: 64, lineHeight: 68, letterSpacing: ls(64, -0.03) },
+  // Nothing Dot: velká čísla a titulky v Doto (tečky), bez záporného prostrkání (tečky by se slily).
+  hero: { fontFamily: font.dot, fontSize: 64, lineHeight: 72, letterSpacing: 0 },
   // Titulek karty, název lekce.
   headline: { fontFamily: font.bodyStrong, fontSize: 18, lineHeight: 24 },
   // Čísla statistik, XP v lize.
@@ -108,8 +114,10 @@ export const type = {
   tab: { fontFamily: font.bodyStrong, fontSize: 11, lineHeight: 14 },
   // Inter má proti Bebas širší znaky a vyšší x-height: menší stupeň v pt dává větší vizuální hmotu.
   // lineHeight ≥ 1.0 em, aby Android neořízl horní dotahy Interu (Bebas snesl 0.9).
-  displayXL: { fontFamily: font.display, fontSize: 110, lineHeight: 114, letterSpacing: ls(110, tracking.display) },
-  display: { fontFamily: font.display, fontSize: 40, lineHeight: 44, letterSpacing: ls(40, -0.02) },
+  displayXL: { fontFamily: font.dot, fontSize: 110, lineHeight: 120, letterSpacing: 0 },
+  display: { fontFamily: font.dot, fontSize: 40, lineHeight: 46, letterSpacing: 0 },
+  // Číslo dlaždice (obr. 2 „200 lbs“): Doto 28, nejmenší povolený stupeň písma Doto.
+  dotStat: { fontFamily: font.dot, fontSize: 28, lineHeight: 34, letterSpacing: 0 },
   // Nadpis obrazovky: Inter 600 24 (Teplá litina; dřív Light 33).
   title: { fontFamily: font.bodyStrong, fontSize: 24, lineHeight: 30, letterSpacing: ls(24, -0.01) },
   // Titulek kompaktní karty volby (onboarding, vize těla): o stupeň pod `title`.

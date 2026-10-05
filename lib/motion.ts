@@ -56,6 +56,22 @@ const cvak = { duration: dur.micro, easing: ease.out } satisfies WithTimingConfi
 export const stagger = (i: number, step: number = dur.step, cap: number = dur.staggerCap) => Math.min(Math.max(0, i) * step, cap);
 
 export const motion = {
+  // ── Nothing Dot (spec 2026-10-05 §3–4) ──
+  /** Ambientní rotace kotouče: celá otáčka za idleMs (aktuální uzel currentMs); dojezd po roztočení `decay`, haptický tik po `tickDeg`. */
+  plateSpin: { idleMs: 40000, currentMs: 24000, decay: 0.997, tickDeg: 30, activeOffset: 8, failOffsetY: 12 },
+  /** Živá tečka stavového řádku: jeden cyklus rozsvícení a zhasnutí. */
+  liveBlinkMs: 1200,
+  /** Stisk dlaždice: zmenšení, 3D naklopení k bodu dotyku, perspektiva, návrat. */
+  tilePress: { scale: 0.97, tiltMaxDeg: 6, perspective: 600, releaseMs: 200 },
+  /** Rozsvícení teček při nástupu (sken zleva / spirála). */
+  dotScanMs: 600,
+  /** Dotyková vlna teček: poloměr vlivu, max odsunutí, doznění po puštění. */
+  ripple: { radius: 64, push: 4, decayMs: 500 },
+  /** Posun podložky aktivního tabu v plovoucím tab baru. */
+  tabSlideMs: 260,
+  /** Nástup obrazovky: hlavička → hero → dlaždice ve vlně. */
+  screenIn: { headerAt: 0, heroAt: 80, step: 60, durationMs: 480, rise: 12 },
+
   ui: { duration: dur.ui, easing: ease.out } satisfies WithTimingConfig,
   uiExit: { duration: dur.tap, easing: ease.exit } satisfies WithTimingConfig,
   /** Nástup prvku obsahu (karta, řádek): 260 ms punch. */
