@@ -1,5 +1,10 @@
 import { MAX_XP_TICKS, once, xpTickStep, xpTickValues } from '../celebration';
 
+/* eslint-disable @typescript-eslint/no-require-imports -- oficiální jest mocky knihoven */
+jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
+jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
+/* eslint-enable @typescript-eslint/no-require-imports */
+
 test('count-up XP má nejvýš 8 ticků a končí přesně na součtu', () => {
   for (const total of [1, 7, 8, 9, 20, 30, 33, 64, 999]) {
     const v = xpTickValues(total);

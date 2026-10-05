@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { Canvas, Points } from '@shopify/react-native-skia';
+import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
+import { lessonDone, motion } from '@/lib/motion';
 import { dots } from '@/theme';
+import { ripplePoints, wavePoints, type Pt } from './animate';
 import { gridDots } from './geometry';
 import { toPoints, useDotInk, type DotTouch } from './ink';
 import { SkiaGuard } from './SkiaGuard';
@@ -15,23 +18,32 @@ interface Props {
   pitch?: number;
   /** Doznívání v pásmech: `down` = pole slábne směrem dolů (pozadí hlavičky), `up` = slábne nahoru (podlaha). */
   fade?: DotFieldFade;
-  /** Dotyková vlna (motion-agent, `useDotTouch`). Staticky se pole nehýbe. */
+  /** Dotyková vlna (`useDotTouch`): souřadnice v rámci pole. Bez ní se pole nehýbe. */
   touch?: DotTouch;
+  /** Vlna od středu pole (oslava): průběh 0–1, čelo vlny jde od středu do nejvzdálenějšího rohu. */
+  wave?: SharedValue<number>;
+  /** Strop počtu teček (výchozí `dots.field.max`). Celoplošné pole oslavy ho zvedá, aby pokrylo obrazovku. */
+  max?: number;
   style?: StyleProp<ViewStyle>;
 }
 
 // Opacita pásem od plného k nejslabšímu (4 pásma = `dots.field.bands`).
 const BAND_OPACITY = [1, 0.66, 0.38, 0.16] as const;
+const RIPPLE = motion.ripple;
+/** Šířka čela vlny od středu (pt). */
+const BAND = lessonDone.waveBand;
 
 /** Pole teček v pozadí (spec §2.4): `dotOff` na `base`/`tile`, vystředěné, bez dotyku statické.
- *  Počet teček je zastropovaný `dots.field.max` (výkon): navíc řádky se ořežou na straně, kam pole doznívá. */
-export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none', style }: Props) {
+ *  Počet teček je zastropovaný `dots.field.max` (výkon): navíc řádky se ořežou na straně, kam pole doznívá.
+ *  Pohyb (motion-agent): dotyková vlna `touch` a vlna od středu `wave` posouvají tečky a rozjasněné kreslí
+ *  navrch v `text`; vše v `useDerivedValue` na UI vlákně, bez React renderu. */
+export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none', touch, wave, max = dots.field.max, style }: Props) {
   const ink = useDotInk();
   const bands = useMemo(() => {
     if (width <= 0 || height <= 0) return [];
     const cols = Math.floor(width / pitch) + 1;
     const allRows = Math.floor(height / pitch) + 1;
-    const rows = Math.max(1, Math.min(allRows, Math.floor(dots.field.max / cols)));
+    const rows = Math.max(1, Math.min(allRows, Math.floor(max / cols)));
     const left = (width - (cols - 1) * pitch) / 2;
     // Pole „up“ (podlaha) sedí dole: ořezané řádky chybí nahoře.
     const top = fade === 'up' ? height - (rows - 1) * pitch - (height - (allRows - 1) * pitch) / 2 : (height - (allRows - 1) * pitch) / 2;
@@ -44,17 +56,58 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
       const t = fade === 'up' ? rows - 1 - r : r;
       out[Math.min(n - 1, Math.floor((t / rows) * n))]!.push(d);
     }
-    return out.map((pts, i) => ({ points: toPoints(pts, left, top), opacity: fade === 'none' ? 1 : BAND_OPACITY[i] ?? 0 }));
-  }, [width, height, pitch, fade]);
+    return out.map((pts, i) => ({ points: toPoints(pts, left, top) as Pt[], opacity: fade === 'none' ? 1 : BAND_OPACITY[i] ?? 0 }));
+  }, [width, height, pitch, fade, max]);
+
+  const base = useMemo(() => bands.map((b) => b.points), [bands]);
+  const reach = Math.hypot(width, height) / 2;
+  // Jeden průchod pro všechna pásma: posunuté body po pásmech + společná rozjasněná vrstva.
+  const moved = useDerivedValue(() => {
+    const s = touch ? touch.strength.value : 0;
+    const w = wave ? wave.value : 0;
+    const out: (readonly Pt[])[] = [];
+    const lit: Pt[] = [];
+    for (let i = 0; i < base.length; i++) {
+      let pts: readonly Pt[] = base[i]!;
+      if (w > 0 && w < 1) {
+        const r = wavePoints(pts, width / 2, height / 2, w * (reach + BAND), BAND, RIPPLE.push);
+        pts = r.pts;
+        for (const q of r.lit) lit.push(q);
+      }
+      if (touch && s > 0.001) {
+        const r = ripplePoints(pts, touch.x.value, touch.y.value, s, RIPPLE.radius, RIPPLE.push);
+        pts = r.pts;
+        for (const q of r.lit) lit.push(q);
+      }
+      out.push(pts);
+    }
+    return { out, lit };
+  });
+  const litPoints = useDerivedValue(() => moved.value.lit);
+  // Rozjasnění: síla doteku, u vlny od středu doznívá s jejím doběhem.
+  const litOpacity = useDerivedValue(() => {
+    const s = touch ? touch.strength.value : 0;
+    const w = wave ? wave.value : 0;
+    return Math.max(s, w > 0 && w < 1 ? 1 - w * w : 0) * RIPPLE.lit;
+  });
+
   return (
     <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width, height }, style]}>
       <SkiaGuard style={{ width, height }}>
         <Canvas testID="dotfield-canvas" style={{ width, height }}>
           {bands.map((b, i) => (
-            <Points key={i} points={b.points} mode="points" color={ink.off} opacity={b.opacity} strokeWidth={dots.field.r * 2} strokeCap="round" />
+            <BandPoints key={i} index={i} moved={moved} color={ink.off} opacity={b.opacity} strokeWidth={dots.field.r * 2} />
           ))}
+          <Points points={litPoints} mode="points" color={ink.on} opacity={litOpacity} strokeWidth={dots.field.r * 2} strokeCap="round" />
         </Canvas>
       </SkiaGuard>
     </View>
   );
+}
+
+function BandPoints({ index, moved, color, opacity, strokeWidth }: {
+  index: number; moved: SharedValue<{ out: (readonly Pt[])[]; lit: Pt[] }>; color: string; opacity: number; strokeWidth: number;
+}) {
+  const points = useDerivedValue(() => (moved.value.out[index] ?? []) as Pt[]);
+  return <Points points={points} mode="points" color={color} opacity={opacity} strokeWidth={strokeWidth} strokeCap="round" />;
 }

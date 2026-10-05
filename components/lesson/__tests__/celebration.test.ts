@@ -1,4 +1,10 @@
-import { barbellLayout, plateHeight, plateWidth, splitPlates, xpBreakdownLabel } from '../celebration';
+import { lessonDone } from '@/lib/motion';
+import { barbellLayout, celebrationTimeline, fieldGrid, gatherSources, plateHeight, plateWidth, splitPlates, xpBreakdownLabel } from '../celebration';
+
+/* eslint-disable @typescript-eslint/no-require-imports -- oficiální jest mocky knihoven */
+jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
+jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 const t = { lesson: 'lekce', boss: 'boss', replay: 'opakování', first: 'první dnes', streak: 'streak' };
 
@@ -44,4 +50,37 @@ test('boss: kotouč bosse přiletí k plné sekci', () => {
 test('rozpis XP vynechá nulové bonusy', () => {
   expect(xpBreakdownLabel({ base: 20, baseKind: 'lesson', firstOfDay: 10, streak: 2, total: 32 }, t)).toBe('lekce 20 · první dnes +10 · streak +2');
   expect(xpBreakdownLabel({ base: 10, baseKind: 'replay', firstOfDay: 0, streak: 0, total: 10 }, t)).toBe('opakování 10');
+});
+
+describe('oslava z teček (Nothing Dot §5)', () => {
+  test('časová osa: field → gather → snap → mascot → cta s časy z motion.lessonDone', () => {
+    const tl = celebrationTimeline(false);
+    expect(tl.map((s) => s.id)).toEqual(['field', 'gather', 'snap', 'mascot', 'cta']);
+    expect(tl.map((s) => s.at)).toEqual([lessonDone.fieldAt, lessonDone.gatherAt, lessonDone.snapAt, lessonDone.mascotAt, lessonDone.ctaAt]);
+    expect(tl.map((s) => s.at)).toEqual([0, 200, 900, 1000, 1600]);
+    expect(tl[1]!.durationMs).toBe(700);
+    // Tečky dolétnou přesně v okamžiku nacvaknutí.
+    expect(tl[1]!.at + tl[1]!.durationMs).toBe(tl[2]!.at);
+  });
+
+  test('omezený pohyb: všechno hned, 200 ms prolnutí', () => {
+    const tl = celebrationTimeline(true);
+    expect(tl.map((s) => s.id)).toEqual(['field', 'gather', 'snap', 'mascot', 'cta']);
+    expect(tl.every((s) => s.at === 0 && s.durationMs === 200)).toBe(true);
+  });
+
+  test('tečky vzlétají z teček pole, dál od středu než jejich cíl', () => {
+    const grid = fieldGrid(390, 844, 14, 2000);
+    const cx = 195;
+    const cy = 400;
+    const targets = [{ x: 100, y: 0, ring: 0 }, { x: 0, y: -60, ring: 1 }, { x: -30, y: 30, ring: 2 }];
+    const src = gatherSources(targets, 100, 3, cx, cy, grid);
+    src.forEach((s, i) => {
+      const gx = (s.x + cx - grid.left) / grid.pitch;
+      const gy = (s.y + cy - grid.top) / grid.pitch;
+      expect(Math.abs(gx - Math.round(gx))).toBeLessThan(1e-6);
+      expect(Math.abs(gy - Math.round(gy))).toBeLessThan(1e-6);
+      expect(Math.hypot(s.x, s.y)).toBeGreaterThan(Math.hypot(targets[i]!.x, targets[i]!.y));
+    });
+  });
 });

@@ -1,5 +1,6 @@
 // Čistá geometrie činky a text rozpisu XP pro oslavu (bez Reactu), pokryté testem v __tests__/celebration.test.ts.
 import { plateSize } from '@/components/map/geometry';
+import { lessonDone, motion } from '@/lib/motion';
 import type { XpBreakdown } from '@/logic/xp';
 import type { PlateKg } from '@/types';
 
@@ -99,4 +100,67 @@ export function once(fn: () => void): { run(): void; readonly done: boolean } {
     run() { if (done) return; done = true; fn(); },
     get done() { return done; },
   };
+}
+
+// ── Nothing Dot: oslava z teček (spec §5) ──
+
+export type CelebrationStepId = 'field' | 'gather' | 'snap' | 'mascot' | 'cta';
+export interface CelebrationStep { id: CelebrationStepId; at: number; durationMs: number }
+
+/** Délka nacvaknutí kotouče (pružina `spring.kotouc` z 1.08 dosedne zhruba za tuto dobu). */
+const SNAP_MS = 240;
+
+/**
+ * Časová osa oslavy dokončení lekce v ms od zobrazení scény, v pořadí field → gather → snap → mascot → cta
+ * (hodnoty z `lessonDone`). Omezený pohyb: všechno hned (`at` 0) jedním prolnutím `reducedMs` (200 ms).
+ */
+export function celebrationTimeline(reduced: boolean): CelebrationStep[] {
+  const L = lessonDone;
+  const steps: CelebrationStep[] = [
+    { id: 'field', at: L.fieldAt, durationMs: L.fieldMs },
+    { id: 'gather', at: L.gatherAt, durationMs: L.gatherMs },
+    { id: 'snap', at: L.snapAt, durationMs: SNAP_MS },
+    { id: 'mascot', at: L.mascotAt, durationMs: L.countMs },
+    { id: 'cta', at: L.ctaAt, durationMs: motion.reveal.duration },
+  ];
+  return reduced ? steps.map((s) => ({ ...s, at: 0, durationMs: L.reducedMs })) : steps;
+}
+
+/** Krok osy podle id (osa je úplná, krok vždy existuje). */
+export const stepOf = (tl: readonly CelebrationStep[], id: CelebrationStepId) => tl.find((s) => s.id === id)!;
+
+/** Mřížka pole teček scény: počátek a rozteč (stejný výpočet jako `DotField` bez doznívání). */
+export interface FieldGrid { left: number; top: number; pitch: number; cols: number; rows: number }
+
+/** Mřížka `DotField` (fade „none“, strop `max` teček) pro plochu width × height. */
+export function fieldGrid(width: number, height: number, pitch: number, max: number): FieldGrid {
+  const cols = Math.floor(width / pitch) + 1;
+  const allRows = Math.floor(height / pitch) + 1;
+  const rows = Math.max(1, Math.min(allRows, Math.floor(max / cols)));
+  return { left: (width - (cols - 1) * pitch) / 2, top: (height - (allRows - 1) * pitch) / 2, pitch, cols, rows };
+}
+
+/**
+ * Odkud tečky kotouče vzlétnou: pro každou cílovou tečku (vůči středu kotouče) bod mřížky pole ve stejném
+ * směru, v mezikruží mezi `inner` × poloměr a nejbližším okrajem pole (vnější prstenec startuje nejdál,
+ * drobný rozptyl podle indexu), zaokrouhlený na nejbližší tečku pole. Mezikruží se vejde do pole, takže
+ * starty netvoří hranatý rám u okraje. Výsledek je vůči středu kotouče (`cx`, `cy` v souřadnicích pole).
+ */
+export function gatherSources(
+  targets: readonly { x: number; y: number; ring: number }[], radius: number, rings: number,
+  cx: number, cy: number, grid: FieldGrid, inner = 1.3,
+): { x: number; y: number }[] {
+  const right = grid.left + (grid.cols - 1) * grid.pitch;
+  const bottom = grid.top + (grid.rows - 1) * grid.pitch;
+  const near = radius * inner;
+  const far = Math.max(near + grid.pitch, Math.min(cx - grid.left, right - cx, cy - grid.top, bottom - cy) - grid.pitch);
+  const snap = (v: number, o: number, n: number) => o + Math.max(0, Math.min(n - 1, Math.round((v - o) / grid.pitch))) * grid.pitch;
+  return targets.map((t, i) => {
+    const a = Math.atan2(t.y, t.x);
+    const k = (1 - t.ring / Math.max(1, rings)) * 0.75 + ((i * 7) % 5) / 5 * 0.25;
+    const d = near + (far - near) * k;
+    const gx = snap(cx + Math.cos(a) * d, grid.left, grid.cols);
+    const gy = snap(cy + Math.sin(a) * d, grid.top, grid.rows);
+    return { x: gx - cx, y: gy - cy };
+  });
 }

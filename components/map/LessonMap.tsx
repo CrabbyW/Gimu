@@ -16,6 +16,7 @@ import type { NodeState } from '@/logic/map';
 import type { LessonPathView, MapNode } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
+import { AmbientClock } from './ambient';
 import { BarbellBoss } from './BarbellBoss';
 import { BOSS_SIZE, LABEL_GAP, SECTION_LABEL_OFFSET, labelHeight, layoutNodes, popoverSide, type NodePosition } from './geometry';
 import { NodePopover } from './NodePopover';
@@ -240,6 +241,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const selectedPos = selected ? posOf(selected.id) : undefined;
 
   return (
+    // Jedna ambientní hodina pro rotaci, kometu a dech všech kotoučů (motion §3), běží jen se zaostřenou mapou.
+    <AmbientClock>
     <ScrollView
       ref={scroll}
       // Průhledná: pod mapou je `base` obrazovky (a tečkové pole hlavičky), UI zůstává monochromní (spec §2.1).
@@ -308,6 +311,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
                 onPress={() => onNodePress(n, state)} shakeKey={shakes[n.lesson.id]}
                 unlocking={unlocking} onUnlocked={onUnlocked}
                 justCompleted={isPrev && frame.prevCheck === 'draw'} checkHidden={isPrev && frame.prevCheck === 'hidden'}
+                // Úvodní sled: tečky kotouče se rozsvítí spirálou s jeho usazením.
+                intro={plan && i <= plan.ci ? plan.at(i) ?? undefined : undefined}
               />
             )}
             </View>
@@ -357,6 +362,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         />
       ) : null}
     </ScrollView>
+    </AmbientClock>
   );
 }
 

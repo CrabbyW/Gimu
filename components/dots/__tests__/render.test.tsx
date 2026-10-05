@@ -15,6 +15,8 @@ const render = (ui: ReactElement, scheme: 'dark' | 'light' = 'dark') => {
   act(() => { r = TestRenderer.create(<ThemeContext.Provider value={buildTheme(scheme, null)}>{ui}</ThemeContext.Provider>); });
   return r!.root;
 };
+/** Skia props mohou být sdílené hodnoty (pohyb na UI vlákně): test čte aktuální hodnotu. */
+const val = (p: unknown): unknown => (p !== null && typeof p === 'object' && 'value' in p ? (p as { value: unknown }).value : p);
 const byTestId = (root: TestRenderer.ReactTestInstance, id: string) => root.findAll((n) => n.props.testID === id);
 
 afterEach(() => { skiaState.ready = true; });
@@ -51,17 +53,17 @@ test('záře jen v dark: light nekreslí BlurMask', () => {
 });
 
 test('DotRing rozsvítí podíl teček podle progress', () => {
-  const root = render(<DotRing progress={0.5} size={200} count={32} />, 'light');
+  const root = render(<DotRing progress={0.5} size={200} count={32} intro={false} />, 'light');
   const pts = root.findAll((n) => n.props.skiaType === 'Points' && typeof n.type === 'string');
   // Pořadí: vnější rastr, zhasnuté, rozsvícené (light bez záře).
-  expect(pts[1]!.props.points).toHaveLength(16);
-  expect(pts[2]!.props.points).toHaveLength(16);
+  expect(val(pts[1]!.props.points)).toHaveLength(16);
+  expect(val(pts[2]!.props.points)).toHaveLength(16);
 });
 
 test('DotField drží strop počtu teček', () => {
   const root = render(<DotField width={390} height={844} fade="down" />);
   const total = root.findAll((n) => n.props.skiaType === 'Points' && typeof n.type === 'string')
-    .reduce((s, n) => s + (n.props.points as unknown[]).length, 0);
+    .reduce((s, n) => s + (val(n.props.points) as unknown[]).length, 0);
   expect(total).toBeGreaterThan(0);
   expect(total).toBeLessThanOrEqual(600);
 });
@@ -69,4 +71,12 @@ test('DotField drží strop počtu teček', () => {
 test('DotMatrix vykreslí prstenec dneška', () => {
   const root = render(<DotMatrix cols={7} rows={5} lit={[true, false, true]} today={2} />);
   expect(root.findAll((n) => n.props.skiaType === 'Circle' && typeof n.type === 'string')).toHaveLength(1);
+});
+
+test('DotRow s nástupem začíná zhasnutý, bez nástupu rovnou rozsvícený', () => {
+  const lit = (root: TestRenderer.ReactTestInstance) => root.findAll((n) => n.props.skiaType === 'Points' && typeof n.type === 'string')
+    .map((n) => (val(n.props.points) as unknown[]).length);
+  // light: [zhasnuté, rozsvícené, rozsvěcovaná]
+  expect(lit(render(<DotRow total={4} fraction={0.5} />, 'light'))).toEqual([4, 0, 0]);
+  expect(lit(render(<DotRow total={4} fraction={0.5} intro={false} />, 'light'))).toEqual([2, 2, 0]);
 });

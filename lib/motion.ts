@@ -26,6 +26,18 @@ export const ease = {
   sine: Easing.bezier(0.37, 0, 0.63, 1),
 };
 
+/** Bezier s ořezaným vstupem 0–1. Na webu dostane první snímek animace spuštěné z efektu občas záporný čas
+ *  (start po časovém razítku snímku) a bezier by extrapoloval mimo dráhu (podložka tabu uskočila o −90 pt). */
+const clampedBezier = (x1: number, y1: number, x2: number, y2: number) => {
+  const f = Easing.bezierFn(x1, y1, x2, y2);
+  return (t: number) => {
+    'worklet';
+    return f(Math.min(1, Math.max(0, t)));
+  };
+};
+/** Stejné křivky jako `ease`, bezpečné pro animace spouštěné přímo z efektů a handlerů (UI prvky). */
+export const easeSafe = { out: clampedBezier(0.22, 1, 0.36, 1), press: clampedBezier(0.5, 0, 0.75, 0) };
+
 /** Délky (ms). UI 150–300, odměny delší. */
 export const dur = {
   press: 90,
@@ -65,8 +77,11 @@ export const motion = {
   tilePress: { scale: 0.97, tiltMaxDeg: 6, perspective: 600, releaseMs: 200 },
   /** Rozsvícení teček při nástupu (sken zleva / spirála). */
   dotScanMs: 600,
-  /** Dotyková vlna teček: poloměr vlivu, max odsunutí, doznění po puštění. */
-  ripple: { radius: 64, push: 4, decayMs: 500 },
+  /** Dotyková vlna teček: poloměr vlivu, max odsunutí, doznění po puštění, opacita rozjasněných teček (`text`). */
+  ripple: { radius: 64, push: 4, decayMs: 500, lit: 0.85 },
+  /** Ambient mapy: jedna hodina pro všechny kotouče; perioda je společný násobek `idleMs` a `currentMs`
+   *  (40 s × 3 = 24 s × 5), takže smyčka nemá skok. Kometa oběhne aktuální kotouč za `cometMs`. */
+  ambient: { clockMs: 120000, cometMs: 8000 },
   /** Posun podložky aktivního tabu v plovoucím tab baru. */
   tabSlideMs: 260,
   /** Nástup obrazovky: hlavička → hero → dlaždice ve vlně. */
@@ -150,36 +165,42 @@ export const motion = {
   scarfEdge: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
 };
 
-/** Oslava lekce: posuny a délky kotoučů (motion spec §4.1, §3.6). */
-export const lessonDone = {
-  titleRise: 8,
-  /** Odkud kotouč přilétá (pravá strana; levá zrcadlově), pt a stupně. */
-  from: { x: 140, rotate: 18 },
-  collarMs: 120,
-  /** Prohnutí osy po dopadu (pt) a jeho náběh. */
-  shakeDepth: 3,
-  shakeInMs: 50,
-  /** Kotouč série: pád z `drop` pt, rozkmit `rattle` pt za `rattleMs`. */
-  seriesDrop: 12,
-  seriesRattle: 1,
-  seriesRattleMs: 40,
-  seriesSeat: { damping: 25, stiffness: 520, mass: 1 } satisfies WithSpringConfig,
-};
-
 /**
- * Oslava dokončení lekce (§7.3), jedna časová osa. `launch`/`leftLag` od zobrazení scény, zbytek od
- * dopadu pravého kotouče (UI vlákno → `onImpact`). Ember (`accent`) je do dopadu ve scéně nulový:
- * rozžhaví se v okamžiku dotyku kotouče (`heat`), +XP v emberu ho převezme o 120 ms později.
+ * Vlajková loď: dokončení lekce z teček (Nothing Dot spec §5). Časy v ms od zobrazení scény.
+ * 0 pole se rozsvítí vlnou od středu → 200 tečky se slétají spirálou do kotouče (700 ms) → 900 nacvaknutí
+ * (scale `snapScale` → 1 pružinou `spring.kotouc`, haptika success) → 1000 opička celebrate, série +1, XP
+ * napočítání → 1600 CTA zdola. Omezený pohyb: vše hned, jedním prolnutím `reducedMs`.
  */
-export const celebration = {
-  launch: 250,
-  leftLag: 60,
-  xp: 120,
-  cheer: 480,
-  title: 760,
-  cta: 1000,
-  /** Žár kotouče při dopadu: ember naplno v rámu dotyku, chladne do oceli. */
-  heat: { peak: 0.85, coolMs: 640 },
+export const lessonDone = {
+  fieldAt: 0,
+  /** Vlna od středu přeběhne pole za tolik ms (šířka pásma `waveBand` pt). */
+  fieldMs: 640,
+  waveBand: 56,
+  gatherAt: 200,
+  gatherMs: 700,
+  /** Podíl `gatherMs`, o který se rozloží starty teček (pořadí spirálou); zbytek je let jedné tečky. */
+  gatherStagger: 0.4,
+  /** Pootočení dráhy tečky (rad): let po spirále, ne po přímce. */
+  twist: 1.6,
+  snapAt: 900,
+  snapScale: 1.08,
+  mascotAt: 1000,
+  /** Titulek a „Zítra“ dosednou s opičkou, XP čísla napočítá `countMs`. */
+  countMs: 700,
+  ctaAt: 1600,
+  ctaRise: 24,
+  /** Kotouč scény: průměr jako podíl šířky obsahu (strop `plateMax`). */
+  plateFrac: 0.62,
+  plateMax: 260,
+  /** Strop teček celoplošného pole scény (390 × 844 při rozteči 14 ≈ 1 700). */
+  fieldMax: 2000,
+  /** Kotouč se během dolétání nadechne na `snapScale` od tohoto podílu `gatherMs`, pak nacvakne. */
+  swellFrom: 0.55,
+  /** Tečkový shock prstenec při nacvaknutí (`motion.shock`): z poloměru kotouče ven. */
+  shockMs: 520,
+  reducedMs: 200,
+  /** Doběh na konečný stav při přeskočení (tap kamkoli). */
+  skipMs: 150,
 };
 
 /**
@@ -261,7 +282,7 @@ export const intro = {
   holdStart: { dip: 0.97 },
   /** Hero sekce mapy (polish 2026-10-05): mezi hlavičkou (0–70) a linkou (140). Štítek+název → číslo →
    *  činka sekce; každý úder `motion.reveal` (480 ms ease.out), zdvih `rise`. Kompaktní varianta bez činky. */
-  hero: { at: 40, step: 60, rise: 8 },
+  hero: { at: 80, step: 60, rise: 8 },
   /** Pódium ligy: stupně vyrostou z podlahy v pořadí 1 → 2 → 3 (`step`), opička dosedne `mascotLag` po
    *  svém stupni (zdvih `mascotRise`, timing, ne pružina), popisky `labelLag` po něm. Stejné časy hraje pódium,
    *  které se objeví až během relace (přechod z prázdného stavu hlavičky). */
@@ -277,3 +298,4 @@ export const intro = {
   /** Modaly: obsah nastoupí po přechodu listu (Stack modal ~350 ms se překrývá). */
   modal: { at: 60, step: 50, rise: 10 },
 };
+

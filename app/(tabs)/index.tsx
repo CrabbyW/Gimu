@@ -1,17 +1,19 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DotField, DotPlate, DotRing } from '@/components/dots';
+import { DotField, DotPlate, DotRing, useDotTouch } from '@/components/dots';
 import { LessonMap } from '@/components/map/LessonMap';
 import { currentSection, SectionHero } from '@/components/map/SectionHero';
 import { Card } from '@/components/ui/Card';
-import { useFirstShow } from '@/components/ui/choreo';
+import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PillButton } from '@/components/ui/PillButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
+import { ease, motion } from '@/lib/motion';
 import { useLeague } from '@/hooks/useLeague';
 import { useLessonMinutes } from '@/hooks/useLessonMinutes';
 import { useLessonPath } from '@/hooks/useLessonPath';
@@ -25,6 +27,9 @@ const fieldHeight = (width: number) => {
   const cols = Math.floor(width / dots.field.pitch) + 1;
   return Math.floor(dots.field.max / cols) * dots.field.pitch;
 };
+
+/** Nástup hlavičky (motion.screenIn): shared value, ne layout animace (ta na webu nechá prvek `absolute`). */
+const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
 
 const findNode =(view: LessonPathView, id: string | null): MapNode | undefined =>
   (id === null ? undefined : view.sections.flatMap((s) => s.nodes).find((n) => n.lesson.id === id));
@@ -49,6 +54,8 @@ export default function TrainingScreen() {
   useLeague();
   // Po sekvenci se parametr smaže, aby se při návratu na tab nepřehrála znovu.
   const clearUnlocked = useCallback(() => router.setParams({ unlocked: undefined }), []);
+  // Dotyková vlna tečkového pole za hlavičkou (spec §4.1): gesto jen čte dotyky, scroll ani tapy nebere.
+  const field = useDotTouch();
 
   if (profile.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
   if (view.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.path} onRetry={view.retry} />;
@@ -63,9 +70,12 @@ export default function TrainingScreen() {
     <MapContent
       unlocked={unlocked ?? null}
       render={(intro) => (
+        <GestureDetector gesture={field.gesture}>
         <View style={{ flex: 1, backgroundColor: c.base }}>
           {/* Pole za hlavičkou: strop `dots.field.max` utne řádky dole, pásma ho nechají doznít do čistého `base`. */}
-          <DotField width={width} height={fieldHeight(width)} fade="down" style={{ position: 'absolute', left: 0, top: 0 }} />
+          <DotField width={width} height={fieldHeight(width)} fade="down" touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
+          {/* Nástup obrazovky (motion.screenIn): hlavička 0 → hero 80 (vnitřní sled SectionHero) → kotouče mapy. */}
+          <Reveal play={intro} delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={HEADER_IN}>
           <ScreenHeader
             title={section?.title ?? copy.tabs.training}
             status={{
@@ -76,6 +86,7 @@ export default function TrainingScreen() {
               rightA11y: copy.status.streakA11y(stats.streak, stats.todayDone),
             }}
           />
+          </Reveal>
           <SectionHero view={viewData} intro={intro} />
           {first ? (
             // Nový uživatel: náhled odměny za první lekci. Akci nese pilulka dole.
@@ -114,6 +125,7 @@ export default function TrainingScreen() {
             </View>
           ) : null}
         </View>
+        </GestureDetector>
       )}
     />
   );

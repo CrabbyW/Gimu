@@ -15,14 +15,22 @@ const timer = (secondsLeft: number): HoldTimerState => ({
   start: jest.fn(), pause: jest.fn(),
 });
 
+/** Skia props jsou sdílené hodnoty (nástup spirálou běží na UI vlákně): test čte aktuální hodnotu. */
+const len = (p: unknown) => ((p !== null && typeof p === 'object' && 'value' in p ? (p as { value: unknown[] }).value : p) as unknown[]).length;
+
 test('HoldTimer při 50 % rozsvítí polovinu teček prstence', () => {
+  jest.useFakeTimers();
   let r: TestRenderer.ReactTestRenderer | null = null;
   act(() => { r = TestRenderer.create(<ThemeContext.Provider value={buildTheme('light', null)}><HoldTimer timer={timer(15)} total={30} /></ThemeContext.Provider>); });
+  // Nástup prstence spirálou (motion.dotScanMs) doběhne.
+  act(() => { jest.advanceTimersByTime(2000); });
   const ring = r!.root.findByType(DotRing);
   expect(ring.props.progress).toBe(0.5);
   // Light (bez záře): Points = vnější rastr, zhasnuté, rozsvícené.
   const pts = ring.findAll((n) => n.props.skiaType === 'Points' && typeof n.type === 'string');
-  expect(pts[2]!.props.points).toHaveLength(pts[1]!.props.points.length);
+  expect(len(pts[2]!.props.points)).toBe(len(pts[1]!.props.points));
+  expect(len(pts[2]!.props.points)).toBeGreaterThan(0);
+  jest.useRealTimers();
 });
 
 test('holdFraction ořezává a bez délky svítí celý', () => {

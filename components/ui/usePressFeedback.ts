@@ -1,5 +1,9 @@
 import { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { easeSafe, motion, useMotionSafe } from '@/lib/motion';
+
+// Stisk z handleru: křivky s ořezaným vstupem (na webu první snímek nesmí vystřelit mimo dráhu).
+const PRESS = { duration: motion.press.duration, easing: easeSafe.press };
+const RELEASE = { duration: motion.release.duration, easing: easeSafe.out };
 
 /** Odezva na stisk pro UI ovládání (UX2, press-release bez pružiny, spec §6.7):
  *  stlačení za 90 ms (`motion.press`), návrat za 220 ms s rozhodným doběhem (`motion.release`).
@@ -12,7 +16,7 @@ export function usePressFeedback(pressedScale: number) {
     : { transform: [{ scale: 1 - pressed.value * (1 - pressedScale) }] }));
   return {
     style,
-    onPressIn: () => { pressed.value = withTiming(1, reduced ? { duration: 0 } : motion.press); },
-    onPressOut: () => { pressed.value = withTiming(0, reduced ? motion.uiExit : motion.release); },
+    onPressIn: () => { pressed.value = withTiming(1, reduced ? { duration: 0 } : PRESS); },
+    onPressOut: () => { pressed.value = withTiming(0, reduced ? motion.uiExit : RELEASE); },
   };
 }

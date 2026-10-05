@@ -49,7 +49,7 @@ export function SectionHero({ view, intro = false }: { view: LessonPathView; int
           </View>
         </Reveal>
         <Reveal play={intro} delay={H.at + H.step} rise={H.rise} config={motion.reveal}>
-          <DotRow total={total} fraction={total > 0 ? done / total : 0} columns={ROW_MAX} dot={dots.row.d} />
+          <DotRow total={total} fraction={total > 0 ? done / total : 0} columns={ROW_MAX} dot={dots.row.d} intro={intro ? H.at + H.step : false} />
         </Reveal>
         <Reveal play={intro} delay={H.at + H.step * 2} rise={H.rise} config={motion.reveal}>
           <Text variant="headline" numberOfLines={1}>{copy.hero.name}</Text>

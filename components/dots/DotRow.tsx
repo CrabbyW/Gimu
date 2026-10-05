@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { BlurMask, Canvas, Points } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Group, Points } from '@shopify/react-native-skia';
+import { useDerivedValue } from 'react-native-reanimated';
 import { dots } from '@/theme';
 import { rowLit } from './geometry';
+import { scanCount, type Pt } from './animate';
 import { glowPad, toPoints, useDotInk } from './ink';
+import { useDotReveal } from './useDotReveal';
 import { SkiaGuard } from './SkiaGuard';
 
 interface Props {
@@ -17,6 +20,9 @@ interface Props {
   dot?: number;
   /** Popisek pro čtečku; bez něj je řádek dekorativní (číslo nese text vedle). */
   accessibilityLabel?: string;
+  /** Nástup skenem zleva (`motion.dotScanMs`), číslo = zpoždění v ms; false = stojí hned. Změna `fraction`
+   *  po nástupu (série +1, další cvik) rozsvítí nové tečky vždy plynule. */
+  intro?: boolean | number;
 }
 
 /** Rozměr řádku pro layout (kvůli rezervaci místa i ve fallbacku bez Skia). */
@@ -28,18 +34,29 @@ export function dotRowSize(total: number, columns: number | undefined, dot: numb
 }
 
 /** Řádek progresu (obr. 5): k z N teček rozsvíceno v `text` (v dark se září), zbytek `dotOff`.
- *  Statický; nástup skenem zleva (`motion.dotScanMs`) přidá motion-agent. */
-export function DotRow({ total, fraction, columns, dot = dots.row.d, accessibilityLabel }: Props) {
+ *  Nástup skenem zleva (`motion.dotScanMs`) a plynulé rozsvícení nových teček (`useDotReveal`). */
+export function DotRow({ total, fraction, columns, dot = dots.row.d, accessibilityLabel, intro = true }: Props) {
   const ink = useDotInk();
   const { cols, width, height } = dotRowSize(total, columns, dot);
   // Záře přesahuje tečku: plátno je o `pad` větší na všech stranách, layout drží čistý rozměr řádku.
   const pad = glowPad(dot);
-  const { lit, off } = useMemo(() => {
+  const { all, litCount } = useMemo(() => {
     const flags = rowLit(total, fraction);
     const pitch = dot + dots.row.gap;
-    const all = flags.map((on, i) => ({ on, x: (i % cols) * pitch + dot / 2, y: Math.floor(i / cols) * pitch + dot / 2 }));
-    return { lit: toPoints(all.filter((d) => d.on), pad, pad), off: toPoints(all.filter((d) => !d.on), pad, pad) };
+    // Rozsvícené jsou vždy prvních k teček (rowLit), takže sken zleva = prefix pole v pořadí indexů.
+    const pts = flags.map((_, i) => ({ x: (i % cols) * pitch + dot / 2, y: Math.floor(i / cols) * pitch + dot / 2 }));
+    return { all: toPoints(pts, pad, pad) as Pt[], litCount: flags.filter(Boolean).length };
   }, [total, fraction, cols, dot, pad]);
+  const { count, fade } = useDotReveal(litCount, total, intro);
+  const lit = useDerivedValue(() => all.slice(0, scanCount(count.value / Math.max(1, all.length), all.length).whole));
+  const off = useDerivedValue(() => all.slice(scanCount(count.value / Math.max(1, all.length), all.length).whole));
+  // Právě rozsvěcovaná tečka: opacita = desetinná část počtu.
+  const fresh = useDerivedValue(() => {
+    const k = scanCount(count.value / Math.max(1, all.length), all.length);
+    const p = all[k.whole];
+    return k.frac > 0.001 && p ? [p] : [];
+  });
+  const freshOpacity = useDerivedValue(() => scanCount(count.value / Math.max(1, all.length), all.length).frac);
   if (total <= 0) return null;
   const a11y = accessibilityLabel
     ? { accessible: true, accessibilityRole: 'progressbar' as const, accessibilityLabel }
@@ -48,13 +65,16 @@ export function DotRow({ total, fraction, columns, dot = dots.row.d, accessibili
     <View {...a11y} style={{ width, height }}>
       <SkiaGuard style={{ width, height }}>
         <Canvas testID="dotrow-canvas" pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: width + pad * 2, height: height + pad * 2 }}>
-          <Points points={off} mode="points" color={ink.off} strokeWidth={dot} strokeCap="round" />
-          {ink.glow && lit.length > 0 ? (
-            <Points points={lit} mode="points" color={ink.glow} strokeWidth={dot * dots.glow.scale} strokeCap="round">
-              <BlurMask blur={dots.glow.blur} style="normal" />
-            </Points>
-          ) : null}
-          <Points points={lit} mode="points" color={ink.on} strokeWidth={dot} strokeCap="round" />
+          <Group opacity={fade}>
+            <Points points={off} mode="points" color={ink.off} strokeWidth={dot} strokeCap="round" />
+            {ink.glow ? (
+              <Points points={lit} mode="points" color={ink.glow} strokeWidth={dot * dots.glow.scale} strokeCap="round">
+                <BlurMask blur={dots.glow.blur} style="normal" />
+              </Points>
+            ) : null}
+            <Points points={lit} mode="points" color={ink.on} strokeWidth={dot} strokeCap="round" />
+            <Points points={fresh} mode="points" color={ink.on} opacity={freshOpacity} strokeWidth={dot} strokeCap="round" />
+          </Group>
         </Canvas>
       </SkiaGuard>
     </View>

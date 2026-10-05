@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { easeSafe, motion, useMotionSafe } from '@/lib/motion';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import { useTheme } from '@/theme';
 
@@ -26,6 +27,17 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
   const inner = space.xs;
   const slot = (barW - inner * 2) / Math.max(1, count);
   const padD = Math.min(slot, size.tabPill - inner * 2);
+  // Podložka klouže za aktivním tabem (`motion.tabSlideMs`, ease.out, bez pružiny). Posun přes translateX
+  // na UI vlákně; změna šířky lišty (rotace, první layout) ji přestaví bez animace.
+  const { reduced } = useMotionSafe();
+  const x = useSharedValue(state.index * slot);
+  const lastSlot = useRef(slot);
+  useEffect(() => {
+    const target = state.index * slot;
+    if (lastSlot.current !== slot || reduced) { lastSlot.current = slot; x.value = target; return; }
+    x.value = withTiming(target, { duration: motion.tabSlideMs, easing: easeSafe.out });
+  }, [state.index, slot, reduced, x]);
+  const slide = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
     <View
       pointerEvents="box-none"
@@ -45,9 +57,9 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
           style={[{
             // Kulatá podložka pevného průměru, vystředěná ve slotu (ne přes celou šířku slotu, ta u krajů
             // narážela do zaoblení pilulky a opticky ujížděla).
-            position: 'absolute', top: inner, left: inner + state.index * slot + (slot - padD) / 2, width: padD, height: padD,
+            position: 'absolute', top: inner, left: inner + (slot - padD) / 2, width: padD, height: padD,
             borderRadius: radius.full, backgroundColor: c.tilePressed,
-          }, padStyle]}
+          }, slide, padStyle]}
         />
         {state.routes.map((route, i) => {
           const { options } = descriptors[route.key]!;

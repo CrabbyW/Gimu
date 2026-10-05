@@ -1,8 +1,10 @@
 import { Pressable, StyleSheet, View, type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { feedback } from '@/lib/feedback';
+import { motion } from '@/lib/motion';
 import { opacity, useTheme } from '@/theme';
 import { DotLoader } from './DotLoader';
+import { usePressFeedback } from './usePressFeedback';
 import { Text } from './Text';
 
 export type PillVariant = 'primary' | 'secondary';
@@ -38,6 +40,8 @@ export function PillButton({
   label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, motionStyle, onPressIn, onPressOut, style, accessibilityHint,
 }: PillButtonProps) {
   const { c, radius, size, space } = useTheme();
+  // Stisk (motion): scale 0.97 za `motion.press`, návrat `motion.release`, bez pružiny (spec §3).
+  const press = usePressFeedback(motion.tilePress.scale);
   const inactive = disabled || loading;
   const primary = variant === 'primary';
   const fill = (pressed: boolean) => {
@@ -47,11 +51,11 @@ export function PillButton({
   };
   const ink = onAccent ? (primary ? c.accent : c.onAccent) : primary ? c.onText : c.text;
   return (
-    <Animated.View style={[{ alignSelf: 'stretch' }, motionStyle, style]}>
+    <Animated.View style={[{ alignSelf: 'stretch' }, press.style, motionStyle, style]}>
       <Pressable
         onPress={() => { if (!inactive) onPress(); }}
-        onPressIn={(e) => { if (!inactive) feedback(primary ? 'cta' : 'tapLight'); onPressIn?.(e); }}
-        onPressOut={onPressOut}
+        onPressIn={(e) => { if (!inactive) { feedback(primary ? 'cta' : 'tapLight'); press.onPressIn(); } onPressIn?.(e); }}
+        onPressOut={(e) => { press.onPressOut(); onPressOut?.(e); }}
         disabled={inactive}
         accessibilityRole="button"
         accessibilityLabel={label}

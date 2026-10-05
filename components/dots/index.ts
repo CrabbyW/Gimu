@@ -4,4 +4,5 @@ export { DotPlate, plateDotRadius, plateOuterRadius, type DotPlateState } from '
 export { DotRing, ringLayout } from './DotRing';
 export { DotRow, dotRowSize } from './DotRow';
 export { useDotInk, type DotTouch } from './ink';
+export { useDotTouch } from './useDotTouch';
 export { SkiaGuard } from './SkiaGuard';

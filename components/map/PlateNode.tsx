@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  ReduceMotion, cancelAnimation, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming,
+  ReduceMotion, cancelAnimation, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withSequence, withSpring, withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -14,7 +15,9 @@ import { ease, motion, spring, useMotionSafe } from '@/lib/motion';
 import { playSfx } from '@/lib/sound';
 import type { NodeState } from '@/logic/map';
 import { useTheme } from '@/theme';
+import { turnsPerClock, useAmbientClock } from './ambient';
 import { CHECK_LENGTH, CHECK_PATH } from './Plate';
+import { usePlateSpin } from './usePlateSpin';
 import type { PlateKg } from '@/types';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -45,21 +48,48 @@ interface Props {
   rotation?: SharedValue<number>;
   /** Úhel komety aktuálního kotouče (motion-agent). */
   comet?: SharedValue<number>;
+  /** Nástup tečkového kotouče spirálou po tolika ms (úvodní sled mapy); bez něj stojí hned. */
+  intro?: number;
 }
+
+const TAU = Math.PI * 2;
+const TURNS_IDLE = turnsPerClock(motion.plateSpin.idleMs);
+const TURNS_CURRENT = turnsPerClock(motion.plateSpin.currentMs);
+const TURNS_COMET = turnsPerClock(motion.ambient.cometMs);
+const TURNS_BREATH = turnsPerClock(motion.breath.periodMs);
+// Kometa startuje ve 12 hodin (stejně jako statický `DotPlate`).
+const COMET_HOME = -Math.PI / 2;
 
 /** Kulatý uzel mapy (Nothing Dot): kotouč z teček (`DotPlate`), bez stínu a bez plného prstence.
  *  Popisek a opička nejsou děti uzlu (kreslí je LessonMap jako sourozence), takže pohyb kotouče je nehýbe. */
-export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0, rotation, comet }: Props) {
+export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0, rotation, comet, intro }: Props) {
   const { size } = useTheme();
   const { reduced } = useMotionSafe();
+  // Ambient (spec §3): kotouč se točí 360° / 40 s, aktuální / 24 s; kometa obíhá; záře aktuálního dýchá.
+  // Vše odvozené z jedné hodiny mapy (UI vlákno). Roztočení prstem (`usePlateSpin`) se k ambientu přičítá
+  // a po doběhu `withDecay` zůstane jen ambient, takže kotouč plynule naváže.
+  const clock = useAmbientClock();
+  const spinnable = state !== 'locked' && !unlocking;
+  const spin = usePlateSpin(spinnable, nodeSize);
+  const turns = state === 'current' ? TURNS_CURRENT : TURNS_IDLE;
+  const ownRotation = useDerivedValue(() => (clock ? clock.value * TAU * turns : 0) + spin.spin.value);
+  const ownComet = useDerivedValue(() => COMET_HOME + (clock ? clock.value * TAU * TURNS_COMET : 0));
+  const breath = useDerivedValue(() => {
+    if (reduced || !clock) return motion.breath.still;
+    // Kosinus od 1 (plná záře) k `low` a zpět, perioda `breath.periodMs`.
+    const b = motion.breath;
+    return b.low + (1 - b.low) * (0.5 + 0.5 * Math.cos(clock.value * TAU * TURNS_BREATH));
+  });
   const shake = useShake(shakeKey, reduced);
   const feedback = usePressFeedback(0.94);
   const slop = Math.max(0, (size.hitLarge - nodeSize) / 2);
   return (
     <Animated.View style={[{ width: nodeSize, height: nodeSize }, shake]}>
+      <GestureDetector gesture={spin.gesture}>
       <Animated.View style={feedback.style}>
       <Pressable
-        onPress={onPress}
+        // Po roztočení prstem tap neotevírá popover (puštění po švihu není klepnutí).
+        onPress={() => { if (!spin.dragged.value) onPress(); }}
         onPressIn={() => { feedback.onPressIn(); fb(state === 'current' ? 'cta' : state === 'locked' ? 'locked' : 'tapLight'); }}
         onPressOut={feedback.onPressOut}
         hitSlop={slop}
@@ -68,15 +98,20 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
         style={{ width: nodeSize, height: nodeSize, alignItems: 'center', justifyContent: 'center' }}
       >
         {unlocking ? (
-          <UnlockingPlate kg={kg} size={nodeSize} reduced={reduced} onUnlocked={onUnlocked} />
+          <UnlockingPlate kg={kg} size={nodeSize} reduced={reduced} onUnlocked={onUnlocked} rotation={rotation ?? ownRotation} />
         ) : (
           // Nothing Dot: kotouč z teček, bez stínu. Aktuální uzel nese záře a kometa (místo plného prstence),
           // `rotation`/`comet` napojí motion-agent (ambientní rotace, roztočení).
-          <DotPlate kg={kg} size={nodeSize} state={state} check={!(justCompleted || checkHidden)} rotation={rotation} comet={comet} decorative />
+          <DotPlate
+            kg={kg} size={nodeSize} state={state} check={!(justCompleted || checkHidden)} decorative
+            rotation={rotation ?? ownRotation} comet={comet ?? ownComet} breath={state === 'current' ? breath : undefined}
+            touch={spinnable ? spin.touch : undefined} intro={intro ?? false}
+          />
         )}
         {state === 'done' && justCompleted ? <DrawnCheck size={nodeSize} reduced={reduced} /> : null}
       </Pressable>
       </Animated.View>
+      </GestureDetector>
     </Animated.View>
   );
 }
@@ -86,7 +121,7 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
  *  scale 0.92 → 1 `spring.kotouc`, trim prstence v `text` 400 ms ease.out. Konec trimu = vzor `unlock` + zvuk
  *  a `onUnlocked`. Omezený pohyb: jen prolnutí 200 ms, prstenec rovnou celý, haptika zůstává.
  *  Nothing Dot: vizuál vrstev vyměněn za `DotPlate`, časování beze změny (motion-agent ho může přeladit). */
-function UnlockingPlate({ kg, size, reduced, onUnlocked }: { kg: PlateKg; size: number; reduced: boolean; onUnlocked?(): void }) {
+function UnlockingPlate({ kg, size, reduced, onUnlocked, rotation }: { kg: PlateKg; size: number; reduced: boolean; onUnlocked?(): void; rotation?: SharedValue<number> }) {
   const { c, size: tokens, stroke } = useTheme();
   const fade = useSharedValue(0);
   const scale = useSharedValue(reduced ? 1 : UNLOCK.from);
@@ -119,7 +154,8 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked }: { kg: PlateKg; size: 
         <DotPlate kg={kg} size={size} state="locked" decorative />
       </Animated.View>
       <Animated.View style={[{ position: 'absolute' }, solid]}>
-        <DotPlate kg={kg} size={size} state="current" decorative />
+        {/* Stejné natočení jako ambient po odemčení: výměna za běžný kotouč nedá skok. */}
+        <DotPlate kg={kg} size={size} state="current" decorative rotation={rotation} />
       </Animated.View>
       <View pointerEvents="none" style={{ position: 'absolute', left: inset, top: inset, width: ring, height: ring, transform: [{ rotate: '-90deg' }] }}>
         <Svg width={ring} height={ring}>

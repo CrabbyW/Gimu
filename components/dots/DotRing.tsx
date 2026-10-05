@@ -1,9 +1,13 @@
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { View } from 'react-native';
-import { BlurMask, Canvas, Points } from '@shopify/react-native-skia';
+import { BlurMask, Canvas, Group, Points } from '@shopify/react-native-skia';
+import { Easing, ReduceMotion, useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
+import { motion, useMotionSafe } from '@/lib/motion';
 import { dots } from '@/theme';
 import { ringDots, rowLit } from './geometry';
+import { scanCount, type Pt } from './animate';
 import { glowPad, toPoints, useDotInk } from './ink';
+import { useDotReveal } from './useDotReveal';
 import { SkiaGuard } from './SkiaGuard';
 
 interface Props {
@@ -17,6 +21,9 @@ interface Props {
   accessibilityLabel?: string;
   /** Obsah uprostřed (číslo, odpočet). */
   children?: ReactNode;
+  /** Nástup spirálou (`motion.dotScanMs`): vnější rastr se rozvine od středu ven, vnitřní prstenec doběhne
+   *  od 12 hodin. Číslo = zpoždění v ms, false = stojí hned. Změny `progress` doběhnou plynule. */
+  intro?: boolean | number;
 }
 
 /** Geometrie prstence: vnitřní tečky (start nahoře) a vnější rozptýlený disk. Exportované pro motion (spirála). */
@@ -35,20 +42,41 @@ export function ringLayout(size: number, count: number = dots.ring.count) {
 }
 
 /** Progresový prstenec (obr. 3): rastr drobných teček `dotDim` kolem a uvnitř prstenec většich teček,
- *  rozsvícený do `progress` v `text` (dark se září), zbytek `dotOff`. Statický; spirálový nástup dělá motion. */
-export function DotRing({ progress, size, count = dots.ring.count, accessibilityLabel, children }: Props) {
+ *  rozsvícený do `progress` v `text` (dark se září), zbytek `dotOff`. Nástup spirálou a plynulé změny (motion). */
+export function DotRing({ progress, size, count = dots.ring.count, accessibilityLabel, children, intro = true }: Props) {
   const ink = useDotInk();
   const layout = useMemo(() => ringLayout(size, count), [size, count]);
   const pad = glowPad(layout.innerDot * 2);
-  const { lit, off, outer } = useMemo(() => {
+  const { inner, outer, litCount } = useMemo(() => {
     const flags = rowLit(count, progress);
     const c = size / 2 + pad;
     return {
-      lit: toPoints(layout.inner.filter((_, i) => flags[i]), c, c),
-      off: toPoints(layout.inner.filter((_, i) => !flags[i]), c, c),
-      outer: toPoints(layout.outer, c, c),
+      inner: toPoints(layout.inner, c, c) as Pt[],
+      outer: toPoints(layout.outer, c, c) as Pt[],
+      litCount: flags.filter(Boolean).length,
     };
   }, [layout, count, progress, size, pad]);
+  const { count: shown, fade } = useDotReveal(litCount, count, intro);
+  // Vnější rastr: průběh 0 → 1 za `dotScanMs`, prstence od středu ven (pořadí `ringLayout`) = spirála.
+  const { reduced } = useMotionSafe();
+  const spiral = intro !== false && !reduced;
+  const disc = useSharedValue(spiral ? 0 : 1);
+  useEffect(() => {
+    if (!spiral) return;
+    disc.value = withDelay(typeof intro === 'number' ? intro : 0, withTiming(1, { duration: motion.dotScanMs, easing: Easing.linear, reduceMotion: ReduceMotion.Never }));
+    // Nástup jednou při mountu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const outerShown = useDerivedValue(() => (disc.value >= 1 ? outer : outer.slice(0, Math.max(0, Math.floor(disc.value * outer.length)))));
+  // Počet ořezaný do 0–count (první snímek animace na webu může dostat záporný čas).
+  const lit = useDerivedValue(() => inner.slice(0, scanCount(shown.value / Math.max(1, count), count).whole));
+  const off = useDerivedValue(() => inner.slice(scanCount(shown.value / Math.max(1, count), count).whole));
+  const fresh = useDerivedValue(() => {
+    const k = scanCount(shown.value / Math.max(1, count), count);
+    const p = inner[k.whole];
+    return k.frac > 0.001 && p ? [p] : [];
+  });
+  const freshOpacity = useDerivedValue(() => scanCount(shown.value / Math.max(1, count), count).frac);
   const a11y = accessibilityLabel
     ? { accessible: true, accessibilityRole: 'progressbar' as const, accessibilityLabel }
     : {};
@@ -60,14 +88,17 @@ export function DotRing({ progress, size, count = dots.ring.count, accessibility
           pointerEvents="none"
           style={{ position: 'absolute', left: -pad, top: -pad, width: size + pad * 2, height: size + pad * 2 }}
         >
-          <Points points={outer} mode="points" color={ink.dim} strokeWidth={layout.outerDot * 2} strokeCap="round" />
-          <Points points={off} mode="points" color={ink.off} strokeWidth={layout.innerDot * 2} strokeCap="round" />
-          {ink.glow && lit.length > 0 ? (
-            <Points points={lit} mode="points" color={ink.glow} strokeWidth={layout.innerDot * 2 * dots.glow.scale} strokeCap="round">
-              <BlurMask blur={dots.glow.blur} style="normal" />
-            </Points>
-          ) : null}
-          <Points points={lit} mode="points" color={ink.on} strokeWidth={layout.innerDot * 2} strokeCap="round" />
+          <Group opacity={fade}>
+            <Points points={outerShown} mode="points" color={ink.dim} strokeWidth={layout.outerDot * 2} strokeCap="round" />
+            <Points points={off} mode="points" color={ink.off} strokeWidth={layout.innerDot * 2} strokeCap="round" />
+            {ink.glow ? (
+              <Points points={lit} mode="points" color={ink.glow} strokeWidth={layout.innerDot * 2 * dots.glow.scale} strokeCap="round">
+                <BlurMask blur={dots.glow.blur} style="normal" />
+              </Points>
+            ) : null}
+            <Points points={lit} mode="points" color={ink.on} strokeWidth={layout.innerDot * 2} strokeCap="round" />
+            <Points points={fresh} mode="points" color={ink.on} opacity={freshOpacity} strokeWidth={layout.innerDot * 2} strokeCap="round" />
+          </Group>
         </Canvas>
       </SkiaGuard>
       {children}
