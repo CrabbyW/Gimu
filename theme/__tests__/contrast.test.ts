@@ -47,16 +47,29 @@ it('dark raised na accent (konfety stage-up) má kontrast ≥ 3:1', () => {
   expect(contrast(dark.raised, dark.accent)).toBeGreaterThanOrEqual(3);
 });
 
-// Hlídá pravidlo spec §2.1: dark `faint` se na `raised` nepoužívá. Kdyby se paleta změnila tak, že projde,
-// pravidlo i tento test se dají zrušit.
-it('dark faint na raised je pod 3:1 (ghost grafika se v kartě kreslí na surface)', () => {
-  expect(contrast(dark.faint, dark.raised)).toBeLessThan(3);
-});
-
 describe('inkOn', () => {
   it('na světlém kotouči volí tmavý inkoust, na tmavém světlý', () => {
     expect(inkOn(light.plate5, light)).toBe(light.text);
     expect(inkOn(light.plate25, light)).toBe(light.base);
     expect(inkOn(dark.plate25, dark)).toBe(dark.text);
+  });
+});
+
+// Nothing Dot (spec 2026-10-05 §2.1): monochrom bez akcentu, dlaždice a tečky.
+describe.each([['dark', dark as Colors], ['light', light]] as const)('Nothing Dot %s', (_name, c) => {
+  it('text na base i tile ≥ 4.5:1', () => {
+    expect(contrast(c.text, c.base)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c.text, c.tile)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(c.text, c.tilePressed)).toBeGreaterThanOrEqual(4.5);
+  });
+  it('muted na tile ≥ 4.5:1', () => expect(contrast(c.muted, c.tile)).toBeGreaterThanOrEqual(4.5));
+  it('onText na text (primární CTA) ≥ 4.5:1', () => expect(contrast(c.onText, c.text)).toBeGreaterThanOrEqual(4.5));
+  it('rozsvícená tečka (text) vs. zhasnutá (dotOff) ≥ 3:1', () => expect(contrast(c.text, c.dotOff)).toBeGreaterThanOrEqual(3));
+  it('žádný akcent: accent i accentGraphic = text', () => {
+    expect(c.accent).toBe(c.text);
+    expect(c.accentGraphic).toBe(c.text);
+  });
+  it('žádná čistá čerň ani bílá', () => {
+    Object.values(c).forEach((v) => expect(['#000', '#000000', '#FFF', '#FFFFFF']).not.toContain(String(v).toUpperCase()));
   });
 });
