@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import Svg, { Path, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { copy } from '@/data/copy';
 import { feedback as fb } from '@/lib/feedback';
 import { ease, motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
-import { svgType, useTheme } from '@/theme';
+import { dots, svgType, useTheme } from '@/theme';
 import { BOSS_SIZE } from './geometry';
 import { PULSE_MS, useShake, useUnlockProgress } from './PlateNode';
 
@@ -20,6 +20,7 @@ const PW = 12;
 const GAP = 2;
 const COLLAR_X = 50; // vnitřní hrana prvního kotouče od středu osy; objímka sedí těsně před ní
 const PULSE_PAD = 8;
+const DOT_PITCH = dots.boss.pitch;
 
 interface Props {
   state: NodeState;
@@ -48,33 +49,44 @@ export function BarbellBoss({ state, accessibilityLabel, onPress, shakeKey = 0, 
   );
 }
 
+/** Tečky obdélníku (kotouč, objímka): sloupce × řádky po `DOT_PITCH`, vystředěné v obdélníku. */
+function rectDots(x: number, y: number, w: number, h: number) {
+  const cols = Math.max(1, Math.floor(w / DOT_PITCH));
+  const rows = Math.max(1, Math.floor(h / DOT_PITCH));
+  const ox = x + (w - (cols - 1) * DOT_PITCH) / 2;
+  const oy = y + (h - (rows - 1) * DOT_PITCH) / 2;
+  const out: { x: number; y: number }[] = [];
+  for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) out.push({ x: ox + k * DOT_PITCH, y: oy + r * DOT_PITCH });
+  return out;
+}
+
+/** Boss jako tečková činka (Nothing Dot): osa = řada teček, kotouče a objímky = tečkové sloupce. Zamčená
+ *  v `dotDim`, odemčená v `text` (nejtěžší kotouče u středu jsou nejvyšší, hmotnost nese výška, ne odstín). */
 function Barbell({ state }: { state: NodeState }) {
-  const { c, seasonal, stroke: tokens } = useTheme();
+  const { c, stroke: tokens } = useTheme();
   const locked = state === 'locked';
-  // Zamčená osa je obrys; výplň podkladem mapy zakryje tyč za kotouči, aby se čáry nekřížily.
-  // Teplá litina §2.7: zamčený boss v obrysu `faint` (grafika ≥ 3:1 na base), ne `rule`.
-  const stroke = locked ? { fill: seasonal.mapBase, stroke: c.faint, strokeWidth: tokens.icon } : null;
-  const side = (dir: -1 | 1) => PLATES.map((p, i) => {
-    const inner = W / 2 + dir * (COLLAR_X + i * (PW + GAP));
-    const px = dir === 1 ? inner : inner - PW;
-    return (
-      <Rect key={`${dir}-${p.kg}`} x={px} y={MID - p.h / 2} width={PW} height={p.h} rx={3}
-        {...(stroke ?? { fill: c[`plate${p.kg}`] })} />
-    );
-  });
-  const collar = (dir: -1 | 1) => (
-    <Rect x={dir === 1 ? W / 2 + COLLAR_X - 8 : W / 2 - COLLAR_X} y={MID - 9} width={8} height={18} rx={2} {...(stroke ?? { fill: c.muted })} />
-  );
+  const ink = locked ? c.dotDim : c.text;
+  const rects: { x: number; y: number; w: number; h: number }[] = [];
+  for (const dir of [-1, 1] as const) {
+    PLATES.forEach((p, i) => {
+      const inner = W / 2 + dir * (COLLAR_X + i * (PW + GAP));
+      rects.push({ x: dir === 1 ? inner : inner - PW, y: MID - p.h / 2, w: PW, h: p.h });
+    });
+    rects.push({ x: dir === 1 ? W / 2 + COLLAR_X - 8 : W / 2 - COLLAR_X, y: MID - 9, w: 8, h: 18 });
+  }
+  const pts = rects.flatMap((r) => rectDots(r.x, r.y, r.w, r.h));
+  // Osa: jedna řada teček, jen mimo kotouče a objímky (jinak by se tečky zdvojily).
+  for (let x = DOT_PITCH / 2; x < W; x += DOT_PITCH) {
+    if (!rects.some((r) => x >= r.x - DOT_PITCH / 2 && x <= r.x + r.w + DOT_PITCH / 2)) pts.push({ x, y: MID });
+  }
   return (
     <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-      <Rect x={0} y={MID - 3} width={W} height={6} rx={3} {...(stroke ?? { fill: c.plateRim })} />
-      {collar(-1)}{collar(1)}
-      {side(-1)}{side(1)}
+      {pts.map((p, i) => <Circle key={i} cx={p.x} cy={p.y} r={dots.path.r} fill={ink} />)}
       <SvgText x={W / 2} y={MID - 10} fontFamily={svgType.label.fontFamily} fontSize={svgType.label.fontSize} letterSpacing={svgType.label.letterSpacing} textAnchor="middle" fill={locked ? c.muted : c.text}>
         {copy.map.boss}
       </SvgText>
       {state === 'done' ? (
-        <Path d={`M${W / 2 - 7} ${MID + 16} l5 5 l10 -11`} stroke={c.text} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d={`M${W / 2 - 7} ${MID + 16} l5 5 l10 -11`} stroke={c.text} strokeWidth={tokens.check} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       ) : null}
     </Svg>
   );

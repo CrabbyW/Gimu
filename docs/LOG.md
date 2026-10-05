@@ -612,3 +612,20 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Vstup 0 / záporný / prázdný UI odmítne už `parseMilestoneTarget` (1–9999), do `retarget` se nedostane.
 - Podium se při 0 XP skrývá (`return null`), hlavička ligy se přepíná přes `Reveal` s klíčem, nástupy (choreo) respektují Reduce Motion (200ms fade), časování z `lib/motion`, v nových souborech nejsou pružiny ani hardcoded hodnoty.
 - Verdikt: SCHVÁLENO. K ruční kontrole na zařízení: vzhled kompaktního SectionHero, přechod hlavičky ligy.
+
+## 2026-10-05 · design-agent · Nothing Dot fáze 1, úkoly 5–9 (statický vzhled)
+- Nové: `components/dots/` (SkiaGuard, DotPlate, DotRing, DotRow, DotMatrix, DotField, ink, index), `components/ui/` Tile, PillButton, StatusLine, ScreenHeader, FloatingTabBar. Card/Button/BigActionBar/RoundCta/TabHeader převedeny na dlaždice a pilulky, Grain odstraněn ze Screen a všech tabů.
+- Tokeny: `dots.*` (rozteče, poloměry, záře, strop pole 600), `type.pill` (mono 13 pro CTA), `size.liveDot/holdRing/heroTile`, `opacity.edgeLit`.
+- Mapa: uzly = DotPlate, cesta = tečky (SVG čárka nulové délky s kulatým koncem; zachová animaci dokreslení), boss = tečková činka, hero = dlaždice s Doto číslem a DotRow, hlavička = stavový řádek „SEKCE 01 · ● N DNÍ“ + Doto titulek sekce, tečkové pole za hlavičkou doznívá dolů, plovoucí pilulka `[ZAČÍT LEKCI]`. Opička sedí na `plateOuterRadius` (= size/2, vnější hrana teček).
+- Lekce: LessonProgress = DotRow + mono „02/05“, ExerciseCard = Tile s podlahou z teček (pole doznívá nahoru), HoldTimer = DotRing 260 s Doto sekundami, BigActionBar = dvě pilulky.
+- Rozhodnutí sám:
+  - kg na uzlu mapy (72/88) je mono štítek, ne Doto: Doto je povolené až od 28 pt a do náboje R/φ² se nevejde. Doto až od průměru 144 (`dots.plate.dotoMin`, oslava).
+  - Aktuální vs. dokončený kotouč: aktuální má záři (dark) a kometu, dokončený plný `text` bez záře + fajfka místo čísla. Plný prstenec aktuálního uzlu (PulseRing) a stín kotouče odstraněny: rozbíjely tečkový jazyk; aktuální nese velikost 88 + kometa + opička.
+  - Tlačítko „Začít lekci“ pod aktuálním uzlem odstraněno, akce je plovoucí pilulka obrazovky (spec §6) a tap na kotouč; `labelHeight` current upraven.
+  - Mapa už nemá TopBar (XP, liga): spec §6 je na mapě nemá; `useLeague()` zůstává kvůli vyhodnocení týdne.
+  - Živá tečka stavového řádku svítí jen když dnes ještě nic nebylo (údaj „série čeká“), jinak chybí.
+  - DotField: spec chce rozteč 14 i strop ~600 teček; celé pole přes obrazovku má ~1700. Řešení: pole jen za hlavičkou, řádky nad strop se utnou a 4 pásma ho nechají doznít.
+  - Lekce: spec §6 říká „DotRing progresu nahoře“, plán úkol 9 „DotRow“. Držím plán (DotRow), ring je u výdrže.
+  - Jest: `lib/commonjs/mock` Skia exportuje jen továrnu `Mock(CanvasKit)`, takže `jest.setup.ts` mock by shodil každý render s Canvas. Nahrazen vlastní atrapou (komponenty = View s props).
+  - Button: jen tvar pilulky (výška 56, radius full, hrana u sekundárního), popisky zůstávají Inter sentence case (vedlejší akce v obsahu); `[ZÁVORKY]` nese PillButton.
+- Otevřené: haptika primární pilulky je `cta` (medium), spec chce light (FeedbackId v `lib/` patří bossovi). Dev obrazovka „Tečky“ (plán úkol 5 krok 5) nepřidána. Popover uzlu a NodeLabel zůstaly Inter/Card. Ověřit na zařízení: Doto s diakritikou v titulku sekce, čitelnost `dotOff` pole v light.

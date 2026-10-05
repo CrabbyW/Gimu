@@ -12,6 +12,9 @@ export const radius = { s: 8, l: 14, tile: 28, full: 999 } as const;
 export const size = {
   // Nothing Dot §2.3: pilulkové CTA 56, plovoucí tab bar 64, kulaté ikonové tlačítko 44, vnitřní okraj dlaždice 20.
   pill: 56, tabPill: 64, iconButton: 44, tilePad: 20,
+  // Živá tečka stavového řádku 6, tečkový prstenec výdrže 260 (Doto 64 + jednotka se vejde do vnitřního prstence),
+  // minimální výška hero dlaždice mapy (číslo nahoře, název dole jako obr. 2).
+  liveDot: 6, holdRing: 260, heroTile: 148,
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
   // Karta volby v onboardingu (vize těla, R36) a její glyf; glyf cesty je `glyph`.
   choiceCard: 80, choiceGlyph: 40, glyph: 48,
@@ -56,6 +59,26 @@ export const size = {
   podiumFirstCount: 5, podiumSecondCount: 3, podiumThirdCount: 2, pedestalCount: 3,
   pedestalW: 176, pedestalPlateH: 12, silhouettePanel: 240, floorStep: 24, floorRows: 5, plateUnitMin: 72,
 } as const;
+// Nothing Dot §2.4: tečkové prvky (Skia, `components/dots/`). Vše v pt, poměry (`…Frac`, ×R) vůči poloměru prvku.
+export const dots = {
+  /** DotField: rozteč 14 (spec §2.4), poloměr tečky, strop počtu teček (spec §7: ~600), počet pásem doznívání. */
+  field: { pitch: 14, r: 1.25, max: 600, bands: 4 },
+  /** DotRow (obr. 5): průměr tečky a mezera mezi tečkami i řádky. */
+  row: { d: 10, gap: 6 },
+  /** DotMatrix (obr. 2): rozteč, poloměr zhasnuté a rozsvícené tečky, mezera prstence dneška. */
+  matrix: { pitch: 10, r: 1.6, rLit: 2.2, todayGap: 2.4 },
+  /** DotPlate: poloměr tečky = rFrac × R (min rMin); kometa = počet teček ohonu a zvětšení hlavy;
+   *  od průměru `dotoMin` nese kotouč kg v Doto (≥ 28 pt), menší uzly mono štítek (Doto pod 28 pt zakázané). */
+  plate: { rFrac: 0.036, rMin: 1, cometDots: 7, cometScale: 1.9, dotoMin: 144 },
+  /** DotRing (obr. 3): vnitřní prstenec (počet teček, poloměr ×R, tečka ×R) a vnější rozptýlený disk (od ×R, rozteč ×R, tečka ×R). */
+  ring: { count: 32, inner: 0.46, innerDot: 0.042, outerFrom: 0.62, outerPitch: 0.074, outerDot: 0.013 },
+  /** Tečkovaná cesta mapy: rozteč teček po křivce a poloměr. */
+  path: { pitch: 10, r: 1.5 },
+  /** Tečková činka bosse: rozteč 6 = dva sloupce teček na kotouč šíře 12 (tečka `path.r`). */
+  boss: { pitch: 6 },
+  /** Záře aktivní tečky (jen dark): rozmazání BlurMask a poloměr záře vůči tečce. */
+  glow: { blur: 4, scale: 1.8 },
+} as const;
 // Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
 // `statMaxScale` = strop zvětšení tokenu `stat` (1.4): pevné sloupce čísel (XP v lize) rostou jen do něj.
 export const layout = { narrow: 360, fontScale: 1.3, statMaxScale: 1.4 } as const;
@@ -64,7 +87,9 @@ export const layout = { narrow: 360, fontScale: 1.3, statMaxScale: 1.4 } as cons
 // `future` = budoucí dny v DotGridu sezóny (`faint` na 40 %, Teplá litina §3.4).
 // `grain` = celá vrstva zrna litiny přes obrazovku (2026-10-03, „hloubka a materiál“): 5 %, na hranici vnímání.
 // `floor` = mřížka podlahy pod siluetou cviku (linky `rule` na `surface`, ať nepřebije postavu).
-export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4, grain: 0.05, floor: 0.7, glint: 0.24 } as const;
+export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4, grain: 0.05, floor: 0.7, glint: 0.24,
+  // Nothing Dot §3: rozjasněná hrana stisknuté dlaždice (vrstva `text` přes `edge`).
+  edgeLit: 0.16 } as const;
 // `glint` = odlesk na hraně litinového kotouče (`text` na 24 %): jediné místo, kde kov „chytá“ světlo.
 // Přerušovaná cílová linie grafu váhy (SVG strokeDasharray).
 export const dash = { target: '4 6' } as const;
@@ -127,6 +152,9 @@ export const type = {
   // letterSpacing 0.18em při 11 pt ≈ 2.
   label: { fontFamily: font.mono, fontSize: 11, lineHeight: 14, letterSpacing: 2, textTransform: 'uppercase' as const },
   caption: { fontFamily: font.body, fontSize: 13, lineHeight: 18 },
+  // Popisek pilulkového CTA `[ZAČÍT LEKCI]` (obr. 1): mono 13 s rozpalem 0.12 em. O stupeň nad štítkem 11,
+  // protože nese hlavní akci obrazovky a musí se číst i v pohybu; verzálky dodává PillButton v textu (čtečka bez závorek).
+  pill: { fontFamily: font.mono, fontSize: 13, lineHeight: 16, letterSpacing: ls(13, 0.12) },
   // Volný text ve víceřádkovém poli (TextField, onboarding dream): tělový font, větší řez.
   input: { fontFamily: font.body, fontSize: 20, lineHeight: 28 },
   inputLarge: { fontFamily: font.body, fontSize: 22, lineHeight: 32 },

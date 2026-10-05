@@ -12,7 +12,6 @@ import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { LockedPreview } from '@/components/ui/LockedPreview';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Grain } from '@/components/ui/Grain';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -55,7 +54,6 @@ export default function LeagueScreen() {
         : league.status === 'error' ? <ErrorState edges={[]} what={copy.league.errorWhat} onRetry={league.retry} />
           : locked ? <LockedLeague view={league.data} />
             : <Standings view={league.data} />}
-      <Grain />
     </View>
   );
 }

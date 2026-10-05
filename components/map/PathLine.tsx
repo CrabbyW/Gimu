@@ -2,7 +2,7 @@ import { useEffect, useId } from 'react';
 import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Defs, Mask, Path } from 'react-native-svg';
 import { motion, useMotionSafe } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { dots, useTheme } from '@/theme';
 import { segmentLength, segmentPath, type NodePosition } from './geometry';
 
 type Point = { x: number; y: number };
@@ -11,7 +11,8 @@ const bottomOf = (p: NodePosition): Point => ({ x: p.x, y: p.y + p.size / 2 + ED
 const topOf = (p: NodePosition): Point => ({ x: p.x, y: p.y - p.size / 2 - EDGE_GAP });
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const DRAW_MS = motion.pathDrawMs;
-const DOTS = { strokeWidth: 3, strokeDasharray: '2 10', strokeLinecap: 'round' as const, fill: 'none' };
+// Nothing Dot: čárka nulové délky s kulatým koncem = přesná tečka průměru 2r každých `pitch` pt.
+const DOTS = { strokeWidth: dots.path.r * 2, strokeDasharray: `0 ${dots.path.pitch}`, strokeLinecap: 'round' as const, fill: 'none' };
 
 interface Props {
   width: number;
@@ -23,15 +24,16 @@ interface Props {
   drawing?: number | null;
 }
 
-/** Tečkovaná cesta mezi uzly. Prošlé úseky v `muted`, cesta k zamčeným v `mapRule`. */
+/** Tečkovaná cesta mezi uzly (Nothing Dot): prošlé úseky až k aktuálnímu uzlu rozsvícené v `text`,
+ *  cesta k zamčeným tlumená `dotDim`. Stejné tečky jako zbytek jazyka, ne přerušovaná čára. */
 export function PathLine({ width, height, positions, reached, drawing = null }: Props) {
-  const { c, seasonal } = useTheme();
+  const { c } = useTheme();
   // Úsek vede od spodní hrany uzlu k horní hraně dalšího: čára nikdy nekříží kotouč ani text bosse.
   const segments = positions.slice(1).map((b, i) => ({ i, a: bottomOf(positions[i]!), b: topOf(b) }));
   return (
     <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
       {segments.map(({ i, a, b }) => (
-        <Path key={i} d={segmentPath(a, b)} stroke={reached[i] && drawing !== i ? c.muted : seasonal.mapRule} {...DOTS} />
+        <Path key={i} d={segmentPath(a, b)} stroke={reached[i] && drawing !== i ? c.text : c.dotDim} {...DOTS} />
       ))}
       {drawing !== null && segments[drawing] ? <DrawingSegment a={segments[drawing].a} b={segments[drawing].b} /> : null}
     </Svg>
@@ -58,7 +60,7 @@ function DrawingSegment({ a, b }: { a: Point; b: Point }) {
           <AnimatedPath d={d} stroke="white" strokeWidth={8} fill="none" strokeDasharray={`${len} ${len}`} animatedProps={props} />
         </Mask>
       </Defs>
-      <Path d={d} stroke={c.muted} mask={`url(#${mask})`} {...DOTS} />
+      <Path d={d} stroke={c.text} mask={`url(#${mask})`} {...DOTS} />
     </>
   );
 }

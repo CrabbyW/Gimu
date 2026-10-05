@@ -1,0 +1,83 @@
+import { Pressable, StyleSheet, View, type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { feedback } from '@/lib/feedback';
+import { opacity, useTheme } from '@/theme';
+import { DotLoader } from './DotLoader';
+import { Text } from './Text';
+
+export type PillVariant = 'primary' | 'secondary';
+
+export interface PillButtonProps {
+  /** Věta v sentence case („Začít lekci“). Zobrazí se jako `[ZAČÍT LEKCI]`, čtečka dostane větu bez závorek. */
+  label: string;
+  onPress(): void;
+  variant?: PillVariant;
+  disabled?: boolean;
+  /** Akce běží: místo popisku DotLoader, šířka a výška se nemění. */
+  loading?: boolean;
+  /** Na plné akcentové ploše (stage-up): primární = plocha `onAccent` s popiskem v akcentu, sekundární obrys `onAccent`. */
+  onAccent?: boolean;
+  /** Motion vrstva (stisk, nástup zdola); staticky nic. */
+  motionStyle?: StyleProp<ViewStyle>;
+  onPressIn?(e: GestureResponderEvent): void;
+  onPressOut?(e: GestureResponderEvent): void;
+  /** Jen umístění v layoutu (šířka, okraje), ne vzhled. */
+  style?: StyleProp<ViewStyle>;
+  accessibilityHint?: string;
+}
+
+/** Text pilulky: mono verzálky v hranatých závorkách (obr. 1). */
+export const pillText = (label: string) => `[${label.toUpperCase()}]`;
+
+/**
+ * Pilulkové CTA (spec §2.3, obr. 1): výška 56, plná šířka, radius full.
+ * Primární = výplň `text`, popisek `onText` (nejsilnější plocha obrazovky, jediná plná). Sekundární = `tile` + `edge`.
+ * Stisk mění výplň (`accentPressed` / `tilePressed`); scale a haptiku drží motion vrstva a `feedback`.
+ */
+export function PillButton({
+  label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, motionStyle, onPressIn, onPressOut, style, accessibilityHint,
+}: PillButtonProps) {
+  const { c, radius, size, space } = useTheme();
+  const inactive = disabled || loading;
+  const primary = variant === 'primary';
+  const fill = (pressed: boolean) => {
+    if (onAccent) return primary ? c.onAccent : 'transparent';
+    if (primary) return pressed ? c.accentPressed : c.text;
+    return pressed ? c.tilePressed : c.tile;
+  };
+  const ink = onAccent ? (primary ? c.accent : c.onAccent) : primary ? c.onText : c.text;
+  return (
+    <Animated.View style={[{ alignSelf: 'stretch' }, motionStyle, style]}>
+      <Pressable
+        onPress={() => { if (!inactive) onPress(); }}
+        onPressIn={(e) => { if (!inactive) feedback(primary ? 'cta' : 'tapLight'); onPressIn?.(e); }}
+        onPressOut={onPressOut}
+        disabled={inactive}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled: inactive, busy: loading }}
+        style={({ pressed }) => ({
+          minHeight: size.pill,
+          borderRadius: radius.full,
+          paddingHorizontal: space.l,
+          paddingVertical: space.s,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: fill(pressed && !inactive),
+          // Sekundární pilulka nese vlasovou hranu jako dlaždice; primární je jen výplň.
+          borderWidth: primary && !onAccent ? 0 : StyleSheet.hairlineWidth,
+          borderColor: onAccent ? c.onAccent : c.edge,
+          opacity: disabled ? opacity.disabled : 1,
+        })}
+      >
+        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <Text variant="pill" numberOfLines={1} importantForAccessibility="no" style={{ color: ink, opacity: loading ? 0 : 1, textAlign: 'center' }}>
+            {pillText(label)}
+          </Text>
+          {loading ? <View style={{ position: 'absolute' }}><DotLoader color={ink} size={size.loaderDot * 6} /></View> : null}
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+}

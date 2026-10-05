@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/Button';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Grain } from '@/components/ui/Grain';
 import { Stat } from '@/components/ui/Stat';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { Telemetry } from '@/components/ui/Telemetry';
@@ -45,7 +44,6 @@ export default function ProgressScreen() {
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.progress.errorWhat} onRetry={profile.retry} />
           : <ProgressBody profile={profile.data!} />}
-      <Grain />
     </View>
   );
 }

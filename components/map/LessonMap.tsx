@@ -5,7 +5,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY } from '@/components/mascot';
-import { Button } from '@/components/ui/Button';
+import { plateOuterRadius } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { feedback } from '@/lib/feedback';
@@ -48,6 +48,8 @@ interface Props {
   onUnlockSequenceEnd?(): void;
   /** Úvodní sled (motion, první zobrazení): kotouče se usadí shora dolů k aktuálnímu uzlu, opice poslední. */
   intro?: boolean;
+  /** Místo pod posledním uzlem pro plovoucí CTA obrazovky (pt), aby ho šlo odscrollovat. */
+  footerSpace?: number;
 }
 
 /** Teplá litina §2.7: opička SEDÍ na horní hraně kotouče (sourozenec kotouče, ne dítě: kotouč smí pulzovat,
@@ -55,13 +57,14 @@ interface Props {
 const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolean, stage: MascotStage) => {
   // Kotva (spec §2.7, z-order): spodní hrana trupu leží na středu horní hrany kotouče; nohy a konec šálu
   // (MonkeyFront) visí přes čelo kotouče.
-  if (!isBoss && !beside) return { x: p.x, y: p.y - p.size / 2 - (mascotSeatY(stage) / MASCOT_VIEWBOX - 0.5) * MASCOT };
+  // Nothing Dot: hrana = vnější hrana teček `DotPlate` (`plateOuterRadius`), opička sedí na horní tečce.
+  if (!isBoss && !beside) return { x: p.x, y: p.y - plateOuterRadius(p.size) - (mascotSeatY(stage) / MASCOT_VIEWBOX - 0.5) * MASCOT };
   const half = isBoss ? BOSS_SIZE.w / 2 : p.size / 2;
   const side = p.x < cx ? 1 : -1;
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false }: Props) {
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0 }: Props) {
   const { c, space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -77,7 +80,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     () => layoutNodes(flat.map((n) => ({ id: n.lesson.id, isBoss: n.lesson.isBoss, state: n.state, sectionStart: n.section.nodes[0]?.lesson.id === n.lesson.id })), width),
     [flat, width],
   );
-  const height = layout.height + insets.bottom;
+  const height = layout.height + insets.bottom + footerSpace;
   const posOf = useCallback((id: string) => layout.positions.find((p) => p.id === id), [layout]);
 
   // --- Odemykací sekvence (spec §7.2) ---
@@ -239,7 +242,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   return (
     <ScrollView
       ref={scroll}
-      style={{ flex: 1, backgroundColor: seasonal.mapBase }}
+      // Průhledná: pod mapou je `base` obrazovky (a tečkové pole hlavičky), UI zůstává monochromní (spec §2.1).
+      style={{ flex: 1 }}
       contentContainerStyle={{ height }}
       onLayout={(e) => setViewportH(e.nativeEvent.layout.height)}
       onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }}
@@ -307,7 +311,6 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
               state={state}
               minutes={minutesOf[n.lesson.id] ?? 1}
               bossAfter={n.section.nodes.filter((m) => !m.lesson.isBoss).length}
-              onStart={() => onOpenLesson(n.lesson.id)}
             />
           </SettleIn>
         );
@@ -354,13 +357,12 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
 
 const center = { textAlign: 'center' as const };
 
-/** Popisek pod uzlem (Teplá litina §2.7, tabulka stavů). Metadata z dat: počet cviků, `estMinutes`, XP.
- *  current = název `headline` + metadata + „+N XP“ a primary „Začít lekci“; locked = název a metadata
- *  `caption muted`; done = jen název `caption muted`; boss = „Boss sekce“ + podmínka odemčení. */
-function NodeLabel({ node, state, minutes, bossAfter, onStart }: {
-  node: MapNode; state: NodeState; minutes: number; bossAfter: number; onStart(): void;
+/** Popisek pod uzlem (tabulka stavů). Metadata z dat: počet cviků, `estMinutes`, XP.
+ *  current = název `headline` + metadata + „+N XP“ (akci nese plovoucí pilulka obrazovky a tap na kotouč);
+ *  locked = název a metadata `caption muted`; done = jen název `caption muted`; boss = „Boss sekce“ + podmínka. */
+function NodeLabel({ node, state, minutes, bossAfter }: {
+  node: MapNode; state: NodeState; minutes: number; bossAfter: number;
 }) {
-  const { space } = useTheme();
   const info = copy.map.nodeInfo(node.exerciseCount, minutes);
   const withXp = `${info} · ${copy.map.xpGain(node.xp)}`;
   const current = state === 'current';
@@ -393,7 +395,6 @@ function NodeLabel({ node, state, minutes, bossAfter, onStart }: {
   return (
     <View pointerEvents="box-none" style={{ marginTop: LABEL_GAP, alignItems: 'center' }}>
       {lines}
-      {current ? <Button label={copy.map.startLesson} onPress={onStart} style={{ marginTop: space.s, alignSelf: 'stretch' }} /> : null}
     </View>
   );
 }

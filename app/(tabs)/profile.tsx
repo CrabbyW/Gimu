@@ -10,7 +10,6 @@ import { Card } from '@/components/ui/Card';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Grain } from '@/components/ui/Grain';
 import { PlateStack } from '@/components/ui/PlateStack';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { StatGrid } from '@/components/ui/StatGrid';
@@ -37,7 +36,6 @@ export default function ProfileScreen() {
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.profile.errorWhat} onRetry={profile.retry} />
           : <ProfileBody profile={profile.data!} />}
-      <Grain />
     </View>
   );
 }

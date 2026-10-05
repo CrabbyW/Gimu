@@ -1,31 +1,32 @@
 import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
-import Animated, { FadeOut, useAnimatedProps, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
-import { Stat } from '@/components/ui/Stat';
+import Animated, { FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { DotRing } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
-import { stroke, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-const SIZE = 220;
-const STROKE = stroke.ring;
-const R = (SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * R;
 const PULSE_FROM = motion.holdPulse.fromS;
 
-/** Kruhový odpočet výdrže: prstenec v `text` na stopě `rule` se vyprazdňuje, uprostřed zbývající sekundy.
- *  R42: bez akcentu, měřidlo nese kontrast; useknutý konec (butt) čte jako měřicí čára, ne jako pilulka.
- *  Stav a ovládání drží `useHoldTimer` v rodiči, který kreslí i akční lištu. */
-export function HoldTimer({ timer }: { timer: HoldTimerState }) {
-  const { c, space } = useTheme();
-  const { reduced } = useMotionSafe();
-  const { progress, secondsLeft, status, countdown } = timer;
+interface Props {
+  timer: HoldTimerState;
+  /** Délka výdrže v sekundách (zdroj podílu rozsvícených teček). Bez ní prstenec svítí celý. */
+  total?: number;
+}
 
-  const ring = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE * (1 - progress.value) }));
+/** Podíl rozsvíceného prstence: zbývající / celkem (1 → 0), ořezaný; neznámá délka = plný. */
+export const holdFraction = (secondsLeft: number, total?: number) =>
+  (total && total > 0 ? Math.min(1, Math.max(0, secondsLeft / total)) : 1);
+
+/** Odpočet výdrže (Nothing Dot, obr. 3): tečkový prstenec zhasíná po směru hodin, uprostřed Doto sekundy
+ *  a mono jednotka. Číslo je nejdůležitější věc obrazovky během výdrže, prstenec ho jen rámuje.
+ *  Stav a ovládání drží `useHoldTimer` v rodiči, který kreslí i akční lištu. */
+export function HoldTimer({ timer, total }: Props) {
+  const { space, size } = useTheme();
+  const { reduced } = useMotionSafe();
+  const { secondsLeft, status, countdown } = timer;
 
   const scale = useSharedValue(1);
   useEffect(() => {
@@ -70,32 +71,27 @@ export function HoldTimer({ timer }: { timer: HoldTimerState }) {
       accessible
       accessibilityRole="timer"
       accessibilityLabel={`${secondsLeft} ${copy.lesson.seconds.toLowerCase()}`}
-      style={{ width: SIZE, height: SIZE, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center' }}
+      style={{ alignSelf: 'flex-start' }}
     >
-      <Animated.View style={[pulse, { position: 'absolute' }]}>
-      <Svg width={SIZE} height={SIZE}>
-        <Circle cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={c.rule} strokeWidth={STROKE} fill="none" />
-        {/* Start nahoře, ubývá po směru hodinových ručiček. */}
-        <AnimatedCircle
-          cx={SIZE / 2} cy={SIZE / 2} r={R} stroke={c.text} strokeWidth={STROKE} fill="none" strokeLinecap="butt"
-          strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`} animatedProps={ring}
-          transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-        />
-      </Svg>
-      </Animated.View>
-      <Animated.View style={[pulse, { alignItems: 'center' }]}>
-        {counting ? (
-          <Animated.View style={cdStyle}>
-            <Stat size="L" value={countdown} unit="" />
-          </Animated.View>
-        ) : (
-          <Stat size="L" value={secondsLeft} unit={copy.lesson.seconds} />
-        )}
-        {status === 'ready' ? (
-          <Animated.View exiting={FadeOut.duration(motion.uiExit.duration).easing(motion.uiExit.easing)}>
-            <Text variant="label" tone="muted" style={{ marginTop: space.xs }}>{copy.lesson.holdReady}</Text>
-          </Animated.View>
-        ) : null}
+      <Animated.View style={pulse}>
+        <DotRing progress={holdFraction(secondsLeft, total)} size={size.holdRing}>
+          <View style={{ alignItems: 'center' }}>
+            {counting ? (
+              <Animated.View style={cdStyle}>
+                <Text variant="hero" maxFontSizeMultiplier={1}>{countdown}</Text>
+              </Animated.View>
+            ) : (
+              <Text variant="hero" maxFontSizeMultiplier={1}>{secondsLeft}</Text>
+            )}
+            {status === 'ready' ? (
+              <Animated.View exiting={FadeOut.duration(motion.uiExit.duration).easing(motion.uiExit.easing)}>
+                <Text variant="label" tone="muted" style={{ marginTop: space.xs }}>{copy.lesson.holdReady}</Text>
+              </Animated.View>
+            ) : counting ? null : (
+              <Text variant="label" tone="muted">{copy.lesson.seconds}</Text>
+            )}
+          </View>
+        </DotRing>
       </Animated.View>
     </View>
   );

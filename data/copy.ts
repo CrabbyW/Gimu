@@ -398,6 +398,20 @@ export const copy = {
     title: 'Opice roste.', cta: 'Pokračovat',
     a11y: (n: number, name: string) => `Opice vyrostla. Stage ${n}, ${name}.`,
   },
+  // Nothing Dot: tečkové prvky a nové primitivy (stavový řádek, hero dlaždice mapy).
+  dots: {
+    plateA11y: (kg: number, state: string) => `Kotouč ${kg} kg, ${state}`,
+  },
+  status: {
+    // Pravá strana stavového řádku mapy: živý údaj série („12 DNÍ“), tečka bliká, dokud dnes nic nebylo.
+    streak: (n: number) => `${n} ${czPlural(n, 'den', 'dny', 'dní')}`.toUpperCase(),
+    streakA11y: (n: number, todayDone: boolean) => `Série ${n} ${czPlural(n, 'den', 'dny', 'dní')}, ${todayDone ? 'dnes hotovo' : 'dnes čeká'}`,
+  },
+  hero: {
+    name: 'Lekce v sekci',
+    next: (title: string) => `Další: ${title}`,
+    allDone: 'Sekce hotová',
+  },
   mascot: {
     // Popisek pro čtečku obrazovky podle nálady.
     label: { idle: 'Tvoje opice', happy: 'Tvoje opice má radost', celebrate: 'Tvoje opice slaví', sad: 'Tvoje opice je smutná' },

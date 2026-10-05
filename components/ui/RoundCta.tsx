@@ -1,8 +1,4 @@
-import { Pressable } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { useTheme } from '@/theme';
-import { Text } from './Text';
-import { usePressFeedback } from './usePressFeedback';
+import { PillButton } from './PillButton';
 
 export interface CtaAction {
   label: string; onPress(): void; disabled?: boolean;
@@ -10,47 +6,13 @@ export interface CtaAction {
   onAccent?: boolean;
 }
 
-const DIAMETER = 88;
-// Inter SemiBold 16 pt má průměrnou šířku znaku ≈ 0.55 em, tj. ~9 pt: 7 znaků
-// (~62 pt) se do kruhu 88 pt vejde s okrajem, delší popisek by se dotýkal obvodu.
+// Inter SemiBold 16 pt ≈ 9 pt na znak: do dřívějšího kulatého CTA 88 pt se vešlo 7 znaků.
 const MAX_ROUND_CHARS = 7;
 
-/** Vejde se popisek do kulatého CTA? Delší popisek dostane pilulku (a v BigActionBar širší buňku). */
+/** Krátký popisek? BigActionBar podle toho dělí šířku mezi vedlejší a hlavní akci (krátké CTA = půl, dlouhé = 2/3). */
 export const fitsRoundCta = (label: string): boolean => label.length <= MAX_ROUND_CHARS;
 
-/** Hlavní CTA spodní lišty: kulaté 88 pt, plná světlá plocha (R42); delší popisek → pilulka 64 pt na šířku buňky. */
+/** Hlavní CTA spodní lišty. Nothing Dot §2.3: místo kruhu pilulka 56 `[POPISEK]` na šířku buňky (obr. 1). */
 export function RoundCta({ label, onPress, disabled = false, onAccent = false }: CtaAction) {
-  const { c, space, radius } = useTheme();
-  const feedback = usePressFeedback(0.96);
-  const round = fitsRoundCta(label);
-  return (
-    <Animated.View style={[feedback.style, round ? null : { alignSelf: 'stretch' }]}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={feedback.onPressIn}
-        onPressOut={feedback.onPressOut}
-        disabled={disabled}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityState={{ disabled }}
-        style={{
-          width: round ? DIAMETER : '100%',
-          // Pilulka = krok škály `xxl` (64); kruh 88 drží spec §6.6 (= seasonBadgeLarge), ne φ-stupeň 87.
-          height: round ? DIAMETER : space.xxl,
-          paddingHorizontal: round ? 0 : space.l,
-          borderRadius: radius.full,
-          // R42: plná `text` plocha místo akcentu. Neaktivní přejde na neutrální plochu jako Button.
-          backgroundColor: onAccent ? (disabled ? 'transparent' : c.onAccent) : disabled ? c.surface : c.text,
-          borderWidth: onAccent && disabled ? 1 : 0,
-          borderColor: c.onAccent,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {onAccent
-          ? <Text variant="bodyStrong" numberOfLines={1} style={{ color: disabled ? c.onAccent : c.accent }}>{label}</Text>
-          : <Text variant="bodyStrong" tone={disabled ? 'muted' : 'inverse'} numberOfLines={1}>{label}</Text>}
-      </Pressable>
-    </Animated.View>
-  );
+  return <PillButton label={label} onPress={onPress} disabled={disabled} onAccent={onAccent} />;
 }

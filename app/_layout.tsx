@@ -9,7 +9,7 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
@@ -17,7 +17,6 @@ import { useActiveSeason } from '@/hooks/useActiveSeason';
 import { useHydrated } from '@/hooks/useHydrated';
 import { useReminderSync } from '@/hooks/useReminderSync';
 import { ThemeProvider, useTheme } from '@/theme';
-import { loadSkia } from '@/lib/skiaReady';
 import { preloadSounds } from '@/lib/sound';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -25,13 +24,10 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Doto_700Bold, Inter_300Light, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
   const hydrated = useHydrated();
-  // Web: CanvasKit (wasm) musí být načtený před prvním Skia <Canvas>; na nativu se vyřeší hned.
-  const [skiaLoaded, setSkiaLoaded] = useState(false);
-  useEffect(() => { loadSkia().finally(() => setSkiaLoaded(true)); }, []);
   const season = useActiveSeason();
   useEffect(() => { if (fontError) console.warn('[fonts] načtení selhalo, pokračuji se systémovým písmem', fontError); }, [fontError]);
   // Splash drží, dokud nejsou fonty i uložená data (spec §9). Chyba fontů splash neblokuje.
-  const ready = (fontsLoaded || fontError != null) && hydrated && skiaLoaded;
+  const ready = (fontsLoaded || fontError != null) && hydrated;
   useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => undefined); }, [ready]);
   // Přehrávače jednou při startu: první zvuk oslavy bez latence dekódování (motion spec §6.2.5).
   useEffect(preloadSounds, []);

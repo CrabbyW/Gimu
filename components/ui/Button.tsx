@@ -1,4 +1,4 @@
-import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { feedback } from '@/lib/feedback';
 import { motion, useMotionSafe } from '@/lib/motion';
@@ -57,17 +57,19 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
         accessibilityLabel={label}
         accessibilityState={{ disabled, busy: loading }}
         style={({ pressed }) => ({
-          minHeight: size.button,
+          // Nothing Dot §2.3: pilulka (radius full), výška jako PillButton; obsah zůstává Inter (vedlejší akce v obsahu).
+          minHeight: size.pill,
           minWidth: size.hit,
-          borderRadius: radius.s,
+          borderRadius: radius.full,
           paddingHorizontal: space.l,
-          // 14 pt svisle = (52 − 24) / 2: jeden řádek drží min. výšku, dva řádky ji zvětší.
-          paddingVertical: (size.button - space.l) / 2,
+          // (56 − 24) / 2: jeden řádek drží min. výšku, dva řádky ji zvětší.
+          paddingVertical: (size.pill - space.l) / 2,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: fill(pressed),
-          borderWidth: onAccent && variant === 'secondary' ? 1 : 0,
-          borderColor: c.onAccent,
+          // Sekundární nese vlasovou hranu dlaždice; na akcentové ploše obrys `onAccent`.
+          borderWidth: variant === 'secondary' ? (onAccent ? 1 : StyleSheet.hairlineWidth) : 0,
+          borderColor: onAccent ? c.onAccent : c.edge,
           opacity: disabled ? opacity.disabled : 1,
         })}
       >

@@ -23,7 +23,8 @@ describe('plateDots', () => {
     const d = plateDots(25, 100);
     const gap = (r: number) => {
       const ps = d.filter((p) => p.ring === r);
-      return (2 * Math.PI * Math.hypot(ps[0].x, ps[0].y)) / ps.length;
+      const p0 = ps[0]!;
+      return (2 * Math.PI * Math.hypot(p0.x, p0.y)) / ps.length;
     };
     expect(Math.abs(gap(0) - gap(3))).toBeLessThan(gap(0) * 0.35);
   });
@@ -31,8 +32,8 @@ describe('plateDots', () => {
 
 it('ringDots rozloží tečky rovnoměrně po kruhu', () => {
   const r = ringDots(4, 10);
-  expect(r[1].x).toBeCloseTo(0, 5);
-  expect(r[1].y).toBeCloseTo(10, 5);
+  expect(r[1]!.x).toBeCloseTo(0, 5);
+  expect(r[1]!.y).toBeCloseTo(10, 5);
 });
 
 describe('rowLit', () => {
@@ -71,6 +72,6 @@ it('spiralOrder: vnější prstenec první, vnitřní poslední', () => {
   const o = spiralOrder(d);
   expect(o).toHaveLength(d.length);
   expect(new Set(o).size).toBe(d.length);
-  expect(d[o[0]].ring).toBe(0);
-  expect(d[o[o.length - 1]].ring).toBe(2);
+  expect(d[o[0]!]!.ring).toBe(0);
+  expect(d[o[o.length - 1]!]!.ring).toBe(2);
 });

@@ -19,5 +19,25 @@ jest.mock('expo-audio', () => ({
   useAudioPlayer: () => ({ volume: 1, play: () => undefined, seekTo: () => Promise.resolve() }),
 }));
 
-// Skia v jestu nemá nativní modul ani CanvasKit: oficiální atrapa balíčku (Canvas a primitivy jako prázdné View).
-jest.mock('@shopify/react-native-skia', () => require('@shopify/react-native-skia/lib/commonjs/mock'));
+// Skia v jestu nemá nativní modul ani CanvasKit. `lib/commonjs/mock` exportuje jen továrnu `Mock(CanvasKit)`
+// (potřebuje jestEnv s wasm), proto vlastní atrapa: Canvas a primitivy = View s předanými props (testy čtou props).
+jest.mock('@shopify/react-native-skia', () => {
+  /* eslint-disable @typescript-eslint/no-require-imports -- atrapa uvnitř jest.mock */
+  const React = require('react');
+  const { View } = require('react-native');
+  /* eslint-enable @typescript-eslint/no-require-imports */
+  const stub = (name: string) => {
+    const C = (props: Record<string, unknown>) => React.createElement(View, { ...props, skiaType: name }, props.children as never);
+    C.displayName = `Skia${name}`;
+    return C;
+  };
+  return {
+    Canvas: stub('Canvas'), Group: stub('Group'), Circle: stub('Circle'), Points: stub('Points'), BlurMask: stub('BlurMask'),
+    Path: stub('Path'), Paint: stub('Paint'), Line: stub('Line'),
+    vec: (x: number, y: number) => ({ x, y }),
+    useFont: () => null,
+  };
+});
+
+// lucide-react-native se v jestu nepřeloží (ESM .mjs): každá ikona je prázdná komponenta. Soubory s vlastním mockem mají přednost.
+jest.mock('lucide-react-native', () => new Proxy({ __esModule: true }, { get: (t, k) => (k in t ? (t as Record<string | symbol, unknown>)[k] : () => null) }));

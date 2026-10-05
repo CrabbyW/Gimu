@@ -1,7 +1,7 @@
 {
   "name": "opice",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index",
   "dependencies": {
     "@expo-google-fonts/bebas-neue": "^0.4.1",
     "@expo-google-fonts/doto": "^0.4.1",
@@ -71,5 +71,8 @@
       "<rootDir>/video/"
     ]
   },
-  "private": true
+  "private": true,
+  "allowScripts": {
+    "@shopify/react-native-skia@2.6.2": true
+  }
 }

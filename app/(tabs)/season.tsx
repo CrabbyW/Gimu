@@ -12,7 +12,6 @@ import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { Card } from '@/components/ui/Card';
 import { DotLoader, DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Grain } from '@/components/ui/Grain';
 import { RegMark } from '@/components/ui/RegMark';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { Text } from '@/components/ui/Text';
@@ -38,7 +37,6 @@ export default function SeasonScreen() {
         : status.status === 'error' ? <ErrorState edges={[]} what={copy.season.errorWhat} onRetry={status.retry} />
           : status.data === null ? <NoSeason />
             : <SeasonBody status={status.data} />}
-      <Grain />
     </View>
   );
 }

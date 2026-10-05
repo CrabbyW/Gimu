@@ -75,5 +75,8 @@ export function spiralOrder<T extends { angle: number; ring?: number }>(dots: T[
   const norm = (a: number) => ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
   return dots
     .map((_, i) => i)
-    .sort((a, b) => (dots[a].ring ?? 0) - (dots[b].ring ?? 0) || norm(dots[a].angle) - norm(dots[b].angle));
+    .sort((a, b) => {
+      const da = dots[a]!, db = dots[b]!;
+      return (da.ring ?? 0) - (db.ring ?? 0) || norm(da.angle) - norm(db.angle);
+    });
 }

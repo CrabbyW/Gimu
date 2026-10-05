@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { statSize, tracking, useTheme, type StatSize } from '@/theme';
+import { statSize, useTheme, type StatSize } from '@/theme';
 import { Text, type TextTone } from './Text';
 
 export type { StatSize };
@@ -27,7 +27,8 @@ export function Stat({ value, unit, label, size = 'M', tone = 'text', a11yValue 
     <View accessible accessibilityLabel={[label, `${a11yValue ?? value} ${unit}`].filter(Boolean).join(', ')}>
       {label ? <Text variant="label" tone={quiet} style={{ marginBottom: space.xs }}>{label}</Text> : null}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.xs }}>
-        <Text variant="display" tone={tone} maxFontSizeMultiplier={1} style={{ fontSize: px, lineHeight: px * 1.05, letterSpacing: px * tracking.display, marginLeft: -px * opticalInset(value) }}>{value}</Text>
+        {/* Nothing Dot: `display` je Doto; tečky se při záporném prostrkání slévají, proto letterSpacing 0. */}
+        <Text variant="display" tone={tone} maxFontSizeMultiplier={1} style={{ fontSize: px, lineHeight: px * 1.05, letterSpacing: 0, marginLeft: -px * opticalInset(value) }}>{value}</Text>
         <Text variant="caption" tone={quiet} style={{ marginBottom: px * 0.18 }}>{unit}</Text>
       </View>
     </View>
