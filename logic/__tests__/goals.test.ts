@@ -1,4 +1,4 @@
-import { applyGoalsPatch } from '@/logic/goals';
+import { applyGoalsPatch, retarget } from '@/logic/goals';
 import { buildInitialProfile } from '@/logic/onboarding';
 import type { Milestone } from '@/types';
 
@@ -34,4 +34,30 @@ test('změna cesty ponechá historii aktivity', () => {
   expect(p.path).toBe('strength');
   expect(p.activity).toHaveLength(1);
   expect(applyGoalsPatch(p0, { path: 'yoga' as never })).toEqual({ error: 'path' });
+});
+test('retarget přepíše číslo v názvu předvolby, vlastní název nechá', () => {
+  expect(retarget({ ...m('a', 10), label: '10 shybů' }, 15).label).toBe('15 shybů');
+  expect(retarget({ ...m('a', 10), label: 'Můj cíl 10', custom: true }, 15).label).toBe('Můj cíl 10');
+});
+test.each([
+  ['10 shybů', 10, 1, '1 shyb'],
+  ['10 shybů', 10, 3, '3 shyby'],
+  ['8 shybů', 8, 5, '5 shybů'],
+  ['5 shybů k hrudi', 5, 2, '2 shyby k hrudi'],
+  ['10 tleskacích kliků', 10, 1, '1 tleskací klik'],
+  ['20 výskoků z dřepu', 20, 4, '4 výskoky z dřepu'],
+  ['Vrána 15 s', 15, 20, 'Vrána 20 s'],
+  ['-3 kg', 3, 5, '-5 kg'],
+  ['110 dipů', 110, 1, '1 dip'],
+])('retarget skloňuje „%s“ → %i/%i', (label, from, to, out) => {
+  expect(retarget({ ...m('a', from), label }, to).label).toBe(out);
+});
+
+test('retarget okraje (QA): 110, 0, znaménko, chybějící číslo', () => {
+  expect(retarget({ ...m('a', 10), label: '10 shybů' }, 110).label).toBe('110 shybů');
+  expect(retarget({ ...m('a', 10), label: '10 shybů' }, 0).label).toBe('0 shybů');
+  expect(retarget({ ...m('a', 3), label: '-3 kg' }, 5).label).toBe('-5 kg');
+  const r = retarget({ ...m('a', 10), label: 'Stojka' }, 4);
+  expect(r.label).toBe('Stojka');
+  expect(r.target).toBe(4);
 });

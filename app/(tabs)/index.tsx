@@ -4,9 +4,11 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LessonMap } from '@/components/map/LessonMap';
 import { Plate } from '@/components/map/Plate';
+import { SectionHero } from '@/components/map/SectionHero';
 import { Card } from '@/components/ui/Card';
 import { useFirstShow } from '@/components/ui/choreo';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Grain } from '@/components/ui/Grain';
 import { Text } from '@/components/ui/Text';
 import { TopBar } from '@/components/ui/TopBar';
 import { copy } from '@/data/copy';
@@ -54,6 +56,7 @@ export default function TrainingScreen() {
             xp={stats.totalXp} tierLabel={tierName}
             showToday={!stats.isNew}
           />
+          <SectionHero view={viewData} intro={intro} />
           {first ? (
             // Nový uživatel: náhled odměny za první lekci místo řádku „Dnes čeká“. Bez CTA: akce je u uzlu.
             <Card style={{ marginHorizontal: space.l, marginTop: space.s, flexDirection: 'row', alignItems: 'center', gap: space.m }}>
@@ -80,6 +83,7 @@ export default function TrainingScreen() {
             onUnlockSequenceEnd={clearUnlocked}
             intro={intro}
           />
+          <Grain />
         </View>
       )}
     />

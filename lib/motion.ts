@@ -243,6 +243,21 @@ export const intro = {
   card: { step: 50, rise: 10 },
   /** Start výdrže: prstenec se nadechne (0.97) a rozhodně vrátí. */
   holdStart: { dip: 0.97 },
+  /** Hero sekce mapy (polish 2026-10-05): mezi hlavičkou (0–70) a linkou (140). Štítek+název → číslo →
+   *  činka sekce; každý úder `motion.reveal` (480 ms ease.out), zdvih `rise`. Kompaktní varianta bez činky. */
+  hero: { at: 40, step: 60, rise: 8 },
+  /** Pódium ligy: stupně vyrostou z podlahy v pořadí 1 → 2 → 3 (`step`), opička dosedne `mascotLag` po
+   *  svém stupni (zdvih `mascotRise`, timing, ne pružina), popisky `labelLag` po něm. Stejné časy hraje pódium,
+   *  které se objeví až během relace (přechod z prázdného stavu hlavičky). */
+  podium: { at: 120, step: 90, mascotLag: 160, mascotRise: 10, labelLag: 120, rise: 6 },
+  /** Podstavec PlateStack: stoh vyroste z podlahy (výřez, posun o celou výšku), `motion.reveal`. */
+  pedestal: { at: 0 },
+  /** Mřížka podlahy panelu lekce: prolne se se zdvihem `rise`, před siluetou (ta jde v `card.step`). */
+  floor: { at: 0, rise: 6 },
+  /** Editory Cílů: kicker → titulek+lead → obsah po `step`; lišta Zrušit/Uložit stojí (ovládání se nehýbe). */
+  goals: { at: 60, step: 70, rise: 10 },
+  /** Řádky Cílů v Nastavení: uvnitř sekce po `step` za nástupem sekce; hodnota po načtení se prolne. */
+  goalRows: { step: 40 },
   /** Modaly: obsah nastoupí po přechodu listu (Stack modal ~350 ms se překrývá). */
   modal: { at: 60, step: 50, rise: 10 },
 };

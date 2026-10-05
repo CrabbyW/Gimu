@@ -10,6 +10,8 @@ import { Card } from '@/components/ui/Card';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Grain } from '@/components/ui/Grain';
+import { PlateStack } from '@/components/ui/PlateStack';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { StatGrid } from '@/components/ui/StatGrid';
 import { StreakBarbell } from '@/components/ui/StreakBarbell';
@@ -35,6 +37,7 @@ export default function ProfileScreen() {
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.profile.errorWhat} onRetry={profile.retry} />
           : <ProfileBody profile={profile.data!} />}
+      <Grain />
     </View>
   );
 }
@@ -62,18 +65,22 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
 
   return (
     <ScrollView contentContainerStyle={{ padding: space.l, paddingBottom: space.xxl, gap: space.xl }}>
-      {/* Hrdina: opička M v rámu vedle cesty. Pod `layout.narrow` pod sebe. */}
-      <View style={{ flexDirection: stacked ? 'column' : 'row', alignItems: stacked ? 'flex-start' : 'center', gap: space.l }}>
-        <FrameIn play={first}>
-          {(mascotStyle) => (
-            <ProfileFrame frameId={profile.equipped.profileFrame} size={MASCOT_SIZES.M}>
-              <Animated.View style={mascotStyle}>
-                <Mascot stage={stage} mood="idle" size="M" cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
-              </Animated.View>
-            </ProfileFrame>
-          )}
-        </FrameIn>
-        <Text variant="body" tone="muted" style={{ flexShrink: 1 }}>{copy.profile.pathLine(pathName)}</Text>
+      {/* Hrdina (hloubka a materiál): opička M v rámu stojí na podstavci ze tří litinových kotoučů, uprostřed
+          obrazovky; pod ní cesta. Podstavec dává opičce zem a váhu, místo aby plavala vedle textu. */}
+      <View style={{ alignItems: 'center', gap: space.m }}>
+        <View style={{ alignItems: 'center' }}>
+          <FrameIn play={first}>
+            {(mascotStyle) => (
+              <ProfileFrame frameId={profile.equipped.profileFrame} size={MASCOT_SIZES.M}>
+                <Animated.View style={mascotStyle}>
+                  <Mascot stage={stage} mood="idle" size="M" cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
+                </Animated.View>
+              </ProfileFrame>
+            )}
+          </FrameIn>
+          <PlateStack count={size.pedestalCount} width={size.pedestalW} play={first} delay={intro.pedestal.at} />
+        </View>
+        <Text variant="body" tone="muted" style={{ textAlign: 'center' }}>{copy.profile.pathLine(pathName)}</Text>
       </View>
 
       {/* Karta série: jediný nositel streaku na profilu (StreakBarbell lg + číslo `display` v accentText). */}

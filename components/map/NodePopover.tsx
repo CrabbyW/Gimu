@@ -1,6 +1,6 @@
 import { X } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
@@ -64,7 +64,7 @@ export function NodePopover({ title, minutes, exerciseCount, xp, state, anchor, 
         style,
       ]}
     >
-      <View style={{ backgroundColor: c.raised, borderRadius: radius.l, padding: space.m, gap: space.s }}>
+      <View style={{ backgroundColor: c.raised, borderRadius: radius.l, padding: space.m, gap: space.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.edge }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.s }}>
           <Text variant="headline" numberOfLines={2} style={{ flex: 1 }}>{title}</Text>
           <Pressable

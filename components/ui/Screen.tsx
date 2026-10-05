@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Keyboard, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
+import { Grain } from './Grain';
 import { RevealOnFocusContext, type RevealOnFocus } from './revealOnFocus';
 
 interface Props {
@@ -20,6 +21,7 @@ export function Screen({ edges = ['top', 'bottom'], scroll = false, children }: 
       ) : (
         <View style={{ flex: 1, paddingHorizontal: space.l }}>{children}</View>
       )}
+      <Grain />
     </SafeAreaView>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Button } from '@/components/ui/Button';
@@ -52,7 +52,7 @@ export function LeagueResultBanner({ result, toTierName, onDismiss }: Props) {
     <Animated.View accessibilityLiveRegion="polite" style={[box, { marginHorizontal: space.l, marginTop: space.m }]}>
       {/* Hero karta (R42): registrační značky v rozích, odsazená od okrajů, aby `+` byly celé vidět. */}
       <RegMark>
-        <View style={{ backgroundColor: c.surface, borderRadius: radius.l, padding: space.l, flexDirection: 'row', alignItems: 'center', gap: space.l }}>
+        <View style={{ backgroundColor: c.surface, borderRadius: radius.l, padding: space.l, flexDirection: 'row', alignItems: 'center', gap: space.l, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.edge }}>
           <Animated.View style={badgeStyle}><TierBadge tierName={toTierName} bare /></Animated.View>
           <View style={{ flex: 1, gap: space.s, alignItems: 'flex-start' }}>
             <Telemetry items={[{ key: copy.league.lastWeekKey, value: `${result.rank}.`, unit: copy.league.placeUnit, a11y: copy.league.lastWeekA11y(result.rank) }]} />

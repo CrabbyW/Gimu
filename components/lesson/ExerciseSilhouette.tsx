@@ -48,11 +48,13 @@ export function ExerciseSilhouette({ id }: { id: SilhouetteId }) {
   const [a, b] = SILHOUETTES[id];
   const vb = poseFrame(id);
   // Zem drží spodní hranu karty; postava se zvětší, aby vyplnila výšku nebo šířku.
+  // Hloubka a materiál: linka země ve `faint` (ne `rule`), aby se odlišila od mřížky podlahy v ExerciseCard
+  // a postava na ní stála, ne plavala.
   // Dekorativní: Svg na webu atributy přístupnosti propouští do DOM, proto je skrývá obalový View.
   return (
     <View style={{ flex: 1, alignSelf: 'stretch' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
     <Svg width="100%" height="100%" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMax meet">
-      <Line x1={vb.x - 200} y1={GROUND_Y + STROKE / 2} x2={vb.x + vb.w + 200} y2={GROUND_Y + STROKE / 2} stroke={c.rule} strokeWidth={stroke.icon} strokeLinecap="round" />
+      <Line x1={vb.x - 200} y1={GROUND_Y + STROKE / 2} x2={vb.x + vb.w + 200} y2={GROUND_Y + STROKE / 2} stroke={c.faint} strokeWidth={stroke.icon} strokeLinecap="round" />
       {BONES.map(([from, to]) => (
         <Bone key={`${from}-${to}`} a0={a.joints[from]} a1={b.joints[from]} b0={a.joints[to]} b1={b.joints[to]} t={t} color={c.text} />
       ))}

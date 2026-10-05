@@ -69,6 +69,11 @@ function RootStack() {
             <Stack.Screen name="season-recap" options={{ presentation: 'fullScreenModal' }} />
             <Stack.Screen name="wardrobe" options={{ presentation: 'modal' }} />
             <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+            {/* Editory cílů z Nastavení: další modal nad Nastavením, po uložení `router.back()` vrátí na seznam. */}
+            <Stack.Screen name="goals/milestones" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="goals/weight" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="goals/dream" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="goals/path" options={{ presentation: 'modal' }} />
             <Stack.Screen name="dev" options={{ presentation: 'modal' }} />
           </Stack>
         </NavigationThemeProvider>

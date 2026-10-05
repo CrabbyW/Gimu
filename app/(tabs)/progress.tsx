@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Grain } from '@/components/ui/Grain';
 import { Stat } from '@/components/ui/Stat';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { Telemetry } from '@/components/ui/Telemetry';
@@ -44,6 +45,7 @@ export default function ProgressScreen() {
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.progress.errorWhat} onRetry={profile.retry} />
           : <ProgressBody profile={profile.data!} />}
+      <Grain />
     </View>
   );
 }
@@ -67,6 +69,7 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
   const { grid, chart, milestones, dreamBody } = view;
   // Dnešek má v mřížce vlastní stav `today`; když je dnes odcvičeno (`todayDone` z useProfileStats), počítá se.
   const todayDone = stats?.todayDone ?? false;
+  const longest = stats?.longestStreak ?? 0;
   const activeCount = grid.filter((g) => g.state === 'active').length + (todayDone ? 1 : 0);
   const latest = chart && chart.points.length > 0 ? chart.points[chart.points.length - 1]!.kg : null;
 
@@ -83,12 +86,23 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space.l, paddingBottom: space.xxl, gap: space.xl }} keyboardShouldPersistTaps="handled">
-        {dreamBody ? <Reveal play={first} rise={T.rise}><DreamBodyCard text={dreamBody} /></Reveal> : null}
+        {/* Hero (hloubka a materiál): jedno velké číslo obrazovky = aktivní dny v okně mřížky, vedle tišší
+            nejdelší série. Nula se ukáže taky: prázdný hero by nechal obrazovku bez kotvy, věta v mřížce vysvětlí proč. */}
+        <Reveal play={first} rise={T.rise} style={{ gap: space.s }}>
+          <Text variant="label" tone="muted" accessibilityRole="header">{copy.progress.heroKicker}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', columnGap: space.l, rowGap: space.m }}>
+            <Stat value={activeCount} unit={copy.progress.heroActiveUnit(activeCount)} size="L" />
+            <View accessible accessibilityLabel={`${copy.progress.heroLongestKey}: ${copy.progress.heroLongestValue(longest)}`} style={{ gap: space.xs, paddingBottom: space.s }}>
+              <Text variant="label" tone="muted">{copy.progress.heroLongestKey}</Text>
+              <Text variant="stat">{copy.progress.heroLongestValue(longest)}</Text>
+            </View>
+          </View>
+        </Reveal>
+
+        {dreamBody ? <Reveal play={first} delay={T.step} rise={T.rise}><DreamBodyCard text={dreamBody} /></Reveal> : null}
 
         <Section label={copy.progress.activityLabel} play={first} delay={T.step}>
           <ActivityGrid cells={grid} todayDone={todayDone} play={first} />
-          {/* Prázdný stav nese věta v mřížce; „0 dní“ by jen opakovalo prázdno. */}
-          {activeCount > 0 ? <Telemetry items={[{ key: copy.progress.activeKey, value: copy.progress.activeDays(activeCount) }]} /> : null}
         </Section>
 
         <Section label={copy.progress.milestonesLabel} play={first} delay={T.step * 2}>

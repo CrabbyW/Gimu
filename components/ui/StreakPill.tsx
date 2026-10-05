@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { copy } from '@/data/copy';
 import { useTheme } from '@/theme';
 import { StreakBarbell } from './StreakBarbell';
@@ -22,6 +22,7 @@ export function StreakPill({ streak, longest, todayDone }: Props) {
       accessibilityLabel={a11y}
       style={{
         minHeight: size.streakPill, borderRadius: radius.full, backgroundColor: c.surface,
+        borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.edge,
         paddingHorizontal: space.m, flexDirection: 'row', alignItems: 'center', gap: space.s, alignSelf: 'flex-start',
       }}
     >

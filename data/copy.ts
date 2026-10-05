@@ -108,6 +108,11 @@ export const copy = {
     bossUnlock: (n: number) => `Odemkne se po ${n} ${czPlural(n, 'lekci', 'lekcích', 'lekcích')}`,
     firstTitle: (min: number) => `První lekce: ${min} ${czPlural(min, 'minuta', 'minuty', 'minut')}`,
     firstBody: (xp: number) => `Za dokončení dostaneš kotouč na činku a +${xp} XP.`,
+    // Hloubka a materiál (2026-10-03): ražba na kotouči a hero hlavička sekce nad mapou („3 / 8“).
+    plateUnit: 'KG',
+    sectionKicker: (n: number) => `SEKCE ${String(n).padStart(2, '0')}`,
+    sectionTotal: (total: number) => `/ ${total}`,
+    sectionCaption: (total: number) => `${czPlural(total, 'lekce', 'lekcí', 'lekcí')} hotovo`,
     brokenTitle: 'Série se přerušila',
     brokenBody: (n: number) => `Nejdelší série ${n} ${czPlural(n, 'den', 'dny', 'dní')} zůstává v profilu. Jedna lekce rozjede novou.`,
     sectionProgressA11y: (n: number, title: string, done: number, total: number) => `Sekce ${n}, ${title}: hotovo ${done} z ${total} lekcí`,
@@ -172,7 +177,10 @@ export const copy = {
     headerTitle: (tier: string) => `Liga ${tier}`,
     endsInLine: (d: number, h: number, m: number) => `Týden končí za ${d} d ${h} h ${m} min`,
     xp: 'XP', rank: 'POZICE', myXp: 'TVOJE XP',
+    // Pódium top 3 (hloubka a materiál): XP pod jménem, tisíce s nezlomitelnou mezerou.
+    podiumXp: (n: number) => `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} XP`,
     // Prázdný stav: uživatel má tento týden 0 XP (soupeři už mohou mít).
+    podiumEmpty: 'Nový týden, nikdo zatím nemá XP. Pódium obsadí první tři, kdo odcvičí lekci.',
     emptyWeek: 'Tenhle týden zatím bez XP. Jedna lekce tě posune nahoru.',
     lastWeek: (rank: number) => `MINULÝ TÝDEN · ${rank}. MÍSTO`,
     // Telemetrie karty výsledku (R42): „MINULÝ TÝDEN: 3. MÍSTO“.
@@ -190,6 +198,11 @@ export const copy = {
     gridA11y: (active: number) => `Posledních 5 týdnů: ${active} ${czPlural(active, 'aktivní den', 'aktivní dny', 'aktivních dní')}`,
     activeDays: (n: number) => `${n} ${czPlural(n, 'den', 'dny', 'dní')}`,
     activeKey: 'AKTIVNÍ', todayKey: 'DNES',
+    // Hero Progresu (hloubka a materiál): velké číslo aktivních dní za okno mřížky + nejdelší série.
+    heroKicker: 'POSLEDNÍCH 5 TÝDNŮ',
+    heroActiveUnit: (n: number) => czPlural(n, 'aktivní den', 'aktivní dny', 'aktivních dní'),
+    heroLongestKey: 'NEJDELŠÍ SÉRIE',
+    heroLongestValue: (n: number) => `${n} ${czPlural(n, 'den', 'dny', 'dní')}`,
     noMilestones: 'Zatím žádné milníky.',
     milestoneValue: (current: number, target: number) => `${current} / ${target}`,
     milestoneA11y: (label: string, current: number, target: number, done: boolean) =>
@@ -264,6 +277,43 @@ export const copy = {
     feedback: 'Odezva', haptics: 'Haptika', hapticsLine: 'Jemné vibrace při klepnutí a oslavě.',
     sound: 'Zvuky', soundLine: 'Krátké zvuky kotoučů a oslavy.',
     hourPick: 'Čas připomínky', appearance: 'Vzhled', reminderSection: 'Připomínka',
+  },
+  // Nastavení → Cíle: přehled v Nastavení a čtyři editory (milníky, váha, vize, cesta).
+  goals: {
+    section: 'Cíle', save: 'Uložit', cancel: 'Zrušit', close: 'Zavřít',
+    rows: { milestones: 'Milníky', weight: 'Cíl váhy', dream: 'Vize těla', path: 'Cesta tréninku' },
+    rowA11y: (title: string, value: string) => `${title}: ${value}. Upravit.`,
+    loadError: 'Cíle se nepodařilo načíst.', noProfile: 'Profil zatím neexistuje.',
+    // Váha česky s desetinnou čárkou: „82,5“.
+    kg: (n: number) => String(n).replace('.', ','),
+    weightNone: 'Bez cíle',
+    weightValue: (kind: 'lose' | 'gain', start: number, target: number) =>
+      `${kind === 'lose' ? 'Hubnutí' : 'Nabírání'} · ${String(start).replace('.', ',')} → ${String(target).replace('.', ',')} kg`,
+    errors: {
+      milestoneCount: 'Nech si 2 až 3 milníky.',
+      milestoneTarget: 'Cíl musí být celé číslo od 1 do 9999.',
+      weight: 'Zkontroluj váhu. Cíl musí sedět ke směru.',
+      dream: 'Vize musí mít 3 až 140 znaků.',
+      path: 'Tuhle cestu neznáme. Vyber jinou.',
+      unknown: 'Uložit se nepodařilo. Zkus to znovu.',
+    },
+    milestones: {
+      title: 'Milníky', lead: 'Drž 2 až 3. Pokrok u ponechaných milníků zůstane.',
+      yours: 'Tvoje milníky', add: 'Přidat milník', count: (n: number, max: number) => `${n} / ${max}`,
+      progress: (current: number, target: number, unit: MilestoneUnit) => (unit === 'done'
+        ? (current >= 1 ? 'Splněno' : 'Zatím nesplněno')
+        : `Pokrok ${current} / ${target} ${MILESTONE_UNIT_SHORT[unit]}`),
+      remove: (label: string) => `Odebrat milník ${label}`,
+      minHint: 'Méně než 2 milníky mít nejde. Nejdřív jeden přidej.',
+      fullHint: 'Máš 3 milníky. Nejdřív jeden odeber.',
+      noPresets: 'Všechny předvolby cesty už máš. Napiš si vlastní.',
+    },
+    weight: { title: 'Cíl váhy', lead: 'Volitelné. Graf váhy uvidíš jen s cílem.', start: 'Výchozí váha' },
+    dream: { title: 'Vize těla', lead: 'Jedna vize, kterou uvidíš nahoře v Progresu.' },
+    path: {
+      title: 'Cesta tréninku', lead: 'Trénuješ jednu cestu najednou. Opice jde s tebou.',
+      notice: 'Mapa se přepne na novou cestu. Hotové lekce zůstanou.',
+    },
   },
   dev: {
     title: 'Dev menu', demo: 'Načíst demo profil', reset: 'Reset appky', resetConfirm: 'Smazat všechna data? Téma zůstane.', xp: '+500 XP',

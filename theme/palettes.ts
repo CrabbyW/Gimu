@@ -6,6 +6,9 @@
 // `shadow` = tmavý inkoust pro stín uzlu a stínovou stranu kotouče.
 export const dark = {
   base: '#14110E', surface: '#1D1915', raised: '#26211C', raisedPressed: '#2F2924', rule: '#332C25',
+  // `edge` = vlasová horní hrana světla na kartách (hloubka a materiál 2026-10-03): o stupeň světlejší než `rule`,
+  // takže se na `surface` i `raised` čte jako hrana chycená světlem shora, ne jako obrys.
+  edge: '#3D352D',
   text: '#EFE8DE', muted: '#A39A8F', faint: '#6E665D',
   accent: '#F2A33A', accentPressed: '#E8952A', accentGraphic: '#F2A33A', onAccent: '#14110E', accentText: '#F2A33A',
   // Litina: plate5 (o krok tmavší kvůli světlejší křídě textu) → plate25 L 0.27 po ΔL 0.065; plate5 ještě nese křídové číslo ≥ 4.5:1.
@@ -20,6 +23,8 @@ export const dark = {
 // Teplý papír a litinový inkoust: stejné materiály, obrácené role. Plný jantar jen jako výplň CTA.
 export const light: Record<keyof typeof dark, string> = {
   base: '#F4EEE5', surface: '#EAE2D6', raised: '#FBF7F1', raisedPressed: '#EAE2D6', rule: '#D6CCBE',
+  // Ve světlém je `rule` tmavší než karta (četl by se jako stín), proto hrana světla = téměř bílý papír.
+  edge: '#FFFDF8',
   text: '#1E1813', muted: '#6B6157', faint: '#857B6E',
   accent: '#F2A33A', accentPressed: '#E8952A', accentGraphic: '#B26A10', onAccent: '#1E1813', accentText: '#8A500C',
   plate5: '#A9A39E', plate10: '#918B86', plate15: '#5C5753', plate20: '#383532', plate25: '#181613',

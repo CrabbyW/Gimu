@@ -44,6 +44,14 @@ export const size = {
   weekCol: 48,
   // Mřížka aktivity (§3.3): odcvičený dnešek = plná tečka + prstenec `accentGraphic` s touto mezerou.
   todayRingGap: 2,
+  // Hloubka a materiál (2026-10-03): dlaždice zrna litiny 96 (dost velká, aby se opakování nečetlo jako vzor),
+  // hero činka sekce 136×36, pódium ligy (šířka spodního kotouče stupně 80/72/64 — vejde se do třetiny 320 pt
+  // displeje — a počet kotoučů ve stohu 5/3/2, opička 48), podstavec profilu (nejširší kotouč 176, tloušťka
+  // kotouče z boku 12), panel siluety cviku 240 a krok mřížky podlahy 24, od průměru 72 kotouč nese i ražené „KG“.
+  grainTile: 96, heroBarbellW: 136, heroBarbellH: 36,
+  podiumFirst: 80, podiumSecond: 72, podiumThird: 64, podiumMascot: 48,
+  podiumFirstCount: 5, podiumSecondCount: 3, podiumThirdCount: 2, pedestalCount: 3,
+  pedestalW: 176, pedestalPlateH: 12, silhouettePanel: 240, floorStep: 24, floorRows: 5, plateUnitMin: 72,
 } as const;
 // Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
 // `statMaxScale` = strop zvětšení tokenu `stat` (1.4): pevné sloupce čísel (XP v lize) rostou jen do něj.
@@ -51,7 +59,10 @@ export const layout = { narrow: 360, fontScale: 1.3, statMaxScale: 1.4 } as cons
 // Průhlednost zamčené položky v Šatníku (silueta náhledu pod zámkem).
 // `disabled` = neaktivní ovládací prvek (stejná hodnota, jakou má Button).
 // `future` = budoucí dny v DotGridu sezóny (`faint` na 40 %, Teplá litina §3.4).
-export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4 } as const;
+// `grain` = celá vrstva zrna litiny přes obrazovku (2026-10-03, „hloubka a materiál“): 5 %, na hranici vnímání.
+// `floor` = mřížka podlahy pod siluetou cviku (linky `rule` na `surface`, ať nepřebije postavu).
+export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4, grain: 0.05, floor: 0.7, glint: 0.24 } as const;
+// `glint` = odlesk na hraně litinového kotouče (`text` na 24 %): jediné místo, kde kov „chytá“ světlo.
 // Přerušovaná cílová linie grafu váhy (SVG strokeDasharray).
 export const dash = { target: '4 6' } as const;
 // Tloušťky čar instrument vrstvy: Lucide obrys 1.5, aktivní úsek měřicí linky 2,
@@ -59,11 +70,21 @@ export const dash = { target: '4 6' } as const;
 // (měřidlo v `text` na stopě `rule`; tenčí než dřív, protože už ho nenese barva, ale kontrast).
 // R43: `plate` = lem a náboj kotouče, `check` = fajfka přes otvor, `hairline` = konstrukční figura oslavy.
 // Teplá litina: `nodeRing` 2 = prstenec aktuálního uzlu, `streakAxis` osa StreakBarbell sm.
-export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1, nodeRing: 2, streakAxis: 1.5, streakAxisLg: 3, todayDot: 1.5, slot: 1 } as const;
+export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1, nodeRing: 2, streakAxis: 1.5, streakAxisLg: 3, todayDot: 1.5, slot: 1,
+  // Litinový kotouč (viewBox 100): soustružená drážka 0.5, odlesk hrany 1.6, zkosení otvoru 1.
+  groove: 0.5, glint: 1.6, bevel: 1 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 // StreakBarbell: radius kotouče sm 1 / lg 2 (spec §2.7).
-export const material = { collarRadius: 2, streakPlateSm: 1, streakPlateLg: 2 } as const;
+export const material = {
+  collarRadius: 2, streakPlateSm: 1, streakPlateLg: 2,
+  // Litinový kotouč (viewBox 100, 2026-10-03): poloměry soustružených drážek vnějšího lemu (mezi lemem 40 a hranou 48),
+  // odsazení drážek náboje od jeho hrany, oblouk odlesku hrany ve stupních (světlo shora vlevo, 0° = vpravo, po směru
+  // hodinových ručiček) a posun ražby čísla (stín dolů, světlo nahoru) ve viewBoxu.
+  plateLipGrooves: [46, 44.4, 42.8, 41.4], plateHubGrooves: [2.2, 4.4], plateGlint: [195, 285], plateStamp: 0.7,
+  // Hero činka sekce: tloušťka kotouče, mezera mezi kotouči a průměr osy v pt.
+  heroPlateW: 6, heroPlateGap: 2, heroBar: 3,
+} as const;
 // Názvy rodin = klíče předané do useFonts v app/_layout.tsx. Váha je součást rodiny:
 // fontWeight se s nimi nekombinuje (Android u vlastních fontů váhu nesyntetizuje).
 // R42: display je Inter 300 Light (místo Bebas Neue), bez nové závislosti.
@@ -135,6 +156,8 @@ export const svgType = {
   // Číslo kg uprostřed kotouče v Plate.
   // Inter Light je širší než Bebas: 20 jednotek ve viewBoxu 100 drží „25“ uvnitř vnějšího prstence.
   plateKg: { fontFamily: font.display, fontSize: 20, letterSpacing: ls(20, tracking.display) },
+  // Ražené „KG“ ve spodním pásu kotouče (jen od `size.plateUnitMin`): mono s rozpalem jako štítky.
+  plateUnit: { fontFamily: font.mono, fontSize: 7, letterSpacing: 1.4 },
 } as const;
 
 // Velikosti čísla ve `Stat` (M/L/XL) podle spec §6.6.

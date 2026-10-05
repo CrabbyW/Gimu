@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Countdown } from '@/components/league/Countdown';
 import { LeagueResultBanner } from '@/components/league/LeagueResultBanner';
 import { LeagueRow } from '@/components/league/LeagueRow';
+import { Podium } from '@/components/league/Podium';
 import { TierBadge } from '@/components/league/TierBadge';
 import { ZoneDivider } from '@/components/league/ZoneDivider';
 import { Button } from '@/components/ui/Button';
@@ -11,13 +12,14 @@ import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { LockedPreview } from '@/components/ui/LockedPreview';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Grain } from '@/components/ui/Grain';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useLeague } from '@/hooks/useLeague';
 import { useProfile } from '@/hooks/useProfile';
 import { isLeagueLocked } from '@/logic/league';
-import { intro, stagger } from '@/lib/motion';
+import { intro, motion, stagger } from '@/lib/motion';
 import { tierName } from '@/hooks/useTierName';
 import { services, type LeagueWeekView } from '@/services';
 import { layout, useTheme } from '@/theme';
@@ -53,6 +55,7 @@ export default function LeagueScreen() {
         : league.status === 'error' ? <ErrorState edges={[]} what={copy.league.errorWhat} onRetry={league.retry} />
           : locked ? <LockedLeague view={league.data} />
             : <Standings view={league.data} />}
+      <Grain />
     </View>
   );
 }
@@ -84,10 +87,16 @@ function Standings({ view }: { view: LeagueWeekView }) {
   const myIndex = items.findIndex((it) => it.kind === 'row' && it.entry.isMe);
   const myXp = view.entries[view.myRank - 1]?.xpThisWeek ?? 0;
   const name = tierName(view.tier);
+  const nobodyScored = view.entries.every((e) => e.xpThisWeek === 0);
   const inPromoteZone = view.promoteCount > 0 && view.myRank <= view.promoteCount;
   // Motion: úvodní sled jen při prvním zobrazení tabu: hlavička, řádky po 45 ms,
   // vlastní řádek jako vyvrcholení po dojetí scrollu.
   const first = useFirstShow('tab:league');
+  // Pódium hraje nástup při prvním zobrazení tabu, nebo když se objeví až během relace (z prázdného stavu).
+  const [podiumAtMount] = useState(!nobodyScored);
+  const podiumPlay = first || !podiumAtMount;
+  const headerLine = nobodyScored ? 'podium' : myXp === 0 ? 'empty' : null;
+  const [headerLineAtMount] = useState(headerLine);
 
   // Po otevření tabu dojet tak, aby vlastní řádek byl uprostřed seznamu (hlavička je mimo scroll, zůstává). S 0 XP (začátek týdne) se nescrolluje:
   // přednost má hlavička s výzvou, vlastní řádek je stejně poslední.
@@ -118,7 +127,12 @@ function Standings({ view }: { view: LeagueWeekView }) {
             <Countdown endsAt={view.endsAt} />
           </View>
         </View>
-        {myXp === 0 ? <Text variant="body" tone="muted">{copy.league.emptyWeek}</Text> : null}
+        {headerLine ? (
+          // Věta se mění během relace (první XP týdne): nová se prolne, místo skoku.
+          <Reveal key={headerLine} play={headerLine !== headerLineAtMount} rise={0} config={motion.reveal}>
+            <Text variant="body" tone="muted">{headerLine === 'podium' ? copy.league.podiumEmpty : copy.league.emptyWeek}</Text>
+          </Reveal>
+        ) : null}
       </Reveal>
       <FlatList
         ref={list}
@@ -127,6 +141,7 @@ function Standings({ view }: { view: LeagueWeekView }) {
         keyExtractor={(it) => (it.kind === 'row' ? it.entry.userId : it.zone)}
         onScrollToIndexFailed={() => undefined}
         contentContainerStyle={{ paddingBottom: space.xxl }}
+        ListHeaderComponent={<Podium entries={view.entries} play={podiumPlay} />}
         renderItem={({ item, index }) => (item.kind === 'row'
           ? <LeagueRow entry={item.entry} rank={item.rank} index={index} play={first} />
           : <Reveal play={first} delay={intro.league.rows + stagger(index)} rise={0}><ZoneDivider kind={item.zone} /></Reveal>)}
