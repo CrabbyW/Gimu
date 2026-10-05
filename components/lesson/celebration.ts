@@ -60,20 +60,14 @@ export interface XpLabels { lesson: string; boss: string; replay: string; first:
 
 /** „lekce 20 · první dnes +10 · streak +2“; nulové bonusy se vynechají. Velká písmena dělá styl label. */
 export function xpBreakdownLabel(xp: XpBreakdown, t: XpLabels): string {
-  const parts = [`${t[xp.baseKind]} ${xp.base}`];
-  if (xp.firstOfDay > 0) parts.push(`${t.first} +${xp.firstOfDay}`);
-  if (xp.streak > 0) parts.push(`${t.streak} +${xp.streak}`);
+  // Uvnitř položky nezlomitelné mezery: „streak +14“ se nesmí rozdělit na dva řádky (zalomí se jen mezi položkami).
+  const nb = (s: string) => s.replace(/ /g, ' ');
+  const parts = [nb(`${t[xp.baseKind]} ${xp.base}`)];
+  if (xp.firstOfDay > 0) parts.push(nb(`${t.first} +${xp.firstOfDay}`));
+  if (xp.streak > 0) parts.push(nb(`${t.streak} +${xp.streak}`));
   return parts.join(' · ');
 }
 
-/** Časová osa oslavy úrovně (a) v ms od dopadu pravého kotouče (motion spec §4.1). Patří do `lib/motion`
- *  jako `celebration.a`; do té doby (lib/* mimo motion-agenta) žije tady. */
-export const TIMELINE_A = {
-  dim: 0, dimMs: 240, center: 120, ring: 160, ringMs: 700, xp: 500, countMs: 650,
-  seriesPlate: 900, pose: 950, scarfMs: 200, title: 1000, tomorrow: 1100, cta: 1200,
-  /** Doběh na konečný stav při přeskočení. */
-  skipMs: 150,
-} as const;
 
 export const MAX_XP_TICKS = 8;
 

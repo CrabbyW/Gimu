@@ -654,3 +654,11 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
   - Řada série v oslavě: celé týdny po 7 (1–3 řádky), popisek `copy.status.streak`.
 - Otevřené: `Barbell.tsx`, `XpPop.tsx`, `GoldenFigure.tsx` a `TIMELINE_A` už scéna nepoužívá (smazání nechávám bossovi, GoldenFigure má test). Reakce opičky 15 (točí hlavou za kotoučem) a ostatní z §4.4 nejsou v tomto kroku. Haptika primární pilulky dál `cta` (medium).
 - K ruční kontrole na zařízení: 60 fps oslavy (≈1 700 teček pole + ~250 v letu, derived na UI vlákně) na slabším Androidu; že svislý scroll mapy začatý na kotouči vyhraje a vodorovný švih kotouč roztočí (RN ScrollView + RNGH Pan); hmatový tik 30° při roztočení; vlna pod prstem v hlavičce mapy na iOS/Androidu (Manual gesto souběžně se scrollem a Pressable); 3D naklopení dlaždice (zatím žádná dlaždice s `onPress` na mapě, ověřit na obrazovkách fáze 2).
+
+## qa-agent — QA fáze 1 Nothing Dot (db940b8..b1dac1b)
+- tsc čisté, eslint čistý, jest 535/535 (po smazání mrtvých testů GoldenFigure).
+- Smazáno mrtvé: components/lesson/Barbell.tsx, XpPop.tsx, GoldenFigure.tsx (+ test), TIMELINE_A z celebration.ts (nikdo neimportoval).
+- Opraveno: haptika primární pilulky `cta` medium -> light (spec §2), test upraven.
+- Ověřeno screenshoty: mapa light/dark, oslava dokončení dark/light/RM; SkiaGuard obaluje všechny dot komponenty; žádné hardcoded barvy v app/components.
+- Otevřené: withSpring v profile/progress/birth/stage-up (neklikací prvky, OK); rozpis XP na oslavě se láme na 2 řádky (design-agent); na zařízení ověřit scroll mapy vs. roztočení kotouče a tick haptiku 30°.
+- Verdikt: SCHVÁLENO s položkami k ruční kontrole.

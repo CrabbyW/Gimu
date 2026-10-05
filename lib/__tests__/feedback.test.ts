@@ -49,9 +49,9 @@ test('vypnutá haptika: vzor ani feedback nevibrují, zvuk se řídí vlastním 
   expect(playSfx).toHaveBeenCalledWith('plateSnap');
 });
 
-test('tapLight nemá haptiku ani zvuk; cta = medium bez zvuku', () => {
+test('tapLight nemá haptiku ani zvuk; cta = light bez zvuku (spec §2)', () => {
   feedback('tapLight');
   expect(Haptics.impactAsync).not.toHaveBeenCalled(); expect(playSfx).not.toHaveBeenCalled();
   feedback('cta');
-  expect(Haptics.impactAsync).toHaveBeenCalledWith('medium'); expect(playSfx).not.toHaveBeenCalled();
+  expect(Haptics.impactAsync).toHaveBeenCalledWith('light'); expect(playSfx).not.toHaveBeenCalled();
 });

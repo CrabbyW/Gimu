@@ -48,8 +48,8 @@ test('boss: kotouč bosse přiletí k plné sekci', () => {
 });
 
 test('rozpis XP vynechá nulové bonusy', () => {
-  expect(xpBreakdownLabel({ base: 20, baseKind: 'lesson', firstOfDay: 10, streak: 2, total: 32 }, t)).toBe('lekce 20 · první dnes +10 · streak +2');
-  expect(xpBreakdownLabel({ base: 10, baseKind: 'replay', firstOfDay: 0, streak: 0, total: 10 }, t)).toBe('opakování 10');
+  expect(xpBreakdownLabel({ base: 20, baseKind: 'lesson', firstOfDay: 10, streak: 2, total: 32 }, t)).toBe('lekce 20 · první dnes +10 · streak +2');
+  expect(xpBreakdownLabel({ base: 10, baseKind: 'replay', firstOfDay: 0, streak: 0, total: 10 }, t)).toBe('opakování 10');
 });
 
 describe('oslava z teček (Nothing Dot §5)', () => {

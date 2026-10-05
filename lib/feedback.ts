@@ -10,7 +10,7 @@ export type FeedbackId =
 
 const MAP: Record<FeedbackId, readonly [HapticKind | null, SfxName | null]> = {
   tab: ['selection', null],
-  cta: ['medium', null],
+  cta: ['light', null],
   // Vizuální stisk sekundárního tlačítka: bez haptiky i zvuku, existuje kvůli jednotnému API tlačítek.
   tapLight: [null, null],
   locked: ['warning', null],
