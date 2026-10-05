@@ -18,3 +18,6 @@ jest.mock('expo-audio', () => ({
   setAudioModeAsync: () => Promise.resolve(),
   useAudioPlayer: () => ({ volume: 1, play: () => undefined, seekTo: () => Promise.resolve() }),
 }));
+
+// Skia v jestu nemá nativní modul ani CanvasKit: oficiální atrapa balíčku (Canvas a primitivy jako prázdné View).
+jest.mock('@shopify/react-native-skia', () => require('@shopify/react-native-skia/lib/commonjs/mock'));

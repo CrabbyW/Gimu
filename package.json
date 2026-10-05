@@ -4,10 +4,12 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/bebas-neue": "^0.4.1",
+    "@expo-google-fonts/doto": "^0.4.1",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo/metro-runtime": "~57.0.16",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@shopify/react-native-skia": "2.6.2",
     "expo": "~57.0.26",
     "expo-asset": "~57.0.18",
     "expo-audio": "~57.0.5",
