@@ -19,20 +19,20 @@ const make = (emitPrevented = false) => {
   } as unknown as BottomTabBarProps;
   let r: TestRenderer.ReactTestRenderer | null = null;
   act(() => { r = TestRenderer.create(<ThemeContext.Provider value={buildTheme('dark', null)}><FloatingTabBar {...props} /></ThemeContext.Provider>); });
-  const tabs = r!.root.findAll((n) => n.props.accessibilityRole === 'tab' && typeof n.props.onPress === 'function');
+  const tabs = r!.root.findAll((n) => typeof n.type === 'string' && n.props.accessibilityRole === 'tab' && typeof n.props.onAccessibilityTap === 'function');
   return { navigation, tabs };
 };
 
 test('tap na 2. tab emituje tabPress a naviguje na league', () => {
   const { navigation, tabs } = make();
-  act(() => { tabs[1]!.props.onPress(); });
+  act(() => { tabs[1]!.props.onAccessibilityTap(); });
   expect(navigation.emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'tabPress', target: 'league-k' }));
   expect(navigation.navigate).toHaveBeenCalledWith('league', undefined);
 });
 
 test('zablokovaný tabPress (guard) nenaviguje', () => {
   const { navigation, tabs } = make(true);
-  act(() => { tabs[1]!.props.onPress(); });
+  act(() => { tabs[1]!.props.onAccessibilityTap(); });
   expect(navigation.navigate).not.toHaveBeenCalled();
 });
 

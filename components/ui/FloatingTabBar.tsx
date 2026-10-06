@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -81,13 +81,28 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
       dragging.set(false);
       if (!success) scheduleOnRN(settle);
     }), [count, slot, inner, x, hovered, dragging, release, settle]);
+  // Ťuknutí vyhodnocuje stejný GestureDetector jako tah (RNGH Tap, ne Pressable): na iPhonu Pan zachytil
+  // první dotek a Pressable dostal až druhé ťuknutí („musím 2× poklepat“). Tab = slot pod prstem.
+  const tapTo = useCallback((i: number) => {
+    const route = state.routes[i];
+    if (!route) return;
+    if (i === state.index) { navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true }); return; }
+    release(i);
+  }, [state.routes, state.index, navigation, release]);
+  const tap = useMemo(() => Gesture.Tap()
+    .onEnd((e, success) => {
+      if (!success) return;
+      const i = Math.min(count - 1, Math.max(0, Math.floor((e.x - inner) / slot)));
+      scheduleOnRN(tapTo, i);
+    }), [count, slot, inner, tapTo]);
+  const gesture = useMemo(() => Gesture.Race(scrub, tap), [scrub, tap]);
   const slide = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
     <View
       pointerEvents="box-none"
       style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.m, paddingBottom: insets.bottom + space.m }}
     >
-      <GestureDetector gesture={scrub}>
+      <GestureDetector gesture={gesture}>
       <View
         accessibilityRole="tablist"
         onLayout={(e) => setBarW(e.nativeEvent.layout.width)}
@@ -111,14 +126,14 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
           const focused = state.index === i;
           const title = options.title ?? route.name;
           const color = focused ? c.text : c.muted;
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
-          };
           return (
-            <Pressable
+            // Dotyk řeší gesto lišty (tap + tah); View nese jen přístupnost (aktivace čtečkou → tapTo).
+            <View
               key={route.key}
-              onPress={onPress}
+              accessible
+              onAccessibilityTap={() => tapTo(i)}
+              accessibilityActions={[{ name: 'activate' }]}
+              onAccessibilityAction={(e) => { if (e.nativeEvent.actionName === 'activate') tapTo(i); }}
               accessibilityRole="tab"
               accessibilityLabel={options.tabBarAccessibilityLabel ?? title}
               accessibilityState={{ selected: focused }}
@@ -126,7 +141,7 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
             >
               {/* Jen ikona (obr. 2): popisek „TRÉNINK“ se do kulaté podložky nevejde; název nese čtečka. */}
               {options.tabBarIcon?.({ focused, color, size: size.tabIcon })}
-            </Pressable>
+            </View>
           );
         })}
       </View>
