@@ -495,6 +495,32 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
 - Import `rive-react-native` je zakomentovaný, protože neběží v Expo Go.
 - README dostane sekci „Přechod na Rive“.
 
+### 8.x Reakce (Nothing Dot fáze 3)
+- **Logika:** výběr reakce je čistá funkce v `logic/mascotReactions.ts` (testovaná). Přehrání řeší `components/mascot/` (`reactionMotion.ts`, `useMascotReactions`, `ReactiveMascot`). Nepoužívá nové kresby, jen nálady, oči, dech a transformace.
+- **Jedna reakce naráz, žádná fronta:**
+  - Po každé reakci platí cooldown 1200 ms.
+  - Událost s prioritou ≥ 5 (hra) cooldown přeskočí, pokud má vyšší prioritu než ta, která právě hraje.
+  - Salto smí přebít poskok, takže trojité ťuknutí funguje i z klidu.
+- **Reduce Motion:** skoky a salto se změní na celebrate, závrať a točení hlavy na lookDown, mávání, kývnutí a pokrčení ramen na pohled očima.
+
+| Událost | Reakce |
+|---|---|
+| ťuknutí | poskok |
+| 3 ťuknutí do 600 ms | salto |
+| podržení | mazlení |
+| tah prstu | pohled za prstem |
+| scroll dolů | pohled dolů |
+| rychlý scroll (≥ 2500 pt/s) | závrať |
+| 20 s nečinnosti (jen zaostřená obrazovka) | usne |
+| návrat do appky po ≥ 60 s | zamává |
+| start lekce | kývne |
+| dokončení lekce | celebrate |
+| série +1 | hrdost |
+| ztráta série | smutek |
+| povýšení v lize | skok radosti |
+| sestup v lize | pokrčí rameny |
+| roztočení kotouče | hlava za kotoučem |
+
 ## 9. Chyby a okrajové stavy
 
 - **Hydratace store:** splash obrazovka drží, dokud se nenačtou fonty a store.

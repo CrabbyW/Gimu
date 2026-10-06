@@ -754,3 +754,12 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Ověřeno na webu (Playwright, restart Metro --clear): tap = poskok (−6.6 pt na 56 pt), vytrvalé ťukání = salto (roll až 360°), podržení = oči zavřené + zmáčknutí, tah prstu = hlava ±4° a pupily za prstem i návrat, scroll dolů = droop, rychlý scroll = hlava ±12°, nečinnost 20 s = spánek, dotek probudí; profil tap/podržení/pohled. Bez chyb v konzoli. tsc, eslint, jest (614) zelené; nový test `components/mascot/__tests__/reactions.test.tsx`.
 - Pro bosse (logika, neměnil jsem): trojité ťuknutí po klidu salto nespustí. První ťuknutí zahraje hop a cooldown 1200 ms zahodí 2. i 3. ťuknutí (flip má prioritu 4 < 5). Salto přijde jen při ťukání přes celý cooldown. Návrh: v cooldownu povolit flip, když právě hraje hop. Dále `touchMove` přes `pickReaction` nehlásím: gaze by spustil cooldown a zablokoval následný tap. Pohled za prstem běží souvisle mimo logiku.
 - Otevřené / k ruční kontrole: lekce nemá opičku, nod hraje opička na mapě při startu (pod přechodem skoro neviditelný). Mapa na webu nejde scrollovat kolečkem (ScrollView má `overflow: hidden`, je to tak i před fází 3). Nativ (Expo Go): matice hlavy (`matrix` na G), measure pro gaze, Tap/LongPress uvnitř ScrollView a 60 fps salta na slabém Androidu.
+
+## 2026-10-06 · boss · Nothing Dot fáze 3 a podněty z Expo Go
+- Plán `docs/superpowers/plans/2026-10-06-nothing-dot-faze3.md`. Logika reakcí `logic/mascotReactions.ts` (TDD). Rozhodnuto bossem na podnět motion-agenta: v cooldownu smí salto přebít poskok, jinak trojité ťuknutí z klidu nikdy salto nespustilo (testy logiky i hooku upraveny: 10 rychlých ťuknutí = poskok a jedno salto).
+- Uživatel testuje v Expo Go na iPhonu (tunel Cloudflare, ngrok v expo nefunguje):
+  1. Pád mapy na nativu „[Worklets] Cannot copy value of type PanGesture“: worklety v PlateNode zachytávaly celý objekt z `usePlateSpin` včetně gesta. Opraveno rozbalením sdílených hodnot. Na webu se to neprojevilo, protože web worklety nekopíruje.
+  2. Křížek lekce ležel pod hodinami (iOS fullScreenModal, SafeAreaView nepromítla horní výřez): `LessonProgress` odsazuje přes `useSafeAreaInsets`, křížek je kulaté tlačítko `tile` s hranou jako v ScreenHeader.
+  3. Přepínání tabů přejetím prstem po tab baru (`FloatingTabBar`, Pan s `motion.tabScrub.activeOffset` 6, podložka jede za prstem, tab se přepne při přejetí do slotu přes stejný `tabPress` jako tap).
+- Metro „nesledoval změny“ jen kvůli `CI=1` (CI režim vypíná watch); Expo Go server běží bez něj.
+- SPEC §8 doplněn o tabulku reakcí.
