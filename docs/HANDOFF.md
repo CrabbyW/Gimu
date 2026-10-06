@@ -1,4 +1,4 @@
-# Kde jsme skončili (2026-10-05 večer)
+# Kde jsme skončili (aktualizováno 2026-10-06)
 
 ## Redesign „Nothing Dot“ — fáze 1 (systém + mapa + lekce + oslava)
 - Spec: `docs/superpowers/specs/2026-10-05-nothing-dot-redesign-design.md`
@@ -6,20 +6,10 @@
 - Zadání a rozhodnutí uživatele: `docs/prompts/2026-10-05-redesign-nothing-dot.md`. Reference jsou v `images/`.
 - Commity db940b8..257aafb: design, motion i QA jsou hotové (QA: SCHVÁLENO).
 
-## Stav: rating kolo 1 = 15/100 (`docs/RATING.md`). Rozpracované opravy, ZATÍM NECOMMITNUTÉ
-Ověřeno: tsc čistý, eslint čistý, jest 535/535.
-Hotovo v pracovním stromu:
-- `app/dev.tsx` + `components/dots/DotGallery.tsx`: dev sekce „Tečky“.
-- `components/map/NodePopover.tsx`: dlaždice bez šipky, pilulka, mono údaje. Popisky uzlů v `LessonMap.tsx` mají údaje mono.
-- `data/copy.ts`: „Zítra · …“ (dřív dvojtečka 2×), copy `dev.dots`/`dev.dotState`.
-- `components/map/Plate.tsx`: komentář už neodkazuje na smazaný GoldenFigure.
-
-## Zbývá pro rating kolo 2
-1. Commitnout výše uvedené.
-2. Boss zápis fáze 1 do `docs/LOG.md`: plán, integrace, web vstup `index.web.js` + `public/canvaskit.wasm`, smazání Barbell/XpPop/GoldenFigure, haptika CTA light.
-3. `README.md`: přepsat sekci „Vzhled a odezva (R44 Teplá litina)“ na Nothing Dot (Doto, Skia/CanvasKit, `index.web.js`, `components/dots/`).
-4. qa-agent: zapsat body fáze 1 jako ✅ do `docs/QA.md` a nafotit oslavu znovu. Ověřit, že rozpis XP se nezlomí uvnitř položky (oprava NBSP v `celebration.ts`; screenshot `m-done-1300` je starší než oprava).
-5. rating-agent kolo 2 (max 5 kol, pokračuje se jen při 100/100).
+## Stav: fáze 1 HOTOVÁ — QA kolo 2 SCHVÁLENO, rating kolo 2 = 100/100 (docs/RATING.md, docs/QA.md)
+K ruční kontrole na zařízení: scroll mapy vs. roztočení kotouče, haptika (tik 30°, success), plynulost Skia, Doto s diakritikou,
+dotOff v light, dotykové plochy 44 pt, zamčený boss neotevírá popover (záměr?), kotouč částečně pod pruhem CTA po dosunutí mapy.
+Otevřené pro fázi 2: web limit ~16 WebGL kontextů (mapa dnes 10 pláten).
 
 ## Potom
 - Fáze 2: liga, progres, sezóna, profil/šatník, nastavení/cíle, stage-up, onboarding. Onboarding má překryv lead textu s 1. kartou a díru mezi 1. a 2. kartou (`/onboarding/path`, `/onboarding/dream`).
