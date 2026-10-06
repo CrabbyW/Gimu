@@ -662,3 +662,11 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Ověřeno screenshoty: mapa light/dark, oslava dokončení dark/light/RM; SkiaGuard obaluje všechny dot komponenty; žádné hardcoded barvy v app/components.
 - Otevřené: withSpring v profile/progress/birth/stage-up (neklikací prvky, OK); rozpis XP na oslavě se láme na 2 řádky (design-agent); na zařízení ověřit scroll mapy vs. roztočení kotouče a tick haptiku 30°.
 - Verdikt: SCHVÁLENO s položkami k ruční kontrole.
+
+## 2026-10-06 · boss · Nothing Dot fáze 1 (plán, integrace, rozhodnutí)
+- Brainstorming s uživatelem → zadání `docs/prompts/2026-10-05-redesign-nothing-dot.md`, spec `docs/superpowers/specs/2026-10-05-nothing-dot-redesign-design.md`, plán `docs/superpowers/plans/2026-10-05-nothing-dot-faze1.md`. Rozhodnutí uživatele: směr Nothing Dot + prvky widget dlaždic, opička zůstává barevná, žádný akcent, dark i light, tečkový kotouč se pomalu točí, interaktivita (vlna teček, roztočení kotouče, opička ~15 reakcí ve fázi 3), Skia.
+- Základ (úkoly 1–4) psal boss: Skia + Doto, monochromní palety se zachovanými klíči (stávající komponenty se přebarvily bez přepisu), tokeny Doto/dlaždic/pohybu, `components/dots/geometry.ts` (TDD).
+- Integrace: web nejel (Skia při importu sahá na CanvasKit) → `index.web.js` načte `LoadSkiaWeb` z `public/canvaskit.wasm` a appku vyžádá až potom; `package.json` `main` = `index`. Jest: oficiální mock Skia neexportuje komponenty → vlastní atrapa (design-agent); lucide v jestu globální Proxy mock. Po odebrání Grain zůstaly v 4 tabech text nody `}    </View>` → opraveno.
+- Rozhodnuto bossem: Skia install skript schválen (`allowScripts` v package.json, na pokyn uživatele); QA smazala mrtvý kód staré oslavy (Barbell, XpPop, GoldenFigure, TIMELINE_A); haptika `cta` = light podle spec (sdílí ji i tap na kotouč); rozpis XP v oslavě s nezlomitelnými mezerami uvnitř položek.
+- Rating kolo 1 = 15/100. Opraveno: dev sekce Tečky, popover uzlu v tečkovém jazyce, copy „Zítra · …“, komentář Plate.tsx, README sekce vzhledu, tento zápis.
+- Otevřené: onboarding (překryv lead textu a díra mezi kartami) → fáze 2; reakce opičky → fáze 3. Metro na tomto stroji nesleduje změny spolehlivě (restart `--clear`).

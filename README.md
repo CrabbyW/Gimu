@@ -8,7 +8,8 @@ a mění náladu podle postupu.
 
 - Expo SDK 57, Expo Router (navigace ze souborové struktury `app/`)
 - React Native 0.86 + React 19, TypeScript (strict)
-- react-native-reanimated pro animace, react-native-svg pro maskota a herní grafiku
+- react-native-reanimated a gesture-handler pro animace a interakci, @shopify/react-native-skia pro tečkovou grafiku,
+  react-native-svg pro maskota
 - zustand + AsyncStorage pro perzistentní stav, mock `services/` vrstva místo backendu
 - Jest (`jest-expo`) pro testy
 
@@ -33,17 +34,21 @@ npm run lint          # expo lint
 - `data/` — statický obsah (cviky, lekce, milníky, ligy, sezónní texty, copy)
 - `hooks/` — sdílené React hooky nad store/services
 
-## Vzhled a odezva (R44 „Teplá litina“)
+## Vzhled a odezva (redesign „Nothing Dot“, 2026-10)
 
-- Teplá hnědočerná báze, mléčná křída, jediný akcent jantar `#F2A33A` jen pro primární akci, sérii, progres a oslavu
-  (spec `docs/superpowers/specs/2026-10-03-tepla-litina-redesign-design.md`).
-- Série = činka, na kterou každý den přibude kotouč (`components/ui/StreakBarbell.tsx`).
-- Liga je zamčená do první lekce; ozubené kolo nastavení je jen na Profilu.
-- Pohyb, haptika a zvuk podle `docs/superpowers/specs/2026-10-03-motion-haptics-sound-design.md`: pružiny Kotouč / Šál
-  a timing Cvak v `lib/motion.ts`, `feedback(id)` v `lib/feedback.ts` (haptika + zvuk ve stejném ticku).
-  Oslavné vzory: AHAP soubory v `assets/haptics/` (pro budoucí dev build), v Expo Go jejich aproximace `APPROX` v `lib/haptics.ts`.
+- Monochromní tečkový jazyk podle Nothing OS, bez akcentu: „aktivní“ (CTA, rozsvícená tečka, progres) = `text`.
+  Barvu v UI nese jen opička. Tmavý i světlý režim jsou plnohodnotné (spec `docs/superpowers/specs/2026-10-05-nothing-dot-redesign-design.md`).
+- Písmo: **Doto** (dot-matrix, jen ≥ 28 pt: hero čísla, titulky), Inter (text), JetBrains Mono (štítky VERZÁLKAMI, akce v `[ZÁVORKÁCH]`).
+- Tečková grafika přes **Skia** v `components/dots/` (`DotPlate`, `DotRing`, `DotRow`, `DotMatrix`, `DotField`, čistá geometrie
+  v `geometry.ts`). Každá komponenta je obalená `SkiaGuard`: bez Skia se vykreslí prázdný fallback.
+- **Web:** Skia potřebuje CanvasKit dřív než cokoli jiného, proto má web vlastní vstup `index.web.js` (`LoadSkiaWeb`, pak appka)
+  a `public/canvaskit.wasm` (zkopírováno z balíčku `canvaskit-wasm`). Nativní vstup je `index.js` (expo-router).
+- Dlaždice (`Tile`, radius 28, jediné oddělení = vlasová hrana `edge`), pilulková CTA (`PillButton`), plovoucí tab bar (`FloatingTabBar`).
+- Interaktivita: kotouče se pomalu točí a jdou roztočit prstem (`components/map/usePlateSpin.ts`), tečky reagují na dotek vlnou
+  (`components/dots/useDotTouch.ts`), dlaždice se při stisku naklopí k prstu. Dokončení lekce = tečky se slétnou do kotouče.
+- Pohyb jen z `lib/motion.ts`, haptika a zvuk přes `feedback(id)` v `lib/feedback.ts`. Omezený pohyb: vše jen prolnutí 200 ms.
+- Dev menu má sekci **Tečky** se všemi tečkovými komponentami pro vizuální kontrolu.
 - Nastavení: dva nezávislé přepínače **Haptika** a **Zvuky**; tichý režim iOS = ticho.
-- Onboarding končí krokem **Připomínka** (výběr hodiny).
 
 ## Přeskočení cviku
 
