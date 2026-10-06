@@ -79,3 +79,17 @@ describe.each([['dark', dark as Colors], ['light', light]] as const)('CTA na sea
   it('hrana pilulky proti zlaté ploše ≥ 3:1', () => expect(contrast(c.onSeasonGold, c.seasonGold)).toBeGreaterThanOrEqual(3));
   it('popisek na pilulce ≥ 4.5:1', () => expect(contrast(c.onGoldPill, c.onSeasonGold)).toBeGreaterThanOrEqual(4.5));
 });
+
+// Barevný systém 2026-10-06 (docs/design/color-system.md).
+describe.each([['dark', dark as Colors], ['light', light]] as const)('barevný systém %s', (_name, c) => {
+  it.each(['base', 'tile', 'tilePressed'] as const)('terciární text (faint) na %s ≥ 4.5:1', (bg) => {
+    expect(contrast(c.faint, c[bg])).toBeGreaterThanOrEqual(4.5);
+  });
+  it.each(['base', 'tile'] as const)('hranice ovládacího prvku (borderStrong) na %s ≥ 3:1', (bg) => {
+    expect(contrast(c.borderStrong, c[bg])).toBeGreaterThanOrEqual(3);
+  });
+  it.each(['base', 'tile'] as const)('fokus na %s ≥ 3:1', (bg) => expect(contrast(c.focus, c[bg])).toBeGreaterThanOrEqual(3));
+  it.each(['stateSuccess', 'stateWarning', 'stateInfo', 'danger'] as const)('stavová barva %s jako text na tile ≥ 4.5:1', (t) => {
+    expect(contrast(c[t], c.tile)).toBeGreaterThanOrEqual(4.5);
+  });
+});

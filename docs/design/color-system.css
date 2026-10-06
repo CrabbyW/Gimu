@@ -1,0 +1,108 @@
+/* Nothing Dot — color system (2026-10-06). Generated from docs/design/color-system.md; source of truth for the app is theme/palettes.ts. */
+:root {
+  /* Neutral ramp: cool graphite, OKLCH hue 255 */
+  --neutral-50: #F8FAFD; /* oklch(0.985 0.0036 255) */
+  --neutral-100: #F1F3F5; /* oklch(0.962 0.0036 255) */
+  --neutral-200: #E0E3E7; /* oklch(0.915 0.006 255) */
+  --neutral-300: #CBCED2; /* oklch(0.85 0.006 255) */
+  --neutral-400: #A2A5A8; /* oklch(0.72 0.006 255) */
+  --neutral-500: #7E8084; /* oklch(0.6 0.006 255) */
+  --neutral-600: #616367; /* oklch(0.5 0.006 255) */
+  --neutral-700: #46484B; /* oklch(0.4 0.006 255) */
+  --neutral-800: #292B2E; /* oklch(0.29 0.006 255) */
+  --neutral-900: #16181B; /* oklch(0.21 0.006 255) */
+  --neutral-950: #0B0C0E; /* oklch(0.155 0.0036 255) */
+  color-scheme: light dark;
+}
+
+:root, [data-theme="light"] {
+  --bg: #F1F3F5; /* oklch(0.962 0.0036 255) */
+  --surface1: #FAFBFD; /* oklch(0.988 0.003 255) */
+  --surface2: #E7EAED; /* oklch(0.935 0.006 255) */
+  --surface3: #FCFDFF; /* oklch(0.995 0.002 255) */
+  --rule: #DBDEE2; /* oklch(0.9 0.006 255) */
+  --border: #D2D4D8; /* oklch(0.87 0.006 255) */
+  --border-strong: #84868A; /* oklch(0.62 0.006 255) */
+  --text-primary: #15171A; /* oklch(0.205 0.006 255) */
+  --text-secondary: #595B5E; /* oklch(0.47 0.006 255) */
+  --text-tertiary: #67696C; /* oklch(0.52 0.006 255) */
+  --disabled: #A8ABAF; /* oklch(0.74 0.006 255) */
+  --dot-off: #D5D8DB; /* oklch(0.88 0.006 255) */
+  --dot-dim: #A2A5A8; /* oklch(0.72 0.006 255) */
+  --on-primary: #F1F3F5; /* oklch(0.962 0.0036 255) */
+  --success: #21763C; /* oklch(0.5 0.12 150) */
+  --warning: #A46400; /* oklch(0.56 0.13 70) */
+  --error: #C2272D; /* oklch(0.53 0.19 25) */
+  --info: #006AA0; /* oklch(0.5 0.12 240) */
+  --focus: #15171A; /* oklch(0.205 0.006 255) */
+  --viz-amber: #CF6F19; /* oklch(0.64 0.15 55) */
+  --viz-sky: #0C8BBB; /* oklch(0.6 0.12 232) */
+  --viz-green: #177C52; /* oklch(0.52 0.11 160) */
+  --viz-lemon: #5C5C01; /* oklch(0.46 0.1 110) */
+  --viz-cobalt: #204CA4; /* oklch(0.44 0.15 262) */
+  --viz-vermilion: #B71C0E; /* oklch(0.5 0.19 30) */
+  --viz-orchid: #A24287; /* oklch(0.53 0.15 340) */
+  --viz-graphite: #84868A; /* oklch(0.62 0.006 255) */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B0C0E; /* oklch(0.155 0.0036 255) */
+    --surface1: #131518; /* oklch(0.195 0.006 255) */
+    --surface2: #1B1D20; /* oklch(0.23 0.006 255) */
+    --surface3: #232528; /* oklch(0.265 0.006 255) */
+    --rule: #202225; /* oklch(0.25 0.006 255) */
+    --border: #2E3033; /* oklch(0.31 0.006 255) */
+    --border-strong: #67696C; /* oklch(0.52 0.006 255) */
+    --text-primary: #E9EBEE; /* oklch(0.94 0.004 255) */
+    --text-secondary: #A2A5A8; /* oklch(0.72 0.006 255) */
+    --text-tertiary: #84868A; /* oklch(0.62 0.006 255) */
+    --disabled: #535559; /* oklch(0.45 0.006 255) */
+    --dot-off: #292B2E; /* oklch(0.29 0.006 255) */
+    --dot-dim: #4E5053; /* oklch(0.43 0.006 255) */
+    --on-primary: #0B0C0E; /* oklch(0.155 0.0036 255) */
+    --success: #7CCD8E; /* oklch(0.78 0.12 150) */
+    --warning: #EEC05B; /* oklch(0.83 0.13 85) */
+    --error: #F66D67; /* oklch(0.7 0.17 25) */
+    --info: #7BB9E5; /* oklch(0.76 0.09 240) */
+    --focus: #E9EBEE; /* oklch(0.94 0.004 255) */
+    --viz-amber: #F4A437; /* oklch(0.78 0.15 70) */
+    --viz-sky: #64C4F0; /* oklch(0.78 0.11 230) */
+    --viz-green: #44B782; /* oklch(0.7 0.13 160) */
+    --viz-lemon: #EDE361; /* oklch(0.9 0.15 105) */
+    --viz-cobalt: #5283E0; /* oklch(0.62 0.15 262) */
+    --viz-vermilion: #EA6134; /* oklch(0.66 0.18 38) */
+    --viz-orchid: #DA83BE; /* oklch(0.72 0.13 340) */
+    --viz-graphite: #909296; /* oklch(0.66 0.006 255) */
+  }
+}
+
+[data-theme="dark"] {
+  --bg: #0B0C0E; /* oklch(0.155 0.0036 255) */
+  --surface1: #131518; /* oklch(0.195 0.006 255) */
+  --surface2: #1B1D20; /* oklch(0.23 0.006 255) */
+  --surface3: #232528; /* oklch(0.265 0.006 255) */
+  --rule: #202225; /* oklch(0.25 0.006 255) */
+  --border: #2E3033; /* oklch(0.31 0.006 255) */
+  --border-strong: #67696C; /* oklch(0.52 0.006 255) */
+  --text-primary: #E9EBEE; /* oklch(0.94 0.004 255) */
+  --text-secondary: #A2A5A8; /* oklch(0.72 0.006 255) */
+  --text-tertiary: #84868A; /* oklch(0.62 0.006 255) */
+  --disabled: #535559; /* oklch(0.45 0.006 255) */
+  --dot-off: #292B2E; /* oklch(0.29 0.006 255) */
+  --dot-dim: #4E5053; /* oklch(0.43 0.006 255) */
+  --on-primary: #0B0C0E; /* oklch(0.155 0.0036 255) */
+  --success: #7CCD8E; /* oklch(0.78 0.12 150) */
+  --warning: #EEC05B; /* oklch(0.83 0.13 85) */
+  --error: #F66D67; /* oklch(0.7 0.17 25) */
+  --info: #7BB9E5; /* oklch(0.76 0.09 240) */
+  --focus: #E9EBEE; /* oklch(0.94 0.004 255) */
+  --viz-amber: #F4A437; /* oklch(0.78 0.15 70) */
+  --viz-sky: #64C4F0; /* oklch(0.78 0.11 230) */
+  --viz-green: #44B782; /* oklch(0.7 0.13 160) */
+  --viz-lemon: #EDE361; /* oklch(0.9 0.15 105) */
+  --viz-cobalt: #5283E0; /* oklch(0.62 0.15 262) */
+  --viz-vermilion: #EA6134; /* oklch(0.66 0.18 38) */
+  --viz-orchid: #DA83BE; /* oklch(0.72 0.13 340) */
+  --viz-graphite: #909296; /* oklch(0.66 0.006 255) */
+}

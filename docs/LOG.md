@@ -816,3 +816,10 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Rozhodnuto samo: událost `screenOpen` v `logic/mascotReactions.ts` (malý zásah do logiky); Podium přepíná jen komponentu vítěze (layout beze změny); ve SvgMascot/reactionMotion přepsáno `x.value = …` na `x.set(…)` (React Compiler lint po předání hodnot do workletů).
 - Testy: `logic/__tests__/mascotIdle.test.ts`, `components/mascot/__tests__/idle.test.tsx` (výběr, pauzy, determinismus, přerušení reakcí, Reduce Motion, spánek, přehrání všech akcí ve všech vrstvách). tsc, jest (651), eslint zelené.
 - Otevřené / k ruční kontrole: viz report (iPhone: plynulost uší/šálu, četnost idle, zamávání při každém návratu na profil).
+
+## 2026-10-06 · boss · Barevný systém (color grading + kontrast)
+- Zadání uživatele: kompletní color grading a kontrastní systém. Rozhodnutí uživatele: držet monochrom (bez primary/secondary/accent), dokument + rovnou do appky, export TS tokeny + CSS proměnné.
+- Grading: chladný grafit, neutrály OKLCH h 255 / C ≤ 0.006, aby teplá opička (jediná barva) vystoupila. Hodnoty spočítané skriptem (OKLCH→sRGB, WCAG 2.2, APCA Lc, Machado CVD simulace), dokument `docs/design/color-system.md`, CSS `docs/design/color-system.css`.
+- `theme/palettes.ts`: přebarvené neutrály v obou režimech (stejné klíče), nové `borderStrong`, `focus`, `disabled`, `stateSuccess/Warning/Info`. `success` v UI zůstává = `text` (monochrom), stavové barvy jen pro skutečné stavy a data.
+- Opravy kontrastu: vlasové hrany zůstávají dekorativní (výjimka WCAG 1.4.11), ovládací prvky dostaly `borderStrong` ≥ 3:1 (TextField, vypnutý Toggle s hranou); terciární text v light ztmaven na 4.5:1.
+- Testy kontrastu rozšířeny (terciární text, borderStrong, fokus, stavové barvy).

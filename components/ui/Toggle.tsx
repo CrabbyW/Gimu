@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Pressable } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { motion, useMotionSafe } from '@/lib/motion';
 import { opacity, useTheme } from '@/theme';
@@ -26,7 +26,11 @@ export function Toggle({ value, onChange, label, disabled = false }: Props) {
   useEffect(() => {
     on.set(reduced ? (value ? 1 : 0) : withTiming(value ? 1 : 0, motion.toggle));
   }, [value, reduced, on]);
-  const trackStyle = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(on.value, [0, 1], [c.dotOff, c.text]) }));
+  // Vypnutý stav má hranici `borderStrong` (≥ 3:1, WCAG 1.4.11): samotná stopa `dotOff` na pozadí splývala.
+  const trackStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(on.value, [0, 1], [c.dotOff, c.text]),
+    borderColor: interpolateColor(on.value, [0, 1], [c.borderStrong, c.text]),
+  }));
   const knobStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(on.value, [0, 1], [c.muted, c.onText]),
     transform: [{ translateX: on.value * travel }],
@@ -40,7 +44,7 @@ export function Toggle({ value, onChange, label, disabled = false }: Props) {
       accessibilityState={{ checked: value, disabled }}
       style={{ minWidth: size.hit, minHeight: size.hit, alignItems: 'center', justifyContent: 'center', opacity: disabled ? opacity.disabled : 1 }}
     >
-      <Animated.View style={[{ width: size.toggleWidth, height: size.toggleHeight, borderRadius: radius.full, justifyContent: 'center' }, trackStyle]}>
+      <Animated.View style={[{ width: size.toggleWidth, height: size.toggleHeight, borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center' }, trackStyle]}>
         <Animated.View style={[{ width: size.toggleKnob, height: size.toggleKnob, borderRadius: radius.full, marginLeft: inset }, knobStyle]} />
       </Animated.View>
     </Pressable>

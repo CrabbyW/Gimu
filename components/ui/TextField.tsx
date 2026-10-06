@@ -29,7 +29,7 @@ export function TextField({ label, unit, error, onFocus, onBlur, ...input }: Pro
       <View
         style={{
           flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: size.pill, paddingHorizontal: space.l,
-          backgroundColor: c.tile, borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
+          backgroundColor: c.tile, borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth, borderColor: c.borderStrong,
         }}
       >
         <TextInput
