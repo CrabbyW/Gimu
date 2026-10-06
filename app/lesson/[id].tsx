@@ -133,6 +133,7 @@ export default function LessonScreen() {
           suspended={quitOpen}
           extra={lesson.data.extras[index] ?? 0}
           onDone={() => void advance(true)}
+          alwaysSkip={demo}
           onSkip={demo ? () => void advance(true) : canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
         />
       </Screen>
@@ -151,10 +152,12 @@ interface StepProps {
   onDone(): void;
   /** Přeskočení cviku; chybí, když by se lekce už nezapočítala (logic/adaptive canSkip). */
   onSkip?: () => void;
+  /** Demo: přeskočit jde i během odpočtu a běžícího časovače. */
+  alwaysSkip?: boolean;
 }
 
 /** Jeden cvik: karta a spodní lišta. Klíčovaný cvikem, takže odpočet výdrže začíná pro každý cvik znovu. */
-function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip }: StepProps) {
+function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, alwaysSkip = false }: StepProps) {
   const { space } = useTheme();
   const hold = exercise.type === 'hold';
   const timer = useHoldTimer(hold ? exercise.amount : 0, onDone);
@@ -179,7 +182,7 @@ function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip }: Step
         <BigActionBar
           primary={{ ...primary, disabled: busy || timer.status === 'done' }}
           // Přeskočit jen před startem výdrže nebo u opakování; běžící výdrž se nejdřív pauzne.
-          secondary={onSkip && !busy && timer.status !== 'running' && timer.status !== 'countdown' && timer.status !== 'done'
+          secondary={onSkip && !busy && (alwaysSkip || (timer.status !== 'running' && timer.status !== 'countdown' && timer.status !== 'done'))
             ? { label: copy.lesson.skip, onPress: () => { pause(); onSkip(); } } : undefined}
         />
       </View>

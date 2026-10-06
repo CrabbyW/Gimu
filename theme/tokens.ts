@@ -118,7 +118,7 @@ export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4, grain: 0.05, 
   // Nothing Dot §3: rozjasněná hrana stisknuté dlaždice (vrstva `text` přes `edge`).
   edgeLit: 0.16,
   // Závoj pod překryvnou hlavičkou mapy (EdgeFade): `base` krytí na spodní hraně hlavičky; nahoře 1, pod ní doznívá do 0.
-  veilEdge: 0.72 } as const;
+  veilEdge: 0.86 } as const;
 // `glint` = odlesk na hraně litinového kotouče (`text` na 24 %): jediné místo, kde kov „chytá“ světlo.
 // Přerušovaná cílová linie grafu váhy (SVG strokeDasharray).
 // `dots` = tečkovaná linka v SVG (nulový úsek + kulatý konec = tečka, rozteč 6): cílová linie tečkového grafu váhy.
