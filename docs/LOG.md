@@ -859,3 +859,8 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Rozhodnutí: vnořená gesta s menším prahem vyhrají dřív, totiž kotouč (8 pt) a tab bar (6 pt, ten leží mimo pozadí). Tap a podržení nemají pohyb, takže gesto se neaktivuje. Při omezeném pohybu se gesta chovají stejně, vypne se jen vlna.
 - Výsledky: tsc OK, eslint OK, jest 68/682 OK, e2e 80/80 (2.9 min). Baseline se nemění, vizuálně se nic nemění.
 - Otevřené: chování nativního UIScrollView vůči `requireExternalGestureToFail` se musí ověřit na iPhonu. Kdyby scroll startoval i při šikmém tahu, zbývá záložní varianta: aktivace „play“ gesta scroll zruší.
+- QA kolo 2 fáze 0 (a90b51b): SCHVÁLENO. tsc/eslint/jest 682, guard 21/21, e2e 80/80, perf 2× 4/4, expogo bez ERROR. Otevřené: hook nechytá kill-port 8082 / kill $(lsof), wardrobe vodorovné sloty ověřit na iPhonu.
+
+## 2026-10-06 · boss · Otevřené po QA kola 2 (fáze 0)
+- Hook: `npx kill-port 8082` a dosazené PID (`kill $(lsof -ti:8082)`) projdou — doplnit v příštím kole (změna kódu by jinak otevřela nové QA; mezera v ochranném nástroji, ne v appce).
+- Šatník: vodorovný ScrollView slotů uvnitř IntentScrollView — ověřit na iPhonu (checklist bod 3), případná oprava motion-agent.

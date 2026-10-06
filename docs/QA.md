@@ -251,3 +251,26 @@ Build: `tsc --noEmit` 0 chyb, Jest 65 sad / 623 testů OK, ESLint 0 nálezů.
 3. Dotek na kotouči lekce/plátech reaguje s haptikou jako dřív.
 4. Oslava dokončení lekce plynulá, bez zaseknutí.
 5. Po pár minutách používání žádná červená obrazovka chyby.
+
+## QA kolo 2 elite fáze 0 + scrollIntent — HEAD a90b51b (7cab20c, a90b51b)
+
+**Verdikt: SCHVÁLENO pro a90b51b** (s jednou výhradou k hooku a ověřením na iPhonu)
+
+Funguje:
+- tsc 0 chyb, eslint 0, jest 68 sad / 682 testů zelené.
+- `node --test .claude/hooks/guard.test.mjs` 21/21.
+- Ruční vstupy do guard.mjs: Write na docs/QA.md → blok (2); PowerShell `Stop-Process -Name cloudflared` → blok; `taskkill /IM cloudflared.exe` → blok; `echo 8082 cloudflared` → povoleno (pravidla jen v pozici příkazu, OK).
+- `npm run e2e` 80/80 za 2.9 min (produkční export, 8083), bez vizuálních diffů. `npm run e2e:perf` 2× za sebou 4/4 (28 s).
+- `$TEMP/expogo.log`: 0 řádků ERROR.
+- scrollIntent: worklety zachytávají jen čísla (SLOP, RATIO) a sdílené hodnoty sx/sy; manager je parametr callbacku, ne zachycený objekt. Druhý prst → fail. Mimo pozadí (bez kontextu) je IntentScrollView obyčejný ScrollView. Reduce Motion: gesto na RM nezávisí, vlnu vypíná useDotTouch — v pořádku.
+
+Výhrady:
+- ⚠️ Hook: `npx kill-port 8082` a `kill $(lsof -ti:8082)` projdou (exit 0) — PID-check vidí jen doslovné PID. Doporučení (boss): blokovat `kill-port … 8082` a substituce s `8082` v pozici kill příkazu. Neblokuje kolo.
+- ⚠️ Wardrobe (app/wardrobe.tsx:164): vnořený nativní `ScrollView horizontal` uvnitř IntentScrollView; vodorovný tah aktivuje hrací gesto pozadí, které může na iOS zrušit vodorovný scroll slotů. Na webu neověřitelné → iPhone checklist bod 3. Pokud selže: motion-agent (výjimka pro vodorovné scrollery, např. Gesture.Native s simultaneous/blocksExternalGesture).
+
+iPhone checklist kola (scroll):
+1. Mapa: svislý tah scrolluje hned a plynule, bez zadrhnutí na startu.
+2. Vodorovný/šikmý tah přes pozadí hýbe tečkami a obrazovka se neposune.
+3. Šatník: vodorovné sloty jdou posouvat prstem.
+4. Kotouč a tab bar reagují na tah i tap jako dřív (žádné spolknuté gesto).
+5. Reduce Motion zapnuté: scroll funguje, tečky bez vlny; haptika beze změny.
