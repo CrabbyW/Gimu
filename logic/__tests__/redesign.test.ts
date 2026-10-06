@@ -72,6 +72,6 @@ describe('badges', () => {
   });
   test('podmínky anglicky', () => {
     expect(badgeCondition({ kind: 'lessons', n: 1 })).toBe('Finish your first lesson');
-    expect(badgeCondition({ kind: 'streak', n: 7 })).toBe('Cvič 7 dní v řadě');
+    expect(badgeCondition({ kind: 'streak', n: 7 })).toBe('Train 7 days in a row');
   });
 });

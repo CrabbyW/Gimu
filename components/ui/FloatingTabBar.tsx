@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View, useWindowDimensions, type StyleProp, type 
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { haptics } from '@/lib/haptics';
 import { easeSafe, motion, useMotionSafe } from '@/lib/motion';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import { useTheme } from '@/theme';
@@ -20,8 +21,8 @@ export const tabBarClearance = (bottomInset: number, pill: number, gap: number) 
  * Aktivní tab = podložka `tilePressed` (absolutně, pod ikonou) + ikona `text`; ostatní `muted`.
  * Popisek jen u aktivního tabu (mono 10) a jen od šířky 360 pt; pod ní samé ikony (popisek nese čtečka).
  * Tap emituje `tabPress` (guard navigace a haptika žijí ve `screenListeners` layoutu).
- * Přejetí prstem po pilulce: podložka jede za prstem a tab se přepne hned, jak prst přejede do jiného slotu
- * (stejný `tabPress`, takže i haptika a guard); po puštění podložka dosedne na slot.
+ * Přejetí prstem po pilulce: podložka jede plynule za prstem, na každém slotu jemný haptický tik; po puštění
+ * se přepne na tab pod prstem (stejný `tabPress` jako tap, takže guard i haptika) a podložka dosedne.
  */
 export function FloatingTabBar({ state, descriptors, navigation, insets, padStyle }: Props) {
   const { c, space, size, radius } = useTheme();
@@ -61,20 +62,25 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
     hovered.set(active.get());
     x.set(reduced ? target : withTiming(target, { duration: motion.tabSlideMs, easing: easeSafe.out }));
   }, [slot, reduced, x, hovered, active]);
+  // Puštění prstu: přepne na tab pod prstem (jedno `navigate`, ne obrazovka po obrazovce během tahu)
+  // a podložka dosedne; když guard přepnutí zablokuje, dosedne zpět na aktivní tab.
+  const release = useCallback((i: number) => { goTo(i); settle(); }, [goTo, settle]);
   const scrub = useMemo(() => Gesture.Pan()
     // Krátký vodorovný posun, ať tap na ikonu zůstane tapem.
     .activeOffsetX([-motion.tabScrub.activeOffset, motion.tabScrub.activeOffset])
     .onStart(() => { dragging.set(true); })
     .onUpdate((e) => {
+      // Podložka jede plynule za prstem; přechod přes slot = jemný haptický tik, obrazovka se zatím nemění.
       const maxX = (count - 1) * slot;
       x.set(Math.min(maxX, Math.max(0, e.x - inner - slot / 2)));
       const i = Math.min(count - 1, Math.max(0, Math.floor((e.x - inner) / slot)));
-      if (i !== hovered.get()) { hovered.set(i); scheduleOnRN(goTo, i); }
+      if (i !== hovered.get()) { hovered.set(i); scheduleOnRN(haptics.tick); }
     })
-    .onFinalize(() => {
+    .onEnd(() => { scheduleOnRN(release, hovered.get()); })
+    .onFinalize((_e, success) => {
       dragging.set(false);
-      scheduleOnRN(settle);
-    }), [count, slot, inner, x, hovered, dragging, goTo, settle]);
+      if (!success) scheduleOnRN(settle);
+    }), [count, slot, inner, x, hovered, dragging, release, settle]);
   const slide = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
     <View

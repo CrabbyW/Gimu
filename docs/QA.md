@@ -143,3 +143,32 @@ Datum: 2026-10-06 · qa-agent · větev `faze1/core-loop` · rozsah: plán `docs
 - Popover u uzlu těsně nad CTA: po automatickém posunu je kotouč napůl pod pruhem (snímek `qa-pop-done-*`), zkontrolovat, jestli to působí přirozeně.
 - Tap na zamčený boss uzel: popover se neotevřel (jen zatřesení?), ověřit zamýšlené chování.
 - Scroll mapy vs. roztočení prstem, haptika tick/success, 44 pt dotykové plochy, Doto s diakritikou na zařízení.
+
+## Po fázi 3: reset, mapa, angličtina (2026-10-06, commity 76f7ad3..f0381e3)
+
+**Verdikt: SCHVÁLENO** (s jednou opravou v `logic/`, viz níže).
+
+Build: `tsc --noEmit` čisté, `eslint .` čisté, Jest 64 sad / 616 testů OK (po opravě `logic` 285/285).
+
+### 1. Reset app (Nastavení → Data)
+- ✅ Playwright 390×844: demo profil + téma light + připomínka zapnutá + dev posun +3 dny → Reset → web confirm („All progress, XP, streak and goals will be deleted…“) → `/onboarding/path`. `opice-db` = `{profile:null}` (celý stav hry žije v profilu: XP, série, cíle, liga, sezóna, kosmetika), `opice-settings` vrácen na výchozí, **téma light zůstalo**, `devTimeOffsetMs` 0, připomínka vypnuta.
+- ✅ Reload i Zpět po resetu zůstávají na onboardingu. Dvojklik na tlačítko vyvolá jen jeden dialog.
+
+### 2. Kompaktní hlavička mapy
+- ✅ 390×844: nad CTA 3 prvky cesty (hotová lekce, aktuální, boss), nic se nepřekrývá.
+- ✅ 320×568: bez vodorovného přetečení. ⚠️ Název sekce na jeden řádek se usekne („Balance ba…“) — záměr `singleLine`, ale na 320 pt přichází o informaci (design-agent: zvážit menší variantu fontu pro dlouhé názvy).
+- ⚠️ Řádek „4 EXERCISES · 3 MIN · +20 XP“ se na 320 i 390 láme tak, že `·` visí na konci prvního řádku (design-agent: nezalomitelná mezera před `·` nebo XP na samostatný řádek).
+
+### 3. Angličtina
+Sken textu + `aria-label` všech obrazovek (onboarding 6 kroků, dev, mapa, liga, progres, sezóna, cíl sezóny, recap, profil, šatník, nastavení, stage-up, 4 editory cílů) na 320 i 390.
+- ❌→✅ **Opraveno:** podmínky odznaků v profilu byly česky („Cvič 30 dní v řadě“, „Odcvič ho v lekci“, i v a11y popiscích). Commit f0381e3 je neopravil (text obsahoval NBSP). `logic/badges.ts` → „Train N days in a row“ / „Train 1 day“ / „Do it in a lesson“; test v `logic/__tests__/redesign.test.ts` upraven.
+- ✅ Plurály přes `plural()` v copy (day/days, lesson/lessons, exercise/exercises, minute/minutes).
+- ✅ Formáty: data M/D (sezóna „9/28 – 12/26“), desetinná tečka — vědomé rozhodnutí z LOG „translation“.
+- ✅ Bez přetečení textu kromě záměrných ellips (jméno v lize „Jake_Pull…“) a vodorovně posuvného segmentu v šatníku.
+- ⚠️ Zbytky češtiny mimo UI: chybové zprávy `logic/completion.ts` (UI je chytá generickou hláškou), `theme/useTheme.ts`, `console.warn`, mrtvá `formatCzDate`, komentáře „desetinná čárka“ v `components/season/format.ts`. Neviditelné uživateli, ale v dev menu se `e.message` zobrazí — boss.
+- ⚠️ Dev menu datum `en-US` (M/D/YYYY) — jen dev.
+
+### K ruční kontrole
+- Reset na iPhonu (nativní Alert, `router.dismissAll()` ze stacku nad taby).
+- Hlavička mapy na reálném 320 pt zařízení (SE 1. gen) s nejdelším názvem sekce.
+- VoiceOver čte anglické popisky odznaků.

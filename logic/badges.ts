@@ -12,10 +12,10 @@ export interface BadgeProgress { id: string; name: string; earned: boolean; curr
 export function badgeCondition(rule: BadgeRule): string {
   switch (rule.kind) {
     case 'lessons': return rule.n === 1 ? 'Finish your first lesson' : `Finish ${rule.n} lessons`;
-    case 'streak': return `Cvič ${rule.n} dní v řadě`;
+    case 'streak': return rule.n === 1 ? 'Train 1 day' : `Train ${rule.n} days in a row`;
     case 'boss': return 'Beat a section boss';
     case 'xp': return `Earn ${rule.n} XP`;
-    case 'exercise': return 'Odcvič ho v lekci';
+    case 'exercise': return 'Do it in a lesson';
   }
 }
 
