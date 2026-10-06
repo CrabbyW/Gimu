@@ -298,6 +298,9 @@ export const copy = {
         : 'Opice čeká na dnešní lekci.'),
   },
   settings: {
+    dataSection: 'Data', reset: 'Reset app', resetLine: 'Deletes your progress and starts again from the beginning.',
+    resetTitle: 'Reset app?', resetConfirm: 'All progress, XP, streak and goals will be deleted. The app starts from the beginning.',
+    resetCancel: 'Cancel', resetDo: 'Reset',
     title: 'Nastavení', theme: 'Téma', themeOptions: { system: 'Systém', light: 'Světlý', dark: 'Tmavý' },
     reminder: 'Denní připomínka', hour: 'Hodina', sendTest: 'Poslat testovací notifikaci',
     denied: 'Notifikace jsou v systému vypnuté.', openSettings: 'Otevřít nastavení', dev: 'Dev menu',

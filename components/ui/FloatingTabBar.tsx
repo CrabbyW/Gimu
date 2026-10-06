@@ -45,14 +45,22 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
     x.set(withTiming(target, { duration: motion.tabSlideMs, easing: easeSafe.out }));
   }, [state.index, slot, reduced, x, dragging]);
 
+  // Skutečně aktivní tab (i hned po `navigate`, než přijde nový `state`): po puštění na něj podložka dosedne,
+  // i když guard navigace (`lib/navGuard`) přepnutí během přejíždění zablokoval.
+  const active = useSharedValue(state.index);
   const goTo = useCallback((i: number) => {
     const route = state.routes[i];
     if (!route || i === state.index) return;
     const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-    if (!event.defaultPrevented) navigation.navigate(route.name, route.params);
-  }, [navigation, state.routes, state.index]);
+    if (!event.defaultPrevented) { navigation.navigate(route.name, route.params); active.set(i); }
+  }, [navigation, state.routes, state.index, active]);
   const hovered = useSharedValue(state.index);
-  useEffect(() => { hovered.set(state.index); }, [state.index, hovered]);
+  useEffect(() => { active.set(state.index); hovered.set(state.index); }, [state.index, hovered, active]);
+  const settle = useCallback(() => {
+    const target = active.get() * slot;
+    hovered.set(active.get());
+    x.set(reduced ? target : withTiming(target, { duration: motion.tabSlideMs, easing: easeSafe.out }));
+  }, [slot, reduced, x, hovered, active]);
   const scrub = useMemo(() => Gesture.Pan()
     // Krátký vodorovný posun, ať tap na ikonu zůstane tapem.
     .activeOffsetX([-motion.tabScrub.activeOffset, motion.tabScrub.activeOffset])
@@ -65,8 +73,8 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
     })
     .onFinalize(() => {
       dragging.set(false);
-      x.set(reduced ? hovered.get() * slot : withTiming(hovered.get() * slot, { duration: motion.tabSlideMs, easing: easeSafe.out }));
-    }), [count, slot, inner, x, hovered, dragging, goTo, reduced]);
+      scheduleOnRN(settle);
+    }), [count, slot, inner, x, hovered, dragging, goTo, settle]);
   const slide = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
     <View

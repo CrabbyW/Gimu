@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ChevronRight, X } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Reveal } from '@/components/ui/choreo';
 import { PillButton } from '@/components/ui/PillButton';
@@ -18,6 +18,8 @@ import { useProfileStats } from '@/hooks/useProfileStats';
 import { REMINDER_HOURS, useSettingsPrefs, type ThemePreference } from '@/hooks/useSettingsPrefs';
 import { haptics } from '@/lib/haptics';
 import { intro, motion } from '@/lib/motion';
+import { services } from '@/services';
+import { useDevControls } from '@/hooks/useDevControls';
 import { opacity, useTheme } from '@/theme';
 
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
@@ -50,6 +52,17 @@ export default function SettingsScreen() {
     if (busy) return;
     setBusy(true); setNote(null);
     try { await prefs.sendTest(copy.notifications.reminder(stats?.streak ?? 0)); setNote(copy.settings.sent); } catch { setNote(copy.wardrobe.actionError); } finally { setBusy(false); }
+  };
+
+  const { resetDev } = useDevControls();
+  const confirmReset = () => {
+    const run = async () => { await services.user.reset(); resetDev(); router.dismissAll(); router.replace('/'); };
+    // RN Web `Alert` nic nezobrazí, proto na webu `confirm` (jako v dev menu a lekci).
+    if (Platform.OS === 'web') { if (globalThis.confirm(copy.settings.resetConfirm)) void run(); return; }
+    Alert.alert(copy.settings.resetTitle, copy.settings.resetConfirm, [
+      { text: copy.settings.resetCancel, style: 'cancel' },
+      { text: copy.settings.resetDo, style: 'destructive', onPress: () => void run() },
+    ]);
   };
 
   return (
@@ -127,8 +140,20 @@ export default function SettingsScreen() {
           </Tile>
         </Section>
 
+        {/* Reset: smaže profil, pokrok a historii; appka začne znovu onboardingem (téma zůstane). */}
+        <Section i={4} play={first} label={copy.settings.dataSection}>
+          <Tile pad="none">
+            <PressRow last onPress={confirmReset} accessibilityLabel={copy.settings.reset}>
+              <View style={{ flex: 1, gap: space.xs }}>
+                <Text variant="bodyStrong" style={{ color: c.danger }}>{copy.settings.reset}</Text>
+                <Text variant="caption" tone="muted">{copy.settings.resetLine}</Text>
+              </View>
+            </PressRow>
+          </Tile>
+        </Section>
+
         {__DEV__ ? (
-          <Section i={4} play={first}>
+          <Section i={5} play={first}>
             <Tile pad="none">
               <PressRow last onPress={() => router.push('/dev')} accessibilityLabel={copy.settings.dev} role="link">
                 <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.dev}</Text>

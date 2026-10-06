@@ -279,24 +279,25 @@ function MascotSvg({
     };
   });
   const P = motion.reactions.gaze;
+  // ry se svírá do [zavřeno, otevřeno]: přestřelení easingu (web) dávalo záporné ry (QA fáze 3).
   // Oči: mrknutí, zavření reakcí (spánek, mazlení), pohled dolů (smutek, scroll) a pupily za prstem.
   const eyeLeftProps = useAnimatedProps(() => ({
-    ry: eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value,
+    ry: Math.max(EYE_RY_CLOSED, eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * Math.min(1, Math.max(0, eyeClose.value))),
     cx: 84 + pupilX.value * P.pupilX,
     cy: 78 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
   }));
   const eyeRightProps = useAnimatedProps(() => ({
-    ry: eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value,
+    ry: Math.max(EYE_RY_CLOSED, eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * Math.min(1, Math.max(0, eyeClose.value))),
     cx: 116 + pupilX.value * P.pupilX,
     cy: 78 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
   }));
   const catchLeftProps = useAnimatedProps(() => ({
-    opacity: interpolate(eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value, CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(Math.max(EYE_RY_CLOSED, eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * Math.min(1, Math.max(0, eyeClose.value))), CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
     cx: 86 + pupilX.value * P.pupilX,
     cy: 75 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
   }));
   const catchRightProps = useAnimatedProps(() => ({
-    opacity: interpolate(eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value, CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(Math.max(EYE_RY_CLOSED, eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * Math.min(1, Math.max(0, eyeClose.value))), CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
     cx: 118 + pupilX.value * P.pupilX,
     cy: 75 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
   }));

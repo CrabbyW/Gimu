@@ -763,3 +763,9 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
   3. Přepínání tabů přejetím prstem po tab baru (`FloatingTabBar`, Pan s `motion.tabScrub.activeOffset` 6, podložka jede za prstem, tab se přepne při přejetí do slotu přes stejný `tabPress` jako tap).
 - Metro „nesledoval změny“ jen kvůli `CI=1` (CI režim vypíná watch); Expo Go server běží bez něj.
 - SPEC §8 doplněn o tabulku reakcí.
+
+## 2026-10-06 qa-agent: QA fáze 3 (reakce opičky)
+- tsc/eslint/jest (616) zelené, web smoke (10x ťuknutí, tap pod opičkou otevře lekci, taby) OK. Verdikt SCHVÁLENO.
+- Opraveno: FloatingTabBar dosednutí podložky při zablokované navigaci; useMascotReactions bez re-renderu při každém scrollu, spánek se po zahození zkusí znovu; SvgMascot záporné ry očí.
+- Otevřené: tah po tab baru jen ručně na iPhonu (na webu ho nejde ověřit); AppState listener ztrácí leftAt při změně focusu (drobnost, motion).
+- Incident: při restartu webového Metra jsem omylem zabil všechny node procesy (`taskkill /IM node.exe`), tím i Expo Go server na 8082, a pustil ho znovu bez tunelu. Boss ho vrátil do původního stavu. Dál jen 8081.

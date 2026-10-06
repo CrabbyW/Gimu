@@ -6,7 +6,7 @@ import { useAnimatedReaction, useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { feedback } from '@/lib/feedback';
 import { useMotionSafe } from '@/lib/motion';
-import { degrade, IDLE_MS, isIdle, pickReaction, type MascotEvent, type ReactionId, type ReactionState } from '@/logic/mascotReactions';
+import { degrade, IDLE_MS, isIdle, pickReaction, REACTION_COOLDOWN_MS, type MascotEvent, type ReactionId, type ReactionState } from '@/logic/mascotReactions';
 import type { MascotReaction } from './types';
 
 const FRESH: ReactionState = { lastId: null, lastAt: -Infinity, taps: [] };
@@ -65,12 +65,14 @@ export function useMascotReactions(focused: boolean): MascotReactions {
   }, []);
 
   const touched = useCallback(() => {
+    // Bez re-renderu: dotek (i každá událost scrollu, ~30/s) jen posune čas; běžící časovač nečinnosti
+    // se při vypršení sám přeplánuje (QA fáze 3: dřív setState při každém scrollu překresloval celou mapu).
     lastInteraction.current = Date.now();
-    setIdleTick((n) => n + 1);
     if (asleep.current) {
       // Probuzení: klid (oči se otevřou); případná reakce na stejný dotek přijde hned po něm.
       asleep.current = false;
       setReaction(null);
+      setIdleTick((n) => n + 1);
     }
   }, []);
 
@@ -91,9 +93,11 @@ export function useMascotReactions(focused: boolean): MascotReactions {
   // Nečinnost: jeden časovač od posledního doteku, jen se zaostřenou obrazovkou. Usne jednou, další spánek až po doteku.
   useEffect(() => {
     if (!focused || asleep.current) return;
-    const wait = Math.max(0, IDLE_MS - (Date.now() - lastInteraction.current));
+    // Spodní mez = cooldown: opakovaný pokus po zahozeném spánku nesmí běžet v těsné smyčce.
+    const wait = Math.max(REACTION_COOLDOWN_MS, IDLE_MS - (Date.now() - lastInteraction.current));
     const id = setTimeout(() => {
-      if (isIdle(lastInteraction.current, Date.now(), focused)) report({ type: 'idle' });
+      // Neusnula (mezitím dotek, nebo spánek zahodil cooldown jiné reakce): naplánovat znovu.
+      if (!isIdle(lastInteraction.current, Date.now(), focused) || !report({ type: 'idle' })) setIdleTick((n) => n + 1);
     }, wait);
     return () => clearTimeout(id);
   }, [focused, idleTick, report]);
