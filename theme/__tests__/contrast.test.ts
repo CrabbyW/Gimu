@@ -73,3 +73,9 @@ describe.each([['dark', dark as Colors], ['light', light]] as const)('Nothing Do
     Object.values(c).forEach((v) => expect(['#000', '#000000', '#FFF', '#FFFFFF']).not.toContain(String(v).toUpperCase()));
   });
 });
+
+// Stage-up (QA fáze 2 N2): primární pilulka na zlaté = výplň `onSeasonGold`, popisek `onGoldPill`.
+describe.each([['dark', dark as Colors], ['light', light]] as const)('CTA na seasonGold %s', (_name, c) => {
+  it('hrana pilulky proti zlaté ploše ≥ 3:1', () => expect(contrast(c.onSeasonGold, c.seasonGold)).toBeGreaterThanOrEqual(3));
+  it('popisek na pilulce ≥ 4.5:1', () => expect(contrast(c.onGoldPill, c.onSeasonGold)).toBeGreaterThanOrEqual(4.5));
+});

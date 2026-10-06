@@ -712,6 +712,11 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Pro motion-agenta: pódium sken sloupců zdola (DotRow intro je zleva), TierBadge spirála, rozpad starého DotRing ve stage-up na tečky (teď stávající prasknutí kruhu), crossfade hrany výběru v KindTile (season-goal) a vlastní dlaždici ligy, recap přechody (layout `entering` FadeIn* — na webu riziko jako onboarding), `justLocked` v sezóně taky přes `entering`. Tile nepodporuje `flex` na vnějším obalu (milníky v řádku můžou mít různou výšku).
 - K ruční kontrole: stage-up kontrast bílých/černých teček na zlaté v obou režimech; podstavec profilu (překryv elips) na 320 pt; hero sezóny na 360 pt (displayXL + prstenec těsně vedle sebe).
 
+## 2026-10-06 · design-agent · Nothing Dot fáze 2, QA ⚠️ N1–N3
+- N1 Liga: pódium je první blok pod hlavičkou, dlaždice pozice + TierBadge pod ním a bez `minHeight` (kompaktnější). Odhad polohy vlastního řádku (`headerH` = výška celé hlavičky seznamu) a `intro.leagueScroll` motion-agenta beze změny: měří součet bloků, pořadí ho nemění.
+- N2 Stage-up: nový režim pilulky `onGold` (PillButton, CtaAction/RoundCta, BigActionBar): primární = výplň `onSeasonGold` s popiskem nového tokenu `onGoldPill` (#F2F2EF, ~16:1), sekundární = obrys `onSeasonGold`. Hrana vůči zlatu ≥ 4.5:1 v obou režimech (test `onSeasonGold` na `seasonGold` už existuje). `onAccent` zůstává pro recap (inverze).
+- N3 SeasonBadge: komentář `onAccent` opraven na inverzní plochu `accent` v recapu.
+
 ## 2026-10-06 · motion-agent · Nothing Dot fáze 2, Task 9 (pohybový průchod)
 - Nástup obrazovek: `ScreenHeader`/`TabHeader` mají prop `intro` (Reveal `screenIn.headerAt`, 480 ms ease.out, zdvih 12); liga, progres, sezóna, profil (klíče `hdr:*` přes `useFirstShow`), nastavení a šatník (každé otevření). Nový `tileAt(i)` v choreo (hero 80 + 60 ms × (i+1), víčko `screenIn.maxTiles` 8). Sezóna: dlaždice cíl → dny → comeback → odměna po 60 ms. Onboarding reminder/weight: obsah ve sledu `stagger(2…)`.
 - Layout `entering` odstraněn: recap (FadeInLeft/Right → `Reveal` se `shift` = směr × `motion.slideShift`, `motion.slide`; první snímek zdvih `intro.modal`), sezóna `justLocked` (→ `Reveal` zdvih `intro.lockIn.rise` 16). Zbývá jen scrim CelebrateOverlay (absolutní překryv, bezpečné) a lekce (mimo rozsah).

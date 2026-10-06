@@ -22,12 +22,12 @@ export function BigActionBar({ primary, secondary }: Props) {
         flexDirection: 'row', gap: space.s, paddingHorizontal: space.m, paddingTop: space.s,
         paddingBottom: (keyboardVisible ? 0 : insets.bottom) + space.m,
         // Na akcentové ploše oslavy (stage-up) lišta plochu nepřerušuje.
-        backgroundColor: primary.onAccent ? 'transparent' : c.base,
+        backgroundColor: primary.onAccent || primary.onGold ? 'transparent' : c.base,
       }}
     >
       {secondary ? (
         <View style={{ flex: 1 }}>
-          <PillButton label={secondary.label} onPress={secondary.onPress} variant="secondary" onAccent={primary.onAccent} />
+          <PillButton label={secondary.label} onPress={secondary.onPress} variant="secondary" onAccent={primary.onAccent} onGold={primary.onGold} />
         </View>
       ) : null}
       <View style={{ flex: secondary ? primaryFlex : 1 }}>

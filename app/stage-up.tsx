@@ -163,7 +163,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
           <Text variant="display" style={ink} accessibilityRole="header">{copy.stageUp.title}</Text>
         </Animated.View>
       </View>
-      <BigActionBar primary={{ label: copy.stageUp.cta, onPress: onContinue, disabled: !ready || leaving, onAccent: true }} />
+      <BigActionBar primary={{ label: copy.stageUp.cta, onPress: onContinue, disabled: !ready || leaving, onGold: true }} />
     </View>
   );
 }

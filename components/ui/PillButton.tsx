@@ -19,6 +19,8 @@ export interface PillButtonProps {
   loading?: boolean;
   /** Na plné akcentové ploše (stage-up): primární = plocha `onAccent` s popiskem v akcentu, sekundární obrys `onAccent`. */
   onAccent?: boolean;
+  /** Na zlaté ploše (stage-up): primární = výplň `onSeasonGold` s popiskem `onGoldPill`, sekundární obrys `onSeasonGold`. */
+  onGold?: boolean;
   /** Motion vrstva (stisk, nástup zdola); staticky nic. */
   motionStyle?: StyleProp<ViewStyle>;
   onPressIn?(e: GestureResponderEvent): void;
@@ -37,7 +39,7 @@ export const pillText = (label: string) => `[${label.toUpperCase()}]`;
  * Stisk mění výplň (`accentPressed` / `tilePressed`); scale a haptiku drží motion vrstva a `feedback`.
  */
 export function PillButton({
-  label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, motionStyle, onPressIn, onPressOut, style, accessibilityHint,
+  label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, onGold = false, motionStyle, onPressIn, onPressOut, style, accessibilityHint,
 }: PillButtonProps) {
   const { c, radius, size, space } = useTheme();
   // Stisk (motion): scale 0.97 za `motion.press`, návrat `motion.release`, bez pružiny (spec §3).
@@ -45,11 +47,15 @@ export function PillButton({
   const inactive = disabled || loading;
   const primary = variant === 'primary';
   const fill = (pressed: boolean) => {
+    // Zlatá plocha (stage-up, QA N2): tmavá pilulka `onSeasonGold` (vůči zlatu ≥ 4.5:1 v obou režimech),
+    // světlá `onAccent` pilulka by v light měla hranu ~2.1:1.
+    if (onGold) return primary ? c.onSeasonGold : 'transparent';
     if (onAccent) return primary ? c.onAccent : 'transparent';
     if (primary) return pressed ? c.accentPressed : c.text;
     return pressed ? c.tilePressed : c.tile;
   };
-  const ink = onAccent ? (primary ? c.accent : c.onAccent) : primary ? c.onText : c.text;
+  const ink = onGold ? (primary ? c.onGoldPill : c.onSeasonGold)
+    : onAccent ? (primary ? c.accent : c.onAccent) : primary ? c.onText : c.text;
   return (
     <Animated.View style={[{ alignSelf: 'stretch' }, press.style, motionStyle, style]}>
       <Pressable
@@ -70,8 +76,8 @@ export function PillButton({
           justifyContent: 'center',
           backgroundColor: fill(pressed && !inactive),
           // Sekundární pilulka nese vlasovou hranu jako dlaždice; primární je jen výplň.
-          borderWidth: primary && !onAccent ? 0 : StyleSheet.hairlineWidth,
-          borderColor: onAccent ? c.onAccent : c.edge,
+          borderWidth: primary && !onAccent && !onGold ? 0 : StyleSheet.hairlineWidth,
+          borderColor: onGold ? c.onSeasonGold : onAccent ? c.onAccent : c.edge,
           opacity: disabled ? opacity.disabled : 1,
         })}
       >

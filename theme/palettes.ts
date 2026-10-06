@@ -20,6 +20,8 @@ export const dark = {
   seasonGold: '#C6A15B', onSeasonGold: '#181613',
   // Tečky na zlaté ploše stage-up (fáze 2): zhasnutá a tlumená tečka jako tmavší tóny zlata (rozsvícená = `onSeasonGold`).
   goldDotOff: '#A88A4E', goldDotDim: '#8C7241',
+  // Popisek tmavé pilulky na zlaté ploše (výplň `onSeasonGold`): stejný v obou režimech, ~16:1.
+  onGoldPill: '#F2F2EF',
 } as const;
 // Light (obr. 3): papírově bílá, černé tečky. Bez záře: aktivní = plná `text`.
 export const light: Record<keyof typeof dark, string> = {
@@ -36,5 +38,6 @@ export const light: Record<keyof typeof dark, string> = {
   shadow: '#CFCFCB',
   seasonGold: '#C6A15B', onSeasonGold: '#181613',
   goldDotOff: '#A88A4E', goldDotDim: '#8C7241',
+  onGoldPill: '#F2F2EF',
 };
 export type Colors = Record<keyof typeof dark, string>;

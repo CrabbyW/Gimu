@@ -6,7 +6,8 @@ interface Props {
   /** Název sezóny; v kruhu jsou jeho iniciály („Winter Arc“ → „WA“). */
   seasonName: string;
   large?: boolean;
-  /** Na zlaté ploše (stage-up, odměna v recapu) lem i písmo v `onAccent`; zlatý lem by na zlaté zanikl. */
+  /** Na inverzní ploše `accent` (splněná odměna v recapu) lem i písmo v `onAccent`: zlatý lem by na světlé
+   *  inverzi (dark) neměl kontrast a odznak má mluvit stejným inkoustem jako zbytek oslavné scény. */
   onAccent?: boolean;
 }
 

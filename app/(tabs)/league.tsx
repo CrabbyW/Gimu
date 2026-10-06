@@ -152,10 +152,13 @@ function Standings({ view }: { view: LeagueWeekView }) {
           onDismiss={() => { void services.league.dismissLastResult(); }}
         />
       ) : null}
+      {/* QA N1: pódium je subjekt obrazovky, proto první blok pod hlavičkou; pozice a odznak až pod ním.
+          Odhad polohy vlastního řádku (`headerH`) měří celou hlavičku seznamu, pořadí bloků ho nemění. */}
+      <Podium entries={view.entries} play={podiumPlay} />
       <Reveal play={first} delay={motion.screenIn.heroAt} rise={motion.screenIn.rise} style={{ paddingHorizontal: space.l, paddingBottom: space.m }}>
-        {/* Hero (obr. 2): velké Doto číslo pozice + malá jednotka „/ 30“ vlevo nahoře, odznak úrovně vpravo,
-            název ligy a věta týdne vlevo dole. */}
-        <Tile style={{ minHeight: compact ? undefined : size.heroTile, justifyContent: 'space-between', gap: space.m }}>
+        {/* Pozice (obr. 2): Doto číslo pozice + „/ 30“ vlevo nahoře, odznak úrovně vpravo, název ligy a věta týdne
+            vlevo dole. Bez minimální výšky: druhý blok, nemá pódium odsunout pod ohyb. */}
+        <Tile style={{ justifyContent: 'space-between', gap: space.m }}>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.m }}>
             <View
               accessible
@@ -173,7 +176,6 @@ function Standings({ view }: { view: LeagueWeekView }) {
           </View>
         </Tile>
       </Reveal>
-      <Podium entries={view.entries} play={podiumPlay} />
     </View>
   );
 
