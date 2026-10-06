@@ -1,3 +1,47 @@
+# QA: Nothing Dot fáze 2 (commity 14787b4..071733b)
+
+Verdikt: **SCHVÁLENO** (bez blokerů; 3× ⚠️ k designu / ruční kontrole)
+
+## Build a testy
+- `npx tsc --noEmit` ✅ 0 chyb · `npx jest` ✅ 62 sad / 548 testů · `npx eslint .` ✅ čisto.
+- Nové čisté moduly s testy: `canvasBudget` ✅, `podiumLayout` (0/1/2/3 hráči) ✅, `progress/layout` (`tileColumns(320,1)=1`, `(390,1.4)=1`, `activityCells([])` 35 zhasnutých) ✅.
+
+## Úkoly plánu vs. spec
+- T1 Rozpočet pláten ✅ `SkiaGuard` přes `NavigationContext` + focus/blur, fallback stejného rozměru. Web: 5 tabů 2× dokola → mapa, 10 pláten, žádné „Too many WebGL contexts“, žádný pageerror.
+- T2 Onboarding ✅ StatusLine KROK 01/05 + DotRow, Doto titulek, Reveal místo `entering`. 320×568 dark/light: lead se nepřekrývá s kartou, bez děr.
+- T3 Liga ✅ podiumColumns, pódium skryté bez XP, vlastní řádek s hranou `text`, TierBadge = DotRing. ⚠️ viz N1.
+- T4 Progres ✅ 1 sloupec na 320 pt, DotMatrix, prázdné stavy z `copy.progress`.
+- T5 Sezóna ✅ odpočet Doto, DotRing %, SeasonBadge jediné zlato (lem, iniciály v `text`).
+- T6 Profil a šatník ✅ DotField, stoh 3 DotPlate, statistiky 2×N, SourceBadge sezónní `seasonGold` + `onSeasonGold`.
+- T7 Nastavení a cíle ✅ sekce v dlaždicích, Toggle/SegmentedControl/TextField pilulky.
+- T8 Stage-up ✅ plocha `seasonGold`, inkoust `onSeasonGold` (~7.6:1), RingShatter, Reduce Motion = finální stav.
+- T9 Pohyb ✅ Reveal/tileAt, useTilePress na klikatelných dlaždicích, pódium zdola, count-up.
+
+## Review Focus
+- Taby 2× dokola na webu ✅ (viz T1).
+- Liga 0–2 hráči ✅ (testy + skrytí bez XP).
+- Progres bez aktivity a váhy ✅ (test `activityCells([])`, prázdná copy; na zařízení neověřeno, demo profil má data).
+- 320 pt ✅ jeden sloupec; fontScale > 1.3 ✅ jen testem.
+- Onboarding 320×568 ✅ snímky dark i light.
+- Pláten na obrazovku (web, 320×568): liga 4, progres 4, sezóna 2, profil 4, šatník 1, nastavení 0, cíl sezóny 0, stage-up 3 → vše ≤ 12 ✅.
+- Akcent: `seasonGold` jen v SeasonBadge, SourceBadge, stage-up ✅. `c.accent` v recapu/PillButton = monochrom (`accent` = `text`) ✅. Žádný hex mimo theme ✅.
+- Spring: jen na dekorativních prvcích (opička, odznak, nový prstenec, birth) ✅; PillButton/Tile timing.
+- Layout `entering`: zbývá jen absolutní scrim v `progress.tsx` (CelebrateOverlay, bezpečné) a `ExerciseCard` lekce (mimo rozsah) ✅.
+
+## Nálezy
+- N1 ⚠️ (design-agent) Liga „začíná nahoře s pódiem“ jen částečně: obrazovka začíná nahoře bez scrollu, ale první dlaždice je souhrn pozice + TierBadge, pódium je druhé. Na 320×568 jsou z pódia vidět jen vršky sloupců. Pokud zadání znamená pódium jako první blok, prohodit pořadí.
+- N2 ⚠️ (design-agent) Stage-up light: CTA pilulka `onAccent` = `#F2F2EF` na `#C6A15B`, hrana tlačítka vůči ploše ~2.1:1 (WCAG 1.4.11 chce 3:1). Text v pilulce je OK. Dark (černá pilulka) OK.
+- N3 drobnost (design-agent) Komentář v `SeasonBadge.tsx` mluví o „zlaté ploše“ u `onAccent`, recap ale používá inverzi `accent`; jen dokumentace.
+- Žádné opravy v kódu nebyly nutné.
+
+## K ruční kontrole
+- Stage-up v light na zařízení (N2) a první snímek staré opičky (motion LOG).
+- fontScale 1.4 na zařízení (progres, liga, onboarding) — ověřeno jen unit testem.
+- Progres s čerstvým profilem bez aktivity a bez váhy na zařízení.
+- Plynulost RingShatter/DotBurst na slabém Androidu; scroll ligy k vlastnímu řádku za 2. obrazovkou.
+
+---
+
 # QA: Nothing Dot fáze 1, po ratingu kola 1
 
 Datum: 2026-10-06 · qa-agent · větev `faze1/core-loop` · rozsah: plán `docs/superpowers/plans/2026-10-05-nothing-dot-faze1.md` úkoly 1–10 a Review Focus, porovnané bod po bodu se spec `docs/superpowers/specs/2026-10-05-nothing-dot-redesign-design.md`; opravy `87f436a` a `85b4493`.

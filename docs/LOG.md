@@ -722,3 +722,7 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Stage-up: nová osa `stageUp` (lib/motion): opička se stáhne 300–600, prstenec se nadechne 0.96, v 620 ms se vnitřní prstenec rozpadne na tečky (`RingShatter`, 1 plátno), které po oblouku (výlet +32 % ± 35 %) a pootočené o jednu stage dosednou do nového prstence za 900 ms (rozsvícení se přepne ze stage/3 na nový stage/3); v 1520 nový prstenec převezme, opička pružinou `motion.pop`, haptika tick při rozpadu a success při doletu; text 1800, CTA 2000. Reduce Motion: finální stav, fade 200 ms. Plátna stage-up 3.
 - Ověřeno: tsc, jest (548), eslint zelené; web snímky ligy (pódium roste zdola, bez scrollu), stage-up (sekvence), sezóna, cíl sezóny.
 - Otevřené / k ruční kontrole: stará opička stage-up na webu v 1. snímku (200 ms) nebyla vidět — ověřit na zařízení; plynulost RingShatter a DotBurst na slabém Androidu (worklet přepočítává ~50–300 teček za snímek); scroll ligy s vlastním řádkem za 2. obrazovkou (demo profil má 6/16, nescrolluje); goal editory animují obsah jako jeden blok (bez vlny po dlaždicích).
+
+## 2026-10-06 · qa-agent · QA Nothing Dot fáze 2
+- tsc/jest (548)/eslint zelené; úkoly 1–9 ✅, Review Focus ✅ (web taby 2× bez ztráty WebGL, onboarding 320×568 bez překryvu, plátna ≤ 4 na obrazovku).
+- Verdikt SCHVÁLENO. Otevřené (design-agent): N1 pódium ligy není první blok, N2 hrana CTA na zlaté v light ~2.1:1, N3 zastaralý komentář SeasonBadge. Kód neměněn. Detail v `docs/QA.md`.
