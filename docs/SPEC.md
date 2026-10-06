@@ -253,136 +253,67 @@ Všechny konstanty jsou v `data/xp.ts` a `data/leagues.ts`.
 
 ## 6. Design systém
 
-### 6.1 Směr: Chalk & Iron, light + dark (R42 + R43)
+Detailní zdroj: `docs/superpowers/specs/2026-10-05-nothing-dot-redesign-design.md` (redesign „Nothing Dot“, 2026-10).
+Nahrazuje směr Chalk & Iron / Teplá litina (R42–R44). Reference jsou v `images/1–5.png`.
 
-Hutná a sebevědomá gym estetika v disciplíně skillu `aesthetic` (Kurogane kostra + instrument vrstva),
-barvy odvozené z materiálů posilovny, ne z menu skillu
-(`docs/superpowers/specs/2026-10-03-chalk-iron-geometry-design.md`):
-- **železo** (litina kotouče, OKLCH h 65°, chroma ≤ 0.008) = tmavé neutrály,
-- **křída** (magnézium, h 95°) = text v dark, podklad v light,
-- přesně jeden akcent: **IWF červená 25kg kotouče** `#EF3E31` (OKLCH 0.63 0.215 29), v obou režimech stejná,
-- typografie nese obrazovku, ornament vždy nese informaci,
-- skrytý proporční systém φ (§6.9), jediná viditelná figura v oslavě dokončení lekce.
-
-**Kde smí akcent svítit:** jen oslava dokončení lekce (+XP, žár kotouče při dopadu), stage-up (plocha)
-a recap sezóny (plocha u splněné odměny). Všude jinde nese stav kontrast a tvar (`text` vs `muted`,
-proužek, prstenec, fajfka v `text`).
-
-**Z referencí přebírám:**
-- obří tabulární čísla s malou jednotkou (`20 kg`, `12 dní`)
-- mřížku teček jako kalendář („dnes“ = prstenec v `text`)
-- plochá geometrická kolečka jako hlavní vizuál: kotouč je kruh
-- spodní akční lištu rozdělenou na buňky s velkým kulatým CTA
-- tmavé karty s jedním údajem na kartu
+### 6.1 Směr: Nothing Dot, dark + light
+- Monochromní tečkový jazyk Nothing OS a dlaždice-widgety. **Žádný akcent:** „aktivní“ (primární CTA, rozsvícená tečka, progres) = `text`.
+- Barvu v UI nese **jen opička**, která je subjektem obrazovky. `seasonGold` je jediná materiálová výjimka: sezónní odznak, zdroj sezónní kosmetiky a plocha stage-up.
+- Tmavý i světlý režim jsou plnohodnotné, přepínač Systém / Světlý / Tmavý je v Nastavení. Ve světlém režimu tečky nezáří; aktivní je plná `text`.
 
 ### 6.2 Palety (`theme/palettes.ts`, zdroj pravdy)
-
-Neutrály ve stejných perceptuálních krocích (ΔL 0.035 base → surface → raised), kotouče dark po ΔL 0.065.
-
-| Token | Dark | Light |
-|---|---|---|
-| `base` | `#100E0D` | `#F1F0EB` |
-| `surface` | `#181614` | `#E8E6E0` |
-| `raised` | `#201E1B` | `#F9F8F5` |
-| `rule` | `#302D2A` | `#C9C7C0` |
-| `text` | `#F0EEE9` | `#181613` |
-| `muted` | `#A09A95` | `#625D58` |
-| `accent` (jen oslavy, viz §6.1) | `#EF3E31` | `#EF3E31` |
-| `onAccent` | `#181613` | `#181613` |
-| `accentText` (akcent jako text) | `#F45343` | `#B71B14` |
-| `plate5 → plate25` | `#6F6B67 · #5D5955 · #4B4743 · #393633 · #292623` | `#A9A39E · #918B86 · #5C5753 · #383532 · #181613` |
-| `plateRim` | `#403C39` | `#8B8580` |
-| `plateHighlight` / `plateShade` | `rgba(255,250,240,0.10)` / `rgba(0,0,0,0.28)` | `rgba(255,250,240,0.18)` / `rgba(24,22,19,0.22)` |
-| `scrim` | `rgba(16,14,13,0.72)` | `rgba(241,240,235,0.76)` |
-| `danger` / `success` | `#EF6661` / `#53AF65` (tlumené, jen liga a chyby) | `#B32228` / `#1D7635` |
-| `shadow` (inkoust stínu uzlu a kotouče) | `#040303` | `#181613` |
-| `seasonGold` / `onSeasonGold` (materiál sezónní odměny) | `#C6A15B` / `#181613` | `#C6A15B` / `#181613` |
-
-- Kontrasty hlídá `theme/__tests__/contrast.test.ts`: text/base 16.6 (dark) a 15.8 (light), `muted` ≥ 5.2, `accentText` ≥ 4.88, `onAccent` na `accent` 4.65, inkoust čísla (`inkOn`) na všech kotoučích ≥ 4.5.
-- Téma se řídí systémem (`userInterfaceStyle: automatic`). V Nastavení jde přepnout Systém / Světlý / Tmavý.
-- Light = stejné materiály, obrácené role (křídový papír, železný inkoust), ne zesvětlený dark.
+- **Klíče:**
+  - `base`, `tile`, `tilePressed`, `edge` (vlasová hrana dlaždice);
+  - `text`, `muted`, `faint`, `onText`;
+  - tečky `dotOff`, `dotDim`, `glow` (jen dark), `goldDotOff`, `goldDotDim`;
+  - `danger` (jen chybové stavy).
+- **Starší klíče** mají monochromní hodnoty, takže starší komponenty fungují bez přepisu:
+  - `surface`, `raised`, `rule`, `scrim*`, `plate*`;
+  - `accent*` = `text`, `onAccent` = `onText`.
+- **Žádný čistý #000 ani #FFF.** Kontrast textu ≥ 4.5:1 v obou režimech; testy v `theme/__tests__/contrast.test.ts`.
 
 ### 6.3 Sezónní override (`theme/seasons.ts`)
-
-- Sezóna přepisuje jen neutrály hlavičky a mapy (`headerBase`, `mapBase`, `mapRule`). Winter Arc je zchladí do modrošedé a přidá jemnou mrazivou tečkovou texturu mapy.
-- Akcent se **nemění**, protože dva akcenty by rozbily systém.
-- Opice během sezóny nosí šálu jako sezónní vrstvu. Nejde o equip.
+UI zůstává monochromní; sezóna mění jen kosmetiku opičky a sezónní odznak.
 
 ### 6.4 Typografie
+- **Doto 700** (dot-matrix) jen ≥ 28 pt, varianty `hero` 64, `display` 40, `displayXL` 110, `dotStat` 28, řádek 1.3 em, bez záporného prostrkání.
+- **Inter** 400/600: text, názvy dlaždic.
+- **JetBrains Mono** 500: utility štítky VERZÁLKAMI s rozpalem 0.18 em, údaje (`telemetry`). Akce v hranatých závorkách `[ZAČÍT LEKCI]` (`PillButton`; čtečka dostane větu bez závorek).
+- Uvnitř položek copy nezlomitelné mezery (`a rámy`, „streak +14“); hlídá `data/__tests__/typography.test.ts`.
 
-| Role | Font | Použití |
-|---|---|---|
-| Display | Inter 300 Light (jediný display řez, R42), tracking −0.03 em | Nadpisy, čísla na kotoučích, velké statistiky |
-| Text | Inter 400 / 600 | Běžný text |
-| Utility | JetBrains Mono 500, 10–11 pt, velká písmena, tracking 0.18–0.2 em | Štítky a telemetrie (`XP: 340 · LIGA: BRONZ`) |
-
-**φ škála (R43)**: řada 16·√φⁿ, každé dva kroky = φ: 16 · 20 · 26 · 33 · 42 · 53 · 68 · 87 · 110 (`theme/tokens.ts`).
-
-| Token | pt / řádek | Použití |
-|---|---|---|
-| `displayXL` | 110 / 114 | rezerva škály (Stat XL má stejný stupeň) |
-| `display` | 42 / 46 | titulek oslavy, název sezóny (na < 375 pt o stupeň níž: `title`) |
-| `title` | 33 / 38 | nadpisy karet a stavů, streak v hlavičce mapy |
-| `choiceTitle`, `counter` | 26 | karta volby, čísla v řádku ligy a odpočet |
-| `body`, `bodyStrong` | 16 / 24 | běžný text |
-| `input` | 20 / 28 | víceřádkové pole |
-| Stat `M` / `L` / `XL` | 53 / 87 / 110 | obří tabulární čísla s malou jednotkou |
-
-- Utility stupně stojí mimo škálu kvůli čitelnosti: `label` 11, `caption` 14, `telemetry` 11, `badgeLabel`/`tabLabelCompact` 10, `tierName` 13, `inputLarge` 22.
-- Čísla jsou vždy `tabular-nums`. Rozpočty šířky počítají s `glyph.displayDigit` 0.62 em.
-- Instrument vrstva: mono štítky + telemetrický pruh, tabulární čísla, měřicí linka s tiky, `+` registrační značky (R42).
-
-### 6.5 Kotouče
-
-- Čelní pohled (viewBox 100): vnější kruh R = 48, fyzický lem 40, náboj R/φ² ≈ 18.3, otvor R/φ³ ≈ 11.3 (`components/map/Plate.tsx`), číslo kg v display řezu (`svgType.plateKg` 20 jednotek, nad nábojem).
-- Hmotnost dodává radiální světlo (gradient, který pracuje s hloubkou) a jemné zrno (SVG pattern); stín uzlu v `shadow`.
-- Kotouče jsou litina, monochromní; tmavost roste s kg (tokeny `plateXX`). Velikost uzlu roste s kg: 56 · 60 · 64 · 72 · 80 pt. Boss je činka 220 × 88.
-- Mapa: krok uzlů 104 (= 64·φ, `space.xxxl`), amplituda sinusoidy šířka/φ³ (≈ 0.236 w, max 120).
-
-**Stavy uzlu (R42: bez akcentu):**
-
-| Stav | Vzhled |
-|---|---|
-| Zamčený | Obrysový kruh v `rule` + zámek v `muted`, bez výplně |
-| Aktuální | Plný kotouč + prstenec v `text` (`stroke.focus`), který pomalu pulzuje |
-| Dokončený | Plný kotouč + fajfka v `text` na středovém otvoru |
+### 6.5 Kotouče a tečková grafika (`components/dots/`, Skia)
+- **`DotPlate`:** soustředné prstence teček; počet prstenců podle kg (2.5 → 2 … 25 → 7, neznámá hmotnost = nejbližší nižší, min 2). Uprostřed kg (mono na uzlu, Doto od průměru 144).
+  - Zamčený: jen vnější prstenec `dotDim` a zámek.
+  - Aktuální: všechny prstence `text`, záře a obíhající kometa.
+  - Dokončený: plný kotouč a fajfka.
+- **Další komponenty:** `DotRing` (progres a odpočet), `DotRow` (řada, sken zleva nebo zdola), `DotMatrix` (aktivita), `DotField` (pozadí reagující na dotek), `DotBurst` (rozpad).
+- **Geometrie:** čistá a testovaná v `components/dots/geometry.ts`.
+- **`SkiaGuard`:** každá Skia komponenta je obalená. Bez CanvasKit kreslí prázdný fallback; na webu kreslí jen zaostřená obrazovka, protože Chrome drží jen ~16 WebGL kontextů. Na jedné obrazovce je nejvýš 12 pláten.
+- **Web:** vstup `index.web.js` načte `public/canvaskit.wasm` dřív než appku.
 
 ### 6.6 Tvary a spacing
+- **Dlaždice `Tile`:** radius 28, padding 20, pozadí `tile` a vlasová hrana `edge`. Je to jediné oddělení, žádný stín. Vybraná dlaždice má hranu `text` 2 pt a štítek VYBRÁNO.
+- **Pilulky:**
+  - CTA výška 56; primární výplň `text`, sekundární `tile` s hranou;
+  - plovoucí tab bar 64, 16 od okrajů, kulatá podložka aktivního tabu.
+- Spacing 4 · 8 · 16 · 24 · 40 · 64 · 104 · 168; dotykové plochy ≥ 44 pt.
+- Ikony Lucide outline 1.5 px.
 
-- Spacing `4 8 16 24 40 64 104 168` (od 24 výš ≈ φ).
-- Radiusy `s` 5 (štítky, buňky mřížky), `l` 8 (karty, popover, sheet) — poměr 8/5 ≈ φ, obrobený kov místo bubliny; `full` jen pro tvary, kde kruh nese význam (kotouč, kulaté CTA, odznak, tečka).
-- Materiál činky stojí mimo škálu radiusů (`material.collarRadius` 2, rx 2–3 v SVG čince): je to fyzický tvar, ne UI.
-- Tloušťky čar `stroke`: ikona 1.5, výběr/fokus/prstenec uzlu 2, prstenec výdrže 3.
-- Každý prvek odděluje jen jedna věc: buď pozadí, nebo linka, nebo stín.
-- Dotykové plochy mají minimálně 44 pt (`size.hit`).
+### 6.7 Motion (`lib/motion.ts`, jediný zdroj hodnot)
+- **Ambient:**
+  - kotouče se točí (40 s, aktuální 24 s), kometa, dech aktuálního uzlu;
+  - živá tečka stavového řádku bliká 1.2 s.
+- **Nástup obrazovky:** jeden sled hlavička → hero → dlaždice po 60 ms, 480 ms ease-out `(0.22, 1, 0.36, 1)`, přes `Reveal` (ne layout `entering`). Tečky se rozsvěcují skenem nebo spirálou 600 ms.
+- **Interakce:**
+  - vlna teček pod prstem (`useDotTouch`);
+  - roztočení kotouče prstem se setrvačností a hmatovým tikem po 30° (`usePlateSpin`);
+  - naklopení dlaždice k prstu max 6° (`useTilePress`);
+  - posuvná podložka tabu 260 ms.
+- **Pružiny:** žádný spring ani bounce na klikatelném. Pružina jen pro setrvačnost kotouče, opičku a nacvaknutí v oslavě.
+- **Reduce Motion vždy:** ambient stojí, vlna je vypnutá, nástupy jsou prolnutí 200 ms, oslavy rovnou ukážou finální stav.
 
-### 6.7 Motion
-
-- **UI** (tlačítka, taby, navigace): 150–200 ms, entrance `cubic-bezier(0.22,1,0.36,1)`, exit `(0.4,0,0.2,1)`. Bez pružin.
-- **Herní odměny** (kotouč, +XP, opice, odemčení uzlu, stage-up): pružiny, jen tam.
-- **Haptika jen v klíčových momentech:**
-  - nacvaknutí kotouče (Heavy + Success)
-  - odemčení uzlu (Light)
-  - konec výdrže (Medium)
-  - stage-up (Success)
-- Pokud je v systému zapnuté omezení pohybu (reduce motion), pružiny se nahradí krátkým fade a pulzování se vypne.
-
-### 6.8 Řešení konfliktů se skillem `aesthetic`
-
-| Konflikt | Rozhodnutí |
-|---|---|
-| Pružiny | Jen na herní odměny, ne na UI ovládání. |
-| Display font | Inter 300 Light (R42) místo Bebas: skill chce lehký display, kondenzovanou hutnost nese velikost a těsný tracking. |
-| Akcent pod 5 % plochy | Kotouče, CTA, uzly i „dnes“ jsou monochromní (stav nese kontrast). Akcent jen v oslavě dokončení lekce, stage-up a recapu sezóny; stage-up a recap jsou záměrně plošné (ref. 3). |
-| Akcent z menu skillu | R43: ember `#FF6B35` nahrazen IWF červenou 25kg kotouče `#EF3E31` (barva ze světa předmětu). |
-| Emoji | Jen v textu systémové notifikace, v UI appky ne. |
-| Zarovnání | Výchozí je asymetrie a zarovnání vlevo. Na střed jen maskot, kruhové odznaky a oslavné scény. |
-
-### 6.9 Posvátná geometrie (R43)
-
-- φ = 1.618 (`PHI` v `theme/tokens.ts`). Pravidlo: každá nová míra je φ-odvozená, nebo má komentář, proč ne (čitelnost, fyzický tvar, dotyková plocha).
-- Skrytě: typová škála (§6.4), Stat M/L/XL, radiusy 5/8, kotouč R/φ²/φ³ (§6.5), krok mapy 64·φ a amplituda w/φ³.
-- **Viditelná figura jen v oslavě dokončení lekce** (`components/lesson/GoldenFigure.tsx`): konstrukční kresba kotouče, který právě zacvakl — soustředné kružnice R, R/φ, R/φ², R/φ³ se středem v pravém kotouči + zlatá spirála ze čtvrtkruhů ve zlatém obdélníku kolem osy. Vlasová linka 1 pt v `rule`, bez výplně, bez akcentu. Dokreslí se od dopadu (600 ms, `ease.out`, kružnice od nejmenší); omezený pohyb = fade 200 ms. Nikde jinde v appce.
+### 6.8 Vztah ke skillu `aesthetic`
+Konstanta skillu (monochrom, whitespace, typografie nese obsah, ornament nese informaci) platí. „Jeden akcent“ splňuje **opička**, ne barva UI. Tečky vždy kódují hodnotu: prstence = kg, rozsvícené = pokrok, řada = sekvence.
 
 ## 7. Obrazovky a chování
 
@@ -395,7 +326,7 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
    - Body control: dva vyvážené kruhy
    - Strength: plný těžký kruh
 2. **Dream body** (změna: rozhodnutí uživatele 2026-09-30):
-   - Výběr z 6 karet vize podle zvolené cesty (`data/dreams.ts`, texty v `copy.onboarding.dream.options`). Karta má krátký titulek v Bebas, jeden řádek Inter a plochý geometrický glyf ze skládaných kruhů (jazyk glyfů cest).
+   - Výběr z 6 karet vize podle zvolené cesty (`data/dreams.ts`, texty v `copy.onboarding.dream.options`). Karta je `SelectTile` (dlaždice, výběr = hrana `text` a štítek VYBRÁNO) s titulkem Inter, jedním řádkem popisu a tečkovým glyfem.
    - Sedmá karta „Vlastní…“ odkryje textové pole (max 140 znaků).
    - Vybraná je právě jedna karta. `dreamBody` ukládá větu vybrané karty ve tvaru „Titulek. Řádek“ (rozhodnutí R41, zobrazuje se nahoře v Progresu), nebo vlastní text; bez změny schématu.
    - Při změně cesty se předvolená vize vymaže, vlastní text zůstává.
@@ -426,15 +357,15 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
   1. dojede scroll
   2. dokončený uzel dostane fajfku
   3. dokreslí se úsek čáry
-  4. další uzel se rozpustí ze zámku do plného kotouče (pružina, haptika Light)
+  4. další uzel se rozsvítí ze zamčeného (jen vnější prstenec) do plného tečkového kotouče (pružina, haptika Light)
   5. opice na něj přeskočí
 
 ### 7.3 Lekce (`lesson/[id]`)
 
-- **Nahoře:** řada teček podle počtu cviků (hotové plné, aktuální v akcentu) a „✕“ s potvrzením odchodu.
+- **Nahoře:** řada teček podle počtu cviků (`DotRow`, hotové rozsvícené) a mono „02/05“ a „✕“ s potvrzením odchodu.
 - **ExerciseCard:**
   - animovaná SVG silueta (smyčka dvou póz)
-  - název v Bebas, velké číslo `12` + jednotka `OPAKOVÁNÍ` nebo `30` + `SEKUND`
+  - název Inter, velké Doto číslo `12` + jednotka `OPAKOVÁNÍ` nebo `30` + `SEKUND`
   - popis techniky
 - **Opakování:** BigActionBar „Hotovo“.
 - **Výdrž:**
@@ -442,19 +373,19 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
   - Poslední 3 s pulzují.
   - Na nule haptika Medium a automatický přechod.
 - **Oslava po posledním cviku** (nejdůležitější moment appky):
-  1. Scéna s činkou z boku: osa s již nacvaknutými kotouči (odpovídají dokončeným lekcím sekce).
-  2. Kotouč s kg lekce přiletí shora po oblouku, na ose dojede pružinou s mírným přestřelem.
-  3. Při dopadu haptika Heavy, zámek `click` a krátké rozkmitání osy.
-  4. `+30 XP` vyskočí jako Stat s count-up a rozpisem („lekce 20 · první dnes +10“).
-  5. Opice v náladě happy (u bosse celebrate).
-  6. Haptika Success.
-  7. CTA „Pokračovat“.
+  1. 0 ms: celoplošné pole teček (`DotField`) se rozsvítí vlnou od středu.
+  2. 200 ms: tečky vzlétnou a po spirále se za 700 ms slétnou do velkého `DotPlate` s kg lekce.
+  3. 900 ms: kotouč nacvakne (1.08 → 1), haptika Success a zvuk cvaku; kotouč se dál točí s kometou, kg v Doto.
+  4. 1000 ms: opice celebrate se šálem, XP se napočítá s rozpisem („lekce 20 · první dnes +10“, nezlomitelné uvnitř položek), řada série přibude o tečku.
+  5. 1600 ms: CTA `[POKRAČOVAT]` vyjede zdola. Tap kamkoli přeskočí na konečný stav.
+  6. Pod CTA „Zítra · {další lekce} · {min}“.
+  7. Reduce Motion: konečný stav jedním prolnutím 200 ms.
   8. Pokud došlo ke stage-up, CTA vede na `stage-up`, jinak na mapu s `?unlocked`.
   9. Aktivní efekt ze slotu `lessonEffect` se přehraje nad scénou (například jiskry nebo křída).
 
 ### 7.4 Stage-up
 
-- Celoobrazovková plocha v akcentu (ref. 3).
+- Celoobrazovková plocha `seasonGold`; starý prstenec stage se rozpadne na tečky, které přeletí do nového.
 - Stará opice se zmenší do kruhu, kruh praskne a vyskočí nová stage v náladě celebrate.
 - Pod ní `STAGE 02 · TEENAGER`.
 - CTA „Pokračovat“.
@@ -466,13 +397,13 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
 - **Zóny:**
   - Pod 5. místem oddělovač `▲ POSTUP`.
   - Nad 14. místem `▼ SESTUP` (v Dřevu se neukazuje).
-  - Vlastní řádek zvýrazněný pozadím `raised` + akcentovým proužkem vlevo.
+  - Vlastní řádek = dlaždice s hranou `text` 2 pt.
 - **Pod seznamem** vysvětlení: „XP za lekce a pravidelnost, ne za výkon.“
 
 ### 7.6 Progres
 
 - **Nahoře:** Dream body jako citát v Inter 20 pt.
-- **Pod ním:** DotGrid posledních 5 týdnů aktivity (plná = aktivní, akcent = dnes).
+- **Pod ním:** `DotMatrix` posledních 5 týdnů aktivity (rozsvícená = aktivní, dnešek s prstencem).
 - **Milestones:** řádky s ProgressBarem. Tap otevře zadání aktuální hodnoty. Při splnění nálada celebrate a případná milestone kosmetika.
 - **Graf váhy** (jen pro cíl `lose` / `gain`):
   - čistě SVG: týdenní body, linie, přerušovaná cílová linie s popiskem
@@ -486,7 +417,7 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
 - **Pokud cíl chybí:** výzva „Lock in“ → `season-goal` s výběrem ze 4 typů a hodnotou.
 - **Pokud cíl je:**
   - velký Stat progresu (`34 / 60 dní`)
-  - DotGrid všech dnů sezóny (aktivní, opravené, zameškané v obrysu, dnes v akcentu, budoucí prázdné)
+  - DotGrid všech dnů sezóny (aktivní, opravené, zameškané v obrysu, dnes s prstencem, budoucí zhasnuté)
   - karta Comeback se zbývajícím oknem
   - karta odměny s náhledem šály a odznaku
 - **Po konci sezóny:** CTA „Tvůj recap“.
@@ -513,7 +444,7 @@ Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s �
 | Za milestone | Obrysový štítek s názvem milestone |
 | Obchod | Cena v banánech, bez rámečku |
 
-  Zasloužené položky mají plný štítek a ikonu medaile. Koupené jsou vizuálně tišší. Jde o prestiž, proto je zlatá výjimka z pravidla jednoho akcentu, jen jako materiálová barva štítku.
+  Zasloužené položky mají plný štítek a ikonu medaile. Koupené jsou vizuálně tišší. Jde o prestiž, proto je `seasonGold` materiálová výjimka monochromu, jen jako barva štítku.
 - **Nezískané položky:** zamčené se siluetou a podmínkou získání.
 
 ### 7.9 Nastavení a notifikace
