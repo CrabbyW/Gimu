@@ -731,3 +731,12 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 ## 2026-10-06 · qa-agent · QA Nothing Dot fáze 2
 - tsc/jest (548)/eslint zelené; úkoly 1–9 ✅, Review Focus ✅ (web taby 2× bez ztráty WebGL, onboarding 320×568 bez překryvu, plátna ≤ 4 na obrazovku).
 - Verdikt SCHVÁLENO. Otevřené (design-agent): N1 pódium ligy není první blok, N2 hrana CTA na zlaté v light ~2.1:1, N3 zastaralý komentář SeasonBadge. Kód neměněn. Detail v `docs/QA.md`.
+
+## 2026-10-06 · boss · Nothing Dot fáze 2 (plán, základ, integrace, rozhodnutí)
+- Plán `docs/superpowers/plans/2026-10-06-nothing-dot-faze2.md` (10 úkolů). Rozdělení: boss Task 1 a čistá logika Tasků 3–4, dva design-agenti paralelně na oddělených souborech (A: onboarding, nastavení, cíle; B: liga, progres, sezóna, profil, šatník, stage-up), pak motion-agent, QA, rating.
+- Task 1, rozpočet Skia pláten: `components/dots/canvasBudget.ts` (`shouldMountCanvas`, test) a `SkiaGuard` na webu kreslí jen na zaostřené obrazovce (NavigationContext z `expo-router/build/react-navigation/core`; `useIsFocused` mimo navigaci hází). Ověřeno: 5 tabů 2× dokola → mapa 10 pláten, žádné varování WebGL.
+- Čistá logika (TDD): `components/league/podiumLayout.ts` (`podiumColumns`) a `components/progress/layout.ts` (`tileColumns`, `activityCells`). Rozhodnuto: `podium.ts` přejmenováno na `podiumLayout.ts`, protože na Windows kolidovalo s `Podium.tsx` (stejné jméno až na velikost písmen).
+- Integrace: copy funkce s řetězcovým 1. argumentem obaleny `String(...)` (typografický test je volá s číslem); nezlomitelné mezery v nových textech („z {n}“, „a rámy“). Test kontrastu CTA na `seasonGold` (hrana ≥ 3:1, popisek ≥ 4.5:1). `motion.instant` místo `{ duration: 1 }` ve stage-up.
+- SPEC §6 přepsán na Nothing Dot (§6.1–6.8, detail ve spec dokumentu), §7 opraveny zastaralé termíny (Bebas, akcent, litina) a sled oslavy lekce.
+- Rozhodnuto bossem: liga začíná pódiem (QA N1), CTA na zlaté = tmavá pilulka `onGold` (QA N2).
+- Otevřené: fáze 3 (15 reakcí opičky, `logic/mascotReactions.ts`); na zařízení ověřit plynulost RingShatter/DotBurst, stage-up CTA, scroll ligy k vlastnímu řádku za 2. obrazovkou, fontScale 1.4.

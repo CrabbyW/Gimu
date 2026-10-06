@@ -68,6 +68,8 @@ const cvak = { duration: dur.micro, easing: ease.out } satisfies WithTimingConfi
 export const stagger = (i: number, step: number = dur.step, cap: number = dur.staggerCap) => Math.min(Math.max(0, i) * step, cap);
 
 export const motion = {
+  /** Okamžité přepnutí uvnitř časované sekvence (withDelay/withSequence potřebují animaci, ne přiřazení): 1 snímek. */
+  instant: { duration: 1 } satisfies WithTimingConfig,
   // ── Nothing Dot (spec 2026-10-05 §3–4) ──
   /** Ambientní rotace kotouče: celá otáčka za idleMs (aktuální uzel currentMs); dojezd po roztočení `decay`, haptický tik po `tickDeg`. */
   plateSpin: { idleMs: 40000, currentMs: 24000, decay: 0.997, tickDeg: 30, activeOffset: 8, failOffsetY: 12 },

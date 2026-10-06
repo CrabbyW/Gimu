@@ -95,8 +95,8 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
       oldScale.set(withDelay(T.shatterAt - T.tenseMs, withTiming(T.tense, { duration: T.tenseMs, easing: ease.press })));
       // 2) Rozpad: tečky převezmou vnitřní prstenec na stejných místech, starý rastr se rozplyne.
       dotsOpacity.set(withDelay(T.shatterAt, withSequence(
-        withTiming(1, { duration: 1 }),
-        withDelay(T.shatterMs - 1, withTiming(0, { duration: T.handoffMs })),
+        withTiming(1, motion.instant),
+        withDelay(T.shatterMs - motion.instant.duration, withTiming(0, { duration: T.handoffMs })),
       )));
       oldOpacity.set(withDelay(T.shatterAt, withTiming(0, { duration: T.oldOutMs })));
       shatter.set(withDelay(T.shatterAt, withTiming(1, { duration: T.shatterMs, easing: Easing.linear })));
