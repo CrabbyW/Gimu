@@ -14,8 +14,11 @@ Otevřené pro fázi 2: web limit ~16 WebGL kontextů (mapa dnes 10 pláten).
 ## Fáze 2 HOTOVÁ — QA kolo 2 SCHVÁLENO, rating kolo 2 = 100/100 (plán `docs/superpowers/plans/2026-10-06-nothing-dot-faze2.md`)
 K ruční kontrole: stage-up CTA onGold a první snímek staré opičky, plynulost RingShatter/DotBurst, scroll ligy za 2. obrazovku, podstavec profilu 320 pt, hero sezóny 360 pt, fontScale 1.4.
 
+## Fáze 3 + podněty z iPhonu HOTOVÉ — rating 100/100 (2026-10-06)
+Reakce a život opičky, angličtina, Reset app, kompaktní mapa jedoucí pod hlavičkou, reaktivní pozadí všude, tab bar (ťuknutí + přejetí), nová oslava lekce s haptickým podpisem, barevný systém (docs/design/color-system.md), demo skip.
+K ruční kontrole na iPhonu: haptika oslavy, tab bar a VoiceOver, četnost idle opičky, závoj mapy, Doto 24 pt na 320 pt, kontrast, Toggle/TextField hranice.
+
 ## Potom
-- Fáze 3: 15 reakcí opičky (`logic/mascotReactions.ts`).
 - Nový plán napsat pro každou fázi zvlášť (superpowers:writing-plans).
 
 ## Praktické
