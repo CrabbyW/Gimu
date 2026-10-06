@@ -823,3 +823,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - `theme/palettes.ts`: přebarvené neutrály v obou režimech (stejné klíče), nové `borderStrong`, `focus`, `disabled`, `stateSuccess/Warning/Info`. `success` v UI zůstává = `text` (monochrom), stavové barvy jen pro skutečné stavy a data.
 - Opravy kontrastu: vlasové hrany zůstávají dekorativní (výjimka WCAG 1.4.11), ovládací prvky dostaly `borderStrong` ≥ 3:1 (TextField, vypnutý Toggle s hranou); terciární text v light ztmaven na 4.5:1.
 - Testy kontrastu rozšířeny (terciární text, borderStrong, fokus, stavové barvy).
+
+## 2026-10-06 · boss · Demo skip během časovače, závoj mapy (commit 3dc9561)
+- Na podnět QA: v demo profilu se tlačítko Skip v lekci ukazuje i během odpočtu a běžícího časovače (`ExerciseStep` prop `alwaysSkip`, `app/lesson/[id].tsx`); normální profil beze změny (Skip skrytý, dokud časovač běží, a hlídá ho `canSkip`).
+- Na podnět QA (čitelnost hlavičky mapy v dark): `opacity.veilEdge` 0.72 → 0.86 (závoj pod hlavičkou i za CTA). Rozhodnuto bossem, design token v theme.
+- Rozhodnutí: Doto titul mapy smí na 320 pt klesnout na 24 pt (`fontScale.titleMin` 0.6) — výjimka z „Doto ≥ 28 pt“, lepší než useknutý název.

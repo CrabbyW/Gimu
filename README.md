@@ -47,6 +47,7 @@ npm run lint          # expo lint
 - Interaktivita: kotouče se pomalu točí a jdou roztočit prstem (`components/map/usePlateSpin.ts`), tečky reagují na dotek vlnou
   (`components/dots/useDotTouch.ts`), dlaždice se při stisku naklopí k prstu. Dokončení lekce = tečky se slétnou do kotouče.
 - Pohyb jen z `lib/motion.ts`, haptika a zvuk přes `feedback(id)` v `lib/feedback.ts`. Omezený pohyb: vše jen prolnutí 200 ms.
+- Barevný systém (chladný grafit, OKLCH h 255): `docs/design/color-system.md`, CSS export `docs/design/color-system.css`, publikovaná stránka https://claude.ai/artifact/LpUzrZTXNGQoKCopx8fwzy. Tokeny v `theme/palettes.ts` navíc `borderStrong` (hranice ovládacích prvků ≥ 3:1), `focus`, `disabled`, `stateSuccess/Warning/Info` (jen skutečné stavy a data). Kontrast hlídá `theme/__tests__/contrast.test.ts`.
 - Dev menu má sekci **Tečky** se všemi tečkovými komponentami pro vizuální kontrolu.
 - Nastavení: dva nezávislé přepínače **Haptika** a **Zvuky**; tichý režim iOS = ticho.
 
