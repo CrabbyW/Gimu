@@ -28,7 +28,7 @@ export function Podium({ entries, play = false, meReaction = null }: {
   if (entries.length === 0 || entries.every((e) => e.xpThisWeek === 0)) return null;
   const columns = podiumColumns(Math.min(entries.length, 3));
   return (
-    <View style={{ paddingHorizontal: space.l, paddingBottom: space.m }}>
+    <View testID="league-podium" style={{ paddingHorizontal: space.l, paddingBottom: space.m }}>
       <Tile style={{ gap: space.m }}>
         <Text variant="label" tone="muted">{copy.league.podiumKicker}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.s }}>
@@ -40,6 +40,7 @@ export function Podium({ entries, play = false, meReaction = null }: {
             return (
               <View
                 key={entry.userId}
+                testID="podium-column"
                 accessible
                 accessibilityLabel={copy.league.rowA11y(rank, entry.name, entry.xpThisWeek)}
                 style={{ flex: 1, minWidth: 0, alignItems: 'center', gap: space.s }}

@@ -51,6 +51,14 @@ npm run lint          # expo lint
 - Dev menu má sekci **Tečky** se všemi tečkovými komponentami pro vizuální kontrolu.
 - Nastavení: dva nezávislé přepínače **Haptika** a **Zvuky**; tichý režim iOS = ticho.
 
+## Testy a ověřování (elite fáze 0)
+
+- `npm test` — Jest (logika, komponenty, kontrast, ESLint pravidla).
+- `npm run e2e` — Playwright v `e2e/`: 6 E2E toků (onboarding, lekce, stage-up, liga, reset, tab bar) + vizuální regrese 9 obrazovek × 4 šířky × dark/light (baseline `e2e/__screenshots__/`). Běží proti webu na portu 8081 (spustí ho sám, nebo použije běžící). Chrome ze systému (`CHROME_PATH`), žádné stahování browserů.
+- `npm run e2e:update` — vědomě nová baseline snímků (zapsat do LOG proč).
+- `npm run e2e:perf` — produkční web export (`dist/`, statický server `e2e/serve-dist.mjs` na 8083): Skia plátna ≤ 12 na obrazovce, čas do interakce mapy ≤ 3 s, medián fps mapy a oslavy ≥ 55.
+- Porty: 8081 web pro agenty (nikdy v CI režimu), 8082 Expo Go uživatele za tunelem. Ochranný hook `.claude/hooks/guard.mjs` (testy `node --test .claude/hooks/guard.test.mjs`) a ESLint pravidlo `local/no-worklet-object-capture`.
+
 ## Přeskočení cviku
 
 V lekci jde cvik přeskočit („Přeskočit“). Přeskočený objem se nezahodí: rozloží se rovnoměrně do dalších 5 lekcí

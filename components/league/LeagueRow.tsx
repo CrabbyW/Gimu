@@ -49,6 +49,7 @@ export function LeagueRow({ entry, rank, index, play = true, last = false, react
   const enter = useAnimatedStyle(() => ({ opacity: t.value, transform: [{ translateY: (1 - t.value) * rise }] }));
   return (
     <Animated.View
+      testID="league-row"
       accessible
       accessibilityLabel={copy.league.rowA11y(rank, entry.name, entry.xpThisWeek)}
       style={[enter, me ? { marginHorizontal: space.s, marginVertical: space.xs } : null]}

@@ -833,3 +833,12 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - tsc/jest(673)/eslint OK, expogo.log bez ERROR. Web: jedno kliknutí přepne tab (obě schémata), demo skip během časovače OK, barvy čitelné.
 - Opraveno: chybějící `aria-selected` na tabech na webu (FloatingTabBar).
 - Verdikt SCHVÁLENO. Otevřené: ruční kontrola na iPhonu (tah, VoiceOver, plynulost idle).
+
+## 2026-10-06 · boss · Elite fáze 0 — workflow
+- Plán `docs/superpowers/plans/2026-10-06-elite-faze0-workflow.md`, spec `docs/superpowers/specs/2026-10-06-elite-faze0-workflow-design.md`. Rozhodnutí uživatele: web pro agenty, telefon (Expo Go) testuje uživatel, žádné placené služby, shell pro agenty + hooky + CLAUDE.md, nová rubrika.
+- Task 1: ochranný hook `.claude/hooks/guard.mjs` (+16 testů `node --test`): blokuje zabití všech node / cloudflared / PID na 8082, Metro s CI=1 (jen skutečné spuštění — první verze blokovala i text v heredocu, zpřesněno), přepis QA/LOG (Write, `>`, Edit mimo připsání). Registrace `.claude/settings.json`.
+- Task 2: ESLint `local/no-worklet-object-capture` (+RuleTester), v kódu rozbaleny hodnoty doteku v DotField/DotMatrix/DotPlate.
+- Task 3 (qa-agent, dokončil boss po limitu agenta): Playwright v `e2e/` — toky, vizuální regrese (baseline), měření. Rozhodnutí bosse: měření výkonu běží proti produkčnímu exportu (`dist/`, `e2e/serve-dist.mjs`, port 8083), protože dev server posílá nezmenšený 16MB bundle (TTI 32 s by nic neříkalo). Naměřeno: plátna mapa 10 / liga 5 / progres 5 / sezóna 3 / profil 4 / nastavení 1 / lekce 4; TTI mapy 1671 ms; fps mapa i oslava 60. Limit testu 180 s (toky přenačítají dev bundle, ~1.5 min na tok).
+- Task 4: agenti — design-agent má Bash a estetiku Nothing Dot, všichni ověřují sami (tsc/jest/eslint/e2e), QA připisuje (dřívější zadání „přepiš předchozí“ způsobilo smazání historie QA.md), nová rubrika ratingu (4 brány + 7 kategorií, výjimka 85/85 „čeká na iPhone“).
+- Task 5: CLAUDE.md pravidla, README sekce Testy, HANDOFF (Expo bez --clear + prewarm).
+- Otevřené: e2e toky jsou pomalé kvůli dev bundlu (zvážit toky proti produkčnímu exportu tam, kde nepotřebují dev menu).
