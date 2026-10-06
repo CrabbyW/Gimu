@@ -828,3 +828,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Na podnět QA: v demo profilu se tlačítko Skip v lekci ukazuje i během odpočtu a běžícího časovače (`ExerciseStep` prop `alwaysSkip`, `app/lesson/[id].tsx`); normální profil beze změny (Skip skrytý, dokud časovač běží, a hlídá ho `canSkip`).
 - Na podnět QA (čitelnost hlavičky mapy v dark): `opacity.veilEdge` 0.72 → 0.86 (závoj pod hlavičkou i za CTA). Rozhodnuto bossem, design token v theme.
 - Rozhodnutí: Doto titul mapy smí na 320 pt klesnout na 24 pt (`fontScale.titleMin` 0.6) — výjimka z „Doto ≥ 28 pt“, lepší než useknutý název.
+
+## 2026-10-06 qa-agent: QA 43cb2db/25f442e/c3ca0d8/3dc9561
+- tsc/jest(673)/eslint OK, expogo.log bez ERROR. Web: jedno kliknutí přepne tab (obě schémata), demo skip během časovače OK, barvy čitelné.
+- Opraveno: chybějící `aria-selected` na tabech na webu (FloatingTabBar).
+- Verdikt SCHVÁLENO. Otevřené: ruční kontrola na iPhonu (tah, VoiceOver, plynulost idle).

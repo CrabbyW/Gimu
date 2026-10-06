@@ -137,6 +137,7 @@ export function FloatingTabBar({ state, descriptors, navigation, insets, padStyl
               accessibilityRole="tab"
               accessibilityLabel={options.tabBarAccessibilityLabel ?? title}
               accessibilityState={{ selected: focused }}
+              aria-selected={focused}
               style={{ flex: 1, height: size.tabPill - inner * 2, alignItems: 'center', justifyContent: 'center', gap: space.xs / 2 }}
             >
               {/* Jen ikona (obr. 2): popisek „TRÉNINK“ se do kulaté podložky nevejde; název nese čtečka. */}
