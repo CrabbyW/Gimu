@@ -6,7 +6,9 @@ import { copy } from '@/data/copy';
 import { useTheme } from '@/theme';
 import { DotField, DotMatrix, DotPlate, DotRing, DotRow, useDotTouch, type DotPlateState } from './index';
 
-const KGS = [2.5, 5, 10, 15, 20, 25] as const;
+// Jen tři hmotnosti (nejlehčí, střední, nejtěžší): každý kotouč je vlastní Skia plátno a web (Chrome) drží
+// nejvýš ~16 WebGL kontextů; víc pláten zahodí ty nejstarší (bílé obdélníky). 3 × 3 kotouče + 4 další = 13.
+const KGS = [5, 15, 25] as const;
 const STATES: readonly DotPlateState[] = ['locked', 'current', 'done'];
 // Ukázková mřížka aktivity: 5 týdnů, svítí poslední dva (stejný vzor jako demo profil).
 const MATRIX_LIT = Array.from({ length: 35 }, (_, i) => i >= 16 && i < 29);

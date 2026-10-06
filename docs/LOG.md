@@ -637,6 +637,14 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Tab bar: podložka je kulatá (průměr výška pilulky − 2 × vnitřní okraj), vystředěná ve slotu. Popisek pod ikonou zrušen (do podložky se nevešel), název nese čtečka.
 - Onboarding: Doto varianty dostaly řádek 1.3 em (`display` 52, `hero` 84, `dotStat` 36, `displayXL` 143), protože háčky a čárky nad verzálkami přetékaly box. Je to hypotéza příčiny překryvu leadu; díru mezi kartami v kódu nevidím (PathCard/ChoiceCard jsem neměnil). Potřebuje nový screenshot.
 
+## 2026-10-06 · design-agent · Opravy po ratingu a QA (N3, N4, úkol 3)
+- N3 HoldTimer: prstenec vystředěný (`alignSelf: center`), uvnitř jen Doto číslo; štítek PŘIPRAV SE / SEKUND stojí pod prstencem v řádku pevné výšky (přepnutí nic neposune).
+- N4 závoj popoveru: žádný viditelný závoj, jen průhledná plocha, která zachytí tap mimo. Popover je dlaždice s hranou, nic víc ho oddělovat nemusí; závoj jen přes výřez mapy působil jako chyba.
+- NodePopover: obsah v `Tile`, nahoře mono stav uzlu (AKTUÁLNÍ / ZAMČENÁ / DOKONČENÁ) a zavírací X (stroke 1.5 z tokenu), název Inter (Doto jen ≥ 28 pt), metadata mono, akce PillButton. Popisky uzlů už měly mono metadata.
+- `components/map/Plate.tsx`: litinový SVG kotouč smazán (nikde se nepoužíval), zůstaly jen `CHECK_PATH`/`CHECK_LENGTH` pro PlateNode. Testy na něj žádné nebyly.
+- Úkol 3: rozhodnuto, že `hero`/`display`/`displayXL`/`dotStat` JSOU Doto varianty, plánované `dotHero`/`dotDisplay` se nezavádí (dva názvy pro jeden styl). Plán úkol 3 upraven.
+- Copy „Zítra · …“ a dev sekci Tečky už opravil boss, nesahal jsem.
+
 ## 2026-10-05 · motion-agent · Nothing Dot fáze 1, pohyb a interaktivita (úkoly 5, 7, 8, 10)
 - Ambient mapy (`components/map/ambient.tsx`, `PlateNode`): jedna hodina `useFrameCallback` 0→1 za `motion.ambient.clockMs` 120 s (společný násobek 40 s / 24 s / 8 s / 2.4 s, smyčka bez skoku), běží jen se zaostřenou mapou. Kotouče lineárně 360°/40 s, aktuální 360°/24 s, kometa aktuálního obíhá navíc 8 s/otáčka, záře aktuálního dýchá cos 1 ↔ 0.6 za 2.4 s (`motion.breath`). Odemykaný kotouč dostane stejné natočení (výměna bez skoku). Reduce Motion: stojí, záře `breath.still` 0.8.
 - Živá tečka (`StatusLine`): opacita 1 ↔ 0.15, sinus, cyklus `liveBlinkMs` 1200, nekonečně; Reduce Motion plná.

@@ -16,9 +16,12 @@ import { playSfx } from '@/lib/sound';
 import type { NodeState } from '@/logic/map';
 import { useTheme } from '@/theme';
 import { turnsPerClock, useAmbientClock } from './ambient';
-import { CHECK_LENGTH, CHECK_PATH } from './Plate';
 import { usePlateSpin } from './usePlateSpin';
 import type { PlateKg } from '@/types';
+
+/** Fajfka dokončeného uzlu přes středový otvor kotouče, ve viewBoxu 100×100. Délka tahu ≈ 18. */
+const CHECK_PATH = 'M44 50 l4 4 l8 -9';
+const CHECK_LENGTH = 18;
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);

@@ -66,7 +66,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
 };
 
 export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0 }: Props) {
-  const { c, space, seasonal, size } = useTheme();
+  const { space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -270,7 +270,9 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       />
 
       {selected ? (
-        <Scrim width={width} height={height} color={c.scrimSoft} onPress={() => setSelected(null)} />
+        // Bez viditelného závoje: popover je dlaždice s hranou, plocha jen zachytí tap mimo (závoj jen přes
+        // výřez mapy vypadal v light jako chyba a v dark nebyl vidět).
+        <Scrim width={width} height={height} color="transparent" onPress={() => setSelected(null)} />
       ) : null}
 
       {view.sections.map((s) => {

@@ -1,9 +1,10 @@
 import { X } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { PillButton } from '@/components/ui/PillButton';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
@@ -35,7 +36,7 @@ interface Props {
 /** Karta k uzlu (Nothing Dot §2.3): dlaždice `tile` s vlasovou hranou `edge` (jediné oddělení, bez šipky a stínu),
  *  název Inter, údaje mono verzálkami, akce pilulkou. Otevírá se timingem (UI), bez pružiny. */
 export function NodePopover({ title, minutes, exerciseCount, xp, state, anchor, above, mapWidth, mapHeight, onStart, onClose }: Props) {
-  const { c, space, radius, size } = useTheme();
+  const { c, space, size, stroke } = useTheme();
   const CLOSE_HIT = size.hit;
   const { reduced } = useMotionSafe();
   const open = useSharedValue(0);
@@ -63,19 +64,20 @@ export function NodePopover({ title, minutes, exerciseCount, xp, state, anchor, 
         style,
       ]}
     >
-      <View style={{ backgroundColor: c.tile, borderRadius: radius.tile, padding: size.tilePad, gap: space.s, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space.s }}>
-          <Text variant="headline" numberOfLines={2} style={{ flex: 1 }}>{title}</Text>
+      <Tile style={{ gap: space.s }}>
+        {/* Stav uzlu mono štítkem nahoře (jako stavový řádek obrazovky), zavírací X vpravo. */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.s }}>
+          <Text variant="telemetry" tone="muted">{copy.map.nodeState[state].toUpperCase()}</Text>
           <Pressable
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel={copy.map.closePopover}
             hitSlop={(CLOSE_HIT - CLOSE_ICON) / 2}
-            style={{ marginTop: space.xs }}
           >
-            <X size={CLOSE_ICON} color={c.muted} strokeWidth={1.5} />
+            <X size={CLOSE_ICON} color={c.muted} strokeWidth={stroke.icon} />
           </Pressable>
         </View>
+        <Text variant="headline" numberOfLines={2}>{title}</Text>
         <Text variant="telemetry" tone="muted">{`${copy.map.nodeInfo(exerciseCount, minutes)} · ${copy.map.xpGain(xp)}`}</Text>
         {state === 'locked' ? (
           <Text tone="muted" style={{ marginTop: space.xs }} accessibilityRole="alert">{copy.map.locked}</Text>
@@ -87,7 +89,7 @@ export function NodePopover({ title, minutes, exerciseCount, xp, state, anchor, 
             style={{ marginTop: space.s }}
           />
         )}
-      </View>
+      </Tile>
     </Animated.View>
   );
 }

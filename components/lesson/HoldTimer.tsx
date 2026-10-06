@@ -5,7 +5,7 @@ import { DotRing } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { typography, useTheme } from '@/theme';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
 const PULSE_FROM = motion.holdPulse.fromS;
@@ -71,28 +71,30 @@ export function HoldTimer({ timer, total }: Props) {
       accessible
       accessibilityRole="timer"
       accessibilityLabel={`${secondsLeft} ${copy.lesson.seconds.toLowerCase()}`}
-      style={{ alignSelf: 'flex-start' }}
+      // Prstenec na středu obrazovky; uvnitř jen Doto číslo, štítek stojí pod prstencem (nikdy přes tečky).
+      style={{ alignSelf: 'center', alignItems: 'center', gap: space.s }}
     >
       <Animated.View style={pulse}>
         <DotRing progress={holdFraction(secondsLeft, total)} size={size.holdRing}>
-          <View style={{ alignItems: 'center' }}>
-            {counting ? (
-              <Animated.View style={cdStyle}>
-                <Text variant="hero" maxFontSizeMultiplier={1}>{countdown}</Text>
-              </Animated.View>
-            ) : (
-              <Text variant="hero" maxFontSizeMultiplier={1}>{secondsLeft}</Text>
-            )}
-            {status === 'ready' ? (
-              <Animated.View exiting={FadeOut.duration(motion.uiExit.duration).easing(motion.uiExit.easing)}>
-                <Text variant="label" tone="muted" style={{ marginTop: space.xs }}>{copy.lesson.holdReady}</Text>
-              </Animated.View>
-            ) : counting ? null : (
-              <Text variant="label" tone="muted">{copy.lesson.seconds}</Text>
-            )}
-          </View>
+          {counting ? (
+            <Animated.View style={cdStyle}>
+              <Text variant="hero" maxFontSizeMultiplier={1}>{countdown}</Text>
+            </Animated.View>
+          ) : (
+            <Text variant="hero" maxFontSizeMultiplier={1}>{secondsLeft}</Text>
+          )}
         </DotRing>
       </Animated.View>
+      {/* Pevná výška řádku štítku: přepnutí PŘIPRAV SE → SEKUND → nic neposune obsah pod ním. */}
+      <View style={{ minHeight: typography.label.lineHeight, alignItems: 'center' }}>
+        {status === 'ready' ? (
+          <Animated.View exiting={FadeOut.duration(motion.uiExit.duration).easing(motion.uiExit.easing)}>
+            <Text variant="label" tone="muted">{copy.lesson.holdReady}</Text>
+          </Animated.View>
+        ) : counting ? null : (
+          <Text variant="label" tone="muted">{copy.lesson.seconds}</Text>
+        )}
+      </View>
     </View>
   );
 }
