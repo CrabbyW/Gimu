@@ -1,4 +1,4 @@
-import { podiumColumns } from '../podium';
+import { podiumColumns } from '../podiumLayout';
 
 it('tři hráči: pořadí zleva 2·1·3, výšky 6·9·4 teček', () => {
   expect(podiumColumns(3)).toEqual([
