@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef } from 'react';
 import Animated, {
-  type SharedValue, cancelAnimation, Easing, Extrapolation, interpolate, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
+  type SharedValue, cancelAnimation, Easing, Extrapolation, interpolate, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay,
+  withRepeat, withSequence, withSpring, withTiming,
 } from 'react-native-reanimated';
+import { Platform } from 'react-native';
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path, Rect } from 'react-native-svg';
 import { copy } from '@/data/copy';
-import { ease, motion, useMotionSafe } from '@/lib/motion';
+import { ease, motion, spring, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { MascotStage, Mood } from '@/types';
 import { ANCHORS, type Anchor } from './anchors';
@@ -51,6 +53,12 @@ const NECK_AT = 0.8;
 // Stage 3: posun deltoidu při plně zvednutých pažích (jednotky viewBoxu 200).
 const DELT_RAISE_Y = 6;
 const DELT_RAISE_X = 2;
+const IS_WEB = Platform.OS === 'web';
+const IDLE = motion.mascotIdle;
+const clampAbs = (v: number, m: number) => {
+  'worklet';
+  return Math.max(-m, Math.min(m, v));
+};
 
 type Face = 'idle' | 'happy' | 'sad';
 type MoodPose = { face: Face; armsUp: boolean; earsDown: boolean; breathHalfMs: number; hopRepeat: boolean };
@@ -110,7 +118,7 @@ function outsideTorsoPath({ x, y, w, h, rx }: StageGeometry['torso']): string {
 
 function MascotSvg({
   stage, mood: baseMood, size, cosmetics, accessibilityLabel, decorative, breathe: breatheProp = true, hop: hopProp = true, scarfEdge: scarfProp = false,
-  reaction, gaze, spin, layer,
+  reaction, gaze, spin, idle, scrollLook, layer,
 }: MascotProps & { layer: Layer }) {
   const { c, seasonThemeId } = useTheme();
   const drawBack = layer !== 'front';
@@ -121,7 +129,7 @@ function MascotSvg({
   // Reakce (fáze 3): dočasně přebije náladu (a hranu šálu); spánek zavře oči a zpomalí dech.
   const {
     override: ov, ref: rootRef, lift, squash: rSquash, stretch, roll, tilt, eyeClose, droop: rDroop, pupilX, pupilY, headProps: headMatrix,
-  } = useReactionMotion({ reaction, reduced, gaze, spin, neck: { x: g.head.cx, y: g.head.cy + g.head.r * NECK_AT } });
+  } = useReactionMotion({ reaction, reduced, gaze, spin, idle, scrollLook, neck: { x: g.head.cx, y: g.head.cy + g.head.r * NECK_AT } });
   const mood = ov?.mood ?? baseMood;
   const scarfEdge = scarfProp || ov?.scarf === true;
   const sleeping = ov?.sleeping === true;
@@ -161,9 +169,9 @@ function MascotSvg({
   const breath = useSharedValue(0);
   useEffect(() => {
     cancelAnimation(breath);
-    breath.value = 0;
+    breath.set(0);
     if (reduced || !breathe) return;
-    breath.value = withRepeat(withTiming(1, { duration: breathHalfMs, easing: Easing.inOut(Easing.sin) }), -1, true);
+    breath.set(withRepeat(withTiming(1, { duration: breathHalfMs, easing: Easing.inOut(Easing.sin) }), -1, true));
     return () => cancelAnimation(breath);
   }, [reduced, breathe, breath, breathHalfMs]);
 
@@ -172,13 +180,13 @@ function MascotSvg({
   useEffect(() => {
     if (reduced) {
       cancelAnimation(eyeRy);
-      eyeRy.value = EYE_RY_OPEN;
+      eyeRy.set(EYE_RY_OPEN);
       return;
     }
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
       timer = setTimeout(() => {
-        eyeRy.value = withSequence(withTiming(EYE_RY_CLOSED, { duration: 70 }), withTiming(EYE_RY_OPEN, { duration: 110 }));
+        eyeRy.set(withSequence(withTiming(EYE_RY_CLOSED, { duration: 70 }), withTiming(EYE_RY_OPEN, { duration: 110 })));
         schedule();
       }, BLINK_MIN_MS + Math.random() * BLINK_SPREAD_MS);
     };
@@ -217,21 +225,21 @@ function MascotSvg({
       withTiming(0, { duration: h.recoverMs, easing: ease.out }),
     );
     if (reduced) {
-      hop.value = 0;
-      squash.value = 0;
+      hop.set(0);
+      squash.set(0);
     } else if (!hopEnabled) {
-      hop.value = withTiming(0, motion.moodShift);
-      squash.value = withTiming(0, motion.moodShift);
+      hop.set(withTiming(0, motion.moodShift));
+      squash.set(withTiming(0, motion.moodShift));
     } else if (p.hopRepeat) {
       const rest = motion.celebrateRestMs + h.landMs + h.recoverMs;
-      hop.value = withRepeat(withSequence(jump(), withDelay(rest, withTiming(0, { duration: 0 }))), -1);
-      squash.value = withRepeat(withSequence(squashJump(), withDelay(motion.celebrateRestMs, withTiming(0, { duration: 0 }))), -1);
+      hop.set(withRepeat(withSequence(jump(), withDelay(rest, withTiming(0, { duration: 0 }))), -1));
+      squash.set(withRepeat(withSequence(squashJump(), withDelay(motion.celebrateRestMs, withTiming(0, { duration: 0 }))), -1));
     } else if (p.face === 'happy' && changed) {
-      hop.value = jump();
-      squash.value = squashJump();
+      hop.set(jump());
+      squash.set(squashJump());
     } else {
-      hop.value = withTiming(0, motion.moodShift);
-      squash.value = withTiming(0, motion.moodShift);
+      hop.set(withTiming(0, motion.moodShift));
+      squash.set(withTiming(0, motion.moodShift));
     }
   }, [baseMood, reduced, hopEnabled, hop, squash]);
   useEffect(() => () => { cancelAnimation(hop); cancelAnimation(squash); }, [hop, squash]);
@@ -240,14 +248,14 @@ function MascotSvg({
   const arms = useSharedValue(pose.armsUp ? 1 : 0);
   useEffect(() => {
     const to = pose.armsUp ? 1 : 0;
-    arms.value = reduced ? to : withTiming(to, motion.armsRaise);
+    arms.set(reduced ? to : withTiming(to, motion.armsRaise));
   }, [pose.armsUp, reduced, arms]);
 
   // Smutek: uši dolů a ven, pohled dolů.
   const droop = useSharedValue(pose.earsDown ? 1 : 0);
   useEffect(() => {
     const to = pose.earsDown ? 1 : 0;
-    droop.value = reduced ? to : withTiming(to, motion.moodShift);
+    droop.set(reduced ? to : withTiming(to, motion.moodShift));
   }, [pose.earsDown, reduced, droop]);
 
   // Tři pusy (idle, happy, sad) jako crossfade přes opacity. Do smutku a z něj pomaleji.
@@ -258,13 +266,48 @@ function MascotSvg({
   useEffect(() => {
     const cfg = reduced ? { duration: 0 } : pose.face === 'sad' || prevFace.current === 'sad' ? motion.moodShift : motion.ui;
     prevFace.current = pose.face;
-    mouthIdle.value = withTiming(pose.face === 'idle' ? 1 : 0, cfg);
-    mouthHappy.value = withTiming(pose.face === 'happy' ? 1 : 0, cfg);
-    mouthSad.value = withTiming(pose.face === 'sad' ? 1 : 0, cfg);
+    mouthIdle.set(withTiming(pose.face === 'idle' ? 1 : 0, cfg));
+    mouthHappy.set(withTiming(pose.face === 'happy' ? 1 : 0, cfg));
+    mouthSad.set(withTiming(pose.face === 'sad' ? 1 : 0, cfg));
   }, [pose.face, reduced, mouthIdle, mouthHappy, mouthSad]);
 
+  // Přechod nálady (nálada → nálada): mrknutí a krátké přikrčení s pružným návratem, ať se výraz „přepne“
+  // jako u postavičky, ne prolnutím obrázku. První vykreslení a omezený pohyb bez přechodu.
+  const bob = useSharedValue(0);
+  const blendFace = useRef<Face>(pose.face);
+  useEffect(() => {
+    if (blendFace.current === pose.face) return;
+    blendFace.current = pose.face;
+    if (reduced) return;
+    const m = IDLE.moodBlend;
+    bob.set(withSequence(withTiming(m.bob, { duration: m.inMs, easing: ease.out }), withSpring(0, spring.sal)));
+    eyeRy.set(withSequence(withTiming(EYE_RY_CLOSED, { duration: m.closeMs }), withTiming(EYE_RY_OPEN, { duration: m.openMs })));
+  }, [pose.face, reduced, bob, eyeRy]);
+
+  // Sekundární pohyb: uši a konec šálu dojíždí za tělem pružinou následovníka (zpoždění), jako transformace
+  // stávajících tvarů. Signál = svislá poloha těla (poskok, zdvih) a náklon kolem chodidel. Omezený pohyb: nic.
+  const bodyY = useDerivedValue(() => hop.value + lift.value);
+  const followY = useSharedValue(0);
+  const followTilt = useSharedValue(0);
+  useAnimatedReaction(() => bodyY.value, (v) => { followY.set(withSpring(v, IDLE.follow)); });
+  useAnimatedReaction(() => tilt.value, (v) => { followTilt.set(withSpring(v, IDLE.follow)); });
+  const lagOn = reduced ? 0 : 1;
+  const earLag = useDerivedValue(() => {
+    const L = IDLE.earLag;
+    return {
+      x: lagOn * clampAbs((followTilt.value - tilt.value) * L.tiltGain, L.maxX),
+      y: lagOn * clampAbs((followY.value - bodyY.value) * 200 * L.gain, L.maxY),
+    };
+  });
+  const scarfLagProps = useAnimatedProps((): Record<string, unknown> => {
+    const L = IDLE.scarfLag;
+    const dx = lagOn * clampAbs((followTilt.value - tilt.value) * L.tiltGain, L.maxX);
+    const dy = lagOn * clampAbs((followY.value - bodyY.value) * 200 * L.gain, L.maxY);
+    return IS_WEB ? { transform: `translate(${dx} ${dy})` } : { matrix: [1, 0, 0, 1, dx, dy] };
+  });
+
   const bodyStyle = useAnimatedStyle(() => {
-    const sy = 1 + breath.value * breathScale - squash.value * motion.hop.squash - rSquash.value + stretch.value;
+    const sy = 1 + breath.value * breathScale - squash.value * motion.hop.squash - rSquash.value + stretch.value - bob.value;
     const sx = 1 + (squash.value * motion.hop.squash + rSquash.value) * 0.6;
     return {
       transform: [
@@ -303,11 +346,11 @@ function MascotSvg({
   }));
   const earLeftProps = useAnimatedProps(() => {
     const dn = Math.min(1, droop.value + rDroop.value);
-    return { cx: head.cx - ears.dx - dn * EARS_DOWN_X, cy: head.cy + ears.dy + dn * EARS_DOWN_Y };
+    return { cx: head.cx - ears.dx - dn * EARS_DOWN_X + earLag.value.x, cy: head.cy + ears.dy + dn * EARS_DOWN_Y + earLag.value.y };
   });
   const earRightProps = useAnimatedProps(() => {
     const dn = Math.min(1, droop.value + rDroop.value);
-    return { cx: head.cx + ears.dx + dn * EARS_DOWN_X, cy: head.cy + ears.dy + dn * EARS_DOWN_Y };
+    return { cx: head.cx + ears.dx + dn * EARS_DOWN_X + earLag.value.x, cy: head.cy + ears.dy + dn * EARS_DOWN_Y + earLag.value.y };
   });
   const headProps = useAnimatedProps(() => headMatrix.value);
   const hatProps = useAnimatedProps(() => headMatrix.value);
@@ -440,7 +483,7 @@ function MascotSvg({
             <Circle cx={100 + legs.dx} cy={legs.y} r={legs.r} fill={MASCOT_COLORS.furShade} />
           </G>
         )}
-        {drawFront && ownScarf ? <ScarfTail g={g} mood={mood} /> : null}
+        {drawFront && ownScarf ? <AnimatedG animatedProps={scarfLagProps}><ScarfTail g={g} mood={mood} /></AnimatedG> : null}
       </Svg>
     </Animated.View>
   );

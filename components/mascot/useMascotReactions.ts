@@ -35,6 +35,10 @@ export interface MascotReactions {
   reaction: MascotReaction | null;
   /** Pro `<Mascot gaze>`: bod prstu v okně, nebo null. */
   gaze: ReturnType<typeof useSharedValue<{ x: number; y: number } | null>>;
+  /** Zaostření obrazovky (plánovač idle akcí hraje jen se zaostřenou). */
+  focused: boolean;
+  /** Kolik ms uběhlo od posledního doteku (zívnutí před usnutím). */
+  sinceInteraction(): number;
   /** Gesto pro `GestureDetector` kolem plochy, po které má opička sledovat prst. Nikdy se neaktivuje
    *  (`Manual`): nekrade scroll, tap ani roztočení kotouče. */
   touch: ReturnType<typeof Gesture.Manual>;
@@ -142,5 +146,7 @@ export function useMascotReactions(focused: boolean): MascotReactions {
     .onFinalize(() => { gaze.set(null); }),
   [gaze, downs]);
 
-  return { report, tap, poke: touched, reaction, gaze, touch };
+  const sinceInteraction = useCallback(() => Date.now() - lastInteraction.current, []);
+
+  return { report, tap, poke: touched, reaction, gaze, touch, focused, sinceInteraction };
 }

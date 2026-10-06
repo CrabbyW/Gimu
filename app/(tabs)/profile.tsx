@@ -83,7 +83,15 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
   const streak = stats?.streak ?? 0;
   const longest = stats?.longestStreak ?? 0;
   // Opička je hratelná (fáze 3): ťuknutí, podržení, pohled za prstem po celém hero poli.
-  const reactions = useMascotReactions(useScreenFocused());
+  const focused = useScreenFocused();
+  const reactions = useMascotReactions(focused);
+  // Otevření profilu: opička zamává (po krátké chvíli, ať je hero vidět). Omezený pohyb: `degrade` → pohled.
+  const greet = reactions.report;
+  useEffect(() => {
+    if (!focused) return;
+    const id = setTimeout(() => greet({ type: 'screenOpen' }), motion.mascotIdle.greetDelayMs);
+    return () => clearTimeout(id);
+  }, [focused, greet]);
   const stackH = plateStackHeight();
 
   return (

@@ -210,6 +210,44 @@ export const motion = {
     /** Sledování kotouče: hlava ±`headDeg` a pupily po kruhu za úhlem kotouče; trvá `holdMs`, náběh/doběh `fadeMs`. */
     spinFollow: { headDeg: 10, holdMs: 2600, fadeMs: 300 },
   },
+  /**
+   * Život opičky v klidu (idle repertoár, motion-agent). Pauzy mezi akcemi v ms (náhodně v rozsahu, seedovaný
+   * generátor), váhy akcí, časy a amplitudy (zlomky strany plátna / stupně / jednotky viewBoxu 200 jako `reactions`).
+   * Hraje jen na zaostřené obrazovce, nikdy během reakce (`busyMs` po jejím začátku), omezený pohyb = nic (jen mrkání).
+   */
+  mascotIdle: {
+    pause: { minMs: 4000, maxMs: 12000 },
+    /** Vítěz na pódiu ligy: kratší pauzy, poskoky častěji. */
+    podiumPause: { minMs: 2500, maxMs: 6000 },
+    /** Po začátku reakce se idle nespustí (nejdelší reakce spinFollow ~3.2 s). */
+    busyMs: 3500,
+    /** Od kolika ms nečinnosti může přijít zívnutí (spánek je v `IDLE_MS` = 20 s). */
+    yawnAfterMs: 13000,
+    weights: { lookAround: 3, doubleBlink: 3, stretch: 2, sway: 2, headScratch: 2, joyHop: 1, lookPlate: 2, yawn: 0 },
+    /** Váhy přebité podle kontextu: pódium = radost, před usnutím = zívnutí. */
+    podiumWeights: { joyHop: 6 },
+    yawnWeight: 8,
+    lookAround: { deg: 7, pupil: 0.9, glanceMs: 280, holdMs: 520, crossMs: 440 },
+    doubleBlink: { closeMs: 70, openMs: 100, gapMs: 120 },
+    stretch: { scale: 0.07, lift: 0.025, inMs: 420, holdMs: 380, squint: 0.5 },
+    sway: { deg: 4, swingMs: 420, swings: 4 },
+    headScratch: { deg: 9, dip: 2, inMs: 240, beatMs: 140, beats: 2, holdMs: 200 },
+    joyHop: { height: 0.07, squash: 0.05 },
+    lookPlate: { pupil: 1, dip: 3, deg: 3, inMs: 320, holdMs: 900 },
+    yawn: { headBack: 3, deg: -4, squint: 0.8, stretch: 0.05, inMs: 520, holdMs: 900, outMs: 520 },
+    /** Dlouhé roztočení kotouče (součet úhlu za `spinFollow`) = zatočí se jí hlava (dizzy pohyb po doběhu). */
+    spinDizzyRad: Math.PI * 6,
+    /** Pohled za směrem scrollu mapy: rychlost (pt/s) pro plnou výchylku, náběh, výdrž a návrat; hlava `headDip`. */
+    scrollLook: { fullVelocity: 1500, inMs: 120, holdMs: 250, outMs: 420, pupil: 0.8, headDip: 2.5 },
+    /** Profil: zamávání po otevření (ms po zaostření, ať je opička vidět). */
+    greetDelayMs: 450,
+    /** Sekundární pohyb: uši a konec šálu se zpožděním za tělem (pružina následovníka, zisk, strop ve viewBoxu). */
+    follow: { damping: 9, stiffness: 140, mass: 1 } satisfies WithSpringConfig,
+    earLag: { gain: 0.35, maxY: 5, tiltGain: 0.3, maxX: 3 },
+    scarfLag: { gain: 0.6, maxY: 7, tiltGain: 0.5, maxX: 5 },
+    /** Přechod nálady: krátké mrknutí a přikrčení `bob` (scaleY), návrat pružinou `spring.sal`. */
+    moodBlend: { bob: 0.025, inMs: 110, closeMs: 70, openMs: 120 },
+  },
 };
 
 /**

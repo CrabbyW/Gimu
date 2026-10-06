@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import {
   type AnimatedRef, type DerivedValue, type SharedValue, type WithTimingConfig, cancelAnimation, Easing, measure, ReduceMotion, useAnimatedReaction, useAnimatedRef,
@@ -6,12 +6,14 @@ import {
 } from 'react-native-reanimated';
 import type Animated from 'react-native-reanimated';
 import { ease, motion, spring } from '@/lib/motion';
+import { isLongSpin } from '@/logic/mascotIdle';
 import { degrade } from '@/logic/mascotReactions';
 import type { ReactionId } from '@/logic/mascotReactions';
 import type { Mood } from '@/types';
-import type { MascotGaze, MascotReaction } from './types';
+import type { MascotGaze, MascotIdle, MascotReaction } from './types';
 
 const R = motion.reactions;
+const I = motion.mascotIdle;
 // Reakce běží i s omezeným pohybem (jako nálada a oči, viz `degrade`), proto vlastní ReduceMotion.Never:
 // systémové omezení by jinak sekvenci rovnou dojelo na konec a změna očí by nebyla vidět.
 const NEVER = { reduceMotion: ReduceMotion.Never } as const;
@@ -54,8 +56,12 @@ export interface ReactionMotion {
  * `reaction` → `null` = klid: spící opička otevře oči. Omezený pohyb: reakce projde `degrade` (bez skoků a rotací),
  * pohled za prstem hýbe jen pupilami.
  */
-export function useReactionMotion({ reaction, reduced, gaze, spin, neck }: {
+export function useReactionMotion({ reaction, reduced, gaze, spin, neck, idle, scrollLook }: {
   reaction: MascotReaction | null | undefined; reduced: boolean; gaze?: MascotGaze; spin?: SharedValue<number>;
+  /** Idle akce (život v klidu); hraje se jen novým klíčem a jen bez omezeného pohybu. */
+  idle?: MascotIdle | null;
+  /** Směr scrollu mapy -1…1 (pupily vždy, hlava jen bez omezeného pohybu). */
+  scrollLook?: SharedValue<number>;
   /** Bod otáčení hlavy (krk) ve viewBoxu 200. */
   neck: { x: number; y: number };
 }): ReactionMotion {
@@ -82,8 +88,8 @@ export function useReactionMotion({ reaction, reduced, gaze, spin, neck }: {
   const g = gaze ?? noGaze;
   useAnimatedReaction(() => g.value, (p) => {
     if (!p) {
-      gx.value = withSpring(0, back);
-      gy.value = withSpring(0, back);
+      gx.set(withSpring(0, back));
+      gy.set(withSpring(0, back));
       return;
     }
     const m = measure(ref);
@@ -91,19 +97,27 @@ export function useReactionMotion({ reaction, reduced, gaze, spin, neck }: {
     const dx = p.x - (m.pageX + m.width / 2);
     const dy = p.y - (m.pageY + m.height * 0.4);
     const k = 1 / Math.max(R.gaze.reach, Math.hypot(dx, dy));
-    gx.value = withSpring(dx * k, back);
-    gy.value = withSpring(dy * k, back);
+    gx.set(withSpring(dx * k, back));
+    gy.set(withSpring(dy * k, back));
   });
 
   const zero = useSharedValue(0);
   const s = spin ?? zero;
+  const sl = scrollLook ?? zero;
+  // Ujetý úhel kotouče během sledování (rad): po dlouhém roztočení se jí zatočí hlava. Skok > π = přetočení čísla, ne pohyb.
+  const spinTravel = useSharedValue(0);
+  useAnimatedReaction(() => s.value, (v, prev) => {
+    if (prev === null || follow.value <= 0) return;
+    const d = Math.abs(v - prev);
+    if (d < Math.PI) spinTravel.value += d;
+  });
   const pupilX = useDerivedValue(() => Math.max(-1, Math.min(1, lookX.value + gx.value + follow.value * Math.cos(s.value))));
-  const pupilY = useDerivedValue(() => Math.max(-1, Math.min(1, lookY.value + gy.value + follow.value * Math.sin(s.value) * 0.6)));
+  const pupilY = useDerivedValue(() => Math.max(-1, Math.min(1, lookY.value + gy.value + follow.value * Math.sin(s.value) * 0.6 + sl.value * I.scrollLook.pupil)));
   const headMove = reduced ? 0 : 1;
   const headProps = useDerivedValue((): Record<string, unknown> => {
     const deg = headRot.value + headMove * (gx.value * R.gaze.headDeg + follow.value * Math.sin(s.value) * R.spinFollow.headDeg);
     const tx = headMove * gx.value * R.gaze.headShift;
-    const ty = headY.value + headMove * gy.value * R.gaze.headShift * 0.5;
+    const ty = headY.value + headMove * (gy.value * R.gaze.headShift * 0.5 + sl.value * I.scrollLook.headDip);
     const a = (deg * Math.PI) / 180;
     const cos = Math.cos(a);
     const sin = Math.sin(a);
@@ -115,6 +129,84 @@ export function useReactionMotion({ reaction, reduced, gaze, spin, neck }: {
       : { matrix: [cos, sin, -sin, cos, e, f] };
   });
 
+  // Idle akce (život v klidu): jen novým klíčem (návrat na obrazovku starou akci nepřehraje), nikdy s omezeným
+  // pohybem. Používá stejné hodnoty jako reakce, takže nová reakce idle zruší (cancelAnimation) a převezme.
+  // Každá sekvence končí v klidu (0), nic nezamrzne.
+  const idleKey = idle?.key ?? null;
+  const idleId = idle?.id ?? null;
+  const playedIdle = useRef(0);
+  useEffect(() => {
+    if (idleKey === null || idleId === null || idleKey <= playedIdle.current || reduced) return;
+    playedIdle.current = idleKey;
+    const home = () => withSpring(0, back);
+    switch (idleId) {
+      case 'lookAround': {
+        const a = I.lookAround;
+        lookX.set(withSequence(withTiming(-a.pupil, t(a.glanceMs)), withDelay(a.holdMs, withTiming(a.pupil, sine(a.crossMs))), withDelay(a.holdMs, home())));
+        headRot.set(withSequence(withTiming(-a.deg, t(a.glanceMs)), withDelay(a.holdMs, withTiming(a.deg, sine(a.crossMs))), withDelay(a.holdMs, home())));
+        break;
+      }
+      case 'doubleBlink': {
+        const b = I.doubleBlink;
+        eyeClose.set(withSequence(
+          withTiming(1, t(b.closeMs)), withTiming(0, t(b.openMs)), withDelay(b.gapMs, withTiming(1, t(b.closeMs))), withTiming(0, t(b.openMs)),
+        ));
+        break;
+      }
+      case 'stretch': {
+        const a = I.stretch;
+        stretch.set(withSequence(withTiming(a.scale, sine(a.inMs)), withDelay(a.holdMs, home())));
+        lift.set(withSequence(withTiming(-a.lift, sine(a.inMs)), withDelay(a.holdMs, home())));
+        eyeClose.set(withSequence(withTiming(a.squint, sine(a.inMs)), withDelay(a.holdMs, withTiming(0, t(a.inMs)))));
+        lookY.set(withSequence(withTiming(-0.4, sine(a.inMs)), withDelay(a.holdMs, home())));
+        break;
+      }
+      case 'sway': {
+        const a = I.sway;
+        const swings = Array.from({ length: a.swings }, (_, i) => withTiming((i % 2 ? -1 : 1) * a.deg, sine(i === 0 ? a.swingMs / 2 : a.swingMs)));
+        tilt.set(withSequence(...swings, home()));
+        break;
+      }
+      case 'headScratch': {
+        const a = I.headScratch;
+        const hold = a.holdMs + a.beats * 2 * a.beatMs;
+        const beats = Array.from({ length: a.beats }, () => [withTiming(a.dip, t(a.beatMs)), withTiming(0, t(a.beatMs))]).flat();
+        headRot.set(withSequence(withTiming(a.deg, t(a.inMs)), withDelay(hold, home())));
+        headY.set(withDelay(a.inMs, withSequence(...beats)));
+        lookY.set(withSequence(withTiming(-0.5, t(a.inMs)), withDelay(hold, home())));
+        break;
+      }
+      case 'joyHop': {
+        const h = motion.hop;
+        const a = I.joyHop;
+        lift.set(withSequence(withTiming(0, t(h.crouchMs)), withTiming(-a.height, t(h.riseMs)), withTiming(0, t(h.fallMs, ease.gravity))));
+        squash.set(withSequence(
+          withTiming(a.squash, t(h.crouchMs)), withTiming(0, t(h.riseMs)), withTiming(0, t(h.fallMs)),
+          withTiming(a.squash, t(h.landMs)), withTiming(0, t(h.recoverMs)),
+        ));
+        break;
+      }
+      case 'lookPlate': {
+        const a = I.lookPlate;
+        lookY.set(withSequence(withTiming(a.pupil, sine(a.inMs)), withDelay(a.holdMs, home())));
+        headY.set(withSequence(withTiming(a.dip, sine(a.inMs)), withDelay(a.holdMs, home())));
+        headRot.set(withSequence(withTiming(a.deg, sine(a.inMs)), withDelay(a.holdMs, home())));
+        break;
+      }
+      case 'yawn': {
+        const a = I.yawn;
+        const out = () => withTiming(0, sine(a.outMs));
+        headY.set(withSequence(withTiming(-a.headBack, sine(a.inMs)), withDelay(a.holdMs, out())));
+        headRot.set(withSequence(withTiming(a.deg, sine(a.inMs)), withDelay(a.holdMs, out())));
+        eyeClose.set(withSequence(withTiming(a.squint, sine(a.inMs)), withDelay(a.holdMs, out())));
+        stretch.set(withSequence(withTiming(a.stretch, sine(a.inMs)), withDelay(a.holdMs, out())));
+        break;
+      }
+    }
+    // Spouští se jen novým klíčem idle akce; sdílené hodnoty jsou stabilní.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idleKey]);
+
   const id = reaction ? degrade(reaction.id, reduced) : null;
   const key = reaction?.key ?? null;
   const entry = id ? OVERRIDES[id] : undefined;
@@ -124,12 +216,12 @@ export function useReactionMotion({ reaction, reduced, gaze, spin, neck }: {
     all.forEach(cancelAnimation);
     // Co nová reakce nepoužije, vrátí se do klidu (přerušená reakce dosedne, nezamrzne v půli).
     const used = new Set<SharedValue<number>>();
-    const set = (v: SharedValue<number>, a: number) => { used.add(v); v.value = a; };
+    const set = (v: SharedValue<number>, a: number) => { used.add(v); v.set(a); };
     const timers: ReturnType<typeof setTimeout>[] = [];
     const ms = id ? OVERRIDES[id]?.ms : null;
     if (ms != null && key !== null) timers.push(setTimeout(() => setExpired(key), ms));
     // Salto mohlo skončit uprostřed otočky: úhel se srovná na nejbližší celou otáčku.
-    roll.value = ((roll.value % 360) + 540) % 360 - 180;
+    roll.set(((roll.value % 360) + 540) % 360 - 180);
 
     switch (id) {
       case null:
@@ -227,18 +319,27 @@ export function useReactionMotion({ reaction, reduced, gaze, spin, neck }: {
       case 'spinFollow': {
         const f = R.spinFollow;
         set(follow, withSequence(withTiming(1, t(f.fadeMs)), withDelay(f.holdMs, withTiming(0, t(f.fadeMs)))));
+        spinTravel.set(0);
+        // Dlouhé roztočení: po doběhu sledování se jí zatočí hlava (kývání jako `dizzy`). Omezený pohyb sem nedojde (degrade).
+        timers.push(setTimeout(() => {
+          if (!isLongSpin(spinTravel.value, I.spinDizzyRad)) return;
+          const d = R.dizzy;
+          const swings = Array.from({ length: d.swings }, (_, i) => withTiming((i % 2 ? -1 : 1) * d.deg * d.decay ** i, sine(d.swingMs)));
+          headRot.set(withSequence(...swings, withSpring(0, back)));
+          lookX.set(withSequence(...swings.map((_, i) => withTiming((i % 2 ? 1 : -1) * d.decay ** i, sine(d.swingMs))), withSpring(0, back)));
+        }, f.fadeMs + f.holdMs));
         break;
       }
     }
-    for (const v of all) if (!used.has(v) && v.value !== 0) v.value = withTiming(0, t(motion.ui.duration));
+    for (const v of all) if (!used.has(v) && v.value !== 0) v.set(withTiming(0, t(motion.ui.duration)));
     return () => timers.forEach(clearTimeout);
     // Přehrává se jen novým klíčem (nebo přechodem do klidu); sdílené hodnoty jsou stabilní.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, id]);
 
   useEffect(() => () => {
-    for (const v of [lift, squash, stretch, roll, tilt, headRot, headY, lookX, lookY, eyeClose, droop, follow, gx, gy]) cancelAnimation(v);
-  }, [lift, squash, stretch, roll, tilt, headRot, headY, lookX, lookY, eyeClose, droop, follow, gx, gy]);
+    for (const v of [lift, squash, stretch, roll, tilt, headRot, headY, lookX, lookY, eyeClose, droop, follow, gx, gy, spinTravel]) cancelAnimation(v);
+  }, [lift, squash, stretch, roll, tilt, headRot, headY, lookX, lookY, eyeClose, droop, follow, gx, gy, spinTravel]);
 
   return { lift, squash, stretch, roll, tilt, eyeClose, droop, pupilX, pupilY, headProps, override, ref };
 }

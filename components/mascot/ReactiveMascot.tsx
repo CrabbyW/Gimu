@@ -2,15 +2,19 @@ import { useMemo } from 'react';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { copy } from '@/data/copy';
+import type { IdleContext } from '@/logic/mascotIdle';
 import type { ReactionId } from '@/logic/mascotReactions';
 import { MonkeyBack, MonkeyFront, SvgMascot } from './SvgMascot';
 import { resolveMascotSize, type MascotProps } from './types';
+import { useMascotIdle } from './useMascotIdle';
 import type { MascotReactions } from './useMascotReactions';
 
 /** Podržení = mazlení. Kratší dotek je ťuknutí (poskok, trojité = salto). */
 const LONG_PRESS_MS = 450;
 
-interface Props extends Omit<MascotProps, 'reaction' | 'gaze'> {
+interface Props extends Omit<MascotProps, 'reaction' | 'gaze' | 'idle'> {
+  /** Kontext života v klidu (`map` = smí se podívat dolů na kotouč). */
+  idleContext?: IdleContext;
   /** Stav reakcí z `useMascotReactions` (obrazovka ho sdílí, aby mohla hlásit i vlastní události). */
   reactions: MascotReactions;
   /** Sedí na kotouči: dvě vrstvy (`MonkeyBack` + `MonkeyFront`), kotouč patří mezi ně (mapa). */
@@ -25,7 +29,7 @@ interface Props extends Omit<MascotProps, 'reaction' | 'gaze'> {
  * obrazovka připojí na širší plochu (celá mapa, hero profilu) — dotyky na opičce jím projdou také.
  * Pro čtečku je opička tlačítko „pohladit“ (aktivace = poskok).
  */
-export function ReactiveMascot({ reactions, seated = false, onReaction, ...mascot }: Props) {
+export function ReactiveMascot({ reactions, seated = false, onReaction, idleContext = 'default', ...mascot }: Props) {
   const { report, tap: tapNow } = reactions;
   const gesture = useMemo(() => {
     const emit = (id: ReactionId | null) => { if (id) onReaction?.(id); };
@@ -34,7 +38,9 @@ export function ReactiveMascot({ reactions, seated = false, onReaction, ...masco
     return Gesture.Exclusive(hold, tap);
   }, [report, tapNow, onReaction]);
   const px = resolveMascotSize(mascot.size);
-  const shared = { ...mascot, reaction: reactions.reaction, gaze: reactions.gaze };
+  // Život v klidu: jeden plánovač pro obě vrstvy sedící opičky (stejný klíč = synchronní pohyb).
+  const idle = useMascotIdle({ context: idleContext, focused: reactions.focused, reaction: reactions.reaction, sinceInteraction: reactions.sinceInteraction });
+  const shared = { ...mascot, reaction: reactions.reaction, gaze: reactions.gaze, idle };
   const label = mascot.accessibilityLabel ?? copy.mascot.label[mascot.mood];
   return (
     <GestureDetector gesture={gesture}>

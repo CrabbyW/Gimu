@@ -233,6 +233,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const plateSpin = useSharedValue(0);
   const report = reactions?.report;
   const onSpinStart = useCallback(() => { report?.({ type: 'plateSpin' }); }, [report]);
+  // Směr scrollu (-1 nahoru … 1 dolů): opička se natočí za ním (pupily a hlava), pak se vrátí dopředu.
+  const scrollLook = useSharedValue(0);
   // Ztráta série: opička se při otevření mapy zesmutní (po příchodu v úvodním sledu, ať je vidět).
   const sadOnOpen = stats.mood === 'sad';
   useEffect(() => {
@@ -302,7 +304,13 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         const dt = now - prev.at;
         // Mezera mezi událostmi = nový tah: rychlost z ní by byla nesmysl.
         if (dt <= 0 || dt > SCROLL_GAP_MS) return;
-        reactions.report({ type: 'scroll', velocity: ((y - prev.y) / dt) * 1000 });
+        const velocity = ((y - prev.y) / dt) * 1000;
+        const SL = motion.mascotIdle.scrollLook;
+        scrollLook.value = withSequence(
+          withTiming(Math.max(-1, Math.min(1, velocity / SL.fullVelocity)), { duration: SL.inMs, easing: ease.out }),
+          withDelay(SL.holdMs, withTiming(0, { duration: SL.outMs, easing: ease.out })),
+        );
+        reactions.report({ type: 'scroll', velocity });
       }}
       scrollEventThrottle={32}
     >
@@ -393,7 +401,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         // zbytek kotouče (tap = lekce, tah = roztočení) zůstává volný.
         <Animated.View pointerEvents="box-none" style={[{ position: 'absolute', left: 0, top: 0 }, mascotStyle]}>
           <ReactiveMascot
-            reactions={reactions} seated={seated} spin={plateSpin}
+            reactions={reactions} seated={seated} spin={plateSpin} scrollLook={scrollLook} idleContext={seated ? 'map' : 'default'}
             stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={!seated}
           />
         </Animated.View>

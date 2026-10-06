@@ -7,3 +7,6 @@ export { MASCOT_SIZES } from './types';
 export { ReactiveMascot } from './ReactiveMascot';
 export { useMascotReactions, useScreenFocused, type MascotReactions } from './useMascotReactions';
 export type { MascotReaction, MascotGaze } from './types';
+export { IdleMascot } from './IdleMascot';
+export { useMascotIdle } from './useMascotIdle';
+export type { MascotIdle } from './types';

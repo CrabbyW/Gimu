@@ -1,10 +1,13 @@
 import type { SharedValue } from 'react-native-reanimated';
+import type { IdleActionId } from '@/logic/mascotIdle';
 import type { ReactionId } from '@/logic/mascotReactions';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
 
 /** Přehrání reakce: nový `key` = přehrát znovu. `null`/chybějící = klid (probudí spící opičku). */
 export interface MascotReaction { id: ReactionId; key: number }
 /** Bod pohledu v souřadnicích okna (pt, jako `absoluteX/Y` gest); `null` = pohled zpět dopředu. */
+/** Přehrání idle akce (život v klidu): nový `key` = přehrát. Reakce ji kdykoli přeruší. */
+export interface MascotIdle { id: IdleActionId; key: number }
 export type MascotGaze = SharedValue<{ x: number; y: number } | null>;
 
 export type MascotSize = number | 'S' | 'M' | 'L' | 'XL';
@@ -32,6 +35,10 @@ export interface MascotProps {
   gaze?: MascotGaze;
   /** Úhel kotouče (rad) pro reakci `spinFollow` (`usePlateSpin().spin`). */
   spin?: SharedValue<number>;
+  /** Idle akce z `useMascotIdle` (jen pohyb, bez omezeného pohybu). */
+  idle?: MascotIdle | null;
+  /** Směr scrollu mapy −1 (nahoru) … 1 (dolů): pupily a hlava se natočí za ním. */
+  scrollLook?: SharedValue<number>;
 }
 
 export const MASCOT_SIZES = { S: 56, M: 120, L: 200, XL: 280 } as const;

@@ -9,7 +9,7 @@ export type MascotEvent =
   | { type: 'tap'; at: number } | { type: 'longPress' } | { type: 'touchMove' }
   | { type: 'scroll'; velocity: number } | { type: 'idle' } | { type: 'appReturn'; awayMs: number }
   | { type: 'lessonStart' } | { type: 'lessonDone' } | { type: 'streakUp' } | { type: 'streakLost' }
-  | { type: 'leagueUp' } | { type: 'leagueDown' } | { type: 'plateSpin' };
+  | { type: 'leagueUp' } | { type: 'leagueDown' } | { type: 'plateSpin' } | { type: 'screenOpen' };
 
 /** `taps` = časy nedávných ťuknutí (pro trojité ťuknutí); `lastAt` = kdy hrála poslední reakce. */
 export interface ReactionState { lastId: ReactionId | null; lastAt: number; taps: number[] }
@@ -58,6 +58,7 @@ export function eventToReaction(e: MascotEvent, taps: readonly number[]): Reacti
     case 'leagueUp': return 'joyJump';
     case 'leagueDown': return 'shrug';
     case 'plateSpin': return 'spinFollow';
+    case 'screenOpen': return 'wave';
   }
 }
 

@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { DotRow } from '@/components/dots';
-import { Mascot, type MascotReaction } from '@/components/mascot';
+import { IdleMascot, Mascot, type MascotReaction } from '@/components/mascot';
 import { Reveal } from '@/components/ui/choreo';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
@@ -46,7 +46,12 @@ export function Podium({ entries, play = false, meReaction = null }: {
               >
                 <Reveal play={play} delay={at + P.mascotLag} rise={P.mascotRise} config={motion.reveal}>
                   <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                    <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood={rank === 1 ? 'happy' : 'idle'} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
+                    {/* Vítěz žije: poskakuje radostí častěji (idle kontext `podium`), ostatní stojí. */}
+                    {rank === 1 ? (
+                      <IdleMascot idleContext="podium" stage={entry.stage} cosmetics={entry.cosmetics} mood="happy" size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
+                    ) : (
+                      <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
+                    )}
                   </View>
                 </Reveal>
                 <DotRow total={height * dots.podium.cols} fraction={1} columns={dots.podium.cols} dot={dots.podium.d} from="bottom" intro={play ? at : false} />
