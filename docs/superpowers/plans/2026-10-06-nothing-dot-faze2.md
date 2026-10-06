@@ -77,7 +77,7 @@ export function shouldMountCanvas(platform: string, focused: boolean): boolean {
 ### Task 3: Liga
 
 **Files:**
-- Create: `components/league/podium.ts`, `components/league/__tests__/podium.test.ts`
+- Create: `components/league/podiumLayout.ts`, `components/league/__tests__/podiumLayout.test.ts`
 - Modify: `components/league/Podium.tsx`, `LeagueRow.tsx`, `TierBadge.tsx`, `LeagueResultBanner.tsx`, `ZoneDivider.tsx`, `app/(tabs)/league.tsx`
 
 **Interfaces:**
@@ -85,7 +85,7 @@ export function shouldMountCanvas(platform: string, focused: boolean): boolean {
 
 - [ ] **Step 1: Test**
 ```ts
-import { podiumColumns } from '../podium';
+import { podiumColumns } from '../podiumLayout';
 it('tři hráči: pořadí 2·1·3 a výšky 6·9·4', () => {
   expect(podiumColumns(3)).toEqual([{ rank: 2, order: 0, dots: 6 }, { rank: 1, order: 1, dots: 9 }, { rank: 3, order: 2, dots: 4 }]);
 });
