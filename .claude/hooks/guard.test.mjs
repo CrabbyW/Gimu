@@ -25,3 +25,18 @@ test('povolí Write jinam', () => assert.equal(checkWrite('docs/RATING.md'), nul
 test('Edit LOG: připsání projde', () => assert.equal(checkEdit('docs/LOG.md', 'konec', 'konec\nnový', 'a\nkonec'), null));
 test('Edit LOG: změna starého obsahu blokována', () => assert.ok(checkEdit('docs/LOG.md', 'konec', 'jinak', 'a\nkonec')));
 test('Edit jinde projde', () => assert.equal(checkEdit('app/x.ts', 'a', 'b', 'a'), null));
+test('Edit QA s CRLF souborem: připsání projde', () => {
+  assert.equal(checkEdit('docs/QA.md', 'řádek\nkonec', 'řádek\nkonec\nnové', 'a\r\nřádek\r\nkonec\r\n'), null);
+});
+test('PowerShell: blokuje Stop-Process -Name node i Get-Process node | Stop-Process', () => {
+  assert.ok(checkBash('Stop-Process -Name node -Force', owners));
+  assert.ok(checkBash('Get-Process node | Stop-Process', owners));
+});
+test('PowerShell: blokuje Stop-Process na PID z 8082, povolí jiný PID', () => {
+  assert.ok(checkBash('Stop-Process -Id 4242 -Force', owners));
+  assert.equal(checkBash('Stop-Process -Id 777 -Force', owners), null);
+});
+test('PowerShell: blokuje Stop-Process -Name cloudflared', () => assert.ok(checkBash('Stop-Process -Name cloudflared', owners)));
+test('povolí text v heredocu, který taskkill node jen zmiňuje', () => {
+  assert.equal(checkBash("cat >> docs/LOG.md <<'X'\n- hook blokuje `taskkill /IM node` a `CI=1 npx expo start`\nX", owners), null);
+});

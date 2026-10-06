@@ -842,3 +842,13 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Task 4: agenti — design-agent má Bash a estetiku Nothing Dot, všichni ověřují sami (tsc/jest/eslint/e2e), QA připisuje (dřívější zadání „přepiš předchozí“ způsobilo smazání historie QA.md), nová rubrika ratingu (4 brány + 7 kategorií, výjimka 85/85 „čeká na iPhone“).
 - Task 5: CLAUDE.md pravidla, README sekce Testy, HANDOFF (Expo bez --clear + prewarm).
 - Otevřené: e2e toky jsou pomalé kvůli dev bundlu (zvážit toky proti produkčnímu exportu tam, kde nepotřebují dev menu).
+
+### qa-agent — QA elite fáze 0 (HEAD a7e39c7)
+NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook živý, nativní log bez ERROR. `npm run e2e` 52/80 timeoutů proti pomalému Metru na 8081 (0 vizuálních diffů). Otevřené: stabilita e2e vůči dev serveru, PowerShell Stop-Process v hooku, false positive hooku na text v heredocu.
+- Doplněno: hook blokuje Edit-připsání u CRLF souboru (docs/QA.md) — viz QA.
+
+## 2026-10-06 · boss · Fáze 0 — opravy po QA (NESCHVÁLENO pro a7e39c7)
+- e2e celé (toky + vizuální + perf) běží proti produkčnímu webovému exportu (`dist/` přes `e2e/serve-dist.mjs` na 8083), ne proti Metru: QA kolo mělo 52 timeoutů (16MB dev bundle, paralelní workery, souběh s Expo Go na 8082) a souběh shodil i Expo Go server uživatele. Teď 80/80 za 3.0 min, dvakrát po sobě; perf 4/4 (28 s). Skripty `e2e*` export vytvoří předem.
+- Baseline snímků vědomě přegenerována (`npm run e2e:update`) na produkčním buildu — důvod: změna cílového buildu, ne změna UI.
+- Hook: Edit s CRLF souborem (normalizace konců řádků), PowerShell `Stop-Process -Name node|cloudflared` / `Get-Process node | Stop-Process` / `Stop-Process -Id <8082>`, pravidla jen v pozici příkazu (text v heredocu neblokuje). 21 testů.
+- Expo Go server uživatele se při QA souběhu zasekl; boss ho obnovil (zastavení vlastní úlohy + ukončení visícího procesu), bundle předem stažen.

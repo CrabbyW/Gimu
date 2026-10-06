@@ -223,3 +223,31 @@ Build: `tsc --noEmit` 0 chyb, Jest 65 sad / 623 testů OK, ESLint 0 nálezů.
 5. Oslava ✅: osa `celebrationTimeline`/`celebrationHaptics` pokryta testy; snímky 300/900/1400/2000/3000 ms (dark i light) — vír → prstenec → kotouč 20 s opičkou, XP, sérií a [CONTINUE] na konci. `skipToEnd` je idempotentní (`once`), ruší naplánované kroky včetně haptiky (`cancelSteps`), XP tik po přeskočení mlčí, pozadí appky = přeskočení, Reduce Motion = konečný stav + jen `success`, `fire` respektuje `hapticsEnabled`.
 
 **K ruční kontrole (iPhone):** pocit crescenda/heavy/heartbeat; přejetí tab barem (tik na slot, žádný skok obrazovek během tahu); oslava s Reduce Motion; vypnutá Haptika = ticho; čitelnost hlavičky mapy při scrollu.
+
+## QA — elite fáze 0 (workflow), commity dccba78..a7e39c7, HEAD a7e39c7
+
+**Verdikt: NESCHVÁLENO** (brána `npm run e2e` není zelená; kód ani logika neregresují, problém je v infrastruktuře e2e proti dev serveru).
+
+### Funguje
+- `npx tsc --noEmit` ✅, `npx jest` ✅ 68 sad / 682 testů, `npx eslint .` ✅ bez chyb.
+- `node --test .claude/hooks/guard.test.mjs` ✅ 16/16.
+- Hook je registrovaný a živý: skutečné Bash volání s hromadným zabitím node procesů zablokoval (nic se nespustilo). Přímé testy guard.mjs (stdin JSON): taskkill /IM node → exit 2, `CI=1` + `expo start` → 2, Write na docs/QA.md i LOG.md → 2, přepis `>` QA.md → 2; `npx expo start --web --port 8081` (i v heredocu) → 0, `>>` QA.md → 0.
+- ESLint `local/no-worklet-object-capture`: RuleTester má invalid případ PlateNode před opravou; v kódu žádný `eslint-disable` pro toto pravidlo (ostatní disable jsou starší `react-hooks/exhaustive-deps`).
+- Agent soubory `.claude/agents/*.md` mají platný frontmatter; design/motion mají Bash (spec §4.1).
+- `npm run e2e:perf` ✅ 4/4 (plátna ≤ 12, fps mapa/oslava ≥ 55, TTI).
+- Nativní log `$TEMP/expogo.log`: 0 řádků ERROR (Metro restartované, jen 2× iOS Bundled).
+- Diff UI fáze 0: jen testID v lize (league-row/podium) a rozbalené touch hodnoty v Dot*.
+
+### Rozbité
+1. ❌ `npm run e2e`: 1. běh `Timed out waiting 180000ms from config.webServer` (8081 běžel, ale `curl localhost:8081/` trval ~30 s). 2. běh: 52 failed / 28 passed za 1,1 h. Všech 52 jsou timeouty (`page.goto` 120 s / test 180 s, 2× ERR_ABORTED), **0 vizuálních diffů**. Repro: Metro na 8081 i 8082 současně, `npm run e2e`. Příčina: ~16 MB dev bundle přes Metro pod zátěží paralelních workerů. Pro bosse: restart Metra jen na PID z 8081, `workers: 1` / prewarm bundlu v globalSetup / vyšší timeouty. Review Focus „e2e funguje i s běžícím serverem“ dnes nesplněn.
+2. ❌ Hook blokuje legitimní Edit-připsání do docs/QA.md: soubor má CRLF, `checkEdit` porovnává `old_string` (LF) s raw textem → `includes` selže. Repro: Edit na QA.md s `old_string` = poslední řádek + `\n`, `new_string` = totéž + nový text → zablokováno. Porušuje Review Focus „běžný Edit připsáním musí projít“. Oprava: normalizovat `\r\n` → `\n` v `fileText` (+ test). Boss. (Tento report připsán přes `>>`.)
+3. ⚠️ Hook nekryje PowerShell `Stop-Process -Name node` (exit 0), přestože matcher zahrnuje PowerShell. Spec §4.2 jmenuje jen taskkill → mezera. Boss.
+4. ⚠️ False positive: hook blokuje i pouhý text (heredoc s reportem) obsahující `taskkill … /IM node` nebo `CI=1 … expo start` na jednom řádku; komentář v guard.mjs tvrdí, že zmínky neblokuje. Boss.
+5. ⚠️ Hook neblokuje spuštění dalšího `expo start --port 8082` (spec to nežádá).
+
+### iPhone checklist (Expo Go, 8082)
+1. Appka se otevře a mapa se dá posouvat tahem bez pádu (Dot* touch hodnoty).
+2. Liga: řádky a pódium vypadají stejně jako před fází 0.
+3. Dotek na kotouči lekce/plátech reaguje s haptikou jako dřív.
+4. Oslava dokončení lekce plynulá, bez zaseknutí.
+5. Po pár minutách používání žádná červená obrazovka chyby.

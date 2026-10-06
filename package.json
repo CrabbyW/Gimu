@@ -56,9 +56,9 @@
     "test": "cross-env TZ=Europe/Prague jest",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "e2e": "playwright test -c e2e/playwright.config.ts flows visual",
-    "e2e:visual": "playwright test -c e2e/playwright.config.ts visual",
-    "e2e:update": "playwright test -c e2e/playwright.config.ts visual --update-snapshots",
+    "e2e": "expo export --platform web && playwright test -c e2e/playwright.config.ts flows visual",
+    "e2e:visual": "expo export --platform web && playwright test -c e2e/playwright.config.ts visual",
+    "e2e:update": "expo export --platform web && playwright test -c e2e/playwright.config.ts visual --update-snapshots",
     "e2e:perf": "expo export --platform web && playwright test -c e2e/playwright.config.ts --project=perf-prod"
   },
   "jest": {
