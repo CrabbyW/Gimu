@@ -56,6 +56,8 @@ export function DotMatrix({ cols, rows, lit, today, pitch = dots.matrix.pitch, a
   // Vlastní dotyková vlna, pokud ji nedodá rodič (např. dlaždice s vlastním gestem).
   const own = useDotTouch(!touch);
   const tt = touch ?? own.touch;
+  // Sdílené hodnoty doteku rozbalené mimo worklet (pravidlo no-worklet-object-capture).
+  const { strength: tS, x: tX, y: tY } = tt;
   const { reduced } = useMotionSafe();
   const play = intro !== false;
   const scan = play && !reduced;
@@ -76,11 +78,11 @@ export function DotMatrix({ cols, rows, lit, today, pitch = dots.matrix.pitch, a
       const k = reveal.value * n;
       a = on.filter((_, i) => onRank[i]! < k);
     }
-    const s = tt.strength.value;
+    const s = tS.value;
     if (s <= 0.001) return { on: a, off: b, lit: [] as Pt[] };
     // Plátno je posunuté o `pad`: prst v souřadnicích mřížky → souřadnice plátna.
-    const fx = tt.x.value + pad;
-    const fy = tt.y.value + pad;
+    const fx = tX.value + pad;
+    const fy = tY.value + pad;
     const ra = ripplePoints(a, fx, fy, s, motion.ripple.radius, motion.ripple.push);
     const rb = ripplePoints(b, fx, fy, s, motion.ripple.radius, motion.ripple.push);
     a = ra.pts;
@@ -90,7 +92,7 @@ export function DotMatrix({ cols, rows, lit, today, pitch = dots.matrix.pitch, a
   const onPts = useDerivedValue(() => layers.value.on as Pt[]);
   const offPts = useDerivedValue(() => layers.value.off as Pt[]);
   const litPts = useDerivedValue(() => layers.value.lit);
-  const litOpacity = useDerivedValue(() => tt.strength.value * motion.ripple.lit);
+  const litOpacity = useDerivedValue(() => tS.value * motion.ripple.lit);
   const a11y = accessibilityLabel
     ? { accessible: true, accessibilityLabel }
     : { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };

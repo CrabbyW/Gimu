@@ -102,6 +102,8 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
 
   // Viditelné tečky (spirála) a dotyková vlna, obojí na UI vlákně. Prst se převede do soustavy otočeného
   // kotouče (−rotation), takže tečky uhýbají od prstu v prostoru obrazovky.
+  // Sdílené hodnoty doteku rozbalené mimo worklet (pravidlo no-worklet-object-capture).
+  const tS = touch?.strength; const tX = touch?.x; const tY = touch?.y;
   const layers = useDerivedValue(() => {
     let outer: readonly Pt[] = geo.outer;
     let inner: readonly Pt[] = geo.inner;
@@ -110,9 +112,9 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
       outer = geo.outer.filter((_, i) => geo.outerRank[i]! < k);
       inner = geo.inner.filter((_, i) => geo.innerRank[i]! < k);
     }
-    const s = touch ? touch.strength.value : 0;
-    if (!touch || s <= 0.001) return { outer, inner, lit: [] as Pt[] };
-    const f = rotateAround(touch.x.value + pad, touch.y.value + pad, mid, mid, -(rotation ? rotation.value : 0));
+    const s = tS ? tS.value : 0;
+    if (!tX || !tY || s <= 0.001) return { outer, inner, lit: [] as Pt[] };
+    const f = rotateAround(tX.value + pad, tY.value + pad, mid, mid, -(rotation ? rotation.value : 0));
     const o = ripplePoints(outer, f.x, f.y, s, motion.ripple.radius, motion.ripple.push);
     const n = ripplePoints(inner, f.x, f.y, s, motion.ripple.radius, motion.ripple.push);
     return { outer: o.pts, inner: n.pts, lit: [...o.lit, ...n.lit] };
@@ -121,7 +123,7 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
   const innerPts = useDerivedValue(() => layers.value.inner as Pt[]);
   const allPts = useDerivedValue(() => [...layers.value.outer, ...layers.value.inner]);
   const litPts = useDerivedValue(() => layers.value.lit);
-  const litOpacity = useDerivedValue(() => (touch ? touch.strength.value : 0) * motion.ripple.lit);
+  const litOpacity = useDerivedValue(() => (tS ? tS.value : 0) * motion.ripple.lit);
   const glowOpacity = useDerivedValue(() => (breath ? breath.value : 1));
   const cometOpacity = useDerivedValue(() => (spiral ? Math.max(0, reveal.value * 4 - 3) : 1));
 

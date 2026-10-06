@@ -70,9 +70,11 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
   const wx = waveOrigin ? waveOrigin.x : width / 2;
   const wy = waveOrigin ? waveOrigin.y : height / 2;
   const reach = Math.hypot(Math.max(wx, width - wx), Math.max(wy, height - wy));
+  // Sdílené hodnoty doteku rozbalené mimo worklet (pravidlo no-worklet-object-capture).
+  const tS = touch?.strength; const tX = touch?.x; const tY = touch?.y;
   // Jeden průchod pro všechna pásma: posunuté body po pásmech + společná rozjasněná vrstva.
   const moved = useDerivedValue(() => {
-    const s = touch ? touch.strength.value : 0;
+    const s = tS ? tS.value : 0;
     const w = wave ? wave.value : 0;
     const out: (readonly Pt[])[] = [];
     const lit: Pt[] = [];
@@ -83,8 +85,8 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
         pts = r.pts;
         for (const q of r.lit) lit.push(q);
       }
-      if (touch && s > 0.001) {
-        const r = ripplePoints(pts, touch.x.value, touch.y.value, s, RIPPLE.radius, RIPPLE.push);
+      if (tX && tY && s > 0.001) {
+        const r = ripplePoints(pts, tX.value, tY.value, s, RIPPLE.radius, RIPPLE.push);
         pts = r.pts;
         for (const q of r.lit) lit.push(q);
       }
@@ -95,7 +97,7 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
   const litPoints = useDerivedValue(() => moved.value.lit);
   // Rozjasnění: síla doteku, u vlny od středu doznívá s jejím doběhem.
   const litOpacity = useDerivedValue(() => {
-    const s = touch ? touch.strength.value : 0;
+    const s = tS ? tS.value : 0;
     const w = wave ? wave.value : 0;
     return Math.max(s, w > 0 && w < 1 ? 1 - w * w : 0) * RIPPLE.lit;
   });
