@@ -125,6 +125,9 @@ export const dash = { target: '4 6', dots: '0 6' } as const;
 export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, plate: 1.2, check: 2.5, hairline: 1, nodeRing: 2, streakAxis: 1.5, streakAxisLg: 3, todayDot: 1.5, slot: 1,
   // Litinový kotouč (viewBox 100): soustružená drážka 0.5, odlesk hrany 1.6, zkosení otvoru 1.
   groove: 0.5, glint: 1.6, bevel: 1 } as const;
+
+// Nejmenší měřítko písma jednořádkového titulku (adjustsFontSizeToFit): Doto `display` 40 → 26 pt, pořád nadpis.
+export const fontScale = { titleMin: 0.65 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 // StreakBarbell: radius kotouče sm 1 / lg 2 (spec §2.7).

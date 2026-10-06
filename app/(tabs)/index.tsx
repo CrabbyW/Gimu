@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DotField, DotPlate, DotRing, useDotTouch } from '@/components/dots';
+import { DotField, DotRing, useDotTouch } from '@/components/dots';
 import { LessonMap } from '@/components/map/LessonMap';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { currentSection, SectionHero } from '@/components/map/SectionHero';
@@ -20,7 +20,6 @@ import { useLessonMinutes } from '@/hooks/useLessonMinutes';
 import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
-import type { LessonPathView, MapNode } from '@/services/contracts';
 import { dots, useTheme } from '@/theme';
 
 /** Výška pole za hlavičkou: tolik řádků, kolik dovolí strop teček při dané šířce. */
@@ -32,12 +31,9 @@ const fieldHeight = (width: number) => {
 /** Nástup hlavičky (motion.screenIn): shared value, ne layout animace (ta na webu nechá prvek `absolute`). */
 const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
 
-const findNode =(view: LessonPathView, id: string | null): MapNode | undefined =>
-  (id === null ? undefined : view.sections.flatMap((s) => s.nodes).find((n) => n.lesson.id === id));
-
 /**
- * Trénink (Nothing Dot §6): stavový řádek „SEKCE 01 · ● 12 DNÍ“, Doto titulek sekce, hero dlaždice pokroku
- * s řádkem teček, pod ní mapa tečkových kotoučů s opičkou na aktuálním a plovoucí pilulka `[ZAČÍT LEKCI]`.
+ * Trénink (Nothing Dot §6): stavový řádek „SEKCE 01 · ● 12 DNÍ“, jednořádkový Doto titulek sekce, tenký řádek
+ * pokroku (tečky + „0 / 9“), pod ním mapa tečkových kotoučů s opičkou na aktuálním a plovoucí pilulka `[ZAČÍT LEKCI]`.
  * Hierarchie: nejsilnější plocha obrazovky je jediná plná pilulka; nejsilnější číslo je pokrok v hero.
  * Za hlavičkou leží tečkové pole, které směrem dolů dozní (mapa pod ním stojí na čistém `base`).
  */
@@ -67,7 +63,6 @@ export default function TrainingScreen() {
   if (!viewData || !stats || !data) return <MapSkeleton />;
 
   const section = currentSection(viewData);
-  const first = stats.isNew ? findNode(viewData, viewData.currentLessonId) : undefined;
   const sad = !stats.isNew && stats.mood === 'sad';
   const currentId = viewData.currentLessonId;
   const open = (id: string) => {
@@ -85,6 +80,7 @@ export default function TrainingScreen() {
           {/* Nástup obrazovky (motion.screenIn): hlavička 0 → hero 80 (vnitřní sled SectionHero) → kotouče mapy. */}
           <Reveal play={intro} delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={HEADER_IN}>
           <ScreenHeader
+            singleLine
             title={section?.title ?? copy.tabs.training}
             status={{
               left: section ? copy.map.sectionKicker(section.index) : copy.tabs.training.toUpperCase(),
@@ -96,18 +92,7 @@ export default function TrainingScreen() {
           />
           </Reveal>
           <SectionHero view={viewData} intro={intro} />
-          {first ? (
-            // Nový uživatel: náhled odměny za první lekci. Akci nese pilulka dole.
-            <Card style={{ marginHorizontal: space.l, marginTop: space.s, flexDirection: 'row', alignItems: 'center', gap: space.m }}>
-              <View style={{ flex: 1, gap: space.xs }}>
-                <Text variant="headline">{copy.map.firstTitle(minutesOf[first.lesson.id] ?? 1)}</Text>
-                <Text tone="muted">{copy.map.firstBody(first.xp)}</Text>
-              </View>
-              <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                <DotPlate kg={first.lesson.plateKg} size={size.previewPlate} state="current" decorative showKg={false} />
-              </View>
-            </Card>
-          ) : null}
+          {/* Karta „První lekce“ zrušena: minuty a XP nese popisek aktuálního uzlu, mapě zůstane výška. */}
           {sad ? (
             <Card style={{ marginHorizontal: space.l, marginTop: space.s, gap: space.xs }}>
               <Text variant="headline">{copy.map.brokenTitle}</Text>
