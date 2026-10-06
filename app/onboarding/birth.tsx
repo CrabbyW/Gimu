@@ -13,7 +13,7 @@ import { useOnboardingDraft, usePathOptions } from '@/hooks/useOnboardingDraft';
 import { now } from '@/lib/clock';
 import { haptics } from '@/lib/haptics';
 import { ease, motion, useMotionSafe } from '@/lib/motion';
-import { formatCzDate, toISODate } from '@/logic/dates';
+import { parseISODate, toISODate } from '@/logic/dates';
 import { buildOnboardingInput } from '@/logic/onboarding';
 import { services } from '@/services';
 import { ThemeProvider, useTheme } from '@/theme';
@@ -60,7 +60,7 @@ function BirthScene() {
   const resetDraft = useOnboardingDraft((s) => s.reset);
   // Koncept se zachytí při vstupu: po uložení se resetuje a obrazovka nesmí během odchodu problikovat.
   const [input] = useState(() => buildOnboardingInput(useOnboardingDraft.getState()));
-  const [bornOn] = useState(() => formatCzDate(toISODate(now())));
+  const [bornOn] = useState(() => { const d = parseISODate(toISODate(now())); return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`; });
   // Sekvence se rozhodne jednou při vstupu; přepnutí omezení pohybu uprostřed ji nerestartuje.
   const [calm] = useState(reduced);
   const [mood, setMood] = useState<Mood>(calm ? 'happy' : 'idle');

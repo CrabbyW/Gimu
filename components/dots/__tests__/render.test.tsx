@@ -32,18 +32,18 @@ test('DotPlate bez Skia nespadne a nechá popisek', () => {
   skiaState.ready = false;
   const root = render(<DotPlate kg={10} size={72} state="locked" />);
   expect(byTestId(root, 'dotplate-canvas')).toHaveLength(0);
-  expect(root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /10 kg/.test(n.props.accessibilityLabel)).length).toBeGreaterThan(0);
+  expect(root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /10\skg/.test(n.props.accessibilityLabel)).length).toBeGreaterThan(0);
 });
 
 test('DotPlate má accessibilityLabel s kg', () => {
   const root = render(<DotPlate kg={20} size={88} state="current" />);
-  expect(root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /20 kg/.test(n.props.accessibilityLabel)).length).toBeGreaterThan(0);
+  expect(root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /20\skg/.test(n.props.accessibilityLabel)).length).toBeGreaterThan(0);
   expect(byTestId(root, 'dotplate-canvas').length).toBeGreaterThan(0);
 });
 
 test('DotPlate decorative je pro čtečku skrytý', () => {
   const root = render(<DotPlate kg={20} size={88} state="done" decorative />);
-  expect(root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /20 kg/.test(n.props.accessibilityLabel))).toHaveLength(0);
+  expect(root.findAll((n) => typeof n.props.accessibilityLabel === 'string' && /20\skg/.test(n.props.accessibilityLabel))).toHaveLength(0);
 });
 
 test('záře jen v dark: light nekreslí BlurMask', () => {

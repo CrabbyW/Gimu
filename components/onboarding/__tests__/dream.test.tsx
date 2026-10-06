@@ -45,14 +45,14 @@ afterEach(() => {
 
 const card = (root: ReactTestInstance, prefix: string) =>
   root.find((n) => n.props.accessibilityRole === 'radio' && typeof n.props.onPress === 'function' && String(n.props.accessibilityLabel).startsWith(prefix));
-const hasField = (root: ReactTestInstance) => root.findAll((n) => n.props.accessibilityLabel === 'Tvoje vize' && typeof n.props.onChangeText === 'function').length > 0;
+const hasField = (root: ReactTestInstance) => root.findAll((n) => n.props.accessibilityLabel === 'Your vision' && typeof n.props.onChangeText === 'function').length > 0;
 
 test('karta uloží větu „Titulek. Řádek“ jako dreamBody (R41) a je vybraná právě jedna', () => {
   const root = render();
   act(() => { card(root, 'Muscle-up').props.onPress(); });
-  expect(useOnboardingDraft.getState().dreamBody).toBe('Muscle-up. Přes hrazdu čistě, bez kopání.');
-  act(() => { card(root, 'V-tvar').props.onPress(); });
-  expect(useOnboardingDraft.getState().dreamBody).toBe('V-tvar. Široká záda, úzký pas.');
+  expect(useOnboardingDraft.getState().dreamBody).toBe('Muscle-up. Clean over the bar, no kipping.');
+  act(() => { card(root, 'V-taper').props.onPress(); });
+  expect(useOnboardingDraft.getState().dreamBody).toBe('V-taper. Wide back, narrow waist.');
   const checked = root.findAll((n) => n.props.accessibilityRole === 'radio' && typeof n.props.onPress === 'function' && n.props.accessibilityState?.checked);
   expect(checked).toHaveLength(1);
   expect(hasField(root)).toBe(false);
@@ -61,10 +61,10 @@ test('karta uloží větu „Titulek. Řádek“ jako dreamBody (R41) a je vybra
 test('„Vlastní…“ odkryje pole a předvolbu vymaže; vlastní text se uloží beze změny', () => {
   const root = render();
   act(() => { card(root, 'Muscle-up').props.onPress(); });
-  act(() => { card(root, 'Vlastní').props.onPress(); });
+  act(() => { card(root, 'Custom').props.onPress(); });
   expect(useOnboardingDraft.getState().dreamBody).toBe('');
   expect(hasField(root)).toBe(true);
-  typeInto(root, 'Tvoje vize', 'Stojka na jedné ruce');
+  typeInto(root, 'Your vision', 'Stojka na jedné ruce');
   expect(useOnboardingDraft.getState().dreamBody).toBe('Stojka na jedné ruce');
 });
 
@@ -75,7 +75,7 @@ test('návrat na krok s vlastním textem obnoví vlastní režim', () => {
 });
 
 test('návrat na krok s uloženou větou karty obnoví výběr té karty, ne vlastní režim (R41)', () => {
-  useOnboardingDraft.getState().set({ dreamBody: 'Muscle-up. Přes hrazdu čistě, bez kopání.' });
+  useOnboardingDraft.getState().set({ dreamBody: 'Muscle-up. Clean over the bar, no kipping.' });
   const root = render();
   expect(hasField(root)).toBe(false);
   const checked = root.findAll((n) => n.props.accessibilityRole === 'radio' && typeof n.props.onPress === 'function' && n.props.accessibilityState?.checked);

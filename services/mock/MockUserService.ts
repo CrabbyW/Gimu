@@ -13,7 +13,7 @@ import { ownershipCtx } from './ownership';
 
 const requireProfile = () => {
   const p = useDb.getState().profile;
-  if (!p) throw new Error('Profil neexistuje, nejdřív onboarding.');
+  if (!p) throw new Error('Profile does not exist, run onboarding first.');
   return p;
 };
 
@@ -21,7 +21,7 @@ export class MockUserService implements UserService {
   async getProfile() { return useDb.getState().profile; }
   async completeOnboarding(input: Parameters<UserService['completeOnboarding']>[0]) {
     // Druhý onboarding by přepsal profil a smazal `activity` (QA kolo 1) — jakmile profil existuje, odmítnout.
-    if (useDb.getState().profile) throw new Error('Profil už existuje, onboarding nelze spustit znovu.');
+    if (useDb.getState().profile) throw new Error('Profile already exists, onboarding cannot run again.');
     const profile = buildInitialProfile(input, clockNow());
     useDb.getState().setProfile(profile);
     return profile;
@@ -33,7 +33,7 @@ export class MockUserService implements UserService {
   async updateMilestone(id: string, current: number): Promise<MilestoneUpdateResult> {
     const p = requireProfile();
     const before = p.milestones.find((m) => m.id === id);
-    if (!before) throw new Error(`Milník ${id} neexistuje.`);
+    if (!before) throw new Error(`Milestone ${id} does not exist.`);
     const value = Math.max(0, current);
     const milestones = p.milestones.map((m) => (m.id === id ? { ...m, current: value } : m));
     useDb.getState().setProfile({ ...p, milestones });
@@ -50,7 +50,7 @@ export class MockUserService implements UserService {
     return r.profile;
   }
   async grantDevXp(amount: number, now: Date) {
-    if (!Number.isInteger(amount) || amount <= 0) throw new Error('Dev XP musí být kladné celé číslo.');
+    if (!Number.isInteger(amount) || amount <= 0) throw new Error('Dev XP must be a positive integer.');
     const p = requireProfile();
     const event = { id: `${DEV_XP_LESSON_ID}-${now.getTime()}-${p.activity.length}`, at: now.toISOString(), day: toISODate(now), lessonId: DEV_XP_LESSON_ID, xp: amount };
     useDb.getState().setProfile({ ...p, activity: [...p.activity, event] });

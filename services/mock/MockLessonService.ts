@@ -56,7 +56,7 @@ export class MockLessonService implements LessonService {
     const { lesson } = detail;
     // Spec §7.2: kromě current a dokončených je vše locked — ani deep link nesmí zamčenou lekci započítat.
     const completed = new Set(profile.activity.map((e) => e.lessonId));
-    if (nodeStates(LESSONS_BY_PATH[lesson.pathId], completed).get(lesson.id) === 'locked') throw new Error(`Lekce ${id} je zamčená.`);
+    if (nodeStates(LESSONS_BY_PATH[lesson.pathId], completed).get(lesson.id) === 'locked') throw new Error(`Lesson ${id} is locked.`);
     const today = toISODate(now);
     const season = SEASONS.find((s) => s.startDate <= today && today <= s.endDate) ?? null;
     const out = applyLessonCompletion({

@@ -15,7 +15,7 @@ const render = (props: Partial<ComponentProps<typeof PillButton>> & { onPress():
   act(() => {
     r = TestRenderer.create(
       <ThemeContext.Provider value={buildTheme('dark', null)}>
-        <PillButton label="Začít lekci" {...props} />
+        <PillButton label="Start lesson" {...props} />
       </ThemeContext.Provider>,
     );
   });
@@ -25,12 +25,12 @@ const texts = (root: ReactTestInstance) => root.findAll((n) => typeof n.props.ch
 const button = (root: ReactTestInstance) => root.find((n) => n.props.accessibilityRole === 'button' && typeof n.props.onPress === 'function');
 
 test('popisek se vykreslí jako [ZAČÍT LEKCI]', () => {
-  expect(texts(render({ onPress: jest.fn() }))).toContain('[ZAČÍT LEKCI]');
+  expect(texts(render({ onPress: jest.fn() }))).toContain('[START LESSON]');
 });
 
 test('čtečka dostane větu bez závorek a roli tlačítka', () => {
   const b = button(render({ onPress: jest.fn() }));
-  expect(b.props.accessibilityLabel).toBe('Začít lekci');
+  expect(b.props.accessibilityLabel).toBe('Start lesson');
   expect(b.props.accessibilityRole).toBe('button');
 });
 

@@ -9,7 +9,7 @@ import type { SeasonService, SeasonStatus } from '../contracts';
 
 const requireProfile = (): UserProfile => {
   const p = useDb.getState().profile;
-  if (!p) throw new Error('Profil neexistuje, nejdřív onboarding.');
+  if (!p) throw new Error('Profile does not exist, run onboarding first.');
   return p;
 };
 const requireSeason = (id: string): Season => {
@@ -43,7 +43,7 @@ export class MockSeasonService implements SeasonService {
   async setGoal(seasonId: string, goal: SeasonGoal) {
     const p = requireProfile(); const s = requireSeason(seasonId);
     // Cíl jde měnit jen do konce sezóny; „teď“ je čas appky (dev posun), ne reálné hodiny.
-    if (toISODate(clockNow()) > s.endDate) throw new Error('Sezóna skončila, cíl už změnit nejde.');
+    if (toISODate(clockNow()) > s.endDate) throw new Error('The season has ended, the goal can no longer change.');
     const check = validateSeasonGoal(goal, s);
     if (check !== 'ok') throw new Error(check);
     const stored: SeasonGoal = goal.kind === 'milestone' && !Number.isFinite(goal.start) ? { ...goal, start: goal.current } : goal;
@@ -53,13 +53,13 @@ export class MockSeasonService implements SeasonService {
   async getProgress(seasonId: string, now: Date) {
     const p = requireProfile(); const s = requireSeason(seasonId);
     const goal = p.seasonGoals[seasonId];
-    if (!goal) throw new Error('Cíl sezóny chybí.');
+    if (!goal) throw new Error('Season goal is missing.');
     return seasonProgress(goal, ctxFor(p, s, now));
   }
 
   async getRecap(seasonId: string, now: Date) {
     const p = requireProfile(); const s = requireSeason(seasonId);
-    if (toISODate(now) <= s.endDate) throw new Error('Sezóna ještě neskončila.');
+    if (toISODate(now) <= s.endDate) throw new Error('The season has not ended yet.');
     // Recap se počítá ke konci sezóny (dnešek = poslední den), ne k dnešku po ní.
     return buildRecap(p.seasonGoals[seasonId] ?? null, {
       ...ctxFor(p, s, now), today: s.endDate, thresholds: STAGE_THRESHOLDS, weightGoal: p.weightGoal,

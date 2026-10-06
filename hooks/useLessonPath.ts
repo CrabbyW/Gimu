@@ -7,7 +7,7 @@ import { useServiceQuery } from './useServiceQuery';
 export function useLessonPath(pathId: PathId | undefined) {
   return useServiceQuery(
     () => {
-      if (!pathId) return Promise.reject(new Error('Chybí cesta'));
+      if (!pathId) return Promise.reject(new Error('Missing path'));
       return services.lessons.getPath(pathId, now());
     },
     [pathId],

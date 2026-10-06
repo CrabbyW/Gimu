@@ -48,11 +48,11 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-test('dvojí tap na „Jdeme trénovat“ uloží profil jen jednou a přejde na mapu', async () => {
+test('dvojí tap na „Let’s train“ uloží profil jen jednou a přejde na mapu', async () => {
   useOnboardingDraft.getState().set(validDraft);
   mockComplete.mockResolvedValue({});
   const root = render();
-  const button = cta(root, 'Jdeme trénovat');
+  const button = cta(root, 'Let’s train');
   await act(async () => { button.props.onPress(); button.props.onPress(); });
   expect(mockComplete).toHaveBeenCalledTimes(1);
   expect(mockComplete).toHaveBeenCalledWith({
@@ -62,16 +62,16 @@ test('dvojí tap na „Jdeme trénovat“ uloží profil jen jednou a přejde na
   expect(useOnboardingDraft.getState().path).toBeNull();
 });
 
-test('selhání uložení ukáže chybu a „Zkusit znovu“, druhý pokus projde', async () => {
+test('selhání uložení ukáže chybu a „Try again“, druhý pokus projde', async () => {
   useOnboardingDraft.getState().set(validDraft);
   jest.spyOn(console, 'warn').mockImplementation(() => undefined);
   mockComplete.mockRejectedValueOnce(new Error('disk plný')).mockResolvedValueOnce({});
   const root = render();
-  await act(async () => { cta(root, 'Jdeme trénovat').props.onPress(); });
-  expect(texts(root)).toContain('Opici se nepodařilo uložit. Zkus to znovu.');
+  await act(async () => { cta(root, 'Let’s train').props.onPress(); });
+  expect(texts(root)).toContain('Couldn’t save your monkey. Try again.');
   expect(mockReplace).not.toHaveBeenCalled();
   expect(useOnboardingDraft.getState().path).toBe('power');
-  await act(async () => { cta(root, 'Zkusit znovu').props.onPress(); });
+  await act(async () => { cta(root, 'Try again').props.onPress(); });
   expect(mockComplete).toHaveBeenCalledTimes(2);
   expect(mockReplace).toHaveBeenCalledWith('/(tabs)');
 });
@@ -87,7 +87,7 @@ test('hardwarové Zpět na Androidu oslavu nezavře', () => {
 test('štítek narození nese datum a cestu', () => {
   jest.setSystemTime(new Date(2026, 8, 29, 10, 0));
   useOnboardingDraft.getState().set(validDraft);
-  expect(texts(render())).toContain('NAROZENA 29. 9. 2026 · Power');
+  expect(texts(render())).toContain('BORN 9/29/2026 · Power');
 });
 
 test('neúplný koncept (např. po ztrátě stavu) vrátí na začátek onboardingu', () => {

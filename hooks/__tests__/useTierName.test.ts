@@ -3,7 +3,7 @@ import type { LeagueTierId } from '@/types';
 import { tierName } from '../useTierName';
 
 test('známá úroveň vrací svůj název', () => {
-  expect(tierName('gold')).toBe('Zlato');
+  expect(tierName('gold')).toBe('Gold');
 });
 
 test('neznámá nebo chybějící úroveň spadne na první úroveň', () => {

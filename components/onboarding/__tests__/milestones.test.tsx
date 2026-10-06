@@ -49,17 +49,17 @@ afterEach(() => {
 
 test('vlastní milník po odznačení zůstane mezi chipy a jde znovu vybrat', () => {
   const root = render();
-  act(() => { pressable(root, 'button', 'Vlastní milník').props.onPress(); });
-  typeInto(root, 'Název', 'Stojka bez zdi');
-  act(() => { pressable(root, 'radio', 'Sekundy').props.onPress(); });
-  typeInto(root, 'Cíl', '30');
-  act(() => { pressable(root, 'button', 'Přidat milník').props.onPress(); });
-  expect(useOnboardingDraft.getState().milestones.map((m) => m.label)).toEqual(['Stojka bez zdi']);
+  act(() => { pressable(root, 'button', 'Custom milestone').props.onPress(); });
+  typeInto(root, 'Name', 'Freestanding handstand');
+  act(() => { pressable(root, 'radio', 'Seconds').props.onPress(); });
+  typeInto(root, 'Target', '30');
+  act(() => { pressable(root, 'button', 'Add milestone').props.onPress(); });
+  expect(useOnboardingDraft.getState().milestones.map((m) => m.label)).toEqual(['Freestanding handstand']);
 
-  act(() => { pressable(root, 'checkbox', 'Stojka bez zdi 30 s').props.onPress(); });
+  act(() => { pressable(root, 'checkbox', 'Freestanding handstand 30 s').props.onPress(); });
   expect(useOnboardingDraft.getState().milestones).toEqual([]);
-  expect(chipLabels(root)).toContain('Stojka bez zdi 30 s');
+  expect(chipLabels(root)).toContain('Freestanding handstand 30 s');
 
-  act(() => { pressable(root, 'checkbox', 'Stojka bez zdi 30 s').props.onPress(); });
-  expect(useOnboardingDraft.getState().milestones.map((m) => m.label)).toEqual(['Stojka bez zdi']);
+  act(() => { pressable(root, 'checkbox', 'Freestanding handstand 30 s').props.onPress(); });
+  expect(useOnboardingDraft.getState().milestones.map((m) => m.label)).toEqual(['Freestanding handstand']);
 });

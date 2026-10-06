@@ -49,8 +49,8 @@ const labelOf = (root: ReactTestInstance) => root.findAll((n) => n.props.accessi
 const mouthOpacity = (root: ReactTestInstance, d: string) => root.findAllByType(Path).find((p) => p.props.d === d)?.props.opacity;
 
 test('výchozí popisek pro čtečku podle nálady, vlastní popisek má přednost', () => {
-  expect(labelOf(render({ mood: 'idle' }))).toBe('Tvoje opice');
-  expect(labelOf(render({ mood: 'happy' }))).toBe('Tvoje opice má radost');
+  expect(labelOf(render({ mood: 'idle' }))).toBe('Your monkey');
+  expect(labelOf(render({ mood: 'happy' }))).toBe('Your monkey is happy');
   expect(labelOf(render({ mood: 'happy', accessibilityLabel: 'Opice Bruno' }))).toBe('Opice Bruno');
 });
 
@@ -143,7 +143,7 @@ describe('šál a vrstvy pro sezení na kotouči', () => {
     expect(legCircles(render({}))).toHaveLength(2);
     const back = renderLayer(MonkeyBack);
     expect(legCircles(back)).toHaveLength(0);
-    expect(labelOf(back)).toBe('Tvoje opice');
+    expect(labelOf(back)).toBe('Your monkey');
     const front = renderLayer(MonkeyFront);
     expect(legCircles(front)).toHaveLength(2);
     expect(front.findAll((n) => n.props.accessibilityRole === 'image')).toHaveLength(0);

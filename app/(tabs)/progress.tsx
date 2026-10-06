@@ -34,7 +34,7 @@ const CELEBRATE_MS = 1800;
 /** Opice v overlay oslavy milníku nastoupí z této velikosti pružinou `motion.settle`. */
 const MASCOT_FROM = 0.6;
 
-const fmtKg = (kg: number) => (Number.isInteger(kg) ? String(kg) : kg.toFixed(1).replace('.', ','));
+const fmtKg = (kg: number) => (Number.isInteger(kg) ? String(kg) : kg.toFixed(1));
 
 export default function ProgressScreen() {
   // Hlavička = první úder nástupu obrazovky (jen první zobrazení v relaci).

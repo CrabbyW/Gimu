@@ -16,7 +16,7 @@ interface Props {
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace('.', ','));
+const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
 /**
  * Tečkový graf váhy (Nothing Dot fáze 2), čisté SVG (bez Skia: nežere rozpočet pláten). Jeden týden = jedna

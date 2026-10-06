@@ -9,7 +9,7 @@ import { ownershipCtx } from './ownership';
 
 const requireProfile = (): UserProfile => {
   const p = useDb.getState().profile;
-  if (!p) throw new Error('Profil neexistuje, nejdřív onboarding.');
+  if (!p) throw new Error('Profile does not exist, run onboarding first.');
   return p;
 };
 const balanceOf = (p: UserProfile) => bananaBalance(totalXp(p.activity), p.owned, COSMETICS, BANANA_RULES.xpPerBanana);
@@ -34,7 +34,7 @@ export class MockCosmeticsService implements CosmeticsService {
     if (id === null) delete equipped[slot];
     else {
       const c = COSMETICS.find((x) => x.id === id);
-      if (!c || c.slot !== slot || !canEquip(c, ownershipCtx(p))) throw new Error('Položku nejde nasadit.');
+      if (!c || c.slot !== slot || !canEquip(c, ownershipCtx(p))) throw new Error('Item cannot be equipped.');
       equipped[slot] = id;
     }
     useDb.getState().setProfile({ ...p, equipped });

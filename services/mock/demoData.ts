@@ -37,11 +37,11 @@ export function buildDemoProfile(now: Date): UserProfile {
   const weightGoal = { kind: 'lose' as const, startKg: 82, targetKg: 78 };
   const season = SEASONS.find((s) => s.startDate <= today && today <= s.endDate);
   return {
-    path: 'bodyControl', dreamBody: 'Volná stojka',
+    path: 'bodyControl', dreamBody: 'Free handstand',
     milestones: [
       { id: 'lsit-10', label: 'L-sit 10 s', target: 10, unit: 'seconds', current: 10, custom: false },
       { id: 'plank-60', label: '60 s plank', target: 60, unit: 'seconds', current: 45, custom: false },
-      { id: 'crow-15', label: 'Vrána 15 s', target: 15, unit: 'seconds', current: 6, custom: false },
+      { id: 'crow-15', label: 'Crow 15 s', target: 15, unit: 'seconds', current: 6, custom: false },
     ],
     weightGoal, weights: mockWeightHistory(weightGoal, now, 4242),
     activity, equipped: { outfit: 'outfit-hoodie-chalk' }, owned: [],

@@ -35,7 +35,7 @@ const render = (onContinue: () => void) => {
   });
   return renderer!.root;
 };
-const continueBtn = (root: ReactTestInstance) => root.find((n) => n.props.accessibilityLabel === 'Pokračovat' && typeof n.props.onPress === 'function');
+const continueBtn = (root: ReactTestInstance) => root.find((n) => n.props.accessibilityLabel === 'Continue' && typeof n.props.onPress === 'function');
 
 beforeEach(() => { focusEffect = null; focusCleanup = null; });
 afterEach(() => {

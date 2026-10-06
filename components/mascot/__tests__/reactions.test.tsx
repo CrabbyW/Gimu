@@ -66,9 +66,9 @@ describe('přehrání reakce (prop `reaction`)', () => {
   test('popisek pro čtečku sleduje přebitou náladu (smutek)', () => {
     const r = mount(<Mascot {...base} reaction={{ id: 'sad', key: 1 }} />);
     const label = () => r.root.findAll((n) => n.props.accessibilityRole === 'image')[0]?.props.accessibilityLabel;
-    expect(label()).toBe('Tvoje opice je smutná');
+    expect(label()).toBe('Your monkey is sad');
     act(() => { jest.advanceTimersByTime(motion.reactions.sad.holdMs + 1); });
-    expect(label()).toBe('Tvoje opice');
+    expect(label()).toBe('Your monkey');
   });
 });
 

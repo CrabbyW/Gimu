@@ -50,7 +50,7 @@ test('getRecap před koncem hodí chybu; claimReward je idempotentní', async ()
   await seed(3);
   useSettings.setState({ devTimeOffsetMs: ACTIVE.getTime() - Date.now() });
   await services.season.setGoal(ID, { kind: 'lessons', count: 2 });
-  await expect(services.season.getRecap(ID, ACTIVE)).rejects.toThrow('neskončila');
+  await expect(services.season.getRecap(ID, ACTIVE)).rejects.toThrow('not ended');
   const recap = await services.season.getRecap(ID, AFTER);
   expect(recap).toMatchObject({ lessons: 3, rewardEarned: true });
   const a = await services.season.claimReward(ID, AFTER);

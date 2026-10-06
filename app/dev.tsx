@@ -58,7 +58,7 @@ export default function DevScreen() {
         </View>
         <Telemetry
           items={[
-            { key: copy.dev.now, value: `${current.toLocaleDateString('cs-CZ')} ${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}` },
+            { key: copy.dev.now, value: `${current.toLocaleDateString('en-US')} ${String(current.getHours()).padStart(2, '0')}:${String(current.getMinutes()).padStart(2, '0')}` },
             { key: copy.dev.offset, value: copy.dev.offsetValue(days, hours) },
           ]}
         />

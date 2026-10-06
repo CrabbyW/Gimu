@@ -12,7 +12,7 @@ import type { LeagueService, LeagueWeekView } from '../contracts';
 
 const requireProfile = () => {
   const p = useDb.getState().profile;
-  if (!p) throw new Error('Profil neexistuje, nejdřív onboarding.');
+  if (!p) throw new Error('Profile does not exist, run onboarding first.');
   return p;
 };
 

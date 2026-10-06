@@ -59,7 +59,7 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
   const milestones = seasonMilestones(profile);
   const [kind, setKind] = useState<Kind | null>(existing?.kind ?? null);
   const [count, setCount] = useState(existing?.kind === 'activeDays' ? String(existing.days) : existing?.kind === 'lessons' ? String(existing.count) : '');
-  const [kg, setKg] = useState(existing?.kind === 'weight' ? String(Math.abs(existing.deltaKg)).replace('.', ',') : '');
+  const [kg, setKg] = useState(existing?.kind === 'weight' ? String(Math.abs(existing.deltaKg)) : '');
   const [dir, setDir] = useState<Dir>(existing?.kind === 'weight' ? (existing.deltaKg > 0 ? 'up' : 'down') : profile?.weightGoal.kind === 'gain' ? 'up' : 'down');
   const [pick, setPick] = useState<string | null>(existing?.kind === 'milestone' ? CUSTOM : milestones[0]?.id ?? CUSTOM);
   const [name, setName] = useState(existing?.kind === 'milestone' ? existing.label : '');

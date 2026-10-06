@@ -15,6 +15,6 @@ export function configureNotifications() {
     handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
   });
   if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync(REMINDER_CHANNEL, { name: 'Připomínky', importance: Notifications.AndroidImportance.DEFAULT }).catch(() => undefined);
+    Notifications.setNotificationChannelAsync(REMINDER_CHANNEL, { name: 'Reminders', importance: Notifications.AndroidImportance.DEFAULT }).catch(() => undefined);
   }
 }
