@@ -19,6 +19,7 @@ import { ease, motion, stageUp, useMotionSafe } from '@/lib/motion';
 import { parseStageParam } from '@/logic/mascot';
 import { dots, useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 const NO_COSMETICS: Partial<Record<CosmeticSlot, string>> = {};
 /** Plocha scény = prstenec stage (Nothing Dot fáze 2); opička M sedí na jeho spodní hraně. */
@@ -132,7 +133,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
   const center = { position: 'absolute', left: 0, top: 0, width: BOX, height: BOX, alignItems: 'center', justifyContent: 'center' } as const;
   const ink = { color: c.onSeasonGold };
   return (
-    <View style={{ flex: 1, backgroundColor: c.seasonGold, paddingTop: insets.top }} accessibilityViewIsModal>
+    <ReactiveBackground tone="gold" style={{ backgroundColor: c.seasonGold, paddingTop: insets.top }} accessibilityViewIsModal>
       <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: space.l, gap: space.xl }}>
         <View style={{ width: BOX, height: BOX + MASCOT_DROP, alignSelf: 'center' }} accessible accessibilityLabel={copy.stageUp.a11y(to, name)}>
           {/* Starý stage: tečkový prstenec rozsvícený do from/3 s Doto číslem a opičkou. Motion ho smrští
@@ -164,7 +165,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
         </Animated.View>
       </View>
       <BigActionBar primary={{ label: copy.stageUp.cta, onPress: onContinue, disabled: !ready || leaving, onGold: true }} />
-    </View>
+    </ReactiveBackground>
   );
 }
 

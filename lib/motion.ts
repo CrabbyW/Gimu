@@ -220,21 +220,22 @@ export const motion = {
  */
 export const lessonDone = {
   fieldAt: 0,
-  /** Vlna od středu přeběhne pole za tolik ms (šířka pásma `waveBand` pt). */
-  fieldMs: 640,
+  /** Vlna od středu kotouče přeběhne pole za tolik ms (šířka pásma `waveBand` pt). */
+  fieldMs: 800,
   waveBand: 56,
   gatherAt: 200,
-  gatherMs: 700,
+  /** Slétání teček do víru (2026-10-06: 700 → 1100 ms, výraznější spirála `twist`). */
+  gatherMs: 1100,
   /** Podíl `gatherMs`, o který se rozloží starty teček (pořadí spirálou); zbytek je let jedné tečky. */
-  gatherStagger: 0.4,
-  /** Pootočení dráhy tečky (rad): let po spirále, ne po přímce. */
-  twist: 1.6,
-  snapAt: 900,
+  gatherStagger: 0.45,
+  /** Pootočení dráhy tečky (rad): let po spirále (vír), ne po přímce. */
+  twist: 2.6,
+  snapAt: 1300,
   snapScale: 1.08,
-  mascotAt: 1000,
+  mascotAt: 1450,
   /** Titulek a „Zítra“ dosednou s opičkou, XP čísla napočítá `countMs`. */
-  countMs: 700,
-  ctaAt: 1600,
+  countMs: 900,
+  ctaAt: 2600,
   ctaRise: 24,
   /** Kotouč scény: průměr jako podíl šířky obsahu (strop `plateMax`). */
   plateFrac: 0.62,
@@ -242,9 +243,19 @@ export const lessonDone = {
   /** Strop teček celoplošného pole scény (390 × 844 při rozteči 14 ≈ 1 700). */
   fieldMax: 2000,
   /** Kotouč se během dolétání nadechne na `snapScale` od tohoto podílu `gatherMs`, pak nacvakne. */
-  swellFrom: 0.55,
+  swellFrom: 0.6,
   /** Tečkový shock prstenec při nacvaknutí (`motion.shock`): z poloměru kotouče ven. */
   shockMs: 520,
+  /** Rázová vlna polem při nacvaknutí: z kotouče přes celou obrazovku, s krátkým rozzářením teček. */
+  shockWaveMs: 900,
+  /** Roztočení kotouče po nacvaknutí: `turns` otáček za `ms` (ease-out), pak ambientní rotace. */
+  spinKick: { turns: 0.6, ms: 1400 },
+  /** Haptický podpis: crescendo tiků při slétání (zrychlují), podíly `gatherMs` od–do; od `lightFrom` light místo selection. */
+  crescendo: { ticks: 7, from: 0.15, to: 0.95, lightFrom: 3 },
+  /** Notifikace success po heavy nacvaknutí. */
+  successAfterSnap: 110,
+  /** Dvojitý „heartbeat“ po doběhu XP: odstup úderů. */
+  heartbeatGap: 120,
   reducedMs: 200,
   /** Doběh na konečný stav při přeskočení (tap kamkoli). */
   skipMs: 150,

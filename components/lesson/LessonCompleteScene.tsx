@@ -3,7 +3,7 @@ import { AppState, Pressable, View, type LayoutChangeEvent } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing, ReduceMotion, cancelAnimation, makeMutable, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue,
-  withDelay, withRepeat, withSpring, withTiming, type SharedValue,
+  withDelay, withRepeat, withSequence, withSpring, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurMask, Canvas, Group, Points, vec } from '@shopify/react-native-skia';
@@ -28,7 +28,7 @@ import type { LessonResult } from '@/services';
 import type { LessonPathView } from '@/services/contracts';
 import { dots, useCompact, useTheme } from '@/theme';
 import type { CosmeticSlot, Lesson, Mood } from '@/types';
-import { celebrationTimeline, fieldGrid, gatherSources, once, stepOf, xpBreakdownLabel, xpTickStep } from './celebration';
+import { celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, once, stepOf, xpBreakdownLabel, xpTickStep } from './celebration';
 
 const t = copy.complete;
 const XP_LABELS = { lesson: t.xpLesson, boss: t.xpBoss, replay: t.xpReplay, first: t.xpFirst, streak: t.xpStreak };
@@ -70,13 +70,16 @@ interface Props {
  * Vlajková loď (Nothing Dot spec §5): dokončení lekce z teček. Výsledek je uložený dřív, než scéna začne;
  * animace ho jen ukazuje a nic neblokuje (tap kamkoli = přeskočit na konec, CTA pak hned funguje).
  *
- *    0 ms  celoplošné pole teček se rozsvítí vlnou od středu kotouče (`DotField.wave`)
- *  200 ms  tečky pole vzlétnou a po spirále se slétnou do prstenců kotouče (700 ms, pořadí `spiralOrder`);
- *          ve druhé půlce letu se kotouč nadechne na 1.08
- *  900 ms  nacvaknutí: 1.08 → 1 pružinou `spring.kotouc`, tečkový shock prstenec, haptika success + cvak,
- *          kotouč se rozjede ambientní rotací s kometou, číslo kg v Doto
- * 1000 ms  opička celebrate + jantarová hrana šálu, titulek, XP napočítá, řada série se rozsvítí a přibude +1
- * 1600 ms  CTA [POKRAČOVAT] nastoupí zdola
+ *    0 ms  celoplošné pole teček se rozsvítí vlnou od středu kotouče (`DotField.wave`, 800 ms)
+ *  200 ms  tečky pole vzlétnou a vírem (`twist` 2.6) se slétnou do prstenců kotouče (1100 ms, pořadí `spiralOrder`);
+ *          haptické crescendo 7 zrychlujících tiků (selection → light); od 60 % letu se kotouč nadechne na 1.08
+ * 1300 ms  nacvaknutí: 1.08 → 1 pružinou `spring.kotouc`, heavy + cvak, za 110 ms success; tečkový shock prstenec
+ *          a rázová vlna polem z kotouče přes obrazovku (900 ms, rozzáření); kotouč se roztočí (0.6 otáčky,
+ *          1400 ms ease-out) a zpomalí do ambientní rotace s kometou
+ * 1450 ms  opička reakce celebrate + jantarová hrana šálu, titulek, XP napočítá (900 ms, tik na každém kroku),
+ *          řada série se rozsvítí tečka po tečce a přibude +1
+ * 2350 ms  XP doběhne: dvojitý „heartbeat“ medium → light (120 ms)
+ * 2600 ms  CTA [POKRAČOVAT] nastoupí zdola
  *
  * Vše na UI vlákně (shared values, Skia `useDerivedValue`); React stav jen pro náladu opice, číslo XP (≤ 8 ticků)
  * a řadu série. Omezený pohyb: konečný stav jedním prolnutím 200 ms, haptika success zůstává.
@@ -160,20 +163,28 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
   const at = (ms: number, fn: () => void) => { steps.current.push(uiAt(ms, fn)); };
   const cancelSteps = () => { steps.current.forEach((m) => cancelAnimation(m)); steps.current = []; };
 
+  // Každý krok napočítání: číslo + tik (zvuk; haptiku drží podpis `celebrationHaptics`). Po přeskočení bez tiku.
+  const onXpStep = (v: number) => {
+    setXpShown(v);
+    if (!calm && v > 0 && !skipGate.current?.done) feedback('xpTick');
+  };
   // Napočítání XP: nejvýš 8 ticků (`xpTickStep`), React se překreslí jen na hranici ticku.
   const xpStep = xpTickStep(result.xp.total);
   useAnimatedReaction(
     () => Math.min(result.xp.total, Math.ceil(xp.value / xpStep) * xpStep),
-    (v, prev) => { if (v !== prev) scheduleOnRN(setXpShown, v); },
+    (v, prev) => { if (v !== prev) scheduleOnRN(onXpStep, v); },
   );
 
   const teardownGate = useRef<ReturnType<typeof once> | null>(null);
   const teardown = () => { (teardownGate.current ??= once(() => setDucking(false))).run(); };
 
   // Ambientní rotace nacvaknutého kotouče (aktuální = 24 s / otáčka), s omezeným pohybem stojí.
-  const startSpin = () => {
+  const startSpin = (kick = false) => {
     if (calm) return;
-    spin.value = withRepeat(withTiming(TAU, { duration: motion.plateSpin.currentMs, easing: Easing.linear, ...NEVER }), -1, false);
+    const from = kick ? L.spinKick.turns * TAU : 0;
+    const ambient = withRepeat(withTiming(from + TAU, { duration: motion.plateSpin.currentMs, easing: Easing.linear, ...NEVER }), -1, false);
+    // Po nacvaknutí: roztočení z víru (ease-out = zpomalí), pak plynule ambientní rotace.
+    spin.value = kick ? withSequence(withTiming(from, { duration: L.spinKick.ms, easing: ease.out, ...NEVER }), ambient) : ambient;
   };
 
   // Přeskočení na konečný stav (tap kamkoli, pozadí). Idempotentní; bez haptiky a zvuku.
@@ -203,9 +214,9 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
     started.current = true;
     setDucking(true);
     if (calm) {
-      // Omezený pohyb: konečný stav jedním prolnutím, potvrzení dokončení zůstává hmatové.
+      // Omezený pohyb: konečný stav jedním prolnutím, potvrzení dokončení zůstává hmatové (jen success).
       sceneIn.value = withTiming(1, { duration: L.reducedMs, easing: ease.out, ...NEVER });
-      fire('success');
+      for (const [, kind] of celebrationHaptics(true)) fire(kind);
       playSfx('plateSnap');
       reportReaction({ type: 'lessonDone' });
       return;
@@ -215,23 +226,26 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
     const snap = stepOf(tl, 'snap');
     const cheerStep = stepOf(tl, 'mascot');
     const cta = stepOf(tl, 'cta');
-    // 0: vlna od středu přeběhne pole.
+    // Haptický podpis: každý úder plánovaný z UI vlákna (sedí na snímek s animací); přeskočení zbytek zruší.
+    for (const [ms, kind] of celebrationHaptics(false)) at(ms, () => fire(kind));
+    // 0: vlna od kotouče přeběhne pole.
     wave.value = withDelay(field.at, withTiming(1, { duration: field.durationMs, easing: Easing.out(Easing.quad), ...NEVER }));
     // 200: let teček (lineární průběh, každá tečka má vlastní ease-out v `flying`).
     gather.value = withDelay(gat.at, withTiming(1, { duration: gat.durationMs, easing: Easing.linear, ...NEVER }));
     // Nádech před nacvaknutím: kotouč se v druhé půlce letu roztáhne na `snapScale`.
     const swellAt = gat.at + gat.durationMs * L.swellFrom;
     swell.value = withDelay(swellAt, withTiming(L.snapScale, { duration: snap.at - swellAt, easing: ease.out, ...NEVER }));
-    // 900: nacvaknutí.
+    // 1300: nacvaknutí: shock prstenec + rázová vlna polem, roztočení kotouče.
     at(snap.at, () => {
       plateOn.value = 1;
       swell.value = withSpring(1, { ...spring.kotouc, ...NEVER });
       shock.value = withTiming(1, { duration: L.shockMs, easing: ease.punch, ...NEVER });
-      startSpin();
-      fire('success');
+      wave.value = 0;
+      wave.value = withTiming(1, { duration: L.shockWaveMs, easing: Easing.out(Easing.cubic), ...NEVER });
+      startSpin(true);
       playSfx('plateSnap');
     });
-    // 1000: opička, titulek, XP, série.
+    // 1450: opička, titulek, XP, série.
     at(cheerStep.at, () => {
       setMood(cheer);
       reportReaction({ type: 'lessonDone' });
@@ -246,7 +260,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
       // Hrdost po oslavě: až skončí její cooldown, jinak by ji vyšší priorita celebrate zahodila.
       at(cheerStep.at + Math.max(scanMs, REACTION_COOLDOWN_MS), () => reportReaction({ type: 'streakUp' }));
     }
-    // 1600: CTA zdola.
+    // 2600: CTA zdola, až po doznění XP a heartbeatu.
     at(cta.at, () => { setCtaReady(true); ctaIn.value = withTiming(1, { ...motion.reveal, ...NEVER }); });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sekvence běží jednou, až je geometrie
   }, [flight]);
@@ -295,7 +309,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
       <View ref={rootRef} onLayout={onRootLayout} style={{ flex: 1, backgroundColor: c.base, overflow: 'hidden' }}>
         {box ? (
           <DotField
-            width={box.w} height={box.h} max={L.fieldMax} wave={calm ? undefined : wave} touch={touch.touch}
+            width={box.w} height={box.h} max={L.fieldMax} wave={calm ? undefined : wave} waveOrigin={center ?? undefined} touch={touch.touch}
             style={{ position: 'absolute', left: 0, top: 0 }}
           />
         ) : null}
@@ -370,7 +384,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
             </Canvas>
           </SkiaGuard>
         ) : null}
-        {/* CTA nastoupí zdola v 1600 ms; místo je rezervované, layout se nehýbe. Do té doby tap přeskočí. */}
+        {/* CTA nastoupí zdola v `lessonDone.ctaAt`; místo je rezervované, layout se nehýbe. Do té doby tap přeskočí. */}
         <Animated.View
           pointerEvents={ctaReady ? 'auto' : 'none'}
           style={[{ paddingHorizontal: space.l, paddingTop: space.m, paddingBottom: insets.bottom + space.m }, ctaStyle]}

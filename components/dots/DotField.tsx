@@ -22,8 +22,14 @@ interface Props {
   touch?: DotTouch;
   /** Vlna od středu pole (oslava): průběh 0–1, čelo vlny jde od středu do nejvzdálenějšího rohu. */
   wave?: SharedValue<number>;
+  /** Odkud vlna `wave` vychází (výchozí střed pole); čelo dojde do nejvzdálenějšího rohu. */
+  waveOrigin?: { x: number; y: number };
   /** Strop počtu teček (výchozí `dots.field.max`). Celoplošné pole oslavy ho zvedá, aby pokrylo obrazovku. */
   max?: number;
+  /** Barvy teček místo `useDotInk` (stage-up na zlaté ploše: `goldDotOff` v klidu, `goldDotDim` pod prstem). */
+  ink?: { off: string; on: string };
+  /** Násobek krytí klidových teček (tlumené pozadí `ReactiveBackground`); rozjasnění pod prstem se netlumí. */
+  restOpacity?: number;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -37,8 +43,9 @@ const BAND = lessonDone.waveBand;
  *  Počet teček je zastropovaný `dots.field.max` (výkon): navíc řádky se ořežou na straně, kam pole doznívá.
  *  Pohyb (motion-agent): dotyková vlna `touch` a vlna od středu `wave` posouvají tečky a rozjasněné kreslí
  *  navrch v `text`; vše v `useDerivedValue` na UI vlákně, bez React renderu. */
-export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none', touch, wave, max = dots.field.max, style }: Props) {
-  const ink = useDotInk();
+export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none', touch, wave, waveOrigin, max = dots.field.max, ink: inkOverride, restOpacity = 1, style }: Props) {
+  const themeInk = useDotInk();
+  const ink = inkOverride ?? themeInk;
   const bands = useMemo(() => {
     if (width <= 0 || height <= 0) return [];
     const cols = Math.floor(width / pitch) + 1;
@@ -60,7 +67,9 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
   }, [width, height, pitch, fade, max]);
 
   const base = useMemo(() => bands.map((b) => b.points), [bands]);
-  const reach = Math.hypot(width, height) / 2;
+  const wx = waveOrigin ? waveOrigin.x : width / 2;
+  const wy = waveOrigin ? waveOrigin.y : height / 2;
+  const reach = Math.hypot(Math.max(wx, width - wx), Math.max(wy, height - wy));
   // Jeden průchod pro všechna pásma: posunuté body po pásmech + společná rozjasněná vrstva.
   const moved = useDerivedValue(() => {
     const s = touch ? touch.strength.value : 0;
@@ -70,7 +79,7 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
     for (let i = 0; i < base.length; i++) {
       let pts: readonly Pt[] = base[i]!;
       if (w > 0 && w < 1) {
-        const r = wavePoints(pts, width / 2, height / 2, w * (reach + BAND), BAND, RIPPLE.push);
+        const r = wavePoints(pts, wx, wy, w * (reach + BAND), BAND, RIPPLE.push);
         pts = r.pts;
         for (const q of r.lit) lit.push(q);
       }
@@ -96,7 +105,7 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
       <SkiaGuard style={{ width, height }}>
         <Canvas testID="dotfield-canvas" style={{ width, height }}>
           {bands.map((b, i) => (
-            <BandPoints key={i} index={i} moved={moved} color={ink.off} opacity={b.opacity} strokeWidth={dots.field.r * 2} />
+            <BandPoints key={i} index={i} moved={moved} color={ink.off} opacity={b.opacity * restOpacity} strokeWidth={dots.field.r * 2} />
           ))}
           <Points points={litPoints} mode="points" color={ink.on} opacity={litOpacity} strokeWidth={dots.field.r * 2} strokeCap="round" />
         </Canvas>

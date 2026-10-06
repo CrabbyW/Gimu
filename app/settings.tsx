@@ -21,6 +21,7 @@ import { intro, motion } from '@/lib/motion';
 import { services } from '@/services';
 import { useDevControls } from '@/hooks/useDevControls';
 import { opacity, useTheme } from '@/theme';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 const HOURS = REMINDER_HOURS;
@@ -66,7 +67,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
       <ScreenHeader intro={first} title={copy.settings.title} actions={[{ icon: X, label: copy.common.back, onPress: () => router.back() }]} />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: insets.bottom + space.xxl, gap: space.xl }}
@@ -163,7 +164,7 @@ export default function SettingsScreen() {
           </Section>
         ) : null}
       </ScrollView>
-    </View>
+    </ReactiveBackground>
   );
 }
 

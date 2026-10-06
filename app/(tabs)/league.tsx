@@ -25,6 +25,7 @@ import { intro, motion, stagger } from '@/lib/motion';
 import { services, type LeagueWeekView } from '@/services';
 import { useCompact, useTheme } from '@/theme';
 import type { LeagueEntry } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 const LS = intro.leagueScroll;
 
@@ -66,7 +67,7 @@ export default function LeagueScreen() {
   const view = league.status === 'ready' ? league.data : null;
   const left = view ? formatCountdown(view.endsAt.getTime() - now.getTime()) : null;
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
       <ScreenHeader
         intro={headerIn}
         title={copy.tabs.league}
@@ -81,7 +82,7 @@ export default function LeagueScreen() {
         : league.status === 'error' ? <ErrorState edges={[]} what={copy.league.errorWhat} onRetry={league.retry} />
           : locked ? <LockedLeague view={league.data} />
             : <Standings view={league.data} />}
-    </View>
+    </ReactiveBackground>
   );
 }
 

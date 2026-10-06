@@ -25,6 +25,7 @@ import { diffDays, toISODate } from '@/logic/dates';
 import type { SeasonStatus } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { SeasonGoal } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 const LOCK_RISE = intro.lockIn.rise;
 
@@ -39,7 +40,7 @@ export default function SeasonScreen() {
   const status = useSeasonStatus();
   const season = status.status === 'ready' && status.data ? status.data.season : null;
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
       <ScreenHeader
         intro={headerIn}
         title={copy.tabs.season}
@@ -52,7 +53,7 @@ export default function SeasonScreen() {
         : status.status === 'error' ? <ErrorState edges={[]} what={copy.season.errorWhat} onRetry={status.retry} />
           : status.data === null ? <NoSeason />
             : <SeasonBody status={status.data} />}
-    </View>
+    </ReactiveBackground>
   );
 }
 

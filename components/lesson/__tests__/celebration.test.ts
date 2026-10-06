@@ -1,5 +1,5 @@
 import { lessonDone } from '@/lib/motion';
-import { barbellLayout, celebrationTimeline, fieldGrid, gatherSources, plateHeight, plateWidth, splitPlates, xpBreakdownLabel } from '../celebration';
+import { barbellLayout, celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, plateHeight, plateWidth, splitPlates, xpBreakdownLabel } from '../celebration';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- oficiální jest mocky knihoven */
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
@@ -57,10 +57,32 @@ describe('oslava z teček (Nothing Dot §5)', () => {
     const tl = celebrationTimeline(false);
     expect(tl.map((s) => s.id)).toEqual(['field', 'gather', 'snap', 'mascot', 'cta']);
     expect(tl.map((s) => s.at)).toEqual([lessonDone.fieldAt, lessonDone.gatherAt, lessonDone.snapAt, lessonDone.mascotAt, lessonDone.ctaAt]);
-    expect(tl.map((s) => s.at)).toEqual([0, 200, 900, 1000, 1600]);
-    expect(tl[1]!.durationMs).toBe(700);
+    expect(tl.map((s) => s.at)).toEqual([0, 200, 1300, 1450, 2600]);
+    expect(tl[1]!.durationMs).toBe(1100);
+    // CTA až po doběhu XP (a heartbeatu).
+    expect(tl[4]!.at).toBeGreaterThan(tl[3]!.at + tl[3]!.durationMs + lessonDone.heartbeatGap);
     // Tečky dolétnou přesně v okamžiku nacvaknutí.
     expect(tl[1]!.at + tl[1]!.durationMs).toBe(tl[2]!.at);
+  });
+
+  test('haptický podpis: zrychlující crescendo při slétání, heavy v nacvaknutí, success, heartbeat po XP', () => {
+    const h = celebrationHaptics(false);
+    const ticks = h.slice(0, lessonDone.crescendo.ticks);
+    expect(ticks.every(([, k]) => k === 'selection' || k === 'light')).toBe(true);
+    const at = ticks.map(([ms]) => ms);
+    const gaps = at.slice(1).map((ms, i) => ms - at[i]!);
+    gaps.slice(1).forEach((g, i) => expect(g).toBeLessThanOrEqual(gaps[i]!));
+    expect(at[0]!).toBeGreaterThanOrEqual(lessonDone.gatherAt);
+    expect(at[at.length - 1]!).toBeLessThan(lessonDone.snapAt);
+    const rest = h.slice(lessonDone.crescendo.ticks);
+    const xpEnd = lessonDone.mascotAt + lessonDone.countMs;
+    expect(rest).toEqual([[lessonDone.snapAt, 'heavy'], [lessonDone.snapAt + 110, 'success'], [xpEnd, 'medium'], [xpEnd + 120, 'light']]);
+    expect(h.map(([ms]) => ms)).toEqual([...h.map(([ms]) => ms)].sort((a, b) => a - b));
+    expect(h[h.length - 1]![0]).toBeLessThan(lessonDone.ctaAt);
+  });
+
+  test('haptika s omezeným pohybem: jen success', () => {
+    expect(celebrationHaptics(true)).toEqual([[0, 'success']]);
   });
 
   test('omezený pohyb: všechno hned, 200 ms prolnutí', () => {

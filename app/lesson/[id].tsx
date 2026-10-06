@@ -20,6 +20,7 @@ import { nextPhase, type LessonPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, Exercise } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 const NO_COSMETICS: Partial<Record<CosmeticSlot, string>> = {};
 
@@ -121,9 +122,9 @@ export default function LessonScreen() {
   if (!exercise) return <ErrorState what={copy.common.loadTarget.lesson} onRetry={lesson.refresh} />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
       {/* Horní safe area odsazuje LessonProgress sám (fullScreenModal na iOS, viz komentář tam). */}
-      <Screen edges={[]}>
+      <Screen edges={[]} transparent>
         <LessonProgress total={exercises.length} current={index} onClose={askQuit} />
         <ExerciseStep
           key={exercise.id + index}
@@ -135,7 +136,7 @@ export default function LessonScreen() {
           onSkip={demo ? () => void advance(true) : canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
         />
       </Screen>
-    </View>
+    </ReactiveBackground>
   );
 }
 

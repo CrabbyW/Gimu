@@ -41,7 +41,7 @@ function confirmBuy(message: string, onYes: () => void) {
 export default function WardrobeScreen() {
   const wardrobe = useWardrobe();
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['top', 'bottom']} background="base">
       <Header />
       {wardrobe.status === 'loading' ? <DotLoaderScreen />
         : wardrobe.status === 'error' ? <ErrorState what={copy.wardrobe.errorWhat} onRetry={wardrobe.retry} />

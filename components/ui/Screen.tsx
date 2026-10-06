@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Keyboard, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+import { ReactiveBackground, type ReactiveTone } from '@/components/dots/ReactiveBackground';
 import { useTheme } from '@/theme';
 import { RevealOnFocusContext, type RevealOnFocus } from './revealOnFocus';
 
@@ -9,12 +10,28 @@ interface Props {
   edges?: readonly Edge[];
   scroll?: boolean;
   children?: ReactNode;
+  /** Reaktivní tečkové pozadí za obsahem (`ReactiveBackground`). Pole nescrolluje se obsahem. */
+  background?: ReactiveTone;
+  /** Průhledná plocha (bez `base`): obrazovka má pozadí o úroveň výš (rám s vlastním `ReactiveBackground`). */
+  transparent?: boolean;
 }
 
-export function Screen({ edges = ['top', 'bottom'], scroll = false, children }: Props) {
+export function Screen({ edges = ['top', 'bottom'], scroll = false, children, background, transparent = false }: Props) {
+  const { c } = useTheme();
+  if (background) {
+    return (
+      <ReactiveBackground tone={background} style={{ backgroundColor: c.base }}>
+        <ScreenBody edges={edges} scroll={scroll} transparent>{children}</ScreenBody>
+      </ReactiveBackground>
+    );
+  }
+  return <ScreenBody edges={edges} scroll={scroll} transparent={transparent}>{children}</ScreenBody>;
+}
+
+function ScreenBody({ edges, scroll, transparent, children }: { edges: readonly Edge[]; scroll: boolean; transparent: boolean; children?: ReactNode }) {
   const { c, space } = useTheme();
   return (
-    <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: c.base }}>
+    <SafeAreaView edges={edges} style={{ flex: 1, backgroundColor: transparent ? 'transparent' : c.base }}>
       {scroll ? (
         <RevealingScroll>{children}</RevealingScroll>
       ) : (

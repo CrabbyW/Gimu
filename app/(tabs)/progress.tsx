@@ -28,6 +28,7 @@ import { intro, motion, stagger, useMotionSafe } from '@/lib/motion';
 import { parseWeight } from '@/logic/onboarding';
 import { useCompact, useTheme } from '@/theme';
 import type { MascotStage, Milestone, UserProfile } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 /** Jak dlouho drží overlay celebrate bez nové kosmetiky (Task 27 Step 7). S kosmetikou čeká na zavření. */
 const CELEBRATE_MS = 1800;
@@ -42,12 +43,12 @@ export default function ProgressScreen() {
   const { c } = useTheme();
   const profile = useProfile();
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
       <TabHeader title={copy.tabs.progress} intro={headerIn} />
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.progress.errorWhat} onRetry={profile.retry} />
           : <ProgressBody profile={profile.data!} />}
-    </View>
+    </ReactiveBackground>
   );
 }
 

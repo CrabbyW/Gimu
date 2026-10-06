@@ -20,6 +20,7 @@ import { intro, motion, stagger } from '@/lib/motion';
 import { validateSeasonGoal, type SeasonGoalCheck } from '@/logic/season';
 import { opacity, useTheme } from '@/theme';
 import type { Milestone, Season, SeasonGoal, UserProfile } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 type Kind = SeasonGoal['kind'];
 type Unit = 'reps' | 'seconds';
@@ -113,8 +114,9 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
         : false;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.base }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Screen edges={['top']} scroll>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Screen edges={['top']} scroll transparent>
         <View style={{ paddingTop: space.m, gap: space.xl }}>
           {/* Motion: hlavička → dlaždice 2×2 po 50 ms → pole hodnoty (při změně typu znovu, `motion.ui`). */}
           <Reveal play delay={intro.modal.at} rise={intro.modal.rise} style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.m }}>
@@ -183,6 +185,7 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
       </Screen>
       <BigActionBar primary={{ label: t.lockIn, onPress: () => { void submit(); }, disabled: !kind || !filled || busy }} />
     </KeyboardAvoidingView>
+    </ReactiveBackground>
   );
 }
 

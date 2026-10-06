@@ -6,6 +6,7 @@ import { DotRow } from '@/components/dots/DotRow';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Reveal } from '@/components/ui/choreo';
 import { Screen } from '@/components/ui/Screen';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 import { StatusLine } from '@/components/ui/StatusLine';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -55,8 +56,9 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
     onContinue();
   };
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.base }}>
-      <Screen edges={['top']} scroll>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <Screen edges={['top']} scroll transparent>
         {/* Nothing Dot: stavový řádek „KROK … 01/05“ a pod ním 5 teček (rozsvícené = aktuální a hotové kroky). */}
         <View style={{ paddingTop: space.l, gap: space.s }}>
           <StatusLine
@@ -79,5 +81,6 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
         secondary={step > 1 ? { label: copy.common.back, onPress: () => router.back() } : undefined}
       />
     </KeyboardAvoidingView>
+    </ReactiveBackground>
   );
 }

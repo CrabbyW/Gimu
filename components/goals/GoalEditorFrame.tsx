@@ -7,6 +7,7 @@ import { Reveal } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useGoals } from '@/hooks/useGoals';
@@ -66,8 +67,9 @@ const G = intro.goals;
 export function GoalEditorFrame({ title, lead, canSave, busy, error, onSave, children }: Props) {
   const { c, space, size, stroke, radius } = useTheme();
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.base }}>
-      <Screen edges={['top']} scroll>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <Screen edges={['top']} scroll transparent>
         {/* Motion (polish 2026-10-05): kicker → titulek+lead → obsah po `intro.goals.step`, 480 ms ease.out, bez pružiny.
             Hraje při každém otevření editoru (modal se mountuje znovu). Lišta Zrušit/Uložit stojí. */}
         <Reveal play delay={G.at} rise={G.rise} config={motion.reveal} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: size.hitLarge }}>
@@ -101,5 +103,6 @@ export function GoalEditorFrame({ title, lead, canSave, busy, error, onSave, chi
         secondary={{ label: copy.goals.cancel, onPress: () => router.back() }}
       />
     </KeyboardAvoidingView>
+    </ReactiveBackground>
   );
 }

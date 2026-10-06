@@ -80,3 +80,12 @@ export function spiralOrder<T extends { angle: number; ring?: number }>(dots: T[
       return (da.ring ?? 0) - (db.ring ?? 0) || norm(da.angle) - norm(db.angle);
     });
 }
+
+/** Rozteč, při které celá plocha `w × h` vejde pod strop `max` (nikdy hustší než `base`). */
+export function backgroundPitch(w: number, h: number, base: number, max: number): number {
+  if (w <= 0 || h <= 0) return base;
+  // (w/p + 1)(h/p + 1) ≤ max  →  odhad z plochy, pak dorovnat po kroku, dokud se nevejde.
+  let p = Math.max(base, Math.sqrt((w * h) / max));
+  while ((Math.floor(w / p) + 1) * (Math.floor(h / p) + 1) > max) p += 0.5;
+  return p;
+}

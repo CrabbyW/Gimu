@@ -1,6 +1,7 @@
 // Čistá geometrie činky a text rozpisu XP pro oslavu (bez Reactu), pokryté testem v __tests__/celebration.test.ts.
 import { plateSize } from '@/components/map/geometry';
 import { lessonDone, motion } from '@/lib/motion';
+import type { HapticKind } from '@/lib/haptics';
 import type { XpBreakdown } from '@/logic/xp';
 import type { PlateKg } from '@/types';
 
@@ -118,6 +119,23 @@ export function celebrationTimeline(reduced: boolean): CelebrationStep[] {
     { id: 'cta', at: L.ctaAt, durationMs: motion.reveal.duration },
   ];
   return reduced ? steps.map((s) => ({ ...s, at: 0, durationMs: L.reducedMs })) : steps;
+}
+
+/** Haptický podpis dokončení lekce v ms od zobrazení scény (odlišný od ostatních success v appce):
+ *  crescendo tiků při slétání teček (zrychlují: odstupy ∝ odmocnině, selection → light), heavy v nacvaknutí,
+ *  notifikace success, a po doběhu XP dvojitý „heartbeat“ medium → light. Omezený pohyb: jen success. */
+export function celebrationHaptics(reduced: boolean): [number, HapticKind][] {
+  const L = lessonDone;
+  if (reduced) return [[0, 'success']];
+  const C = L.crescendo;
+  const out: [number, HapticKind][] = [];
+  for (let j = 0; j < C.ticks; j++) {
+    const f = C.from + (C.to - C.from) * Math.sqrt(j / Math.max(1, C.ticks - 1));
+    out.push([Math.round(L.gatherAt + L.gatherMs * f), j < C.lightFrom ? 'selection' : 'light']);
+  }
+  const xpEnd = L.mascotAt + L.countMs;
+  out.push([L.snapAt, 'heavy'], [L.snapAt + L.successAfterSnap, 'success'], [xpEnd, 'medium'], [xpEnd + L.heartbeatGap, 'light']);
+  return out;
 }
 
 /** Krok osy podle id (osa je úplná, krok vždy existuje). */

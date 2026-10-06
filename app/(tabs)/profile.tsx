@@ -1,11 +1,10 @@
 import { router } from 'expo-router';
 import { ChevronRight, Settings, Shirt } from 'lucide-react-native';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View, useWindowDimensions } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { ProfileFrame } from '@/components/cosmetics/ProfileFrame';
-import { DotField, useDotTouch } from '@/components/dots';
 import { ReactiveMascot, useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { tileColumns } from '@/components/progress/layout';
 import { BadgeTile } from '@/components/ui/BadgeTile';
@@ -27,6 +26,7 @@ import { useProfileStats } from '@/hooks/useProfileStats';
 import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
 import { dots, useTheme } from '@/theme';
 import type { UserProfile } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 /** Nejvyšší stage opice (BABY · TEENAGER · ALPHA): jednotka „/ 3“ u dlaždice stage. */
 const MAX_STAGE = Object.keys(copy.stageUp.names).length;
@@ -42,7 +42,7 @@ export default function ProfileScreen() {
   const stats = useProfileStats(data);
   const pathName = usePathOptions().find((p) => p.id === data?.path)?.name ?? data?.path ?? '';
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
+    <ReactiveBackground style={{ backgroundColor: c.base }}>
       <ScreenHeader
         intro={headerIn}
         title={copy.tabs.profile}
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.profile.errorWhat} onRetry={profile.retry} />
           : <ProfileBody profile={profile.data!} />}
-    </View>
+    </ReactiveBackground>
   );
 }
 
@@ -82,22 +82,15 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
   const badges = useBadgeProgress(profile);
   const streak = stats?.streak ?? 0;
   const longest = stats?.longestStreak ?? 0;
-  // Dotyková vlna pole za opičkou (spec §4.1); gesto jen čte dotyky, scroll nebere.
-  const field = useDotTouch();
   // Opička je hratelná (fáze 3): ťuknutí, podržení, pohled za prstem po celém hero poli.
   const reactions = useMascotReactions(useScreenFocused());
-  const heroTouch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch), [field.gesture, reactions.touch]);
-  const [heroW, setHeroW] = useState(0);
   const stackH = plateStackHeight();
 
   return (
     <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
       {/* Hrdina: opička velká na tečkovém poli, stojí na podstavci ze tří tečkových kotoučů. */}
-      <GestureDetector gesture={heroTouch}>
-        <View onLayout={(e) => setHeroW(e.nativeEvent.layout.width)} style={{ height: size.profileField + stackH / 2, alignItems: 'center', justifyContent: 'flex-end' }}>
-          {heroW > 0 ? (
-            <DotField width={heroW} height={size.profileField} fade="up" touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
-          ) : null}
+      <GestureDetector gesture={reactions.touch}>
+        <View style={{ height: size.profileField + stackH / 2, alignItems: 'center', justifyContent: 'flex-end' }}>
           <View style={{ alignItems: 'center' }}>
             <View style={{ marginBottom: -topEllipse() / 2, zIndex: 1 }}>
               <FrameIn play={first}>

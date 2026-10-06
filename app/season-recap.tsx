@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DotField } from '@/components/dots';
 import { Mascot } from '@/components/mascot';
 import { RecapSlide } from '@/components/season/RecapSlide';
 import { SeasonBadge } from '@/components/season/SeasonBadge';
@@ -22,6 +21,7 @@ import { intro, motion } from '@/lib/motion';
 import type { SeasonRecap } from '@/services/contracts';
 import { dots, opacity, useTheme } from '@/theme';
 import type { MascotStage } from '@/types';
+import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 
 const r = copy.recap;
 
@@ -62,7 +62,7 @@ interface Slide { key: string; celebrate: boolean; render(): ReactNode }
 function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId: string; seasonName: string; recap: SeasonRecap; claimedInitially: boolean }) {
   const { c, space, size, stroke, radius } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const [claimed, setClaimed] = useState(claimedInitially);
   const [claiming, setClaiming] = useState(false);
@@ -168,12 +168,10 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   };
 
   return (
-    <Animated.View style={[{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }, floodStyle]}>
-      {/* Tečkové pole za snímky (Nothing Dot): doznívá dolů, jedno plátno. Na oslavné ploše (inverze) se nekreslí:
+    <Animated.View style={[{ flex: 1 }, floodStyle]}>
+      {/* Reaktivní tečkové pozadí za snímky (celá obrazovka, jedno plátno). Na oslavné ploše (inverze) se nekreslí:
           zhasnuté tečky by na plné `text` ploše četly jako šum. */}
-      {celebrate ? null : (
-        <DotField width={width} height={height / 2} fade="down" style={{ position: 'absolute', left: 0, top: 0 }} />
-      )}
+      <ReactiveBackground visible={!celebrate} style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m, paddingLeft: space.l, paddingRight: space.l, paddingTop: space.s }}>
         <View accessible accessibilityRole="progressbar" accessibilityLabel={r.progressA11y(i + 1, total)} style={{ flex: 1, gap: space.s }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -211,6 +209,7 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
           <NavButton label={r.next} disabled={i === total - 1} onPress={next} onAccent={celebrate} />
         </View>
       </View>
+      </ReactiveBackground>
     </Animated.View>
   );
 }
