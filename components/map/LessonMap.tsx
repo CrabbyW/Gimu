@@ -219,12 +219,21 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     if (shown === 'current') { setSelected(null); onOpenLesson(n.lesson.id); return; }
     const p = posOf(n.lesson.id);
     // Dokončený uzel nahoru (nepřekryje aktuální uzel ani opici), jinak dolů; podle místa ve výřezu.
+    // Spodek výřezu bez pruhu s CTA (`footerSpace`), který mapu překrývá — jinak se popover schová pod pilulku.
+    const visibleBottom = scrollY.current + viewportH - footerSpace;
+    const nodeTop = p ? p.y - p.size / 2 : 0;
+    const nodeBottom = p ? p.y + p.size / 2 : 0;
     const above = p
       ? popoverSide({
-        done: shown === 'done', nodeTop: p.y - p.size / 2, nodeBottom: p.y + p.size / 2,
-        viewportTop: scrollY.current, viewportBottom: scrollY.current + viewportH, room: POPOVER_ROOM,
+        done: shown === 'done', nodeTop, nodeBottom,
+        viewportTop: scrollY.current, viewportBottom: visibleBottom, room: POPOVER_ROOM,
       }) === 'above'
       : false;
+    // Když se popover nevejde ani na jednu stranu, posuň mapu o chybějící kus, ať je celý vidět.
+    if (p && selected?.id !== n.lesson.id) {
+      const deficit = above ? POPOVER_ROOM - (nodeTop - scrollY.current) : POPOVER_ROOM - (visibleBottom - nodeBottom);
+      if (deficit > 0) scroll.current?.scrollTo({ y: Math.max(0, scrollY.current + (above ? -deficit : deficit)), animated: !reduced });
+    }
     setSelected((cur) => (cur?.id === n.lesson.id ? null : { id: n.lesson.id, above }));
     if (shown === 'locked') setShakes((s) => ({ ...s, [n.lesson.id]: (s[n.lesson.id] ?? 0) + 1 }));
   };

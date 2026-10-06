@@ -670,3 +670,9 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Rozhodnuto bossem: Skia install skript schválen (`allowScripts` v package.json, na pokyn uživatele); QA smazala mrtvý kód staré oslavy (Barbell, XpPop, GoldenFigure, TIMELINE_A); haptika `cta` = light podle spec (sdílí ji i tap na kotouč); rozpis XP v oslavě s nezlomitelnými mezerami uvnitř položek.
 - Rating kolo 1 = 15/100. Opraveno: dev sekce Tečky, popover uzlu v tečkovém jazyce, copy „Zítra · …“, komentář Plate.tsx, README sekce vzhledu, tento zápis.
 - Otevřené: onboarding (překryv lead textu a díra mezi kartami) → fáze 2; reakce opičky → fáze 3. Metro na tomto stroji nesleduje změny spolehlivě (restart `--clear`).
+
+## qa-agent — QA Nothing Dot fáze 1 po ratingu kola 1 (2026-10-06)
+- Udělal: `docs/QA.md` přepsán (úkoly 1–10 a Review Focus bod po bodu se spec), tsc/jest (535)/eslint zelené, snímky oslavy, `/dev` Tečky a popoveru v dark i light.
+- Opravil sám: `components/map/LessonMap.tsx` — popover uzlu se schovával pod pruh s CTA (výřez nepočítal `footerSpace`, chyběl posun mapy, když se nevejde).
+- Verdikt NESCHVÁLENO: dev Tečky „ZAMČENÝ“ rozbité na webu (limit WebGL kontextů?), HoldTimer „PŘIPRAV SE“ přes číslici a prstenec mimo střed, šedý závoj popoveru v light → design-agent.
+- Otevřené: Metro :8081 nesleduje změny, ověřováno na čerstvém serveru :8099.
