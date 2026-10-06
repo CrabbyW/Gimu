@@ -23,6 +23,6 @@ K ruční kontrole na iPhonu: haptika oslavy, tab bar a VoiceOver, četnost idle
 
 ## Praktické
 - Metro „nesledoval změny“ jen proto, že běžel s `CI=1` (CI režim vypíná watch). Bez `CI=1` se změny propisují samy.
-- Expo Go pro uživatele mimo Wi-Fi: Cloudflare quick tunnel (expo --tunnel/ngrok nefunguje, „remote gone away“). `cloudflared.exe tunnel --no-autoupdate --url http://localhost:8082` (binárka ve scratchpadu session), pak `EXPO_PACKAGER_PROXY_URL=https://<host>.trycloudflare.com npx expo start --port 8082`; v Expo Go `exps://<host>.trycloudflare.com`. Adresa tunelu je při každém spuštění nová. Port 8081 = webový server pro screenshoty agentů.
+- Expo Go pro uživatele mimo Wi-Fi: Cloudflare quick tunnel (expo --tunnel/ngrok nefunguje, „remote gone away“). `cloudflared.exe tunnel --no-autoupdate --url http://localhost:8082` (binárka ve scratchpadu session), pak `EXPO_PACKAGER_PROXY_URL=https://<host>.trycloudflare.com npx expo start --port 8082`; v Expo Go `exps://<host>.trycloudflare.com`. Adresa tunelu je při každém spuštění nová. Server startovat BEZ `--clear` a po startu stáhnout bundle předem (`curl <tunel>/index.bundle?platform=ios&dev=true&...`), jinak první načtení na telefonu vyprší („Could not connect to development server“). Port 8081 = web pro agenty.
 - Screenshoty: Playwright ve scratchpadu session (`tabs.js`, `shot.js`), Chrome z `C:/Program Files/Google/Chrome/Application/chrome.exe`. Demo profil se načte přes `/dev` → „Načíst demo profil“.
 - Agenti design/motion nemají shell, takže tsc/jest/eslint po nich spouští boss.
