@@ -740,3 +740,7 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - SPEC §6 přepsán na Nothing Dot (§6.1–6.8, detail ve spec dokumentu), §7 opraveny zastaralé termíny (Bebas, akcent, litina) a sled oslavy lekce.
 - Rozhodnuto bossem: liga začíná pódiem (QA N1), CTA na zlaté = tmavá pilulka `onGold` (QA N2).
 - Otevřené: fáze 3 (15 reakcí opičky, `logic/mascotReactions.ts`); na zařízení ověřit plynulost RingShatter/DotBurst, stage-up CTA, scroll ligy k vlastnímu řádku za 2. obrazovkou, fontScale 1.4.
+
+## 2026-10-06 · qa-agent · QA Nothing Dot fáze 2, kolo 2 (HEAD f34446a)
+- Ověřeny 37b0f5b a f34446a: tsc, jest (552) a eslint zelené. Liga má pódium jako první blok (320 i 390, dark i light). Stage-up CTA `onGold` má kontrast ~7.6:1 vůči zlatu. Ostatní CTA (`onAccent` a výchozí) beze změny, `motion.instant` dává stejné časování.
+- N1–N3 OPRAVENO. Verdikt SCHVÁLENO pro HEAD. Kód neměněn.

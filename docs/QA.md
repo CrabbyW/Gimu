@@ -1,6 +1,13 @@
-# QA: Nothing Dot fáze 2 (commity 14787b4..071733b)
+# QA: Nothing Dot fáze 2 (commity 14787b4..f34446a, kolo 2 na HEAD)
 
-Verdikt: **SCHVÁLENO** (bez blokerů; 3× ⚠️ k designu / ruční kontrole)
+Verdikt pro HEAD f34446a: **SCHVÁLENO**. Kolo 2 ověřilo 37b0f5b (opravy N1–N3) a f34446a (`motion.instant` ve stage-up).
+
+## Kolo 2 (HEAD f34446a)
+- tsc ✅ 0 chyb · jest ✅ 552/552 (nový test kontrastu `onGoldPill`/`onSeasonGold` v `theme/__tests__/contrast.test.ts`) · eslint ✅.
+- Liga 320×568 a 390×844, dark i light: pódium je první blok pod hlavičkou, na 320 je celé nad ohybem, pozice a TierBadge jsou pod ním ✅.
+- Stage-up dark i light: CTA je tmavá pilulka `onSeasonGold` (#181613) s popiskem `onGoldPill` (#F2F2EF). Hrana vůči zlatu ~7.6:1, popisek ~16:1 ✅.
+- Ostatní CTA: větev `onAccent` a výchozí větev v `PillButton` se textově nezměnily, `onGold` je opt-in a používá ho jen stage-up. Mapa, lekce, oslava, recap a onboarding tedy beze změny ✅.
+- f34446a: `withTiming(1, motion.instant)` a zpoždění `T.shatterMs - motion.instant.duration` dávají stejné časování ✅.
 
 ## Build a testy
 - `npx tsc --noEmit` ✅ 0 chyb · `npx jest` ✅ 62 sad / 548 testů · `npx eslint .` ✅ čisto.
@@ -9,7 +16,7 @@ Verdikt: **SCHVÁLENO** (bez blokerů; 3× ⚠️ k designu / ruční kontrole)
 ## Úkoly plánu vs. spec
 - T1 Rozpočet pláten ✅ `SkiaGuard` přes `NavigationContext` + focus/blur, fallback stejného rozměru. Web: 5 tabů 2× dokola → mapa, 10 pláten, žádné „Too many WebGL contexts“, žádný pageerror.
 - T2 Onboarding ✅ StatusLine KROK 01/05 + DotRow, Doto titulek, Reveal místo `entering`. 320×568 dark/light: lead se nepřekrývá s kartou, bez děr.
-- T3 Liga ✅ podiumColumns, pódium skryté bez XP, vlastní řádek s hranou `text`, TierBadge = DotRing. ⚠️ viz N1.
+- T3 Liga ✅ podiumColumns, pódium skryté bez XP a jako první blok, vlastní řádek s hranou `text`, TierBadge = DotRing.
 - T4 Progres ✅ 1 sloupec na 320 pt, DotMatrix, prázdné stavy z `copy.progress`.
 - T5 Sezóna ✅ odpočet Doto, DotRing %, SeasonBadge jediné zlato (lem, iniciály v `text`).
 - T6 Profil a šatník ✅ DotField, stoh 3 DotPlate, statistiky 2×N, SourceBadge sezónní `seasonGold` + `onSeasonGold`.
@@ -29,13 +36,13 @@ Verdikt: **SCHVÁLENO** (bez blokerů; 3× ⚠️ k designu / ruční kontrole)
 - Layout `entering`: zbývá jen absolutní scrim v `progress.tsx` (CelebrateOverlay, bezpečné) a `ExerciseCard` lekce (mimo rozsah) ✅.
 
 ## Nálezy
-- N1 ⚠️ (design-agent) Liga „začíná nahoře s pódiem“ jen částečně: obrazovka začíná nahoře bez scrollu, ale první dlaždice je souhrn pozice + TierBadge, pódium je druhé. Na 320×568 jsou z pódia vidět jen vršky sloupců. Pokud zadání znamená pódium jako první blok, prohodit pořadí.
-- N2 ⚠️ (design-agent) Stage-up light: CTA pilulka `onAccent` = `#F2F2EF` na `#C6A15B`, hrana tlačítka vůči ploše ~2.1:1 (WCAG 1.4.11 chce 3:1). Text v pilulce je OK. Dark (černá pilulka) OK.
-- N3 drobnost (design-agent) Komentář v `SeasonBadge.tsx` mluví o „zlaté ploše“ u `onAccent`, recap ale používá inverzi `accent`; jen dokumentace.
+- N1 OPRAVENO (ověřeno v kole 2, 37b0f5b). Původně: Liga „začíná nahoře s pódiem“ jen částečně: obrazovka začíná nahoře bez scrollu, ale první dlaždice je souhrn pozice + TierBadge, pódium je druhé. Na 320×568 jsou z pódia vidět jen vršky sloupců. Pokud zadání znamená pódium jako první blok, prohodit pořadí.
+- N2 OPRAVENO (ověřeno v kole 2, 37b0f5b, režim `onGold`). Původně: Stage-up light: CTA pilulka `onAccent` = `#F2F2EF` na `#C6A15B`, hrana tlačítka vůči ploše ~2.1:1 (WCAG 1.4.11 chce 3:1). Text v pilulce je OK. Dark (černá pilulka) OK.
+- N3 OPRAVENO (ověřeno v kole 2, 37b0f5b). Původně: Komentář v `SeasonBadge.tsx` mluví o „zlaté ploše“ u `onAccent`, recap ale používá inverzi `accent`; jen dokumentace.
 - Žádné opravy v kódu nebyly nutné.
 
 ## K ruční kontrole
-- Stage-up v light na zařízení (N2) a první snímek staré opičky (motion LOG).
+- Stage-up na zařízení: první snímek staré opičky (motion LOG).
 - fontScale 1.4 na zařízení (progres, liga, onboarding) — ověřeno jen unit testem.
 - Progres s čerstvým profilem bez aktivity a bez váhy na zařízení.
 - Plynulost RingShatter/DotBurst na slabém Androidu; scroll ligy k vlastnímu řádku za 2. obrazovkou.
