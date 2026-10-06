@@ -70,8 +70,8 @@ describe('badges', () => {
     expect(p.find((b) => b.id === 'badge-first-lesson')!.earned).toBe(false);
     expect(p.find((b) => b.id === 'badge-xp-1000')!.earned).toBe(true);
   });
-  test('podmínky česky', () => {
-    expect(badgeCondition({ kind: 'lessons', n: 1 })).toBe('Dokonči první lekci');
+  test('podmínky anglicky', () => {
+    expect(badgeCondition({ kind: 'lessons', n: 1 })).toBe('Finish your first lesson');
     expect(badgeCondition({ kind: 'streak', n: 7 })).toBe('Cvič 7 dní v řadě');
   });
 });

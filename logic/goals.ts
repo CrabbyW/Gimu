@@ -36,18 +36,17 @@ export function applyGoalsPatch(p: UserProfile, patch: GoalsPatch): { profile: U
 }
 
 /** Tvary slov z názvů předvoleb po číslovce: 1 / 2–4 / 5+ (stejné pravidlo jako `czPlural` v data/copy). */
-const NUMERAL_FORMS: readonly (readonly [string, string, string])[] = [
-  ['shyb', 'shyby', 'shybů'],
-  ['klik', 'kliky', 'kliků'],
-  ['dip', 'dipy', 'dipů'],
-  ['dřep', 'dřepy', 'dřepů'],
-  ['výskok', 'výskoky', 'výskoků'],
-  ['tleskací', 'tleskací', 'tleskacích'],
+// Tvary slova po čísle v názvech předvoleb (anglické UI): [jednotné, množné].
+const NUMERAL_FORMS: readonly (readonly [string, string])[] = [
+  ['pull-up', 'pull-ups'],
+  ['push-up', 'push-ups'],
+  ['dip', 'dips'],
+  ['squat', 'squats'],
 ];
-const formIndex = (n: number) => (n === 1 ? 0 : n >= 2 && n <= 4 ? 1 : 2);
+const formIndex = (n: number) => (n === 1 ? 0 : 1);
 
-/** Nový cíl milníku. Název předvolby nese číslo cíle („10 shybů“), tak ho přepíše a vyskloňuje
- *  („1 shyb“, „3 shyby“, „5 shybů“), ať název a cíl nejdou proti sobě; vlastní milník si název drží. */
+/** Nový cíl milníku. Název předvolby nese číslo cíle („10 pull-ups“), tak ho přepíše a upraví tvar
+ *  slova („1 pull-up“, „3 pull-ups“), ať název a cíl nejdou proti sobě; vlastní milník si název drží. */
 export function retarget(m: Milestone, target: number): Milestone {
   if (m.custom) return { ...m, target };
   const words = m.label.split(' ');

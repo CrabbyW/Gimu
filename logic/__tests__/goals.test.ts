@@ -36,28 +36,28 @@ test('změna cesty ponechá historii aktivity', () => {
   expect(applyGoalsPatch(p0, { path: 'yoga' as never })).toEqual({ error: 'path' });
 });
 test('retarget přepíše číslo v názvu předvolby, vlastní název nechá', () => {
-  expect(retarget({ ...m('a', 10), label: '10 shybů' }, 15).label).toBe('15 shybů');
-  expect(retarget({ ...m('a', 10), label: 'Můj cíl 10', custom: true }, 15).label).toBe('Můj cíl 10');
+  expect(retarget({ ...m('a', 10), label: '10 pull-ups' }, 15).label).toBe('15 pull-ups');
+  expect(retarget({ ...m('a', 10), label: 'My goal 10', custom: true }, 15).label).toBe('My goal 10');
 });
 test.each([
-  ['10 shybů', 10, 1, '1 shyb'],
-  ['10 shybů', 10, 3, '3 shyby'],
-  ['8 shybů', 8, 5, '5 shybů'],
-  ['5 shybů k hrudi', 5, 2, '2 shyby k hrudi'],
-  ['10 tleskacích kliků', 10, 1, '1 tleskací klik'],
-  ['20 výskoků z dřepu', 20, 4, '4 výskoky z dřepu'],
-  ['Vrána 15 s', 15, 20, 'Vrána 20 s'],
+  ['10 pull-ups', 10, 1, '1 pull-up'],
+  ['10 pull-ups', 10, 3, '3 pull-ups'],
+  ['1 pull-up', 1, 5, '5 pull-ups'],
+  ['5 chest-to-bar pull-ups', 5, 1, '1 chest-to-bar pull-up'],
+  ['10 clap push-ups', 10, 1, '1 clap push-up'],
+  ['20 jump squats', 20, 1, '1 jump squat'],
+  ['Crow 15 s', 15, 20, 'Crow 20 s'],
   ['-3 kg', 3, 5, '-5 kg'],
-  ['110 dipů', 110, 1, '1 dip'],
-])('retarget skloňuje „%s“ → %i/%i', (label, from, to, out) => {
+  ['110 dips', 110, 1, '1 dip'],
+])('retarget upraví tvar „%s“ → %i/%i', (label, from, to, out) => {
   expect(retarget({ ...m('a', from), label }, to).label).toBe(out);
 });
 
 test('retarget okraje (QA): 110, 0, znaménko, chybějící číslo', () => {
-  expect(retarget({ ...m('a', 10), label: '10 shybů' }, 110).label).toBe('110 shybů');
-  expect(retarget({ ...m('a', 10), label: '10 shybů' }, 0).label).toBe('0 shybů');
+  expect(retarget({ ...m('a', 10), label: '10 pull-ups' }, 110).label).toBe('110 pull-ups');
+  expect(retarget({ ...m('a', 10), label: '10 pull-ups' }, 0).label).toBe('0 pull-ups');
   expect(retarget({ ...m('a', 3), label: '-3 kg' }, 5).label).toBe('-5 kg');
-  const r = retarget({ ...m('a', 10), label: 'Stojka' }, 4);
-  expect(r.label).toBe('Stojka');
+  const r = retarget({ ...m('a', 10), label: 'Handstand' }, 4);
+  expect(r.label).toBe('Handstand');
   expect(r.target).toBe(4);
 });

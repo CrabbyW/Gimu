@@ -8,13 +8,13 @@ export type BadgeRule =
 export interface BadgeDef { id: string; name: string; rule: BadgeRule }
 export interface BadgeProgress { id: string; name: string; earned: boolean; current: number; target: number }
 
-/** Podmínka česky pod zamčenou siluetou. */
+/** Podmínka pod zamčenou siluetou (anglické UI). */
 export function badgeCondition(rule: BadgeRule): string {
   switch (rule.kind) {
-    case 'lessons': return rule.n === 1 ? 'Dokonči první lekci' : `Dokonči ${rule.n} lekcí`;
+    case 'lessons': return rule.n === 1 ? 'Finish your first lesson' : `Finish ${rule.n} lessons`;
     case 'streak': return `Cvič ${rule.n} dní v řadě`;
-    case 'boss': return 'Poraz bosse sekce';
-    case 'xp': return `Získej ${rule.n} XP`;
+    case 'boss': return 'Beat a section boss';
+    case 'xp': return `Earn ${rule.n} XP`;
     case 'exercise': return 'Odcvič ho v lekci';
   }
 }
