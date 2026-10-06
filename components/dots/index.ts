@@ -6,3 +6,4 @@ export { DotRow, dotRowSize } from './DotRow';
 export { useDotInk, type DotTouch } from './ink';
 export { useDotTouch } from './useDotTouch';
 export { SkiaGuard } from './SkiaGuard';
+export { DotBurst } from './DotBurst';

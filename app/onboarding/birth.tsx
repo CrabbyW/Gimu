@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BackHandler, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DotBurst, DotRing, useDotInk } from '@/components/dots';
 import { Mascot } from '@/components/mascot';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Text } from '@/components/ui/Text';
@@ -20,7 +21,7 @@ import type { Mood } from '@/types';
 
 const t = copy.onboarding.birth;
 
-// Časová osa zrození (ms od zobrazení). Kruh se nafoukne po chvíli prázdna, praskne a z jeho
+// Časová osa zrození (ms od zobrazení). Tečkový prstenec se rozvine a nafoukne po chvíli prázdna, rozpadne se na tečky a z jeho
 // místa vyskočí opice; pak radost, text a nakonec CTA. Odstupy 450/900/1400/1800 ms se počítají
 // od nafouknutí kruhu.
 const INFLATE_AT = 300;
@@ -28,8 +29,6 @@ const BURST_AT = INFLATE_AT + 450;
 const HAPPY_AT = INFLATE_AT + 900;
 const TEXT_AT = INFLATE_AT + 1400;
 const CTA_AT = INFLATE_AT + 1800;
-const BURST_MS = 220;
-const BURST_SCALE = 1.15;
 // Nádech před prasknutím (UX2, anticipace): kruh se 140 ms stahuje na 0.94, pak praskne.
 const TENSE_MS = 140;
 const TENSE_SCALE = 0.94;
@@ -76,9 +75,10 @@ function BirthScene() {
     return () => sub.remove();
   }, []);
 
+  const ink = useDotInk();
   const circleScale = useSharedValue(0);
   const circleOpacity = useSharedValue(1);
-  const holeScale = useSharedValue(0);
+  const burst = useSharedValue(0);
   const mascotOpacity = useSharedValue(0);
   const mascotScale = useSharedValue(MASCOT_START.scale);
   const mascotY = useSharedValue(MASCOT_START.y);
@@ -104,15 +104,11 @@ function BirthScene() {
 
     circleScale.value = withDelay(INFLATE_AT, withSpring(1, motion.pop));
     at(BURST_AT - TENSE_MS, () => { circleScale.value = withTiming(TENSE_SCALE, { duration: TENSE_MS, easing: ease.press }); });
-    // Prasknutí: kruh se roztáhne a od středu vyprázdní do mizejícího prstence, ze kterého vyskočí opice.
-    // Kruh je v `text` (R42: světelný objekt v černé, akcent patří jen oslavám). Vyprázdní ho díra
-    // v barvě pozadí a prstenec přitom dohasne.
+    // Prasknutí (Nothing Dot): tečkový prstenec se rozpadne na tečky, které odletí ven a dohasnou (`DotBurst`),
+    // a z jeho středu vyskočí opice. Skutečný prstenec zmizí ve stejném snímku, tečky převezmou jeho místa.
     at(BURST_AT, () => {
-      circleScale.value = withTiming(BURST_SCALE, { duration: BURST_MS, easing: ease.punch });
-      holeScale.value = withTiming(1, { duration: BURST_MS, easing: ease.punch });
-      // R42: kruh je světlý (`text`), ne akcent. Prstenec proto při otevírání díry zároveň zhasíná
-      // (ease-out, stejný takt), aby po prasknutí nezůstal ostrý světlý obrys na OLED černé.
-      circleOpacity.value = withTiming(0, { duration: BURST_MS, easing: ease.out });
+      circleOpacity.value = 0;
+      burst.value = withTiming(1, { duration: motion.dotBurst.ms, easing: ease.punch });
       mascotOpacity.value = 1;
       mascotScale.value = withSpring(1, motion.settle);
       mascotY.value = withSpring(0, motion.settle);
@@ -123,10 +119,9 @@ function BirthScene() {
     ctaIn.value = withDelay(CTA_AT, withTiming(1, motion.reveal));
     at(CTA_AT, () => setCtaReady(true));
     return () => timers.forEach(clearTimeout);
-  }, [input, calm, circleScale, circleOpacity, holeScale, mascotOpacity, mascotScale, mascotY, textOpacity, ctaIn]);
+  }, [input, calm, circleScale, circleOpacity, burst, mascotOpacity, mascotScale, mascotY, textOpacity, ctaIn]);
 
   const circleStyle = useAnimatedStyle(() => ({ opacity: circleOpacity.value, transform: [{ scale: circleScale.value }] }));
-  const holeStyle = useAnimatedStyle(() => ({ transform: [{ scale: holeScale.value }] }));
   const mascotStyle = useAnimatedStyle(() => ({
     opacity: mascotOpacity.value,
     transform: [{ translateY: mascotY.value }, { scale: mascotScale.value }],
@@ -167,11 +162,14 @@ function BirthScene() {
         <View onLayout={onStageLayout} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: space.xl }}>
           {stageHeight > 0 ? (
             <View style={{ width: disc, height: disc, alignItems: 'center', justifyContent: 'center' }}>
-              <Animated.View
-                style={[circleStyle, { position: 'absolute', width: disc, height: disc, borderRadius: disc / 2, backgroundColor: c.text }]}
-              >
-                <Animated.View style={[holeStyle, { flex: 1, borderRadius: disc / 2, backgroundColor: c.base }]} />
-              </Animated.View>
+              {/* Zrození z teček: prstenec se spirálou rozvine (DotRing intro) a nafoukne pružinou, nadechne se
+                  a rozpadne na tečky (DotBurst). Klidová varianta prstenec vůbec nekreslí. */}
+              {calm ? null : (
+                <Animated.View style={[circleStyle, { position: 'absolute', width: disc, height: disc }]}>
+                  <DotRing progress={1} size={disc} intro={INFLATE_AT} />
+                </Animated.View>
+              )}
+              {calm ? null : <DotBurst size={disc} progress={burst} color={ink.on} />}
               <Animated.View style={mascotStyle}>
                 <Mascot stage={1} cosmetics={{}} mood={mood} size={Math.round(disc * MASCOT_TO_DISC)} />
               </Animated.View>

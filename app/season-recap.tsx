@@ -2,13 +2,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
-import Animated, { FadeIn, FadeInLeft, FadeInRight, ReduceMotion, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotField } from '@/components/dots';
 import { Mascot } from '@/components/mascot';
 import { RecapSlide } from '@/components/season/RecapSlide';
 import { SeasonBadge } from '@/components/season/SeasonBadge';
 import { decimal } from '@/components/season/format';
+import { Reveal } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PillButton } from '@/components/ui/PillButton';
@@ -17,7 +18,7 @@ import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
 import { seasonActions, useRecap, useSeasonStatus } from '@/hooks/useSeason';
 import { haptics } from '@/lib/haptics';
-import { motion, useMotionSafe } from '@/lib/motion';
+import { intro, motion } from '@/lib/motion';
 import type { SeasonRecap } from '@/services/contracts';
 import { dots, opacity, useTheme } from '@/theme';
 import type { MascotStage } from '@/types';
@@ -67,7 +68,6 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState(false);
   const touch = useRef<{ x: number; y: number } | null>(null);
-  const { reduced } = useMotionSafe();
   const profile = useProfile();
   // Směr posledního listování (null = první snímek při otevření, ten nenastupuje).
   const [dir, setDir] = useState<1 | -1 | null>(null);
@@ -147,12 +147,12 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   const next = () => { if (i < total - 1) { setDir(1); setIndex(i + 1); } };
   const prev = () => { if (i > 0) { setDir(-1); setIndex(i - 1); } };
 
-  // Přechod slidů: nový snímek nastoupí ve směru listování (posun 24 pt + prolnutí, timing 200 ms,
-  // bez pružiny: na slide se klepe). Omezený pohyb: jen prolnutí 200 ms.
-  const entering = dir === null ? undefined
-    : reduced ? FadeIn.duration(motion.slide.duration).reduceMotion(ReduceMotion.Never)
-      : (dir === 1 ? FadeInRight : FadeInLeft).duration(motion.slide.duration).easing(motion.slide.easing)
-        .withInitialValues({ opacity: 0, transform: [{ translateX: dir * motion.slideShift }] });
+  // Přechod slidů: nový snímek nastoupí ve směru listování (posun `slideShift` + prolnutí, timing 200 ms,
+  // bez pružiny: na slide se klepe). První snímek nastoupí zdvihem po přechodu modalu. Reveal (shared value),
+  // ne layout `entering` FadeInLeft/Right: ten na webu nechával obal `absolute`. Omezený pohyb: prolnutí 200 ms.
+  const slideIn = dir === null
+    ? { delay: intro.modal.at, rise: intro.modal.rise, shift: 0 }
+    : { delay: 0, rise: 0, shift: dir * motion.slideShift };
   // Plocha oslavy (akcent u splněné odměny) se prolne stejným taktem jako snímek, ne skokem.
   const flood = useSharedValue(celebrate ? 1 : 0);
   useEffect(() => { flood.set(withTiming(celebrate ? 1 : 0, motion.slide)); }, [celebrate, flood]);
@@ -202,7 +202,9 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
         onResponderRelease={onRelease}
         onResponderTerminate={() => { touch.current = null; }}
       >
-        <Animated.View key={slide?.key} entering={entering} style={{ flex: 1 }}>{slide?.render()}</Animated.View>
+        <Reveal key={slide?.key} play delay={slideIn.delay} rise={slideIn.rise} shift={slideIn.shift} config={motion.slide} style={{ flex: 1 }}>
+          {slide?.render()}
+        </Reveal>
         {/* Tap zóny nejsou pro čtečku dosažitelné: tiché šipky 44 pt jsou explicitní ovládání. */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: space.s }}>
           <NavButton label={r.prev} disabled={i === 0} onPress={prev} onAccent={celebrate} />

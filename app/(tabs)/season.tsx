@@ -1,14 +1,13 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { ComebackCard } from '@/components/season/ComebackCard';
 import { shortDate } from '@/components/season/format';
 import { RewardCard } from '@/components/season/RewardCard';
 import { SeasonDays } from '@/components/season/SeasonDays';
 import { SeasonGoalCard } from '@/components/season/SeasonGoalCard';
 import { SeasonHeader } from '@/components/season/SeasonHeader';
-import { Reveal, useFirstShow } from '@/components/ui/choreo';
+import { Reveal, tileAt, useFirstShow } from '@/components/ui/choreo';
 import { DotLoader, DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PillButton } from '@/components/ui/PillButton';
@@ -21,23 +20,28 @@ import { useNow } from '@/hooks/useNow';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { seasonActions, useSeasonProgress, useSeasonStatus } from '@/hooks/useSeason';
-import { enterSafe, intro, motion, useMotionSafe } from '@/lib/motion';
+import { intro, motion } from '@/lib/motion';
 import { diffDays, toISODate } from '@/logic/dates';
 import type { SeasonStatus } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { SeasonGoal } from '@/types';
+
+const LOCK_RISE = intro.lockIn.rise;
 
 /**
  * Sezóna (Nothing Dot fáze 2). Hlavička: Doto „Sezóna“, stavový řádek s názvem sezóny a termínem.
  * Hierarchie: odpočet (Doto `displayXL`) → cíl sezóny → dny → odměna. Plátna: prstenec 1 + pokrok cíle 1 = 2.
  */
 export default function SeasonScreen() {
+  // Hlavička = první úder nástupu obrazovky (jen první zobrazení v relaci).
+  const headerIn = useFirstShow('hdr:season');
   const { c } = useTheme();
   const status = useSeasonStatus();
   const season = status.status === 'ready' && status.data ? status.data.season : null;
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <ScreenHeader
+        intro={headerIn}
         title={copy.tabs.season}
         status={season ? {
           left: season.name.toUpperCase(),
@@ -77,7 +81,6 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
   const profile = useProfile();
   const stats = useProfileStats(profile.status === 'ready' ? profile.data : null);
   const stage = useDisplayStage(stats?.stage ?? 1);
-  const { reduced } = useMotionSafe();
   // Motion: úvodní sled jen při prvním zobrazení tabu: hero, pak obsah o úder později.
   const first = useFirstShow('tab:season');
   // „Lock in“ potvrzení: karta cíle vjede jen v okamžiku, kdy cíl právě vznikl (ne při každém otevření tabu).
@@ -127,14 +130,22 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
           </Tile>
         ) : (
           <>
-            <Animated.View entering={justLocked ? enterSafe(reduced, 0, 16) : undefined}>
+            {/* Lock in: karta cíle se zvedne z 16 pt jen v okamžiku, kdy cíl právě vznikl (Reveal, ne layout
+                `entering`: ten na webu nechává obal `absolute`). Jinak dlaždice ve vlně po `screenIn.step`. */}
+            <Reveal play={justLocked || first} delay={justLocked ? 0 : tileAt(0)} rise={justLocked ? LOCK_RISE : intro.tab.rise}>
               <SeasonGoalCard progress={progress.data} onRecord={progress.data.goal.kind === 'milestone' ? record : undefined} />
-            </Animated.View>
-            <SeasonDays days={progress.data.dayStates} />
+            </Reveal>
+            <Reveal play={first} delay={tileAt(1)} rise={intro.tab.rise}>
+              <SeasonDays days={progress.data.dayStates} />
+            </Reveal>
             {!progress.data.reachable || progress.data.repairWindow.length > 0 ? (
-              <ComebackCard repairWindow={progress.data.repairWindow} reachable={progress.data.reachable} />
+              <Reveal play={first} delay={tileAt(2)} rise={intro.tab.rise}>
+                <ComebackCard repairWindow={progress.data.repairWindow} reachable={progress.data.reachable} />
+              </Reveal>
             ) : null}
-            <RewardCard season={season} stage={stage} locked={rewardLocked} />
+            <Reveal play={first} delay={tileAt(3)} rise={intro.tab.rise}>
+              <RewardCard season={season} stage={stage} locked={rewardLocked} />
+            </Reveal>
           </>
         )}
       </Reveal>

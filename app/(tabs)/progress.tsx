@@ -21,6 +21,7 @@ import { copy } from '@/data/copy';
 import { useDisplayStage } from '@/hooks/useDisplayStage';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
+import { useCountUp } from '@/hooks/useCountUp';
 import { progressActions, useProgressView } from '@/hooks/useProgressView';
 import { haptics } from '@/lib/haptics';
 import { intro, motion, stagger, useMotionSafe } from '@/lib/motion';
@@ -36,11 +37,13 @@ const MASCOT_FROM = 0.6;
 const fmtKg = (kg: number) => (Number.isInteger(kg) ? String(kg) : kg.toFixed(1).replace('.', ','));
 
 export default function ProgressScreen() {
+  // Hlavička = první úder nástupu obrazovky (jen první zobrazení v relaci).
+  const headerIn = useFirstShow('hdr:progress');
   const { c } = useTheme();
   const profile = useProfile();
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
-      <TabHeader title={copy.tabs.progress} />
+      <TabHeader title={copy.tabs.progress} intro={headerIn} />
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.progress.errorWhat} onRetry={profile.retry} />
           : <ProgressBody profile={profile.data!} />}
@@ -96,6 +99,8 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
               title={copy.progress.activeTitle}
               sub={copy.progress.activeSub}
               strong
+              play={first}
+              delay={motion.screenIn.heroAt}
               a11y={copy.progress.gridA11y(activeCount)}
             />
             <HeroTile
@@ -103,6 +108,8 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
               unit={copy.streak.days(longest)}
               title={copy.progress.longestTitle}
               sub={copy.progress.longestSub}
+              play={first}
+              delay={motion.screenIn.heroAt + motion.screenIn.step}
               a11y={`${copy.progress.heroLongestKey}: ${copy.progress.heroLongestValue(longest)}`}
             />
           </TileGrid>
@@ -192,15 +199,17 @@ function TileGrid({ cols, children }: { cols: 1 | 2; children: ReactNode }) {
 
 /** Hero dlaždice (obr. 2): velké Doto číslo + malá jednotka vlevo nahoře, název a podtitulek vlevo dole.
  *  `strong` = jediné `hero` číslo obrazovky; druhá dlaždice o stupeň tišeji (`display`). */
-function HeroTile({ value, unit, title, sub, strong = false, a11y }: {
-  value: number; unit: string; title: string; sub: string; strong?: boolean; a11y: string;
+function HeroTile({ value, unit, title, sub, strong = false, a11y, play = false, delay = 0 }: {
+  value: number; unit: string; title: string; sub: string; strong?: boolean; a11y: string; play?: boolean; delay?: number;
 }) {
   const { space, size } = useTheme();
+  // Motion: číslo se při prvním zobrazení napočítá (expo.out, `motion.countMs`); čtečka čte cílovou hodnotu (a11y).
+  const shown = useCountUp(value, motion.countMs, 0, { enabled: play, delayMs: delay });
   const compact = useCompact();
   return (
     <Tile style={{ minHeight: size.heroTile, justifyContent: 'space-between', gap: space.m }}>
       <View accessible accessibilityLabel={a11y} style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.s, flexWrap: 'wrap' }}>
-        <Text variant={strong && !compact ? 'hero' : 'display'} numberOfLines={1}>{value}</Text>
+        <Text variant={strong && !compact ? 'hero' : 'display'} numberOfLines={1}>{shown}</Text>
         <Text variant="headline" tone="muted">{unit}</Text>
       </View>
       <View>

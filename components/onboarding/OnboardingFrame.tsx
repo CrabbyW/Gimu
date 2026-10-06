@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import type { ReactNode } from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { DotRow } from '@/components/dots/DotRow';
 import { BigActionBar } from '@/components/ui/BigActionBar';
@@ -9,7 +9,7 @@ import { Screen } from '@/components/ui/Screen';
 import { StatusLine } from '@/components/ui/StatusLine';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { stagger } from '@/lib/motion';
+import { intro, stagger, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
 
 const TOTAL_STEPS = 5;
@@ -38,6 +38,17 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
       return () => { firedRef.current = false; };
     }, []),
   );
+  // Motion: tečka tohoto kroku se rozsvítí až po dojetí přechodu (DotRow změnu počtu doběhne plynule);
+  // předchozí kroky svítí hned. Omezený pohyb: svítí rovnou.
+  const { reduced } = useMotionSafe();
+  const [litSteps, setLitSteps] = useState(reduced ? step : Math.max(0, step - 1));
+  useEffect(() => {
+    if (litSteps === step) return;
+    const id = setTimeout(() => setLitSteps(step), intro.stepDot.at);
+    return () => clearTimeout(id);
+    // Jednou při mountu kroku.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
   const guardedContinue = () => {
     if (firedRef.current) return;
     firedRef.current = true;
@@ -53,8 +64,7 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
             right={copy.onboarding.stepValue(step, TOTAL_STEPS)}
             rightA11y={copy.onboarding.stepA11y(step, TOTAL_STEPS)}
           />
-          {/* Staticky stojí; motion-agent: rozsvícení nové tečky po dojetí přechodu `slide_from_right`. */}
-          <DotRow total={TOTAL_STEPS} fraction={step / TOTAL_STEPS} intro={false} />
+          <DotRow total={TOTAL_STEPS} fraction={litSteps / TOTAL_STEPS} intro={false} />
         </View>
         {/* Nástup kroku: titulek, pak lead (Reveal, ne layout `entering`: ten na webu nechával obal
             `position: absolute`, lead pak ležel přes 1. kartu a mezi kartami zůstávala díra). */}

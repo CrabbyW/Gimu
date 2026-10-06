@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { ValueWheelSheet } from '@/components/ui/ValueWheelSheet';
+import { Reveal } from '@/components/ui/choreo';
+import { stagger } from '@/lib/motion';
 import { copy } from '@/data/copy';
 import { REMINDER_HOURS, useSettingsPrefs } from '@/hooks/useSettingsPrefs';
 import { useTheme } from '@/theme';
@@ -54,6 +56,7 @@ export default function ReminderStep() {
       <View style={{ gap: space.l }}>
         {/* Nothing Dot (obr. 2): dlaždice se štítkem nahoře a velkým Doto číslem dole. Čas je jediné
             rozhodnutí kroku, proto `hero`; klepnutí otevře kolo hodnot. */}
+        <Reveal play delay={stagger(2)}>
         <Tile onPress={() => setOpen(true)} accessibilityLabel={t.timeA11y(time)}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
             <Text variant="telemetry" tone="muted">{t.timeLabel}</Text>
@@ -61,7 +64,10 @@ export default function ReminderStep() {
           </View>
           <Text variant="hero" style={{ marginTop: space.m }}>{time}</Text>
         </Tile>
-        <Button label={t.skip} variant="ghost" onPress={onSkip} style={{ alignSelf: 'flex-start' }} />
+        </Reveal>
+        <Reveal play delay={stagger(3)}>
+          <Button label={t.skip} variant="ghost" onPress={onSkip} style={{ alignSelf: 'flex-start' }} />
+        </Reveal>
       </View>
       <ValueWheelSheet
         visible={open}

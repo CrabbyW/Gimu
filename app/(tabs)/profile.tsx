@@ -34,6 +34,8 @@ const MAX_STAGE = Object.keys(copy.stageUp.names).length;
 const topEllipse = () => dots.pedestal.sizes[dots.pedestal.sizes.length - 1]! * dots.pedestal.squash;
 
 export default function ProfileScreen() {
+  // Hlavička = první úder nástupu obrazovky (jen první zobrazení v relaci).
+  const headerIn = useFirstShow('hdr:profile');
   const { c } = useTheme();
   const profile = useProfile();
   const data = profile.status === 'ready' ? profile.data : null;
@@ -42,6 +44,7 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <ScreenHeader
+        intro={headerIn}
         title={copy.tabs.profile}
         actions={[{ icon: Settings, label: copy.header.settings, onPress: () => router.push('/settings') }]}
         status={data && stats ? {

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, ScrollView, View } from 'react-native';
+import { FlatList, ScrollView, useWindowDimensions, View } from 'react-native';
 import { LeagueResultBanner } from '@/components/league/LeagueResultBanner';
 import { LeagueRow } from '@/components/league/LeagueRow';
 import { Podium } from '@/components/league/Podium';
@@ -24,6 +24,8 @@ import { intro, motion, stagger } from '@/lib/motion';
 import { services, type LeagueWeekView } from '@/services';
 import { useCompact, useTheme } from '@/theme';
 import type { LeagueEntry } from '@/types';
+
+const LS = intro.leagueScroll;
 
 type Item = { kind: 'row'; entry: LeagueEntry; rank: number; last: boolean } | { kind: 'divider'; zone: 'promote' | 'demote' };
 
@@ -51,6 +53,8 @@ const toMap = () => router.navigate('/(tabs)');
  * pak tabulka. Plátna: odznak 1 + pódium ≤ 3 = 4 (rozpočet ≤ 12); řádky jsou bez pláten.
  */
 export default function LeagueScreen() {
+  // Hlavička = první úder nástupu obrazovky (jen první zobrazení v relaci).
+  const headerIn = useFirstShow('hdr:league');
   const { c } = useTheme();
   const league = useLeague();
   const profile = useProfile();
@@ -63,6 +67,7 @@ export default function LeagueScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
       <ScreenHeader
+        intro={headerIn}
         title={copy.tabs.league}
         status={view && left ? {
           left: copy.league.statusTier(tierName(view.tier)),
@@ -119,16 +124,26 @@ function Standings({ view }: { view: LeagueWeekView }) {
   // Věta pod pozicí: prázdný týden (nikdo) / tvoje 0 XP / jinak XP tohoto týdne.
   const heroLine = nobodyScored ? copy.league.podiumEmpty : myXp === 0 ? copy.league.emptyWeek : copy.league.heroXp(copy.league.xpValue(myXp));
 
-  // Po otevření tabu dojet tak, aby vlastní řádek byl uprostřed seznamu. S 0 XP se nescrolluje:
-  // přednost má hero s výzvou, vlastní řádek je stejně poslední.
+  // Vlastní řádek: při prvním otevření obrazovka začne nahoře s pódiem (to je hlavní scéna). Sjede se k němu
+  // až po nástupu pódia, a jen když leží za 2. obrazovkou; bližší řádek je na dosah palce, scroll by jen rušil.
+  // S 0 XP se nescrolluje: přednost má hero s výzvou.
+  const { height: winH } = useWindowDimensions();
+  const [headerH, setHeaderH] = useState(0);
   useEffect(() => {
-    if (myIndex < 0 || myXp === 0) return;
-    const id = setTimeout(() => list.current?.scrollToIndex({ index: myIndex, viewPosition: 0.5, animated: true }), 350);
+    if (myIndex < 0 || myXp === 0 || headerH === 0) return;
+    const rowY = headerH + myIndex * size.leagueRow;
+    if (rowY + size.leagueRow <= winH * LS.screens) return;
+    const id = setTimeout(
+      () => list.current?.scrollToIndex({ index: myIndex, viewPosition: 0.5, animated: true }),
+      first ? LS.afterMs : LS.returnMs,
+    );
     return () => clearTimeout(id);
-  }, [myIndex, myXp, view.weekStart]);
+    // `first` se rozhoduje při mountu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myIndex, myXp, view.weekStart, headerH > 0, winH]);
 
   const hero = (
-    <View>
+    <View onLayout={(e) => { const h = e.nativeEvent.layout.height; if (headerH === 0) setHeaderH(h); }}>
       {/* Výsledek minulého týdne nad hero (nejdůležitější novinka, dokud ji uživatel nezavře). */}
       {view.lastResult ? (
         <LeagueResultBanner

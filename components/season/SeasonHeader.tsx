@@ -3,6 +3,8 @@ import { DotRing } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
+import { useCountUp } from '@/hooks/useCountUp';
+import { motion } from '@/lib/motion';
 import { diffDays } from '@/logic/dates';
 import { layout, useTheme } from '@/theme';
 import type { Season } from '@/types';
@@ -35,6 +37,11 @@ export function SeasonHeader({ season, daysLeft, intro = false }: Props) {
   const big = width >= layout.narrow;
   const elapsed = seasonElapsed(season, daysLeft);
   const pct = Math.round(elapsed * 100);
+  // Motion: odpočet se při prvním zobrazení napočítá spolu se spirálou prstence; čtečka čte cílovou hodnotu.
+  const play = intro !== false;
+  const delayMs = typeof intro === 'number' ? intro : 0;
+  const daysShown = useCountUp(daysLeft ?? 0, motion.countMs, 0, { enabled: play, delayMs });
+  const pctShown = useCountUp(pct, motion.dotScanMs, 0, { enabled: play, delayMs });
   return (
     <Tile style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
       {daysLeft === null ? (
@@ -44,13 +51,13 @@ export function SeasonHeader({ season, daysLeft, intro = false }: Props) {
         </View>
       ) : (
         <View accessible accessibilityLabel={copy.season.daysLeftA11y(daysLeft)} style={{ flexShrink: 1 }}>
-          <Text variant={big ? 'displayXL' : 'hero'} numberOfLines={1}>{daysLeft}</Text>
+          <Text variant={big ? 'displayXL' : 'hero'} numberOfLines={1}>{daysShown}</Text>
           <Text variant="label" tone="muted">{copy.season.daysLeftKicker}</Text>
         </View>
       )}
       <View style={{ alignItems: 'center', gap: space.s }}>
         <DotRing progress={elapsed} size={size.seasonRing} accessibilityLabel={copy.season.elapsedA11y(pct)} intro={intro}>
-          <Text variant="label" maxFontSizeMultiplier={1} importantForAccessibility="no">{copy.season.elapsedPct(pct)}</Text>
+          <Text variant="label" maxFontSizeMultiplier={1} importantForAccessibility="no">{copy.season.elapsedPct(pctShown)}</Text>
         </DotRing>
         <Text variant="label" tone="muted" importantForAccessibility="no">{copy.season.elapsedKicker}</Text>
       </View>

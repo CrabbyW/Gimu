@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { BigActionBar } from '@/components/ui/BigActionBar';
@@ -11,14 +11,14 @@ import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
 import { TextField } from '@/components/ui/TextField';
-import { usePressFeedback } from '@/components/ui/usePressFeedback';
+import { useTilePress } from '@/components/ui/useTilePress';
 import { useSelectionProgress } from '@/components/ui/useSelectionProgress';
 import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
 import { seasonActions, useSeasonStatus } from '@/hooks/useSeason';
 import { intro, motion, stagger } from '@/lib/motion';
 import { validateSeasonGoal, type SeasonGoalCheck } from '@/logic/season';
-import { useTheme } from '@/theme';
+import { opacity, useTheme } from '@/theme';
 import type { Milestone, Season, SeasonGoal, UserProfile } from '@/types';
 
 type Kind = SeasonGoal['kind'];
@@ -191,27 +191,42 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
  *  rezervované místo i u nevybrané dlaždice, takže mřížka při výběru neposkočí. */
 function KindTile({ title, line, selected, onPress, i }: { title: string; line: string; selected: boolean; onPress(): void; i: number }) {
   const { c, space, radius, size, stroke } = useTheme();
-  // Motion: nástup ve sledu, stisk 0.98 (bez pružiny).
-  const feedback = usePressFeedback(0.98);
+  // Motion: nástup ve sledu; stisk = naklopení k prstu (`useTilePress`, bez pružiny); výběr = prolnutí
+  // hrany `text`, štítku a názvu muted → text (`useSelectionProgress`). Hrana je vrstva: layout se nehýbe.
+  const box = useRef<View>(null);
+  const press = useTilePress(box, opacity.edgeLit);
+  const sel = useSelectionProgress(selected);
+  const selStyle = useAnimatedStyle(() => ({ opacity: sel.value }));
+  const offStyle = useAnimatedStyle(() => ({ opacity: 1 - sel.value }));
+  const edge = { borderRadius: radius.tile, borderColor: c.text } as const;
   return (
     <Reveal play delay={intro.modal.at + intro.modal.step + stagger(i, intro.modal.step)} rise={intro.modal.rise} style={{ flexBasis: '45%', flexGrow: 1 }}>
-    <Animated.View style={feedback.style}>
+    <Animated.View ref={box} style={press.style}>
     <Pressable
       onPress={onPress}
-      onPressIn={feedback.onPressIn}
-      onPressOut={feedback.onPressOut}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       accessibilityRole="radio"
       accessibilityLabel={`${title}. ${line}`}
       accessibilityState={{ selected, checked: selected }}
       style={({ pressed }) => ({
-        minHeight: size.choiceCard, padding: size.tilePad - (selected ? stroke.focus : 0), gap: space.xs,
+        minHeight: size.choiceCard, padding: size.tilePad, gap: space.xs,
         borderRadius: radius.tile, backgroundColor: pressed ? c.tilePressed : c.tile,
-        borderWidth: selected ? stroke.focus : StyleSheet.hairlineWidth, borderColor: selected ? c.text : c.edge,
+        borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
       })}
     >
-      <Text variant="label" tone="text" style={{ opacity: selected ? 1 : 0 }} importantForAccessibility="no">{t.selected}</Text>
-      <Text variant="bodyStrong" tone={selected ? 'text' : 'muted'}>{title}</Text>
+      <Animated.View style={selStyle}>
+        <Text variant="label" tone="text" importantForAccessibility="no">{t.selected}</Text>
+      </Animated.View>
+      <View>
+        <Animated.View style={offStyle}><Text variant="bodyStrong" tone="muted">{title}</Text></Animated.View>
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, selStyle]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          <Text variant="bodyStrong" tone="text">{title}</Text>
+        </Animated.View>
+      </View>
       <Text variant="caption" tone="muted">{line}</Text>
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, edge, { borderWidth: stroke.focus }, selStyle]} />
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, edge, { borderWidth: StyleSheet.hairlineWidth }, press.edgeStyle]} />
     </Pressable>
     </Animated.View>
     </Reveal>

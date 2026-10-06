@@ -30,7 +30,8 @@ export function Podium({ entries, play = false }: { entries: LeagueEntry[]; play
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.s }}>
           {columns.map(({ rank, dots: height }) => {
             const entry = entries[rank - 1]!;
-            // Motion: sloupce rostou v pořadí 1 → 2 → 3, opička dosedne, pak popisky.
+            // Motion: sloupce rostou zdola tečku po tečce (DotRow `from="bottom"`) v pořadí 1 → 2 → 3,
+            // opička dosedne po dorůstání svého sloupce, pak popisky.
             const at = P.at + P.step * (rank - 1);
             return (
               <View
@@ -44,7 +45,7 @@ export function Podium({ entries, play = false }: { entries: LeagueEntry[]; play
                     <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood={rank === 1 ? 'happy' : 'idle'} size={size.podiumMascot} decorative hop={false} />
                   </View>
                 </Reveal>
-                <DotRow total={height * dots.podium.cols} fraction={1} columns={dots.podium.cols} dot={dots.podium.d} intro={play ? at : false} />
+                <DotRow total={height * dots.podium.cols} fraction={1} columns={dots.podium.cols} dot={dots.podium.d} from="bottom" intro={play ? at : false} />
                 <Reveal play={play} delay={at + P.mascotLag + P.labelLag} rise={P.rise} config={motion.reveal} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
                   <Text variant="dotStat" tone={rank === 1 ? 'text' : 'muted'}>{rank}</Text>
                   <Text variant={entry.isMe ? 'bodyStrong' : 'caption'} numberOfLines={1} style={{ textAlign: 'center' }}>{entry.name}</Text>

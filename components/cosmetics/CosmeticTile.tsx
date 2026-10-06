@@ -1,10 +1,11 @@
 import { Cloud, Lock, Sparkles } from 'lucide-react-native';
+import { useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 import { Mascot } from '@/components/mascot';
 import { Text } from '@/components/ui/Text';
-import { usePressFeedback } from '@/components/ui/usePressFeedback';
+import { useTilePress } from '@/components/ui/useTilePress';
 import { useSelectionProgress } from '@/components/ui/useSelectionProgress';
 import { copy } from '@/data/copy';
 import type { useWardrobe } from '@/hooks/useWardrobe';
@@ -34,17 +35,18 @@ export function CosmeticTile({ item, width, stage, seasonName, disabled, onPress
   const buyable = !unlocked && (canBuy === 'ok' || canBuy === 'insufficient');
   const state = equipped ? copy.wardrobe.state.equipped : unlocked ? copy.wardrobe.state.unlocked : buyable ? copy.wardrobe.state.buy : copy.wardrobe.state.locked;
   const locked = !unlocked && !buyable;
-  // Motion: stisk 0.97 (press 90 / release 220, bez pružiny) a obrys nasazení se prolne `motion.ui`
-  // (zrušení `motion.uiExit`) místo skoku. Omezený pohyb: obojí hned (usePressFeedback: opacita).
-  const feedback = usePressFeedback(0.97);
+  // Motion: stisk = naklopení dlaždice k prstu (`useTilePress`: scale 0.97, ≤ 6°, bez pružiny) a rozjasnění
+  // hrany; obrys nasazení se prolne `motion.ui` (zrušení `motion.uiExit`). Omezený pohyb: jen hrana.
+  const box = useRef<View>(null);
+  const press = useTilePress(box, opacity.edgeLit);
   const sel = useSelectionProgress(equipped);
   const ring = useAnimatedStyle(() => ({ opacity: sel.value }));
   return (
-    <Animated.View style={feedback.style}>
+    <Animated.View ref={box} style={press.style}>
     <Pressable
       onPress={onPress}
-      onPressIn={feedback.onPressIn}
-      onPressOut={feedback.onPressOut}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={disabled || locked}
       accessibilityRole="button"
       accessibilityLabel={copy.wardrobe.tileA11y(cosmetic.name, state)}
@@ -73,6 +75,10 @@ export function CosmeticTile({ item, width, stage, seasonName, disabled, onPress
       <Animated.View
         pointerEvents="none"
         style={[ring, { position: 'absolute', top: 0, left: 0, width, height: width, borderRadius: radius.tile, borderWidth: stroke.focus, borderColor: c.text }]}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[press.edgeStyle, { position: 'absolute', top: 0, left: 0, width, height: width, borderRadius: radius.tile, borderWidth: StyleSheet.hairlineWidth, borderColor: c.text }]}
       />
       </View>
       <View style={{ gap: space.xs }}>

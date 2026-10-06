@@ -25,7 +25,7 @@ export function ChoiceCard({ title, line, selected, onPress, renderGlyph }: Prop
       onPress={onPress}
       pad="compact"
       accessibilityLabel={`${title}. ${line}`}
-      glyph={renderGlyph(selected ? c.text : c.muted, c.tile)}
+      glyph={(color) => renderGlyph(color, c.tile)}
     >
       <Text variant="headline">{title}</Text>
       <Text variant="caption" tone="muted">{line}</Text>

@@ -18,6 +18,13 @@ export function useFirstShow(key: string): boolean {
   return first;
 }
 
+/** Zpoždění i-té dlaždice nástupu obrazovky (`motion.screenIn`): hlavička 0 → hero 80 → dlaždice po 60 ms.
+ *  Víčko `maxTiles`: dlouhé seznamy dál nečekají, sled čte jako jeden takt. */
+export const tileAt = (i: number) => {
+  const S = motion.screenIn;
+  return S.heroAt + S.step * (Math.min(Math.max(0, i), S.maxTiles) + 1);
+};
+
 /** Jen pro testy. */
 export const resetFirstShow = () => seen.clear();
 

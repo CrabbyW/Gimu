@@ -2,7 +2,9 @@ import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { feedback } from '@/lib/feedback';
+import { ease, motion } from '@/lib/motion';
 import { useTheme } from '@/theme';
+import { Reveal } from './choreo';
 import { StatusLine, type StatusLineProps } from './StatusLine';
 import { Text } from './Text';
 
@@ -17,15 +19,20 @@ interface Props {
   status?: StatusLineProps;
   /** Odsadit horní safe area (výchozí ano; obrazovka v SafeAreaView předá false). */
   insetTop?: boolean;
+  /** Nástup hlavičky jako první úder sledu obrazovky (`motion.screenIn.headerAt`); volající rozhodne
+   *  (`useFirstShow`), výchozí stojí. */
+  intro?: boolean;
 }
+
+const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
 
 /** Hlavička obrazovky (spec §2.3, obr. 2): stavový řádek, pod ním Doto titulek vlevo a kulatá tlačítka vpravo.
  *  Titulek je jediný Doto prvek hlavičky; vše ostatní ustupuje (mono, `muted`). */
-export function ScreenHeader({ title, actions, status, insetTop = true }: Props) {
+export function ScreenHeader({ title, actions, status, insetTop = true, intro = false }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ paddingTop: (insetTop ? insets.top : 0) + space.s, paddingHorizontal: space.l, paddingBottom: space.m, gap: space.s }}>
+    <Reveal play={intro} delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={HEADER_IN} style={{ paddingTop: (insetTop ? insets.top : 0) + space.s, paddingHorizontal: space.l, paddingBottom: space.m, gap: space.s }}>
       {status ? <StatusLine {...status} /> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m, minHeight: size.iconButton }}>
         <Text variant="display" accessibilityRole="header" numberOfLines={2} style={{ flexShrink: 1 }}>{title}</Text>
@@ -51,6 +58,6 @@ export function ScreenHeader({ title, actions, status, insetTop = true }: Props)
           </View>
         ) : null}
       </View>
-    </View>
+    </Reveal>
   );
 }

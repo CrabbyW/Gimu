@@ -85,7 +85,7 @@ export const motion = {
   /** Posun podložky aktivního tabu v plovoucím tab baru. */
   tabSlideMs: 260,
   /** Nástup obrazovky: hlavička → hero → dlaždice ve vlně. */
-  screenIn: { headerAt: 0, heroAt: 80, step: 60, durationMs: 480, rise: 12 },
+  screenIn: { headerAt: 0, heroAt: 80, step: 60, durationMs: 480, rise: 12, maxTiles: 8 },
 
   ui: { duration: dur.ui, easing: ease.out } satisfies WithTimingConfig,
   uiExit: { duration: dur.tap, easing: ease.exit } satisfies WithTimingConfig,
@@ -143,6 +143,9 @@ export const motion = {
   /** Dech prstence aktuálního uzlu a bosse (motion spec §3.1): perioda 2.4 s ease.sine, opacita 1 ↔ `low`,
    *  scale 1 → `scale`; s omezeným pohybem statická opacita `still`. Jediný zdroj pro PlateNode i BarbellBoss. */
   breath: { low: 0.6, scale: 1.03, still: 0.8, periodMs: 2400 },
+  /** Rozpad DotRing na tečky (`DotBurst`, zrození): výlet vnitřních teček `inner` × poloměr, vnějšího
+   *  rastru `outer` ×, rozptyl ±`jitter`; délka `ms` ease.punch, tečky dohasnou. */
+  dotBurst: { inner: 0.7, outer: 0.45, jitter: 0.3, ms: 560 },
   /** Trim fajfky hotového uzlu (§3.1). */
   checkMs: 300,
   /** Zamčený tap: 3 pt, 4 × 60 ms; omezený pohyb opacita na 0.5 a zpět (2 × 120 ms). */
@@ -204,24 +207,35 @@ export const lessonDone = {
 };
 
 /**
- * Stage-up (§7.4, plán B Task 26 Step 3), ms od zobrazení. Smrštění 300–600, nádech 600–700 (plán: smrštění
- * 380 ms; zkráceno, aby se nádech vešel před prasknutí v 700), prasknutí 700, nová opice 720
- * pružinou `motion.pop` → text → CTA.
+ * Stage-up (Nothing Dot fáze 2), ms od zobrazení. Stará opička se stáhne a zmizí (`shrinkAt`–+`shrinkMs`),
+ * prstenec se nadechne (`tense`), v `shatterAt` se vnitřní prstenec rozpadne na tečky: každá vyletí po oblouku
+ * ven (`burst` × poloměr) a pootočená o jednu třetinu kruhu (1 stage) dosedne na místo nového prstence
+ * (`shatterMs`, rozložení startů `spread`). Rozsvícení teček se při doletu přepne ze starého stage na nový.
+ * V `bornAt` (= dolet) nový prstenec nahradí tečky, opička vyskočí pružinou `motion.pop`, haptika success.
+ * Omezený pohyb: rovnou finální stav, fade 200 ms.
  */
 export const stageUp = {
   shrinkAt: 300,
   shrinkMs: 300,
-  /** Nádech před prasknutím (jako zrození): kruh se stáhne na `tense`. */
-  tenseMs: 100,
-  tense: 0.92,
-  burstAt: 700,
-  burstMs: 420,
-  bornAt: 720,
-  textAt: 1300,
-  ctaAt: 1500,
-  shrunk: 0.35,
-  ringTo: 1.4,
-  oldOutMs: 80,
+  /** Stará opička se smrští na `shrunk` a zmizí. */
+  shrunk: 0.6,
+  /** Nádech prstence před rozpadem. */
+  tenseMs: 120,
+  tense: 0.96,
+  shatterAt: 620,
+  shatterMs: 900,
+  /** Podíl `shatterMs`, o který se rozloží starty teček (po směru hodin). */
+  spread: 0.35,
+  /** Výlet ven: poloměr × (1 + burst), s rozptylem ±`jitter`. */
+  burst: 0.32,
+  jitter: 0.35,
+  /** Starý rastr prstence se rozplyne s rozpadem. */
+  oldOutMs: 200,
+  /** Nový prstenec převezme tečky prolnutím. */
+  handoffMs: 160,
+  bornAt: 1520,
+  textAt: 1800,
+  ctaAt: 2000,
 };
 
 /** Celková délka jednoho poskoku opice (`motion.hop`). */
@@ -283,10 +297,13 @@ export const intro = {
   /** Hero sekce mapy (polish 2026-10-05): mezi hlavičkou (0–70) a linkou (140). Štítek+název → číslo →
    *  činka sekce; každý úder `motion.reveal` (480 ms ease.out), zdvih `rise`. Kompaktní varianta bez činky. */
   hero: { at: 80, step: 60, rise: 8 },
-  /** Pódium ligy: stupně vyrostou z podlahy v pořadí 1 → 2 → 3 (`step`), opička dosedne `mascotLag` po
-   *  svém stupni (zdvih `mascotRise`, timing, ne pružina), popisky `labelLag` po něm. Stejné časy hraje pódium,
+  /** Pódium ligy: sloupce vyrostou zdola tečku po tečce (`DotRow from=bottom`, celý sloupec `dotScanMs`)
+   *  v pořadí 1 → 2 → 3 (`step`), opička dosedne `mascotLag` po startu svého sloupce (≈ po jeho dorůstání) (zdvih `mascotRise`, timing, ne pružina), popisky `labelLag` po něm. Stejné časy hraje pódium,
    *  které se objeví až během relace (přechod z prázdného stavu hlavičky). */
-  podium: { at: 120, step: 90, mascotLag: 160, mascotRise: 10, labelLag: 120, rise: 6 },
+  podium: { at: 120, step: 90, mascotLag: 520, mascotRise: 10, labelLag: 120, rise: 6 },
+  /** Liga: k vlastnímu řádku se sjede až po nástupu pódia (`afterMs` od zobrazení) a jen tehdy, když řádek
+   *  leží za `screens` výškami okna; jinak obrazovka zůstane nahoře s pódiem. */
+  leagueScroll: { afterMs: 1400, screens: 2, returnMs: 350 },
   /** Podstavec PlateStack: stoh vyroste z podlahy (výřez, posun o celou výšku), `motion.reveal`. */
   pedestal: { at: 0 },
   /** Mřížka podlahy panelu lekce: prolne se se zdvihem `rise`, před siluetou (ta jde v `card.step`). */
@@ -295,6 +312,10 @@ export const intro = {
   goals: { at: 60, step: 70, rise: 10 },
   /** Řádky Cílů v Nastavení: uvnitř sekce po `step` za nástupem sekce; hodnota po načtení se prolne. */
   goalRows: { step: 40 },
+  /** Sezóna: karta právě zamčeného cíle se zvedne z `rise` pt (potvrzení „lock in“). */
+  lockIn: { rise: 16 },
+  /** Onboarding: tečka nového kroku se rozsvítí až po dojetí přechodu `slide_from_right` (~350 ms). */
+  stepDot: { at: 380 },
   /** Modaly: obsah nastoupí po přechodu listu (Stack modal ~350 ms se překrývá). */
   modal: { at: 60, step: 50, rise: 10 },
 };

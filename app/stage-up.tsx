@@ -1,12 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { markNavigation } from '@/lib/navGuard';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { View } from 'react-native';
 import Animated, {
-  useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue,
+  Easing, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue,
 } from 'react-native-reanimated';
+import { Canvas, Group, Points, vec } from '@shopify/react-native-skia';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DotRing } from '@/components/dots';
+import { DotRing, ringLayout, SkiaGuard } from '@/components/dots';
+import { rowLit } from '@/components/dots/geometry';
 import { Mascot, MASCOT_SIZES } from '@/components/mascot';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Text } from '@/components/ui/Text';
@@ -27,10 +29,6 @@ const MASCOT_DROP = MASCOT * dots.stageUp.mascotDrop;
 const STAGES = Object.keys(copy.stageUp.names).length;
 // Sekvence §7.4 / plán B Task 26 Step 3 (ms od zobrazení): `stageUp` v lib/motion.
 const T = stageUp;
-const SHRUNK = T.shrunk;
-const RING_R = (BOX / 2) * SHRUNK;
-const SHARDS = 8;
-const SHARD_TRAVEL = BOX / 2;
 const FADE = motion.calmFade;
 
 /** Na mapu (stejně jako „Pokračovat“ z oslavy lekce), s id odemčeného uzlu pro unlock sekvenci. */
@@ -60,11 +58,11 @@ function BlankAccent() {
 /**
  * Stage-up (Nothing Dot fáze 2): celá plocha `seasonGold` (spec §2.1, jediná plošná výjimka z monochromu).
  * Uprostřed tečkový prstenec stage s Doto `displayXL` číslem, na jeho spodní hraně sedí opička v celebrate.
- * Starý stage (prstenec + opička) se smrští a praskne, nový nastoupí. Štítek a titulek vlevo pod scénou jako
- * popisek exponátu, inkoust `onSeasonGold`. Omezený pohyb: rovnou finální stav, fade 200 ms. 2 plátna.
+ * Starý stage: opička se stáhne, prstenec se rozpadne na tečky, které přeletí do nového (`RingShatter`). Štítek a titulek vlevo pod scénou jako
+ * popisek exponátu, inkoust `onSeasonGold`. Omezený pohyb: rovnou finální stav, fade 200 ms. 3 plátna.
  */
 function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotStage; unlocked: string | undefined }) {
-  const { c, space, stroke } = useTheme();
+  const { c, space } = useTheme();
   const insets = useSafeAreaInsets();
   const { reduced: reducedNow } = useMotionSafe();
   // Sekvence se rozhodne jednou při vstupu; přepnutí omezení pohybu uprostřed ji nerestartuje.
@@ -75,11 +73,12 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
   const [leaving, setLeaving] = useState(false);
 
   const oldScale = useSharedValue(1);
+  const oldMascot = useSharedValue(1);
   const oldOpacity = useSharedValue(reduced ? 0 : 1);
-  const ringOpacity = useSharedValue(0);
-  const ringScale = useSharedValue(1);
-  const burst = useSharedValue(0);
+  const shatter = useSharedValue(0);
+  const dotsOpacity = useSharedValue(0);
   const newScale = useSharedValue(reduced ? 1 : 0);
+  const newRing = useSharedValue(reduced ? 1 : 0);
   const newOpacity = useSharedValue(reduced ? 0 : 1);
   const textOpacity = useSharedValue(0);
 
@@ -91,36 +90,32 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
       textOpacity.set(withTiming(1, FADE));
       haptics.success();
     } else {
-      // 1) Smrštění staré opice do kruhu (ease-out, bez pružiny: je to příprava, ne odměna).
-      // 2) Kruh se objeví se smrštěním, před prasknutím se nadechne spolu s opicí (anticipace jako
-      //    u zrození), při prasknutí se rozepne 1 → 1.4 a zmizí.
-      ringOpacity.set(withDelay(T.shrinkAt, withSequence(
-        withTiming(1, motion.ui),
-        withDelay(T.burstAt - T.shrinkAt - motion.ui.duration, withTiming(0, { duration: T.burstMs, easing: ease.out })),
+      // 1) Stará opička se stáhne a zmizí (příprava, ease-out, bez pružiny); prstenec se nadechne.
+      oldMascot.set(withDelay(T.shrinkAt, withTiming(0, { duration: T.shrinkMs, easing: motion.reveal.easing })));
+      oldScale.set(withDelay(T.shatterAt - T.tenseMs, withTiming(T.tense, { duration: T.tenseMs, easing: ease.press })));
+      // 2) Rozpad: tečky převezmou vnitřní prstenec na stejných místech, starý rastr se rozplyne.
+      dotsOpacity.set(withDelay(T.shatterAt, withSequence(
+        withTiming(1, { duration: 1 }),
+        withDelay(T.shatterMs - 1, withTiming(0, { duration: T.handoffMs })),
       )));
-      ringScale.set(withDelay(T.burstAt - T.tenseMs, withSequence(
-        withTiming(T.tense, { duration: T.tenseMs, easing: ease.press }),
-        withTiming(T.ringTo, { duration: T.burstMs, easing: ease.punch }),
-      )));
-      // 1) Smrštění staré opice do kruhu (ease-out, bez pružiny: příprava, ne odměna) a nádech.
-      oldScale.set(withDelay(T.shrinkAt, withSequence(
-        withTiming(SHRUNK, { duration: T.shrinkMs, easing: motion.reveal.easing }),
-        withDelay(T.burstAt - T.shrinkAt - T.shrinkMs - T.tenseMs, withTiming(SHRUNK * T.tense, { duration: T.tenseMs, easing: ease.press })),
-      )));
-      // 3) Prasknutí: stará opice zmizí, úlomky letí radiálně ven, nová opice vyskočí pružinou (odměna).
-      oldOpacity.set(withDelay(T.burstAt, withTiming(0, { duration: T.oldOutMs })));
-      burst.set(withDelay(T.burstAt, withTiming(1, { duration: T.burstMs, easing: ease.punch })));
+      oldOpacity.set(withDelay(T.shatterAt, withTiming(0, { duration: T.oldOutMs })));
+      shatter.set(withDelay(T.shatterAt, withTiming(1, { duration: T.shatterMs, easing: Easing.linear })));
+      timers.push(setTimeout(() => haptics.tick(), T.shatterAt));
+      // 3) Dolet: nový prstenec převezme tečky, opička vyskočí pružinou (odměna).
+      newRing.set(withDelay(T.bornAt, withTiming(1, { duration: T.handoffMs })));
       newScale.set(withDelay(T.bornAt, withSpring(1, motion.pop)));
       timers.push(setTimeout(() => haptics.success(), T.bornAt));
       textOpacity.set(withDelay(T.textAt, withTiming(1, motion.ui)));
     }
-    timers.push(setTimeout(() => setReady(true), T.ctaAt));
+    timers.push(setTimeout(() => setReady(true), reduced ? FADE.duration : T.ctaAt));
     return () => timers.forEach(clearTimeout);
-  }, [reduced, oldScale, oldOpacity, ringOpacity, ringScale, burst, newScale, newOpacity, textOpacity]);
+  }, [reduced, oldScale, oldMascot, oldOpacity, shatter, dotsOpacity, newScale, newRing, newOpacity, textOpacity]);
 
   const oldStyle = useAnimatedStyle(() => ({ opacity: oldOpacity.value, transform: [{ scale: oldScale.value }] }));
-  const ringStyle = useAnimatedStyle(() => ({ opacity: ringOpacity.value, transform: [{ scale: ringScale.value }] }));
-  const newStyle = useAnimatedStyle(() => ({ opacity: newOpacity.value, transform: [{ scale: newScale.value }] }));
+  const oldMascotStyle = useAnimatedStyle(() => ({ opacity: oldMascot.value, transform: [{ scale: T.shrunk + (1 - T.shrunk) * oldMascot.value }] }));
+  const newStyle = useAnimatedStyle(() => ({ opacity: newOpacity.value }));
+  const newRingStyle = useAnimatedStyle(() => ({ opacity: newRing.value }));
+  const newMascotStyle = useAnimatedStyle(() => ({ transform: [{ scale: newScale.value }] }));
   const textStyle = useAnimatedStyle(() => ({ opacity: textOpacity.value }));
 
   const name = copy.stageUp.names[to];
@@ -145,23 +140,22 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
           {reduced ? null : (
             <Animated.View style={[center, oldStyle]}>
               <StageRing stage={from} />
+            </Animated.View>
+          )}
+          {reduced ? null : (
+            <Animated.View style={[center, oldMascotStyle]}>
               <View style={{ position: 'absolute', bottom: -MASCOT_DROP }}>
                 <Mascot stage={from} mood="idle" size={MASCOT} cosmetics={cosmetics} decorative />
               </View>
             </Animated.View>
           )}
-          {reduced ? null : (
-            <Animated.View pointerEvents="none" style={[center, ringStyle]}>
-              <View style={{ width: RING_R * 2, height: RING_R * 2, borderRadius: RING_R, borderWidth: stroke.focus, borderColor: c.onSeasonGold }} />
-            </Animated.View>
-          )}
-          {reduced ? null : Array.from({ length: SHARDS }, (_, k) => <Shard key={k} index={k} burst={burst} />)}
+          {reduced ? null : <RingShatter from={from} to={to} progress={shatter} opacity={dotsOpacity} />}
           <Animated.View style={[center, newStyle]}>
-            <StageRing stage={to} />
+            <Animated.View style={[center, newRingStyle]}><StageRing stage={to} /></Animated.View>
             {/* Opička sedí na spodní hraně prstence (jako na kotouči mapy): jediný barevný subjekt. */}
-            <View style={{ position: 'absolute', bottom: -MASCOT_DROP }}>
+            <Animated.View style={[{ position: 'absolute', bottom: -MASCOT_DROP }, newMascotStyle]}>
               <Mascot stage={to} mood="celebrate" size={MASCOT} cosmetics={cosmetics} decorative />
-            </View>
+            </Animated.View>
           </Animated.View>
         </View>
         <Animated.View style={[{ gap: space.s }, textStyle]}>
@@ -185,22 +179,54 @@ function StageRing({ stage }: { stage: MascotStage }) {
   );
 }
 
-/** Úlomek prasknutého kruhu: z obvodu kruhu letí radiálně ven a mizí. */
-function Shard({ index, burst }: { index: number; burst: SharedValue<number> }) {
-  const { c, size, radius } = useTheme();
-  const angle = (index / SHARDS) * Math.PI * 2;
-  const dx = Math.cos(angle);
-  const dy = Math.sin(angle);
-  const style = useAnimatedStyle(() => {
-    const p = burst.value;
-    const d = RING_R + p * SHARD_TRAVEL;
-    return { opacity: p > 0 ? 1 - p : 0, transform: [{ translateX: dx * d }, { translateY: dy * d }] };
+/**
+ * Rozpad prstence (motion-agent): tečky vnitřního prstence starého stage vyletí po oblouku ven, pootočí se
+ * o jednu třetinu kruhu (= 1 stage) a dosednou na místa nového prstence. Rozsvícení se při doletu přepne
+ * ze `from / 3` na `to / 3`. Jedno plátno, pozice počítá worklet na UI vlákně.
+ */
+function RingShatter({ from, to, progress, opacity }: { from: MascotStage; to: MascotStage; progress: SharedValue<number>; opacity: SharedValue<number> }) {
+  const { c } = useTheme();
+  const geo = useMemo(() => {
+    const L = ringLayout(BOX);
+    const n = L.inner.length;
+    const r = Math.hypot(L.inner[0]!.x, L.inner[0]!.y);
+    // Posun o tolik pozic, kolik odpovídá rozdílu stage: dosednutí padne přesně do mřížky nového prstence.
+    const shift = Math.round(n / STAGES) * Math.max(1, to - from);
+    const fromLit = rowLit(n, from / STAGES).filter(Boolean).length;
+    const toLit = rowLit(n, to / STAGES).filter(Boolean).length;
+    // Deterministický rozptyl výletu (bez Math.random: stejný průběh při každém přehrání).
+    const amp = Array.from({ length: n }, (_, i) => 1 + T.jitter * Math.sin(i * 12.9898));
+    return { n, r, shift, fromLit, toLit, amp, d: L.innerDot * 2 };
+  }, [from, to]);
+  const pts = useDerivedValue(() => {
+    const { n, r, shift, fromLit, toLit, amp } = geo;
+    const p = progress.value;
+    const lit = [];
+    const off = [];
+    for (let i = 0; i < n; i++) {
+      const raw = Math.min(1, Math.max(0, (p - (T.spread * i) / n) / (1 - T.spread)));
+      // easeInOutCubic: odlep, let, dosednutí.
+      const t = raw < 0.5 ? 4 * raw * raw * raw : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+      const a = -Math.PI / 2 + ((i + shift * t) / n) * Math.PI * 2;
+      const rr = r * (T.tense + (1 - T.tense) * t) * (1 + T.burst * amp[i]! * Math.sin(Math.PI * t));
+      const pt = vec(BOX / 2 + Math.cos(a) * rr, BOX / 2 + Math.sin(a) * rr);
+      const on = t < 0.5 ? i < fromLit : (i + shift) % n < toLit;
+      if (on) lit.push(pt); else off.push(pt);
+    }
+    return { lit, off };
   });
-  const s = size.shard;
+  const lit = useDerivedValue(() => pts.value.lit);
+  const off = useDerivedValue(() => pts.value.off);
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={[{ position: 'absolute', left: BOX / 2 - s / 2, top: BOX / 2 - s / 2, width: s, height: s, borderRadius: radius.full, backgroundColor: c.onSeasonGold }, style]}
-    />
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: BOX, height: BOX }}>
+      <SkiaGuard style={{ width: BOX, height: BOX }}>
+        <Canvas style={{ width: BOX, height: BOX }}>
+          <Group opacity={opacity}>
+            <Points points={off} mode="points" color={c.goldDotOff} strokeWidth={geo.d} strokeCap="round" />
+            <Points points={lit} mode="points" color={c.onSeasonGold} strokeWidth={geo.d} strokeCap="round" />
+          </Group>
+        </Canvas>
+      </SkiaGuard>
+    </View>
   );
 }

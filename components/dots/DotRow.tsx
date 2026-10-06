@@ -23,6 +23,9 @@ interface Props {
   /** Nástup skenem zleva (`motion.dotScanMs`), číslo = zpoždění v ms; false = stojí hned. Změna `fraction`
    *  po nástupu (série +1, další cvik) rozsvítí nové tečky vždy plynule. */
   intro?: boolean | number;
+  /** Směr nástupu: `left` (výchozí, sken zleva po řádcích) nebo `bottom` (sloupec roste zdola, řada po řadě;
+   *  rozsvícené tečky pak plní řádky odspodu). */
+  from?: 'left' | 'bottom';
 }
 
 /** Rozměr řádku pro layout (kvůli rezervaci místa i ve fallbacku bez Skia). */
@@ -35,18 +38,20 @@ export function dotRowSize(total: number, columns: number | undefined, dot: numb
 
 /** Řádek progresu (obr. 5): k z N teček rozsvíceno v `text` (v dark se září), zbytek `dotOff`.
  *  Nástup skenem zleva (`motion.dotScanMs`) a plynulé rozsvícení nových teček (`useDotReveal`). */
-export function DotRow({ total, fraction, columns, dot = dots.row.d, accessibilityLabel, intro = true }: Props) {
+export function DotRow({ total, fraction, columns, dot = dots.row.d, accessibilityLabel, intro = true, from = 'left' }: Props) {
   const ink = useDotInk();
-  const { cols, width, height } = dotRowSize(total, columns, dot);
+  const { cols, rows, width, height } = dotRowSize(total, columns, dot);
   // Záře přesahuje tečku: plátno je o `pad` větší na všech stranách, layout drží čistý rozměr řádku.
   const pad = glowPad(dot);
   const { all, litCount } = useMemo(() => {
     const flags = rowLit(total, fraction);
     const pitch = dot + dots.row.gap;
     // Rozsvícené jsou vždy prvních k teček (rowLit), takže sken zleva = prefix pole v pořadí indexů.
-    const pts = flags.map((_, i) => ({ x: (i % cols) * pitch + dot / 2, y: Math.floor(i / cols) * pitch + dot / 2 }));
+    // Zdola: index i leží v řádku odspodu, takže prefix (rozsvícené i sken) roste od podlahy nahoru.
+    const rowOf = (i: number) => (from === 'bottom' ? rows - 1 - Math.floor(i / cols) : Math.floor(i / cols));
+    const pts = flags.map((_, i) => ({ x: (i % cols) * pitch + dot / 2, y: rowOf(i) * pitch + dot / 2 }));
     return { all: toPoints(pts, pad, pad) as Pt[], litCount: flags.filter(Boolean).length };
-  }, [total, fraction, cols, dot, pad]);
+  }, [total, fraction, cols, rows, dot, pad, from]);
   const { count, fade } = useDotReveal(litCount, total, intro);
   const lit = useDerivedValue(() => all.slice(0, scanCount(count.value / Math.max(1, all.length), all.length).whole));
   const off = useDerivedValue(() => all.slice(scanCount(count.value / Math.max(1, all.length), all.length).whole));

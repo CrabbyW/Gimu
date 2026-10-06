@@ -54,7 +54,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
-      <ScreenHeader title={copy.settings.title} actions={[{ icon: X, label: copy.common.back, onPress: () => router.back() }]} />
+      <ScreenHeader intro={first} title={copy.settings.title} actions={[{ icon: X, label: copy.common.back, onPress: () => router.back() }]} />
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: insets.bottom + space.xxl, gap: space.xl }}
         showsVerticalScrollIndicator={false}

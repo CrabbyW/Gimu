@@ -53,8 +53,9 @@ export default function WardrobeScreen() {
 /** Hlavička modalu (Nothing Dot §2.3): Doto titulek vlevo, kulaté ikonové tlačítko 44 vpravo. */
 function Header() {
   const { c, size, stroke, space, radius } = useTheme();
+  // Motion: hlavička = první úder nástupu modalu (`screenIn.headerAt`), obsah navazuje `intro.modal`.
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m, minHeight: size.hitLarge, paddingTop: space.s, paddingBottom: space.m }}>
+    <Reveal play delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={motion.reveal} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m, minHeight: size.hitLarge, paddingTop: space.s, paddingBottom: space.m }}>
       <Text variant="display" accessibilityRole="header" numberOfLines={1} style={{ flexShrink: 1 }}>{copy.wardrobe.title}</Text>
       <Pressable
         onPress={() => router.back()}
@@ -67,7 +68,7 @@ function Header() {
       >
         <X size={size.icon} color={c.text} strokeWidth={stroke.icon} />
       </Pressable>
-    </View>
+    </Reveal>
   );
 }
 

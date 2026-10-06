@@ -4,6 +4,8 @@ import { View } from 'react-native';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/SegmentedControl';
 import { TextField } from '@/components/ui/TextField';
+import { Reveal } from '@/components/ui/choreo';
+import { stagger } from '@/lib/motion';
 import { copy } from '@/data/copy';
 import { useOnboardingDraft } from '@/hooks/useOnboardingDraft';
 import { weightFieldErrors, type WeightError, type WeightKind } from '@/logic/onboarding';
@@ -52,9 +54,12 @@ export default function WeightStep() {
       onContinue={onContinue}
     >
       <View style={{ gap: space.xl }}>
-        <SegmentedControl<WeightKind> options={KIND_OPTIONS} value={kind} onChange={changeKind} />
+        <Reveal play delay={stagger(2)}>
+          <SegmentedControl<WeightKind> options={KIND_OPTIONS} value={kind} onChange={changeKind} />
+        </Reveal>
         {kind !== 'none' ? (
-          <View style={{ gap: space.l }}>
+          // Pole nastoupí se sledem kroku, po přepnutí druhu jen krátce (Reveal se přehraje při mountu).
+          <Reveal play delay={stagger(3)} rise={8} style={{ gap: space.l }}>
             <TextField
               label={t.current}
               unit={t.unit}
@@ -75,7 +80,7 @@ export default function WeightStep() {
               maxLength={5}
               error={errors.target ? t.errors[errors.target] : null}
             />
-          </View>
+          </Reveal>
         ) : null}
       </View>
     </OnboardingFrame>
