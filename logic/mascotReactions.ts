@@ -63,7 +63,7 @@ export function eventToReaction(e: MascotEvent, taps: readonly number[]): Reacti
 
 /**
  * Vybere reakci a vrátí nový stav. V cooldownu po poslední reakci projde jen důležitá reakce (priorita ≥ 5)
- * a jen pokud má vyšší prioritu než ta, která právě hraje; ostatní se zahodí (žádná fronta).
+ * a jen pokud má vyšší prioritu než ta, která právě hraje, nebo salto přes poskok; ostatní se zahodí (žádná fronta).
  */
 export function pickReaction(e: MascotEvent, s: ReactionState, now: number): { id: ReactionId | null; state: ReactionState } {
   const taps = e.type === 'tap' ? [...s.taps.filter((t) => now - t <= TRIPLE_TAP_WINDOW_MS), e.at] : s.taps;
@@ -74,7 +74,9 @@ export function pickReaction(e: MascotEvent, s: ReactionState, now: number): { i
   if (cooling) {
     const p = REACTION_PRIORITY[id];
     const beatsCurrent = s.lastId == null || p > REACTION_PRIORITY[s.lastId];
-    if (p < IMPORTANT || !beatsCurrent) return { id: null, state: base };
+    // Trojité ťuknutí: první ťuknutí hraje poskok a salto ho smí přebít (jinak by z klidu salto nikdy nevzniklo).
+    const flipOverHop = id === 'flip' && s.lastId === 'hop';
+    if ((p < IMPORTANT || !beatsCurrent) && !flipOverHop) return { id: null, state: base };
   }
   // Po saltu se série ťuknutí vynuluje, ať čtvrté ťuknutí nespustí další salto.
   return { id, state: { lastId: id, lastAt: now, taps: id === 'flip' ? [] : taps } };

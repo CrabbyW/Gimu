@@ -53,6 +53,10 @@ interface Props {
   comet?: SharedValue<number>;
   /** Nástup tečkového kotouče spirálou po tolika ms (úvodní sled mapy); bez něj stojí hned. */
   intro?: number;
+  /** Roztočení prstem pro reakci opičky `spinFollow` (fáze 3): úhel roztočení (rad) se zrcadlí do `spinOut`
+   *  na UI vlákně a `onSpinStart` se zavolá při každém novém roztočení. */
+  spinOut?: SharedValue<number>;
+  onSpinStart?(): void;
 }
 
 const TAU = Math.PI * 2;
@@ -65,7 +69,7 @@ const COMET_HOME = -Math.PI / 2;
 
 /** Kulatý uzel mapy (Nothing Dot): kotouč z teček (`DotPlate`), bez stínu a bez plného prstence.
  *  Popisek a opička nejsou děti uzlu (kreslí je LessonMap jako sourozence), takže pohyb kotouče je nehýbe. */
-export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0, rotation, comet, intro }: Props) {
+export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0, rotation, comet, intro, spinOut, onSpinStart }: Props) {
   const { size } = useTheme();
   const { reduced } = useMotionSafe();
   // Ambient (spec §3): kotouč se točí 360° / 40 s, aktuální / 24 s; kometa obíhá; záře aktuálního dýchá.
@@ -74,8 +78,13 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
   const clock = useAmbientClock();
   const spinnable = state !== 'locked' && !unlocking;
   const spin = usePlateSpin(spinnable, nodeSize);
+  // Worklety smí zachytit jen sdílené hodnoty, ne celý objekt: `spin.gesture` (PanGesture) se na UI vlákno
+  // zkopírovat nedá a na nativu to shodí mapu („Cannot copy value of type PanGesture“; web worklety nekopíruje).
+  const { spin: spinAngle, spinning: spinOn } = spin;
+  useAnimatedReaction(() => spinAngle.value, (v) => { if (spinOut) spinOut.set(v); });
+  useAnimatedReaction(() => spinOn.value, (on, was) => { if (on && !was && onSpinStart) scheduleOnRN(onSpinStart); });
   const turns = state === 'current' ? TURNS_CURRENT : TURNS_IDLE;
-  const ownRotation = useDerivedValue(() => (clock ? clock.value * TAU * turns : 0) + spin.spin.value);
+  const ownRotation = useDerivedValue(() => (clock ? clock.value * TAU * turns : 0) + spinAngle.value);
   const ownComet = useDerivedValue(() => COMET_HOME + (clock ? clock.value * TAU * TURNS_COMET : 0));
   const breath = useDerivedValue(() => {
     if (reduced || !clock) return motion.breath.still;

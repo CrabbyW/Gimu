@@ -1,4 +1,11 @@
+import type { SharedValue } from 'react-native-reanimated';
+import type { ReactionId } from '@/logic/mascotReactions';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
+
+/** Přehrání reakce: nový `key` = přehrát znovu. `null`/chybějící = klid (probudí spící opičku). */
+export interface MascotReaction { id: ReactionId; key: number }
+/** Bod pohledu v souřadnicích okna (pt, jako `absoluteX/Y` gest); `null` = pohled zpět dopředu. */
+export type MascotGaze = SharedValue<{ x: number; y: number } | null>;
 
 export type MascotSize = number | 'S' | 'M' | 'L' | 'XL';
 
@@ -18,6 +25,13 @@ export interface MascotProps {
   hop?: boolean;
   /** Jantarová (`accentGraphic`) horní hrana šálu (spec §4: každá oslava). Prolnutí řídí motion. */
   scarfEdge?: boolean;
+  /** Reakce opičky (fáze 3, spec §4.4). Přehrání je jen znázornění: nálada z `mood` platí dál a reakce ji
+   *  na chvíli přebije. Omezený pohyb řeší volající přes `degrade` (hook `useMascotReactions`). */
+  reaction?: MascotReaction | null;
+  /** Sdílený bod pohledu: pupily (a bez omezeného pohybu i hlava) sledují prst. */
+  gaze?: MascotGaze;
+  /** Úhel kotouče (rad) pro reakci `spinFollow` (`usePlateSpin().spin`). */
+  spin?: SharedValue<number>;
 }
 
 export const MASCOT_SIZES = { S: 56, M: 120, L: 200, XL: 280 } as const;

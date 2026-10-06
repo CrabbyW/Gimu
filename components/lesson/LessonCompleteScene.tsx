@@ -11,7 +11,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { DotField, DotPlate, DotRow, SkiaGuard, plateDotRadius, useDotInk, useDotTouch } from '@/components/dots';
 import { spiralLerp, type Pt } from '@/components/dots/animate';
 import { plateDots, ringCountForKg, ringDots, spiralOrder } from '@/components/dots/geometry';
-import { Mascot } from '@/components/mascot';
+import { Mascot, useMascotReactions } from '@/components/mascot';
 import { PillButton } from '@/components/ui/PillButton';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -22,6 +22,7 @@ import { feedback } from '@/lib/feedback';
 import { fire } from '@/lib/haptics';
 import { ease, lessonDone as L, motion, spring, useMotionSafe } from '@/lib/motion';
 import { playSfx, setDucking } from '@/lib/sound';
+import { REACTION_COOLDOWN_MS } from '@/logic/mascotReactions';
 import { nextLessonId } from '@/logic/map';
 import type { LessonResult } from '@/services';
 import type { LessonPathView } from '@/services/contracts';
@@ -91,6 +92,10 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
   const [calm] = useState(reduced);
   const tl = useMemo(() => celebrationTimeline(calm), [calm]);
   const touch = useDotTouch(!calm);
+  // Reakce opičky (fáze 3): dokončení lekce = celebrate, série +1 = proud až po něm (cooldown oslavy).
+  // Scéna je modální a krátká: nečinnost se nepočítá (focused=false).
+  // Do plánovaných kroků (UI vlákno → scheduleOnRN) jde jen funkce `report`, nikdy objekt s gestem.
+  const { report: reportReaction, reaction: mascotReaction } = useMascotReactions(false);
 
   // --- Rozměry: plocha scény (onLayout) a střed kotouče v ní (measureInWindow) ---
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
@@ -202,6 +207,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
       sceneIn.value = withTiming(1, { duration: L.reducedMs, easing: ease.out, ...NEVER });
       fire('success');
       playSfx('plateSnap');
+      reportReaction({ type: 'lessonDone' });
       return;
     }
     const field = stepOf(tl, 'field');
@@ -228,6 +234,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
     // 1000: opička, titulek, XP, série.
     at(cheerStep.at, () => {
       setMood(cheer);
+      reportReaction({ type: 'lessonDone' });
       mascotIn.value = withSpring(1, { ...motion.settle, ...NEVER });
       textIn.value = withTiming(1, { ...motion.reveal, ...NEVER });
       xp.value = withTiming(result.xp.total, { duration: cheerStep.durationMs, easing: ease.out, ...NEVER });
@@ -236,6 +243,8 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
       // Řada se rozsvítí skenem (`DotRow` intro) a po něm přibude dnešní tečka.
       const scanMs = (motion.dotScanMs * Math.max(1, result.streak - 1)) / total;
       at(cheerStep.at + scanMs, () => { setSeriesLit(result.streak); feedback('seriesPlate'); });
+      // Hrdost po oslavě: až skončí její cooldown, jinak by ji vyšší priorita celebrate zahodila.
+      at(cheerStep.at + Math.max(scanMs, REACTION_COOLDOWN_MS), () => reportReaction({ type: 'streakUp' }));
     }
     // 1600: CTA zdola.
     at(cta.at, () => { setCtaReady(true); ctaIn.value = withTiming(1, { ...motion.reveal, ...NEVER }); });
@@ -308,7 +317,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
                 </View>
                 <View style={{ alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.m }}>
                   <Animated.View style={mascotStyle}>
-                    <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={compact ? 'S' : 'M'} hop={false} scarfEdge={mood === cheer} decorative />
+                    <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={compact ? 'S' : 'M'} hop={false} scarfEdge={mood === cheer} decorative reaction={mascotReaction} />
                   </Animated.View>
                   <Animated.View style={[{ flex: 1, gap: space.s }, textStyle]}>
                     <View

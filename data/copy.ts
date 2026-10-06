@@ -455,5 +455,7 @@ export const copy = {
   mascot: {
     // Popisek pro čtečku obrazovky podle nálady.
     label: { idle: 'Tvoje opice', happy: 'Tvoje opice má radost', celebrate: 'Tvoje opice slaví', sad: 'Tvoje opice je smutná' },
+    // Reaktivní opička (fáze 3): co s ní jde dělat.
+    playHint: 'Ťukni a poskočí, třikrát rychle a udělá salto, podrž a pohladíš ji',
   },
 } as const;

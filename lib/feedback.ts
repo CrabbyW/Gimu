@@ -6,7 +6,7 @@ import { playSfx, type SfxName } from './sound';
 export type FeedbackId =
   | 'tab' | 'cta' | 'tapLight' | 'locked' | 'unlock' | 'monkeyHop'
   | 'countdown3' | 'countdown2' | 'countdown1' | 'go' | 'holdTick' | 'holdLast5' | 'holdLast4' | 'holdLast3' | 'holdLast2' | 'holdLast1' | 'holdDone'
-  | 'impact' | 'xpTick' | 'seriesPlate' | 'wheelStep' | 'formError';
+  | 'impact' | 'xpTick' | 'seriesPlate' | 'wheelStep' | 'formError' | 'mascotTap' | 'mascotJoy';
 
 const MAP: Record<FeedbackId, readonly [HapticKind | null, SfxName | null]> = {
   tab: ['selection', null],
@@ -32,6 +32,9 @@ const MAP: Record<FeedbackId, readonly [HapticKind | null, SfxName | null]> = {
   seriesPlate: ['rigid', 'tick'],
   wheelStep: ['selection', null],
   formError: ['warning', null],
+  // Reakce opičky (fáze 3): ťuknutí = jemné potvrzení hry, salto a skok radosti = odměna.
+  mascotTap: ['selection', null],
+  mascotJoy: ['success', null],
 };
 
 export function feedback(id: FeedbackId): void {

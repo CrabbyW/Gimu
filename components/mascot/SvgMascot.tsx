@@ -11,11 +11,13 @@ import { ANCHORS, type Anchor } from './anchors';
 import { ArmPoseContext, layerParts, SeasonScarf, type LayerPart } from './cosmetics';
 import { armPoint, STAGE_GEOMETRY, type Limb, type StageGeometry } from './geometry';
 import { MASCOT_COLORS, mascotInk } from './palette';
+import { useReactionMotion } from './reactionMotion';
 import { resolveMascotSize, type MascotProps } from './types';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 const IDLE_MOUTH = 'M88 108 Q100 112 112 108';
 const HAPPY_MOUTH = 'M86 104 Q100 122 114 104 Z';
@@ -44,6 +46,8 @@ const ARMS_UP_ANGLE: Record<MascotStage, number> = { 1: 120, 2: 140, 3: 160 };
 const EARS_DOWN_Y = 8;
 const EARS_DOWN_X = 4;
 const GAZE_DOWN = 3;
+// Krk: bod otáčení hlavy při reakcích leží pod středem hlavy, v tomto podílu jejího poloměru.
+const NECK_AT = 0.8;
 // Stage 3: posun deltoidu při plně zvednutých pažích (jednotky viewBoxu 200).
 const DELT_RAISE_Y = 6;
 const DELT_RAISE_X = 2;
@@ -104,19 +108,34 @@ function outsideTorsoPath({ x, y, w, h, rx }: StageGeometry['torso']): string {
     + `A${rx} ${rx} 0 0 1 ${x + w - rx} ${y + h} H${x + rx} A${rx} ${rx} 0 0 1 ${x} ${y + h - rx} V${y + rx} A${rx} ${rx} 0 0 1 ${x + rx} ${y} Z`;
 }
 
-function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorative, breathe = true, hop: hopEnabled = true, scarfEdge = false, layer }: MascotProps & { layer: Layer }) {
+function MascotSvg({
+  stage, mood: baseMood, size, cosmetics, accessibilityLabel, decorative, breathe: breatheProp = true, hop: hopProp = true, scarfEdge: scarfProp = false,
+  reaction, gaze, spin, layer,
+}: MascotProps & { layer: Layer }) {
   const { c, seasonThemeId } = useTheme();
   const drawBack = layer !== 'front';
   const drawFront = layer !== 'back';
   const { reduced } = useMotionSafe();
   const px = resolveMascotSize(size);
+  const g = STAGE_GEOMETRY[stage];
+  // Reakce (fáze 3): dočasně přebije náladu (a hranu šálu); spánek zavře oči a zpomalí dech.
+  const {
+    override: ov, ref: rootRef, lift, squash: rSquash, stretch, roll, tilt, eyeClose, droop: rDroop, pupilX, pupilY, headProps: headMatrix,
+  } = useReactionMotion({ reaction, reduced, gaze, spin, neck: { x: g.head.cx, y: g.head.cy + g.head.r * NECK_AT } });
+  const mood = ov?.mood ?? baseMood;
+  const scarfEdge = scarfProp || ov?.scarf === true;
+  const sleeping = ov?.sleeping === true;
+  // Spící opička dýchá i tam, kde vlastní dech jinak nemá (uzel mapy): pomalý hluboký dech je celá reakce.
+  const breathe = breatheProp || sleeping;
+  // Přebitá nálada poskoky nespouští (reakce má vlastní pohyb); poskoky nálady z `mood` po ní pokračují.
+  const hopEnabled = hopProp && !ov?.mood;
   const pose = MOOD_POSE[mood];
-  const breathScale = pose.face === 'sad' ? BREATH_SCALE_SAD : BREATH_SCALE;
+  const breathScale = sleeping ? motion.reactions.sleep.breathScale : pose.face === 'sad' ? BREATH_SCALE_SAD : BREATH_SCALE;
+  const breathHalfMs = sleeping ? motion.reactions.sleep.breathHalfMs : pose.breathHalfMs;
   const ink = mascotInk(c);
   // ID ořezů musí být v dokumentu unikátní (na webu je víc opic v jednom DOM).
   const uid = useId().replace(/[^\w-]/g, '');
   const clip = { body: `mascot-body-${uid}`, head: `mascot-head-${uid}`, deltL: `mascot-delt-l-${uid}`, deltR: `mascot-delt-r-${uid}`, legs: `mascot-legs-${uid}` };
-  const g = STAGE_GEOMETRY[stage];
   const { head, ears, torso, shoulders, legs } = g;
   const faceScale = head.r / FACE_REF.r;
   const faceTransform = `translate(${head.cx} ${head.cy}) scale(${faceScale}) translate(${-FACE_REF.cx} ${-FACE_REF.cy})`;
@@ -144,9 +163,9 @@ function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorativ
     cancelAnimation(breath);
     breath.value = 0;
     if (reduced || !breathe) return;
-    breath.value = withRepeat(withTiming(1, { duration: pose.breathHalfMs, easing: Easing.inOut(Easing.sin) }), -1, true);
+    breath.value = withRepeat(withTiming(1, { duration: breathHalfMs, easing: Easing.inOut(Easing.sin) }), -1, true);
     return () => cancelAnimation(breath);
-  }, [reduced, breathe, breath, pose.breathHalfMs]);
+  }, [reduced, breathe, breath, breathHalfMs]);
 
   // Mrknutí v náhodném intervalu 3–6 s; JS časovač spouští sekvenci na UI vlákně.
   const eyeRy = useSharedValue(EYE_RY_OPEN);
@@ -179,9 +198,9 @@ function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorativ
   const hop = useSharedValue(0);
   const squash = useSharedValue(0);
   useEffect(() => {
-    const changed = prevMood.current !== mood;
-    prevMood.current = mood;
-    const p = MOOD_POSE[mood];
+    const changed = prevMood.current !== baseMood;
+    prevMood.current = baseMood;
+    const p = MOOD_POSE[baseMood];
     cancelAnimation(hop);
     cancelAnimation(squash);
     const h = motion.hop;
@@ -214,7 +233,7 @@ function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorativ
       hop.value = withTiming(0, motion.moodShift);
       squash.value = withTiming(0, motion.moodShift);
     }
-  }, [mood, reduced, hopEnabled, hop, squash]);
+  }, [baseMood, reduced, hopEnabled, hop, squash]);
   useEffect(() => () => { cancelAnimation(hop); cancelAnimation(squash); }, [hop, squash]);
 
   // Paže nahoru (celebrate), timing: pozornost nese poskok.
@@ -244,26 +263,53 @@ function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorativ
     mouthSad.value = withTiming(pose.face === 'sad' ? 1 : 0, cfg);
   }, [pose.face, reduced, mouthIdle, mouthHappy, mouthSad]);
 
-  const bodyStyle = useAnimatedStyle(() => ({
-    transform: [
-      // Squash drží chodidla na zemi stejně jako dech: o kolik se spodní hrana zmenšením zvedne, o tolik ji translateY vrátí.
-      { translateY: (hop.value - (breath.value * breathScale) / 2 + (squash.value * motion.hop.squash) / 2) * px },
-      { scaleY: 1 + breath.value * breathScale - squash.value * motion.hop.squash },
-      { scaleX: 1 + squash.value * motion.hop.squash * 0.6 },
-    ],
+  const bodyStyle = useAnimatedStyle(() => {
+    const sy = 1 + breath.value * breathScale - squash.value * motion.hop.squash - rSquash.value + stretch.value;
+    const sx = 1 + (squash.value * motion.hop.squash + rSquash.value) * 0.6;
+    return {
+      transform: [
+        // Škálování drží chodidla na zemi: o kolik se spodní hrana změnou scaleY posune, o tolik ji translateY vrátí.
+        { translateY: (hop.value + lift.value - (sy - 1) / 2) * px },
+        // Náklon (mávnutí) kolem chodidel, salto kolem středu.
+        { translateY: px / 2 }, { rotate: `${tilt.value}deg` }, { translateY: -px / 2 },
+        { rotate: `${roll.value}deg` },
+        { scaleY: sy },
+        { scaleX: sx },
+      ],
+    };
+  });
+  const P = motion.reactions.gaze;
+  // Oči: mrknutí, zavření reakcí (spánek, mazlení), pohled dolů (smutek, scroll) a pupily za prstem.
+  const eyeLeftProps = useAnimatedProps(() => ({
+    ry: eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value,
+    cx: 84 + pupilX.value * P.pupilX,
+    cy: 78 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
   }));
-  const eyeLeftProps = useAnimatedProps(() => ({ ry: eyeRy.value, cy: 78 + droop.value * GAZE_DOWN }));
-  const eyeRightProps = useAnimatedProps(() => ({ ry: eyeRy.value, cy: 78 + droop.value * GAZE_DOWN }));
+  const eyeRightProps = useAnimatedProps(() => ({
+    ry: eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value,
+    cx: 116 + pupilX.value * P.pupilX,
+    cy: 78 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
+  }));
   const catchLeftProps = useAnimatedProps(() => ({
-    opacity: interpolate(eyeRy.value, CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
-    cy: 75 + droop.value * GAZE_DOWN,
+    opacity: interpolate(eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value, CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
+    cx: 86 + pupilX.value * P.pupilX,
+    cy: 75 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
   }));
   const catchRightProps = useAnimatedProps(() => ({
-    opacity: interpolate(eyeRy.value, CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
-    cy: 75 + droop.value * GAZE_DOWN,
+    opacity: interpolate(eyeRy.value + (EYE_RY_CLOSED - eyeRy.value) * eyeClose.value, CATCHLIGHT_FADE, [0, 1], Extrapolation.CLAMP),
+    cx: 118 + pupilX.value * P.pupilX,
+    cy: 75 + Math.min(1, droop.value + rDroop.value) * GAZE_DOWN + pupilY.value * P.pupilY,
   }));
-  const earLeftProps = useAnimatedProps(() => ({ cx: head.cx - ears.dx - droop.value * EARS_DOWN_X, cy: head.cy + ears.dy + droop.value * EARS_DOWN_Y }));
-  const earRightProps = useAnimatedProps(() => ({ cx: head.cx + ears.dx + droop.value * EARS_DOWN_X, cy: head.cy + ears.dy + droop.value * EARS_DOWN_Y }));
+  const earLeftProps = useAnimatedProps(() => {
+    const dn = Math.min(1, droop.value + rDroop.value);
+    return { cx: head.cx - ears.dx - dn * EARS_DOWN_X, cy: head.cy + ears.dy + dn * EARS_DOWN_Y };
+  });
+  const earRightProps = useAnimatedProps(() => {
+    const dn = Math.min(1, droop.value + rDroop.value);
+    return { cx: head.cx + ears.dx + dn * EARS_DOWN_X, cy: head.cy + ears.dy + dn * EARS_DOWN_Y };
+  });
+  const headProps = useAnimatedProps(() => headMatrix.value);
+  const hatProps = useAnimatedProps(() => headMatrix.value);
   // Stage 3: deltoidy sledují zvednutí paží (celebrate): posunou se nahoru a mírně ven se stejným `arms`.
   const sh = shoulders ?? { dx: 0, y: 0, r: 0, trapY: 0 };
   const deltL = useAnimatedProps(() => ({ cx: 100 - sh.dx - arms.value * DELT_RAISE_X, cy: sh.y - arms.value * DELT_RAISE_Y }));
@@ -276,6 +322,7 @@ function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorativ
 
   return (
     <Animated.View
+      ref={rootRef}
       {...(decorative
         ? { accessible: false, accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const, 'aria-hidden': true }
         : { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel: accessibilityLabel ?? copy.mascot.label[mood] })}
@@ -348,6 +395,8 @@ function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorativ
         {/* Šál volně pod bradou: hlava ho kreje, vidět je jen pod ní. Smutná ho má omotaný přes bradu (níž). */}
         {!wrapped && scarfWrap}
 
+        {/* Hlava (uši, lebka, obličej, pokrývky hlavy) je jedna skupina: reakce ji natáčí kolem krku. */}
+        <AnimatedG animatedProps={headProps}>
         <AnimatedCircle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={MASCOT_COLORS.fur} animatedProps={earLeftProps} />
         <AnimatedCircle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={MASCOT_COLORS.fur} animatedProps={earRightProps} />
         <AnimatedCircle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r / 2} fill={MASCOT_COLORS.face} animatedProps={earLeftProps} />
@@ -373,9 +422,13 @@ function MascotSvg({ stage, mood, size, cosmetics, accessibilityLabel, decorativ
           <AnimatedPath d={SAD_MOUTH} stroke={ink} strokeWidth={3} strokeLinecap="round" fill="none" animatedProps={sadMouthProps} />
         </G>
 
+        </AnimatedG>
         {wrapped && scarfWrap}
         {renderLayers(pick('front', 'neck'), anchors.neck)}
-        <G clipPath={`url(#${clip.head})`}>{renderLayers(pick('front', 'head'), anchors.head)}</G>
+        {/* Pokrývky hlavy leží nad šálem (pořadí beze změny) a natáčí se s hlavou stejnou maticí. */}
+        <AnimatedG animatedProps={hatProps}>
+          <G clipPath={`url(#${clip.head})`}>{renderLayers(pick('front', 'head'), anchors.head)}</G>
+        </AnimatedG>
         </>
         )}
 

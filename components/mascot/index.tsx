@@ -4,3 +4,6 @@ export { SvgMascot as Mascot, MonkeyBack, MonkeyFront } from './SvgMascot';
 export { seatY as mascotSeatY } from './geometry';
 export type { MascotProps } from './types';
 export { MASCOT_SIZES } from './types';
+export { ReactiveMascot } from './ReactiveMascot';
+export { useMascotReactions, useScreenFocused, type MascotReactions } from './useMascotReactions';
+export type { MascotReaction, MascotGaze } from './types';

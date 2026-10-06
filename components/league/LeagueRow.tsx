@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import { Mascot } from '@/components/mascot';
+import { Mascot, type MascotReaction } from '@/components/mascot';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { dur, intro, motion, stagger, useMotionSafe } from '@/lib/motion';
@@ -16,6 +16,8 @@ interface Props {
   play?: boolean;
   /** Poslední řádek před zónou / koncem: bez spodní vlasové linky (oddělení nese zóna nebo patička). */
   last?: boolean;
+  /** Reakce opičky (fáze 3): jen vlastní řádek, výsledek minulého týdne. */
+  reaction?: MascotReaction | null;
 }
 
 /**
@@ -24,7 +26,7 @@ interface Props {
  * jméno `body`, XP `stat` tabulárně v pevném sloupci. Bez vlastních pláten.
  * Vlastní řádek = jediná dlaždice seznamu (`tile`) s hranou `text` 2 pt: zvýraznění tvarem, ne barvou.
  */
-export function LeagueRow({ entry, rank, index, play = true, last = false }: Props) {
+export function LeagueRow({ entry, rank, index, play = true, last = false, reaction = null }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
   const me = entry.isMe;
   const { fontScale } = useWindowDimensions();
@@ -68,7 +70,7 @@ export function LeagueRow({ entry, rank, index, play = true, last = false }: Pro
         </Text>
         {/* Pro čtečku skrytá: řádek je jeden prvek s `rowA11y`, cizí opice nesmí číst „Tvoje opice“. */}
         <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
-          <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" size={size.rowMascot} decorative />
+          <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" size={size.rowMascot} decorative reaction={reaction} />
         </View>
         <Text variant={me ? 'bodyStrong' : 'body'} numberOfLines={1} ellipsizeMode="tail" style={{ flex: 1 }}>{entry.name}</Text>
         <Text variant="stat" tone={me ? 'text' : 'muted'} numberOfLines={1} style={{ width: xpCol, textAlign: 'right' }}>

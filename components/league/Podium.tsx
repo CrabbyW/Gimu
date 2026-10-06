@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { DotRow } from '@/components/dots';
-import { Mascot } from '@/components/mascot';
+import { Mascot, type MascotReaction } from '@/components/mascot';
 import { Reveal } from '@/components/ui/choreo';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
@@ -19,7 +19,11 @@ const P = intro.podium;
  * Méně než 3 hráči = jen existující sloupce; nikdo s XP = pódium se nekreslí (pořadí by bylo náhodné,
  * prázdný stav nese věta v hero dlaždici). Nejvýš 3 plátna.
  */
-export function Podium({ entries, play = false }: { entries: LeagueEntry[]; play?: boolean }) {
+export function Podium({ entries, play = false, meReaction = null }: {
+  entries: LeagueEntry[]; play?: boolean;
+  /** Reakce vlastní opičky na pódiu (fáze 3, výsledek minulého týdne). */
+  meReaction?: MascotReaction | null;
+}) {
   const { space, size } = useTheme();
   if (entries.length === 0 || entries.every((e) => e.xpThisWeek === 0)) return null;
   const columns = podiumColumns(Math.min(entries.length, 3));
@@ -42,7 +46,7 @@ export function Podium({ entries, play = false }: { entries: LeagueEntry[]; play
               >
                 <Reveal play={play} delay={at + P.mascotLag} rise={P.mascotRise} config={motion.reveal}>
                   <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                    <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood={rank === 1 ? 'happy' : 'idle'} size={size.podiumMascot} decorative hop={false} />
+                    <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood={rank === 1 ? 'happy' : 'idle'} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
                   </View>
                 </Reveal>
                 <DotRow total={height * dots.podium.cols} fraction={1} columns={dots.podium.cols} dot={dots.podium.d} from="bottom" intro={play ? at : false} />

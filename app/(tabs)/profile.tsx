@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { ChevronRight, Settings, Shirt } from 'lucide-react-native';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, View, useWindowDimensions } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { ProfileFrame } from '@/components/cosmetics/ProfileFrame';
 import { DotField, useDotTouch } from '@/components/dots';
-import { Mascot } from '@/components/mascot';
+import { ReactiveMascot, useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { tileColumns } from '@/components/progress/layout';
 import { BadgeTile } from '@/components/ui/BadgeTile';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
@@ -84,13 +84,16 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
   const longest = stats?.longestStreak ?? 0;
   // Dotyková vlna pole za opičkou (spec §4.1); gesto jen čte dotyky, scroll nebere.
   const field = useDotTouch();
+  // Opička je hratelná (fáze 3): ťuknutí, podržení, pohled za prstem po celém hero poli.
+  const reactions = useMascotReactions(useScreenFocused());
+  const heroTouch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch), [field.gesture, reactions.touch]);
   const [heroW, setHeroW] = useState(0);
   const stackH = plateStackHeight();
 
   return (
     <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
       {/* Hrdina: opička velká na tečkovém poli, stojí na podstavci ze tří tečkových kotoučů. */}
-      <GestureDetector gesture={field.gesture}>
+      <GestureDetector gesture={heroTouch}>
         <View onLayout={(e) => setHeroW(e.nativeEvent.layout.width)} style={{ height: size.profileField + stackH / 2, alignItems: 'center', justifyContent: 'flex-end' }}>
           {heroW > 0 ? (
             <DotField width={heroW} height={size.profileField} fade="up" touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
@@ -101,7 +104,7 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
                 {(mascotStyle) => (
                   <ProfileFrame frameId={profile.equipped.profileFrame} size={size.wardrobePreview}>
                     <Animated.View style={mascotStyle}>
-                      <Mascot stage={stage} mood="idle" size={size.wardrobePreview} cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
+                      <ReactiveMascot reactions={reactions} stage={stage} mood="idle" size={size.wardrobePreview} cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
                     </Animated.View>
                   </ProfileFrame>
                 )}

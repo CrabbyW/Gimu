@@ -86,6 +86,8 @@ export const motion = {
   ambient: { clockMs: 120000, cometMs: 8000 },
   /** Posun podložky aktivního tabu v plovoucím tab baru. */
   tabSlideMs: 260,
+  /** Přejetí prstem po tab baru: od kolika pt vodorovného posunu je to tah, ne tap. */
+  tabScrub: { activeOffset: 6 },
   /** Nástup obrazovky: hlavička → hero → dlaždice ve vlně. */
   screenIn: { headerAt: 0, heroAt: 80, step: 60, durationMs: 480, rise: 12, maxTiles: 8 },
 
@@ -168,6 +170,46 @@ export const motion = {
   slamFrom: 1.2,
   /** Jantarová hrana šálu: prolnutí při vstupu do celebrate. */
   scarfEdge: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
+  /**
+   * Reakce opičky (Nothing Dot fáze 3, spec §4.4). Výšky a zdvihy jsou zlomky strany plátna (nezávislé na
+   * velikosti), úhly ve stupních, posuny hlavy a pupil v jednotkách viewBoxu 200. Návraty hlavy a pupil jdou
+   * pružinou `spring.sal` (opička není ovládací prvek, ťuknutí na ni je hra). Omezený pohyb: `degrade` z
+   * `logic/mascotReactions` zbaví reakci skoků a rotací, zbude nálada a oči.
+   */
+  reactions: {
+    /** Poskok na ťuknutí: časy z `motion.hop`, výška `height`. */
+    hop: { height: 0.12 },
+    /** Salto: přikrčení, výskok s otočkou 360° kolem středu, doskok se zmáčknutím. */
+    flip: { height: 0.34, crouchMs: 90, riseMs: 280, fallMs: 300, landMs: 70, recoverMs: 220, squash: 0.1 },
+    /** Mazlení: oči zavřené, radost, zmáčknutí `squeeze` (náběh `inMs`, výdrž `holdMs`). */
+    cuddle: { squeeze: 0.06, inMs: 160, holdMs: 1100 },
+    /** Pohled: `reach` pt od opičky = plná výchylka; pupily ±`pupilX`/`pupilY`, hlava ±`headDeg` a posun `headShift`.
+     *  Samostatná reakce (a degradované wave/nod/shrug) = mrknutí očima do strany a zpět. */
+    gaze: { reach: 140, pupilX: 3, pupilY: 2.5, headDeg: 6, headShift: 2, glanceMs: 220, holdMs: 360 },
+    /** Pohled dolů při scrollu: `droop` (uši a pohled) na `holdMs`, náběh a návrat `motion.moodShift`. */
+    lookDown: { holdMs: 700 },
+    /** Závrať: kývání hlavy ±`deg`, `swings` půlkmitů po `swingMs`, každý o `decay` menší. */
+    dizzy: { deg: 12, swings: 6, swingMs: 110, decay: 0.72 },
+    /** Spánek: oči se zavřou za `closeMs`, hlava klesne o `headDip`, dech pomalejší a hlubší. */
+    sleep: { closeMs: 500, headDip: 3, breathHalfMs: 2200, breathScale: 0.03 },
+    /** Mávnutí: náklon těla kolem chodidel ±`deg`, `times` × tam a zpět po `swingMs`. */
+    wave: { deg: 7, times: 3, swingMs: 170 },
+    /** Kývnutí: hlava dolů o `dip` a `deg`, `times` ×. */
+    nod: { dip: 5, deg: 5, downMs: 110, upMs: 160, times: 2 },
+    /** Oslava: nálada celebrate a jantarová hrana šálu na `holdMs`. */
+    celebrate: { holdMs: 1800 },
+    /** Hrdost: vypnutí hrudi scaleY +`scale` a zdvih `lift`, výdrž `holdMs`. */
+    proud: { scale: 0.06, lift: 0.03, inMs: 240, holdMs: 900 },
+    /** Smutek: nálada sad na `holdMs` (pak zpět na náladu z aktivity) a povzdech: víčka napůl (`sigh`),
+     *  hlava klesne o `dip`, náběh `inMs`. Viditelné i u opičky, která už smutná je. */
+    sad: { holdMs: 2000, sigh: 0.45, dip: 3, inMs: 400 },
+    /** Skok radosti: hluboké přikrčení, vysoký skok, tvrdší doskok. */
+    joyJump: { height: 0.3, squash: 0.12, crouchMs: 120, riseMs: 240, fallMs: 260, landMs: 70, recoverMs: 260 },
+    /** Pokrčení ramen: tělo nahoru o `lift`, hlava na stranu `deg`, výdrž `holdMs`. */
+    shrug: { lift: 0.035, deg: 10, upMs: 160, holdMs: 340, downMs: 220 },
+    /** Sledování kotouče: hlava ±`headDeg` a pupily po kruhu za úhlem kotouče; trvá `holdMs`, náběh/doběh `fadeMs`. */
+    spinFollow: { headDeg: 10, holdMs: 2600, fadeMs: 300 },
+  },
 };
 
 /**

@@ -120,7 +120,8 @@ export default function LessonScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
-      <Screen edges={['top']}>
+      {/* Horní safe area odsazuje LessonProgress sám (fullScreenModal na iOS, viz komentář tam). */}
+      <Screen edges={[]}>
         <LessonProgress total={exercises.length} current={index} onClose={askQuit} />
         <ExerciseStep
           key={exercise.id + index}

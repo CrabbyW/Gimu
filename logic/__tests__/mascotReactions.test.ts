@@ -31,7 +31,7 @@ describe('eventToReaction', () => {
 });
 
 describe('pickReaction', () => {
-  it('10 rychlých ťuknutí: jedna reakce (salto nejvýš jednou), pak cooldown', () => {
+  it('10 rychlých ťuknutí: poskok, pak nejvýš jedno salto, pak cooldown', () => {
     let s = fresh;
     const played: string[] = [];
     for (let i = 0; i < 10; i++) {
@@ -39,10 +39,21 @@ describe('pickReaction', () => {
       s = r.state;
       if (r.id) played.push(r.id);
     }
-    expect(played).toHaveLength(1);
-    expect(played.filter((p) => p === 'flip').length).toBeLessThanOrEqual(1);
-    const after = pickReaction({ type: 'tap', at: 1450 + REACTION_COOLDOWN_MS + 1 }, s, 1450 + REACTION_COOLDOWN_MS + 1);
+    expect(played).toEqual(['hop', 'flip']);
+    // Salto ve 3. ťuknutí (1100 ms) spustilo nový cooldown.
+    const after = pickReaction({ type: 'tap', at: 1100 + REACTION_COOLDOWN_MS + 1 }, s, 1100 + REACTION_COOLDOWN_MS + 1);
     expect(after.id).not.toBeNull();
+  });
+  it('trojité ťuknutí z klidu = poskok a hned salto', () => {
+    let s = fresh;
+    const ids: (string | null)[] = [];
+    for (const t of [0, 150, 300]) { const r = pickReaction({ type: 'tap', at: t }, s, t); s = r.state; ids.push(r.id); }
+    expect(ids).toEqual(['hop', null, 'flip']);
+  });
+  it('salto nepřebije nic jiného než poskok', () => {
+    const a = pickReaction({ type: 'longPress' }, fresh, 0);
+    const r = pickReaction({ type: 'tap', at: 300 }, { ...a.state, taps: [100, 200] }, 300);
+    expect(r.id).toBeNull();
   });
   it('trojité ťuknutí po vypršení cooldownu = salto', () => {
     let s = pickReaction({ type: 'tap', at: 0 }, fresh, 0).state; // hop v 0

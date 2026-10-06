@@ -4,7 +4,7 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withD
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
-import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY } from '@/components/mascot';
+import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, type MascotReactions } from '@/components/mascot';
 import { plateOuterRadius } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -51,7 +51,13 @@ interface Props {
   intro?: boolean;
   /** Místo pod posledním uzlem pro plovoucí CTA obrazovky (pt), aby ho šlo odscrollovat. */
   footerSpace?: number;
+  /** Reakce opičky (fáze 3): opička na mapě je hratelná a reaguje na scroll, roztočení kotouče a ztrátu série. */
+  reactions?: MascotReactions;
 }
+
+/** Programový scroll (dojetí na uzel, popover) není uživatelův pohyb: opička se po tuto dobu nedívá dolů. */
+const PROGRAMMATIC_SCROLL_MS = 700;
+const SCROLL_GAP_MS = 200;
 
 /** Teplá litina §2.7: opička SEDÍ na horní hraně kotouče (sourozenec kotouče, ne dítě: kotouč smí pulzovat,
  *  opička ne). Smutná a u bosse sedí vedle uzlu na opačné straně vlny. */
@@ -65,7 +71,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0 }: Props) {
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, reactions }: Props) {
   const { space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -107,10 +113,17 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const endRef = useRef(onUnlockSequenceEnd);
   useLayoutEffect(() => { endRef.current = onUnlockSequenceEnd; });
 
+  // Rychlost scrollu pro reakce opičky (lookDown / dizzy); programový scroll se nepočítá.
+  const programmaticUntil = useRef(0);
+  const lastScroll = useRef<{ y: number; at: number } | null>(null);
+  const scrollTo = useCallback((y: number, animated: boolean) => {
+    programmaticUntil.current = Date.now() + PROGRAMMATIC_SCROLL_MS;
+    scroll.current?.scrollTo({ y, animated });
+  }, []);
   const scrollToNode = useCallback((id: string, animated: boolean) => {
     const p = posOf(id);
-    if (p && viewportH > 0) scroll.current?.scrollTo({ y: Math.max(0, p.y - viewportH * 0.4), animated });
-  }, [posOf, viewportH]);
+    if (p && viewportH > 0) scrollTo(Math.max(0, p.y - viewportH * 0.4), animated);
+  }, [posOf, viewportH, scrollTo]);
 
   // Omezený pohyb: opička se na nový uzel jen prolne (200 ms), bez oblouku.
   const crossfade = useSharedValue(1);
@@ -211,6 +224,21 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     };
   });
 
+  // --- Reakce opičky (fáze 3) ---
+  // Úhel roztočení aktuálního kotouče: opička za ním otáčí hlavu a pupily (`spinFollow`).
+  const plateSpin = useSharedValue(0);
+  const report = reactions?.report;
+  const onSpinStart = useCallback(() => { report?.({ type: 'plateSpin' }); }, [report]);
+  // Ztráta série: opička se při otevření mapy zesmutní (po příchodu v úvodním sledu, ať je vidět).
+  const sadOnOpen = stats.mood === 'sad';
+  useEffect(() => {
+    if (!sadOnOpen || !report) return;
+    const id = setTimeout(() => report({ type: 'streakLost' }), plan && !reduced ? plan.mascotAt : 0);
+    return () => clearTimeout(id);
+    // Jednou při otevření mapy se ztracenou sérií.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sadOnOpen]);
+
   // --- Popover a zatřesení ---
   const [selected, setSelected] = useState<{ id: string; above: boolean } | null>(null);
   const [shakes, setShakes] = useState<Record<string, number>>({});
@@ -232,7 +260,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     // Když se popover nevejde ani na jednu stranu, posuň mapu o chybějící kus, ať je celý vidět.
     if (p && selected?.id !== n.lesson.id) {
       const deficit = above ? POPOVER_ROOM - (nodeTop - scrollY.current) : POPOVER_ROOM - (visibleBottom - nodeBottom);
-      if (deficit > 0) scroll.current?.scrollTo({ y: Math.max(0, scrollY.current + (above ? -deficit : deficit)), animated: !reduced });
+      if (deficit > 0) scrollTo(Math.max(0, scrollY.current + (above ? -deficit : deficit)), !reduced);
     }
     setSelected((cur) => (cur?.id === n.lesson.id ? null : { id: n.lesson.id, above }));
     if (shown === 'locked') setShakes((s) => ({ ...s, [n.lesson.id]: (s[n.lesson.id] ?? 0) + 1 }));
@@ -258,7 +286,18 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       style={{ flex: 1, overflow: 'hidden' }}
       contentContainerStyle={{ height }}
       onLayout={(e) => setViewportH(e.nativeEvent.layout.height)}
-      onScroll={(e) => { scrollY.current = e.nativeEvent.contentOffset.y; }}
+      onScroll={(e) => {
+        const y = e.nativeEvent.contentOffset.y;
+        scrollY.current = y;
+        const now = Date.now();
+        const prev = lastScroll.current;
+        lastScroll.current = { y, at: now };
+        if (!reactions || !prev || now < programmaticUntil.current) return;
+        const dt = now - prev.at;
+        // Mezera mezi událostmi = nový tah: rychlost z ní by byla nesmysl.
+        if (dt <= 0 || dt > SCROLL_GAP_MS) return;
+        reactions.report({ type: 'scroll', velocity: ((y - prev.y) / dt) * 1000 });
+      }}
       scrollEventThrottle={32}
     >
       {seasonal.mapTexture ? <DotTexture width={width} height={height} color={seasonal.mapTexture} /> : null}
@@ -321,6 +360,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
                 kg={n.lesson.plateKg} size={p.size} state={state} accessibilityLabel={label}
                 onPress={() => onNodePress(n, state)} shakeKey={shakes[n.lesson.id]}
                 unlocking={unlocking} onUnlocked={onUnlocked}
+                spinOut={state === 'current' ? plateSpin : undefined}
+                onSpinStart={state === 'current' && reactions ? onSpinStart : undefined}
                 justCompleted={isPrev && frame.prevCheck === 'draw'} checkHidden={isPrev && frame.prevCheck === 'hidden'}
                 // Úvodní sled: tečky kotouče se rozsvítí spirálou s jeho usazením.
                 intro={plan && i <= plan.ci ? plan.at(i) ?? undefined : undefined}
@@ -337,7 +378,16 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         );
       })}
 
-      {spot ? (
+      {spot && reactions ? (
+        // Hratelná opička (fáze 3): ťuknutí, podržení a pohled. Plocha jen 56 pt nad horní hranou kotouče;
+        // zbytek kotouče (tap = lekce, tah = roztočení) zůstává volný.
+        <Animated.View pointerEvents="box-none" style={[{ position: 'absolute', left: 0, top: 0 }, mascotStyle]}>
+          <ReactiveMascot
+            reactions={reactions} seated={seated} spin={plateSpin}
+            stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={!seated}
+          />
+        </Animated.View>
+      ) : spot ? (
         <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0 }, mascotStyle]}>
           {/* Na uzlu dýchá prstenec, ne opička (§3.1); vedle uzlu (smutná, boss) dech zůstává. */}
           {seated ? (
