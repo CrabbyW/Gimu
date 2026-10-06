@@ -172,3 +172,16 @@ Sken textu + `aria-label` všech obrazovek (onboarding 6 kroků, dev, mapa, liga
 - Reset na iPhonu (nativní Alert, `router.dismissAll()` ze stacku nad taby).
 - Hlavička mapy na reálném 320 pt zařízení (SE 1. gen) s nejdelším názvem sekce.
 - VoiceOver čte anglické popisky odznaků.
+
+## Podněty z iPhonu + nová oslava (2026-10-06, commity a309eb2..8b0b325)
+**Verdikt: SCHVÁLENO** (s poznámkami níže; nic neopraveno, žádná jasná chyba v logice).
+
+Build: `tsc --noEmit` 0 chyb, Jest 65 sad / 623 testů OK, ESLint 0 nálezů.
+
+1. Tab bar přejetí ✅ (kód): Pan s `activeOffsetX` (tap zůstává tapem), podložka za prstem s ořezem 0..max, tik jen při změně slotu, `navigate` jen v `onEnd` přes `tabPress` (guard `defaultPrevented` respektován), zrušené gesto → `settle` zpět na aktivní tab. Na webu jen statická kontrola, pocit na iPhonu ručně.
+2. Demo přeskočení ✅: web, demo profil, lekce „Balance“ → 4× Skip → oslava, +44 XP (lesson 20 · first today +10 · streak +14), série 12 → 13 dní. Normální profil dál `canSkip` + `advance(false)`. ⚠️ Skip je skrytý, dokud běží časovač (nejdřív [PAUSE]); u demo profilu to zdržuje — rozhodnutí pro boss.
+3. Mapa pod hlavičkou ✅ funkčně (aktuální uzel ve výhledu, kotva opičky nad uzlem, „+20 XP“ na vlastním řádku). ⚠️ design-agent: pod titulkem „Balance basics“ prosvítá popisek a uzel předchozí lekce („Overhead“) — závoj `EdgeFade` je v dark slabý, titulek se tím hůř čte.
+4. Reaktivní pozadí ✅: plátna na webu: mapa 10, lekce 4, oslava 4 (≤ 12). Ostatní obrazovky tento běh neměřeny (minulé kolo OK).
+5. Oslava ✅: osa `celebrationTimeline`/`celebrationHaptics` pokryta testy; snímky 300/900/1400/2000/3000 ms (dark i light) — vír → prstenec → kotouč 20 s opičkou, XP, sérií a [CONTINUE] na konci. `skipToEnd` je idempotentní (`once`), ruší naplánované kroky včetně haptiky (`cancelSteps`), XP tik po přeskočení mlčí, pozadí appky = přeskočení, Reduce Motion = konečný stav + jen `success`, `fire` respektuje `hapticsEnabled`.
+
+**K ruční kontrole (iPhone):** pocit crescenda/heavy/heartbeat; přejetí tab barem (tik na slot, žádný skok obrazovek během tahu); oslava s Reduce Motion; vypnutá Haptika = ticho; čitelnost hlavičky mapy při scrollu.
