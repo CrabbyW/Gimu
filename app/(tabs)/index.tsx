@@ -4,6 +4,7 @@ import { View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotField, DotRing, useDotTouch } from '@/components/dots';
+import { backgroundPitch } from '@/components/dots/geometry';
 import { LessonMap } from '@/components/map/LessonMap';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { currentSection, SectionHero } from '@/components/map/SectionHero';
@@ -24,12 +25,6 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { dots, opacity, useTheme } from '@/theme';
 
-/** Výška pole za hlavičkou: tolik řádků, kolik dovolí strop teček při dané šířce. */
-const fieldHeight = (width: number) => {
-  const cols = Math.floor(width / dots.field.pitch) + 1;
-  return Math.floor(dots.field.max / cols) * dots.field.pitch;
-};
-
 /** Nástup hlavičky (motion.screenIn): shared value, ne layout animace (ta na webu nechá prvek `absolute`). */
 const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
 
@@ -42,7 +37,7 @@ const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
  */
 export default function TrainingScreen() {
   const { c, space, size } = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, height: screenH } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   // Rezerva scény pro plovoucí tab bar; mapa ji záporným okrajem přebírá a jede i pod tab barem.
   const clearance = tabBarClearance(insets.bottom, size.tabPill, space.m);
@@ -84,6 +79,16 @@ export default function TrainingScreen() {
         <GestureDetector gesture={touch}>
         {/* Obrazovka sahá až pod plovoucí tab bar (záporný okraj ruší rezervu scény): mapa jede přes celou výšku. */}
         <View style={{ flex: 1, backgroundColor: c.base, marginBottom: -clearance }}>
+          {/* Reaktivní tečkové pozadí přes celou obrazovku (jako ReactiveBackground jinde): stojí, mapa jede nad ním,
+              vlna z dotyku sedí na prstu (gesto `field` je na kořeni spolu s reakcemi opičky). */}
+          <DotField
+            width={width}
+            height={screenH}
+            pitch={backgroundPitch(width, screenH, dots.field.pitch, dots.field.max)}
+            touch={field.touch}
+            restOpacity={dots.background.restOpacity}
+            style={{ position: 'absolute', left: 0, top: 0 }}
+          />
           {/* Mapa přes celou výšku; mountuje se až se změřenou hlavičkou, aby úvodní dojetí na aktuální uzel
               počítalo se správným výřezem. */}
           {overlayH > 0 ? (
@@ -118,11 +123,6 @@ export default function TrainingScreen() {
             ]}
             style={{ position: 'absolute', left: 0, top: 0 }}
           />
-          {/* Pole teček patří hlavičce (stojí, vlna z dotyku sedí na prstu), oříznuté na její výšku; nad závojem,
-              takže zůstává ostré i když pod ním jede mapa. */}
-          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: overlayH, overflow: 'hidden' }}>
-            <DotField width={width} height={fieldHeight(width)} fade="down" touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
-          </View>
           {/* Překryv: hlavička + řádek sekce. Prázdná místa propouští tah do mapy pod sebou. */}
           <View
             pointerEvents="box-none"
