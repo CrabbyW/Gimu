@@ -46,7 +46,7 @@ function uiAt(at: number, fn: () => void): SharedValue<number> {
   return m;
 }
 
-/** „Zítra: …“: další lekce cesty (`nextLessonId`) a její `estMinutes`. Bez další lekce věta o sekci. */
+/** „Zítra · …“: další lekce cesty (`nextLessonId`) a její `estMinutes`. Bez další lekce věta o sekci. */
 function tomorrowOf(view: LessonPathView | null, minutes: Record<string, number>): string | null {
   if (!view) return null;
   const nodes = view.sections.flatMap((s) => s.nodes);

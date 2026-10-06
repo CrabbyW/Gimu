@@ -383,21 +383,21 @@ function NodeLabel({ node, state, minutes, bossAfter }: {
     lines = (
       <>
         <Text variant="headline" style={center}>{copy.map.bossTitle}</Text>
-        <Text variant="caption" tone="muted" style={center}>{state === 'locked' ? copy.map.bossUnlock(bossAfter) : withXp}</Text>
+        <Text variant="telemetry" tone="muted" style={center}>{state === 'locked' ? copy.map.bossUnlock(bossAfter) : withXp}</Text>
       </>
     );
   } else if (current) {
     lines = (
       <>
         <Text variant="headline" numberOfLines={2} style={center}>{node.lesson.title}</Text>
-        <Text variant="caption" tone="muted" style={center}>{withXp}</Text>
+        <Text variant="telemetry" tone="muted" style={center}>{withXp}</Text>
       </>
     );
   } else if (state === 'locked') {
     lines = (
       <>
         <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{node.lesson.title}</Text>
-        <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{info}</Text>
+        <Text variant="telemetry" tone="muted" numberOfLines={1} style={center}>{info}</Text>
       </>
     );
   } else {

@@ -135,7 +135,8 @@ export const copy = {
   },
   header: { settings: 'Nastavení' },
   lesson: {
-    tomorrow: (title: string, minutes: number) => `Zítra: ${title} · ${minutes} min`,
+    // Oddělovač „·“ místo dvojtečky: název bosse už dvojtečku nese („Boss: Plná osa“).
+    tomorrow: (title: string, minutes: number) => `Zítra · ${title} · ${minutes} min`,
     sectionDone: 'Sekce hotová. Další se odemkne v mapě.',
     skip: 'Přeskočit',
     /** Navýšení cviku z dluhu přeskočených cviků (R44). */
@@ -316,7 +317,8 @@ export const copy = {
     },
   },
   dev: {
-    title: 'Dev menu', demo: 'Načíst demo profil', reset: 'Reset appky', resetConfirm: 'Smazat všechna data? Téma zůstane.', xp: '+500 XP',
+    title: 'Dev menu', demo: 'Načíst demo profil',
+    dots: 'Tečky', dotState: { locked: 'Zamčený', current: 'Aktuální', done: 'Dokončený' }, reset: 'Reset appky', resetConfirm: 'Smazat všechna data? Téma zůstane.', xp: '+500 XP',
     stage: (s: number | null) => `Stage opice: ${s ?? 'auto'}`, seasonEnd: 'Skok na konec sezóny',
     streakLoss: 'Simulace ztráty streaku', resetTime: 'Reset časového posunu', now: 'TEĎ', offset: 'POSUN',
     offsetValue: (d: number, h: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)} D ${h} H`, // nezlomitelné mezery: telemetrie se nesmí zalomit

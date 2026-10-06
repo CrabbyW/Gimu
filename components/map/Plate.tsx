@@ -20,7 +20,7 @@ export const CHECK_PATH = 'M44 50 l4 4 l8 -9';
 export const CHECK_LENGTH = 18;
 
 /** R43 proporce kotouče (viewBox 100): vnější R, náboj R/φ², otvor R/φ³. Lem 40 je fyzický lem, ne φ.
- *  Sdílí je i konstrukční figura oslavy (`GoldenFigure`). */
+ *  Z litinového kotouče dnes zbývá jen fajfka (`CHECK_*`), kterou kreslí `PlateNode` přes tečkový `DotPlate`. */
 export const PLATE_R = 48;
 export const PLATE_RIM = 40;
 export const PLATE_HUB = PLATE_R / PHI ** 2;
