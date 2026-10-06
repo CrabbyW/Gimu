@@ -2,7 +2,7 @@
 
 Datum: 2026-10-06 · qa-agent · větev `faze1/core-loop` · rozsah: plán `docs/superpowers/plans/2026-10-05-nothing-dot-faze1.md` úkoly 1–10 a Review Focus, porovnané bod po bodu se spec `docs/superpowers/specs/2026-10-05-nothing-dot-redesign-design.md`; opravy `87f436a` a `85b4493`.
 
-**Verdikt: NESCHVÁLENO** (2 vizuální vady v hlavním flow a rozbitá dev sekce Tečky; logiku jsem opravil, viz níže)
+**Verdikt: SCHVÁLENO** (kolo 2, po `f63ac3c`; Metro :8081 restartované s --clear, snímky přefoceny v dark i light)
 
 ## Build a testy (spuštěno znovu)
 - `npx tsc --noEmit` ✅ 0 chyb
@@ -16,13 +16,13 @@ Datum: 2026-10-06 · qa-agent · větev `faze1/core-loop` · rozsah: plán `docs
 |---|---|---|---|
 | 1. Skia, Doto, CanvasKit na webu, jest mock | §7 | ✅ | `Doto_700Bold` v `app/_layout.tsx`; CanvasKit přes `index.web.js` + `lib/skiaReady.ts` (plán chtěl `lib/skiaWeb.ts`, odchylka zapsaná bossem v LOG); vlastní mock Skia v `jest.setup.ts` |
 | 2. Monochromní palety | §2.1 | ✅ | `theme/palettes.ts` má `tile/tilePressed/edge/dotOff/dotDim/glow/onText`; `theme/__tests__/contrast.test.ts` zelený; v kódu není čistý #000/#FFF |
-| 3. Tokeny typografie, tvarů, pohybu | §2.2, §2.3, §3 | ⚠️ | `motion.plateSpin/liveBlinkMs/tilePress/screenIn` jsou v `lib/motion.ts`; `dotStat` je, ale `dotHero` (64) a `dotDisplay` (40) jako varianty neexistují (Doto ve velkých titulcích se řeší jinak). Odchylka nesráží funkci, chybí jen pojmenování podle plánu |
+| 3. Tokeny typografie, tvarů, pohybu | §2.2, §2.3, §3 | ✅ | `motion.plateSpin/liveBlinkMs/tilePress/screenIn` v `lib/motion.ts`; rozhodnutí bosse (plán upraven): Doto varianty jsou `hero`/`display`/`displayXL`/`dotStat` |
 | 4. Tečková geometrie (TDD) | §2.4 | ✅ | `components/dots/__tests__/geometry.test.ts`: 2.5→2 … 25→7, neznámé kg |
-| 5. Skia komponenty + vlna + dev „Tečky“ | §2.4, §4.1 | ❌ | Komponenty a testy ✅ (`render.test.tsx`). Dev sekce Tečky v `/dev`: řada „ZAMČENÝ“ se na webu vykreslí jako bílé obdélníky s ikonou rozbitého obrázku (dark i light, i po 5 s) — viz nález N2 |
+| 5. Skia komponenty + vlna + dev „Tečky“ | §2.4, §4.1 | ✅ | `render.test.tsx` zelený; `/dev` Tečky: 3 kg × 3 stavy, řada ZAMČENÝ vykreslená správně v dark i light (13 pláten, pod limitem WebGL) |
 | 6. Tile, PillButton, StatusLine, ScreenHeader | §2.3 | ✅ | `PillButton.test.tsx` (`[ZAČÍT LEKCI]`, čtečka bez závorek, disabled); Grain z `Screen` pryč |
 | 7. Plovoucí tab bar | §2.3 | ✅ | `FloatingTabBar.test.tsx` (navigate + `selected`); snímky: pilulka, podložka aktivního tabu |
 | 8. Mapa: kotouče, roztočení, cesta, hero | §2.4, §4, §6 | ✅ po opravě | `usePlateSpin.test.ts` (`angleDelta`, `ticksCrossed`); `activeOffsetX`/`failOffsetY` v `usePlateSpin.ts`. Popover uzlu se ale schovával pod pruh s CTA — opraveno (N1) |
-| 9. Lekce: DotRing, dlaždice, HoldTimer | §6 | ❌ | `HoldTimer.test.tsx` zelený, ale na snímku je popisek „PŘIPRAV SE“ přes Doto číslici a tečky prstence a prstenec není vodorovně na středu (střed ~x 153 z 390) — N3 |
+| 9. Lekce: DotRing, dlaždice, HoldTimer | §6 | ✅ | `HoldTimer.test.tsx` zelený; snímek dark i light: prstenec na středu, „PŘIPRAV SE“ pod prstencem bez překryvu |
 | 10. Oslava dokončení lekce | §5 | ✅ | `celebration.test.ts`: osa field→gather→snap→mascot→cta 0/200/900/1000/1600, reduced = vše 0 a 200 ms. Snímek 1800 ms dark i light: rozpis „lekce 10 · první dnes +10 · / streak +14“ se láme jen mezi položkami, „streak +14“ drží pohromadě (NBSP oprava funguje). Copy „Zítra · Boss: Plná osa“ ✅ |
 
 ## Review Focus
@@ -38,11 +38,15 @@ Datum: 2026-10-06 · qa-agent · větev `faze1/core-loop` · rozsah: plán `docs
 ## Nálezy
 
 - **N1 (logika, OPRAVENO v `components/map/LessonMap.tsx`)**: popover uzlu na mapě byl vidět jen nadpisem, zbytek (údaje, `[ZOPAKOVAT LEKCI]`) pod pruhem s CTA. Repro: demo profil → mapa → klepnout na „Lekce 5 Nad hlavou“. Příčina: `popoverSide` dostával spodek výřezu bez odečtení `footerSpace`, a když se popover nevešel na žádnou stranu (viditelný výřez mapy je jen ~276 px), nic mapu neposunulo. Oprava: `viewportBottom` = výřez − `footerSpace` a při nedostatku místa `scrollTo` o chybějící kus (bez animace při Reduce Motion). Ověřeno snímkem dark i light na čerstvém Metru (port 8099).
-- **N2 (design-agent / boss)**: `/dev` sekce Tečky, řada „ZAMČENÝ“ = rozbité bílé plochy. Pravděpodobně limit WebGL kontextů v Chrome (~16; sekce má 18 kotoučů + prstenec, řada, matice, pole = 22 Canvasů, nejstarší kontexty prohlížeč zahodí). Týká se jen webu, ale stejné riziko hrozí na mapě s více sekcemi. Návrh: v dev sekci méně kotoučů nebo jeden společný Canvas.
-- **N3 (design-agent)**: obrazovka lekce, HoldTimer: „PŘIPRAV SE“ přes číslici a tečky prstence, prstenec mimo střed.
-- **N4 (design-agent)**: závoj popoveru v light je středně šedá plocha jen přes oblast mapy (hlavička, hero a CTA zůstávají světlé), vypadá jako chyba vykreslení. V dark je závoj skoro neviditelný.
+- **N2 (OPRAVENO `f63ac3c`)**: `/dev` sekce Tečky, řada „ZAMČENÝ“ = rozbité bílé plochy. Pravděpodobně limit WebGL kontextů v Chrome (~16; sekce má 18 kotoučů + prstenec, řada, matice, pole = 22 Canvasů, nejstarší kontexty prohlížeč zahodí). Týká se jen webu, ale stejné riziko hrozí na mapě s více sekcemi. Návrh: v dev sekci méně kotoučů nebo jeden společný Canvas.
+- **N3 (OPRAVENO `f63ac3c`)**: obrazovka lekce, HoldTimer: „PŘIPRAV SE“ přes číslici a tečky prstence, prstenec mimo střed.
+- **N4 (OPRAVENO `f63ac3c`, závoj je průhledná plocha na tap)**: závoj popoveru v light je středně šedá plocha jen přes oblast mapy (hlavička, hero a CTA zůstávají světlé), vypadá jako chyba vykreslení. V dark je závoj skoro neviditelný.
 - **N5 (boss, info)**: Metro `:8081` nebere změny souborů (ani `touch`); bundle `index.web.bundle` zůstal starý. Nové změny ověřuj na čerstvém serveru.
-- **N6 (design, nízká)**: varianty `dotHero`/`dotDisplay` z plánu úkolu 3 chybí.
+- **N6 (VYŘEŠENO rozhodnutím bosse)**: Doto varianty = `hero`/`display`/`displayXL`/`dotStat`, plán upraven.
+- **N5** vyřešen restartem :8081.
+
+## Otevřené pro fázi 2
+- Limit WebGL kontextů na webu (~16 Canvasů): mapa s více sekcemi a taby to může přesáhnout (teď mapa 10 Canvasů). Na nativu limit není.
 
 ## K ruční kontrole
 - Popover u uzlu těsně nad CTA: po automatickém posunu je kotouč napůl pod pruhem (snímek `qa-pop-done-*`), zkontrolovat, jestli to působí přirozeně.

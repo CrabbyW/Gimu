@@ -684,3 +684,7 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Opravil sám: `components/map/LessonMap.tsx` — popover uzlu se schovával pod pruh s CTA (výřez nepočítal `footerSpace`, chyběl posun mapy, když se nevejde).
 - Verdikt NESCHVÁLENO: dev Tečky „ZAMČENÝ“ rozbité na webu (limit WebGL kontextů?), HoldTimer „PŘIPRAV SE“ přes číslici a prstenec mimo střed, šedý závoj popoveru v light → design-agent.
 - Otevřené: Metro :8081 nesleduje změny, ověřováno na čerstvém serveru :8099.
+
+## qa-agent — QA kolo 2 Nothing Dot fáze 1 (2026-10-06)
+- Ověřeno `f63ac3c` na čerstvém :8081: dev Tečky OK, HoldTimer na středu se štítkem pod prstencem, popover bez závoje celý viditelný (dark i light). tsc/jest 535/eslint zelené. QA.md aktualizováno (úkoly 3, 5, 9, nálezy).
+- Verdikt SCHVÁLENO. Otevřené pro fázi 2: limit WebGL kontextů na webu u mapy s více sekcemi/taby (nativ bez limitu).
