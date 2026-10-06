@@ -1,30 +1,36 @@
 import { View } from 'react-native';
-import { copy } from '@/data/copy';
-import { useTheme } from '@/theme';
+import { DotRing } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
+import { copy } from '@/data/copy';
+import { TIER_ORDER } from '@/logic/league';
+import { useTheme } from '@/theme';
+import type { LeagueTierId } from '@/types';
 
 interface Props {
+  tierId: LeagueTierId;
   tierName: string;
-  /** Skrýt mono štítek „LIGA“ (v banneru výsledku je kontext jasný). */
-  bare?: boolean;
-  /** Zamčená liga (Teplá litina §3.2): obrys `faint`, název `muted`. Náhled, ne stav. */
+  /** Zamčená liga: prstenec zhasnutý, iniciála `muted`. Náhled, ne stav. */
   dim?: boolean;
+  /** Nástup spirálou (motion); výchozí stojí. */
+  intro?: boolean | number;
 }
 
-/** Odznak úrovně ligy (§7.5): kruh 56 pt (`size.tierBadge`, Teplá litina §3.2) s obrysem `rule` 1.5, název úrovně (`tierName`, Inter Light 13) uvnitř, štítek LIGA nad ním. */
-export function TierBadge({ tierName, bare = false, dim = false }: Props) {
-  const { c, space, size, radius, stroke } = useTheme();
+/**
+ * Odznak úrovně ligy (Nothing Dot fáze 2): tečkový prstenec `DotRing` 72 s mono iniciálou úrovně uprostřed.
+ * Prstenec není ozdoba: rozsvícený podíl = pořadí úrovně v žebříčku (Dřevo 1/7 … Diamant 7/7), takže
+ * odznak zároveň ukazuje, kolik úrovní je ještě nad tebou. Jedno plátno na odznak (rozpočet pláten).
+ */
+export function TierBadge({ tierId, tierName, dim = false, intro = false }: Props) {
+  const { size } = useTheme();
+  const level = TIER_ORDER.indexOf(tierId as (typeof TIER_ORDER)[number]) + 1;
+  const progress = dim ? 0 : Math.max(1, level) / TIER_ORDER.length;
   return (
-    <View accessible accessibilityLabel={copy.map.leagueA11y(tierName)} style={{ alignItems: 'center', gap: space.s }}>
-      {bare ? null : <Text variant="label" tone="muted">{copy.leagueTier}</Text>}
-      <View
-        style={{
-          width: size.tierBadge, height: size.tierBadge, borderRadius: radius.full, borderWidth: stroke.icon, borderColor: dim ? c.faint : c.rule,
-          alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <Text variant="tierName" tone={dim ? 'muted' : 'text'} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} maxFontSizeMultiplier={1}>{tierName.toUpperCase()}</Text>
-      </View>
+    <View accessible accessibilityRole="image" accessibilityLabel={copy.league.tierA11y(tierName, Math.max(1, level), TIER_ORDER.length)}>
+      <DotRing progress={progress} size={size.tierRing} intro={intro}>
+        <Text variant="label" tone={dim ? 'muted' : 'text'} maxFontSizeMultiplier={1} importantForAccessibility="no">
+          {copy.league.tierInitial(tierName)}
+        </Text>
+      </DotRing>
     </View>
   );
 }

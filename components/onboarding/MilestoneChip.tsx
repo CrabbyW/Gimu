@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Pressable } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { usePressFeedback } from '@/components/ui/usePressFeedback';
@@ -18,7 +18,8 @@ interface Props {
 const SHAKE_PX = 4;
 const SHAKE_STEP = { duration: 50, easing: motion.ui.easing };
 
-/** Chip milníku: nevybraný na ploše `surface`, vybraný inverzní (pozadí `text`, písmo `base`).
+/** Chip milníku (Nothing Dot): nevybraný = pilulka `tile` s vlasovou hranou `edge`, vybraný inverzní
+ *  (výplň `text`, písmo `onText`). Chip je checkbox s více volbami, proto výplň, ne hrana jako u karty volby.
  *  Motion (UX2): inverze se prolne (vrstva `text` + kopie popisku v `base`, `motion.ui`/`uiExit`), stisk 0.96. */
 export function MilestoneChip({ label, selected, onPress, shakeSignal }: Props) {
   const { c, space, radius, size } = useTheme();
@@ -49,7 +50,8 @@ export function MilestoneChip({ label, selected, onPress, shakeSignal }: Props) 
         accessibilityState={{ checked: selected }}
         style={({ pressed }) => ({
           minHeight: size.hit, justifyContent: 'center', paddingHorizontal: space.m, borderRadius: radius.full,
-          backgroundColor: pressed && !selected ? c.raised : c.surface, overflow: 'hidden',
+          backgroundColor: pressed && !selected ? c.tilePressed : c.tile, overflow: 'hidden',
+          borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
         })}
       >
         <Text variant="bodyStrong">{label}</Text>
@@ -60,7 +62,7 @@ export function MilestoneChip({ label, selected, onPress, shakeSignal }: Props) 
           aria-hidden
           style={[inverse, { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: space.m, backgroundColor: c.text }]}
         >
-          <Text variant="bodyStrong" style={{ color: c.base }}>{label}</Text>
+          <Text variant="bodyStrong" style={{ color: c.onText }}>{label}</Text>
         </Animated.View>
       </Pressable>
     </Animated.View>

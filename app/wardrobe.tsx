@@ -1,16 +1,18 @@
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { CosmeticTile, type WardrobeItem } from '@/components/cosmetics/CosmeticTile';
+import { DotField, useDotTouch } from '@/components/dots';
 import { Reveal } from '@/components/ui/choreo';
 import { Mascot } from '@/components/mascot';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { useDisplayStage } from '@/hooks/useDisplayStage';
 import { useProfile } from '@/hooks/useProfile';
@@ -48,12 +50,21 @@ export default function WardrobeScreen() {
   );
 }
 
+/** Hlavička modalu (Nothing Dot §2.3): Doto titulek vlevo, kulaté ikonové tlačítko 44 vpravo. */
 function Header() {
-  const { c, size, stroke } = useTheme();
+  const { c, size, stroke, space, radius } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: size.hitLarge }}>
-      <Text variant="label" tone="muted" accessibilityRole="header">{copy.wardrobe.title.toUpperCase()}</Text>
-      <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={copy.wardrobe.close} style={{ width: size.hit, height: size.hit, alignItems: 'flex-end', justifyContent: 'center' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m, minHeight: size.hitLarge, paddingTop: space.s, paddingBottom: space.m }}>
+      <Text variant="display" accessibilityRole="header" numberOfLines={1} style={{ flexShrink: 1 }}>{copy.wardrobe.title}</Text>
+      <Pressable
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel={copy.wardrobe.close}
+        style={({ pressed }) => ({
+          width: size.iconButton, height: size.iconButton, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
+          backgroundColor: pressed ? c.tilePressed : c.tile, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
+        })}
+      >
         <X size={size.icon} color={c.text} strokeWidth={stroke.icon} />
       </Pressable>
     </View>
@@ -78,6 +89,8 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
   const [changed, setChanged] = useState(false);
   const M = intro.modal;
   const [width, setWidth] = useState(0);
+  const [previewW, setPreviewW] = useState(0);
+  const field = useDotTouch();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   // Náhled: při nasazení opice jednou poskočí (`happy` spouští `motion.hop`), pak zpět do klidu.
@@ -125,9 +138,25 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: space.xxl, gap: space.l }} showsVerticalScrollIndicator={false}>
-      <Reveal play={first} delay={M.at} rise={M.rise} style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.l }}>
-        <Mascot stage={stage} mood={cheer ? 'happy' : 'idle'} size={size.wardrobePreview} cosmetics={equipped} accessibilityLabel={copy.wardrobe.preview} />
-        <Stat label={copy.wardrobe.bananas} value={bananas} unit="" size="M" />
+      {/* Náhled (Nothing Dot fáze 2): opička na tečkovém poli v dlaždici, pole reaguje na dotek. Vpravo dole
+          zůstatek banánů (Doto `dotStat` + mono štítek): měna je kontext nákupu, ne hrdina. 1 plátno. */}
+      <Reveal play={first} delay={M.at} rise={M.rise}>
+        <GestureDetector gesture={field.gesture}>
+          <View onLayout={(e) => setPreviewW(e.nativeEvent.layout.width)}>
+            <Tile pad="none" style={{ height: size.profileField }}>
+              {previewW > 0 ? (
+                <DotField width={previewW} height={size.profileField} touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
+              ) : null}
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', padding: size.tilePad, gap: space.m }}>
+                <Mascot stage={stage} mood={cheer ? 'happy' : 'idle'} size={size.wardrobePreview} cosmetics={equipped} accessibilityLabel={copy.wardrobe.preview} />
+                <View accessible accessibilityLabel={copy.wardrobe.bananasA11y(bananas)} style={{ alignItems: 'flex-end' }}>
+                  <Text variant="dotStat">{bananas}</Text>
+                  <Text variant="label" tone="muted">{copy.wardrobe.bananas}</Text>
+                </View>
+              </View>
+            </Tile>
+          </View>
+        </GestureDetector>
       </Reveal>
 
       <Reveal play={first} delay={M.at + M.step} rise={M.rise}>

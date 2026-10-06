@@ -1,49 +1,24 @@
-import { Pressable, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
-import { usePressFeedback } from '@/components/ui/usePressFeedback';
-import { useSelectionProgress } from '@/components/ui/useSelectionProgress';
 import { useTheme } from '@/theme';
 import type { PathMeta } from '@/types';
 import { PathGlyph } from './PathGlyph';
+import { SelectTile } from './SelectTile';
 
 interface Props { path: PathMeta; selected: boolean; onPress(): void }
 
-/** Velká karta cesty. Karta se odděluje jen pozadím; výběr nese proužek `stroke.focus` v `text`
- *  vlevo a glyf přecházející z `muted` do `text` (R42: bez akcentu). */
+/** Velká karta cesty (Nothing Dot): dlaždice s tečkovým glyfem vlevo, název `title` a věta `caption muted`.
+ *  Výběr = hrana `text` + štítek VYBRÁNO; glyf přejde z `muted` do `text`. */
 export function PathCard({ path, selected, onPress }: Props) {
-  const { c, space, radius, size, stroke } = useTheme();
-  const feedback = usePressFeedback(0.98);
-  const sel = useSelectionProgress(selected);
-  const stripeStyle = useAnimatedStyle(() => ({ opacity: sel.value, transform: [{ scaleY: 0.3 + 0.7 * sel.value }] }));
-  const selGlyph = useAnimatedStyle(() => ({ opacity: sel.value }));
+  const { c, size } = useTheme();
   return (
-    <Animated.View style={feedback.style}>
-      <Pressable
-        onPress={onPress}
-        onPressIn={feedback.onPressIn}
-        onPressOut={feedback.onPressOut}
-        accessibilityRole="radio"
-        accessibilityLabel={`${path.name}. ${path.tagline}`}
-        accessibilityState={{ selected, checked: selected }}
-        style={{
-          minHeight: size.pathCard, flexDirection: 'row', alignItems: 'center', gap: space.m,
-          padding: space.l, borderRadius: radius.l, backgroundColor: c.surface,
-        }}
-      >
-        {/* Proužek je odsazený od zaoblených rohů, aby zůstal rovnou linkou. */}
-        <Animated.View
-          style={[stripeStyle, { position: 'absolute', left: 0, top: space.l, bottom: space.l, width: stroke.focus, backgroundColor: c.text }]}
-        />
-        <View>
-          <PathGlyph path={path.id} color={c.muted} bg={c.surface} />
-          <Animated.View style={[selGlyph, { position: 'absolute', left: 0, top: 0 }]}><PathGlyph path={path.id} color={c.text} bg={c.surface} /></Animated.View>
-        </View>
-        <View style={{ flex: 1, gap: space.xs }}>
-          <Text variant="title">{path.name}</Text>
-          <Text variant="caption" tone="muted">{path.tagline}</Text>
-        </View>
-      </Pressable>
-    </Animated.View>
+    <SelectTile
+      selected={selected}
+      onPress={onPress}
+      accessibilityLabel={`${path.name}. ${path.tagline}`}
+      glyph={<PathGlyph path={path.id} color={selected ? c.text : c.muted} />}
+    >
+      <Text variant="title" style={{ minHeight: size.hit / 2 }}>{path.name}</Text>
+      <Text variant="caption" tone="muted">{path.tagline}</Text>
+    </SelectTile>
   );
 }

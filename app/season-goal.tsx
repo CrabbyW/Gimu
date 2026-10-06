@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Reveal } from '@/components/ui/choreo';
@@ -55,7 +55,7 @@ function close() {
 }
 
 function GoalForm({ season, existing, profile }: { season: Season; existing: SeasonGoal | null; profile: UserProfile | null }) {
-  const { c, space, size, stroke } = useTheme();
+  const { c, space, size, stroke, radius } = useTheme();
   const milestones = seasonMilestones(profile);
   const [kind, setKind] = useState<Kind | null>(existing?.kind ?? null);
   const [count, setCount] = useState(existing?.kind === 'activeDays' ? String(existing.days) : existing?.kind === 'lessons' ? String(existing.count) : '');
@@ -127,7 +127,10 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
               onPress={close}
               accessibilityRole="button"
               accessibilityLabel={t.close}
-              style={{ width: size.hit, height: size.hit, alignItems: 'center', justifyContent: 'center', marginRight: -space.s }}
+              style={({ pressed }) => ({
+                width: size.iconButton, height: size.iconButton, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
+                backgroundColor: pressed ? c.tilePressed : c.tile, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
+              })}
             >
               <X size={size.icon} color={c.text} strokeWidth={stroke.icon} />
             </Pressable>
@@ -183,13 +186,13 @@ function GoalForm({ season, existing, profile }: { season: Season; existing: Sea
   );
 }
 
-/** Dlaždice typu cíle (2×2): stejná gramatika jako karty volby v onboardingu, výběr = proužek v `text`. */
+/** Dlaždice typu cíle (2×2, Nothing Dot fáze 2): plocha `tile`, radius 28. Výběr = hrana `text` 2 pt a mono
+ *  štítek „VYBRÁNO“, ne výplň (stejná gramatika jako karty volby v onboardingu). Výška se nemění: štítek má
+ *  rezervované místo i u nevybrané dlaždice, takže mřížka při výběru neposkočí. */
 function KindTile({ title, line, selected, onPress, i }: { title: string; line: string; selected: boolean; onPress(): void; i: number }) {
   const { c, space, radius, size, stroke } = useTheme();
-  // Motion: nástup ve sledu, stisk 0.98 (bez pružiny), proužek výběru vyroste scaleY 0.3 → 1 (`motion.ui`).
+  // Motion: nástup ve sledu, stisk 0.98 (bez pružiny).
   const feedback = usePressFeedback(0.98);
-  const sel = useSelectionProgress(selected);
-  const stripe = useAnimatedStyle(() => ({ opacity: sel.value, transform: [{ scaleY: 0.3 + 0.7 * sel.value }] }));
   return (
     <Reveal play delay={intro.modal.at + intro.modal.step + stagger(i, intro.modal.step)} rise={intro.modal.rise} style={{ flexBasis: '45%', flexGrow: 1 }}>
     <Animated.View style={feedback.style}>
@@ -201,11 +204,12 @@ function KindTile({ title, line, selected, onPress, i }: { title: string; line: 
       accessibilityLabel={`${title}. ${line}`}
       accessibilityState={{ selected, checked: selected }}
       style={({ pressed }) => ({
-        minHeight: size.choiceCard, padding: space.m, gap: space.xs,
-        borderRadius: radius.l, backgroundColor: pressed || selected ? c.raised : c.surface,
+        minHeight: size.choiceCard, padding: size.tilePad - (selected ? stroke.focus : 0), gap: space.xs,
+        borderRadius: radius.tile, backgroundColor: pressed ? c.tilePressed : c.tile,
+        borderWidth: selected ? stroke.focus : StyleSheet.hairlineWidth, borderColor: selected ? c.text : c.edge,
       })}
     >
-      <Animated.View style={[stripe, { position: 'absolute', left: 0, top: space.m, bottom: space.m, width: stroke.focus, backgroundColor: c.text }]} />
+      <Text variant="label" tone="text" style={{ opacity: selected ? 1 : 0 }} importantForAccessibility="no">{t.selected}</Text>
       <Text variant="bodyStrong" tone={selected ? 'text' : 'muted'}>{title}</Text>
       <Text variant="caption" tone="muted">{line}</Text>
     </Pressable>

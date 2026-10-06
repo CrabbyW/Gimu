@@ -1,37 +1,34 @@
 import { View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import Svg, { G, Line, Rect } from 'react-native-svg';
+import { DotPlate } from '@/components/dots';
 import { useReveal } from '@/components/ui/choreo';
 import { motion, useMotionSafe } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { dots, useTheme } from '@/theme';
 
 interface Props {
-  /** Počet kotoučů na sobě (≥ 1). */
-  count: number;
-  /** Šířka spodního (největšího) kotouče v pt. */
-  width: number;
   /** Nástup: stoh vyroste z podlahy (výřez o výšce stohu, obsah vyjede zdola). Bez `play` stojí hned. */
   play?: boolean;
   /** ms od začátku sledu obrazovky. */
   delay?: number;
 }
 
-// Kotouče se směrem nahoru zužují o 12 % šířky na stupeň (stejný „taper“ jako činka série).
-const TAPER = 0.12;
-// Tóny zdola nahoru: nejtěžší dole. Klíče palety, ne barvy.
-const TONES = ['plate25', 'plate20', 'plate15', 'plate10', 'plate5'] as const;
+/** Výška stohu v pt (pro kotvení opičky nad ním): spodní elipsa + dva rozestupy. */
+export function plateStackHeight() {
+  const P = dots.pedestal;
+  return P.sizes[0] * P.squash + P.step * (P.sizes.length - 1);
+}
 
 /**
- * Stoh litinových kotoučů z boku (hloubka a materiál, 2026-10-03): podstavec opičky v profilu a stupně
- * pódia v lize. Každý kotouč = deska `size.pedestalPlateH` v tónu litiny, horní vlasová hrana `edge`
- * (světlo shora) a soustružená drážka `plateShade` uprostřed boku. Obrys `muted` drží tmavé tóny
- * čitelné na `base`. Dekorativní: popis nese obalující prvek.
+ * Podstavec profilu (Nothing Dot fáze 2): stoh tří tečkových kotoučů `DotPlate` (stav `done`, bez rotace,
+ * dekorativní) zploštělých přes `scaleY` na elipsy, jako kotouče na zemi viděné mírně shora. Těžší dole
+ * (víc prstenců). Každá elipsa má pod sebou plochu `base`: vyšší kotouč zakryje střed nižšího, takže stoh
+ * čte jako pevná hmota, ne jako průhledné prstence přes sebe. 3 plátna.
  */
-export function PlateStack({ count, width, play = false, delay = 0 }: Props) {
-  const { c, size, stroke, material } = useTheme();
-  const h = size.pedestalPlateH;
-  const n = Math.max(1, count);
-  const H = h * n;
+export function PlateStack({ play = false, delay = 0 }: Props) {
+  const { c, radius } = useTheme();
+  const P = dots.pedestal;
+  const H = plateStackHeight();
+  const W = P.sizes[0];
   // Motion (polish 2026-10-05): růst z podlahy = posun o celou výšku ve výřezu, 480 ms ease.out (UI vlákno).
   // Omezený pohyb: useReveal dá 200ms prolnutí, posun 0.
   const { reduced } = useMotionSafe();
@@ -39,25 +36,23 @@ export function PlateStack({ count, width, play = false, delay = 0 }: Props) {
   const dy = reduced ? 0 : H;
   const a = useAnimatedStyle(() => ({ opacity: t.value, transform: [{ translateY: (1 - t.value) * dy }] }));
   return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ overflow: 'hidden' }}>
-      <Animated.View style={a}>
-      <Svg width={width} height={H} viewBox={`0 0 ${width} ${H}`}>
-        {Array.from({ length: n }, (_, i) => {
-          // i = 0 je spodní kotouč.
-          const w = width * (1 - TAPER * i);
-          const x = (width - w) / 2;
-          const y = H - h * (i + 1);
-          const tone = TONES[Math.min(i, TONES.length - 1)]!;
-          const sw = stroke.slot;
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: W, height: H, overflow: 'hidden' }}>
+      <Animated.View style={[{ width: W, height: H }, a]}>
+        {/* Kreslí se zdola nahoru: pozdější (menší, výš) kotouč leží přes předchozí. */}
+        {P.sizes.map((d, k) => {
+          const cy = H - (W * P.squash) / 2 - k * P.step;
           return (
-            <G key={i}>
-              <Rect x={x + sw / 2} y={y + sw / 2} width={w - sw} height={h - sw} rx={material.streakPlateLg} fill={c[tone]} stroke={c.muted} strokeWidth={sw} />
-              <Line x1={x + material.heroPlateW} y1={y + h / 2} x2={x + w - material.heroPlateW} y2={y + h / 2} stroke={c.plateShade} strokeWidth={stroke.slot} />
-              <Line x1={x + material.streakPlateLg * 2} y1={y + sw * 1.5} x2={x + w - material.streakPlateLg * 2} y2={y + sw * 1.5} stroke={c.edge} strokeWidth={stroke.hairline} />
-            </G>
+            <View
+              key={d}
+              style={{
+                position: 'absolute', left: (W - d) / 2, top: cy - d / 2, width: d, height: d,
+                borderRadius: radius.full, backgroundColor: c.base, transform: [{ scaleY: P.squash }],
+              }}
+            >
+              <DotPlate kg={P.kg[k] ?? P.kg[P.kg.length - 1]!} size={d} state="done" showKg={false} check={false} decorative />
+            </View>
           );
         })}
-      </Svg>
       </Animated.View>
     </View>
   );

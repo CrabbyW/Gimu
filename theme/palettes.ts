@@ -18,6 +18,8 @@ export const dark = {
   shadow: '#050506',
   // Zlatý materiál jen pro SourceBadge sezónní položky a plochu stage-up oslavy (spec §6.8, §7.8).
   seasonGold: '#C6A15B', onSeasonGold: '#181613',
+  // Tečky na zlaté ploše stage-up (fáze 2): zhasnutá a tlumená tečka jako tmavší tóny zlata (rozsvícená = `onSeasonGold`).
+  goldDotOff: '#A88A4E', goldDotDim: '#8C7241',
 } as const;
 // Light (obr. 3): papírově bílá, černé tečky. Bez záře: aktivní = plná `text`.
 export const light: Record<keyof typeof dark, string> = {
@@ -33,5 +35,6 @@ export const light: Record<keyof typeof dark, string> = {
   danger: '#C2272D', success: '#131316',
   shadow: '#CFCFCB',
   seasonGold: '#C6A15B', onSeasonGold: '#181613',
+  goldDotOff: '#A88A4E', goldDotDim: '#8C7241',
 };
 export type Colors = Record<keyof typeof dark, string>;

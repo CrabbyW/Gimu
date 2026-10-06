@@ -1,25 +1,26 @@
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
+import { DotRule } from '@/components/ui/DotRule';
+import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useTheme } from '@/theme';
-import { Text } from '@/components/ui/Text';
 
-/** Hranice zóny (Teplá litina §3.2): `ChevronUp/Down` 12 `muted`, mono štítek „POSTUP“ / „SESTUP“ v `muted`,
- *  pak vlasová linka `rule`. Směr nese tvar šipky, ne zelená/červená. */
+/** Hranice zóny (Nothing Dot fáze 2): Lucide šipka `muted`, mono štítek „POSTUP“ / „SESTUP“ a tečková linka
+ *  do konce řádku. Směr nese tvar šipky, ne barva (žádná zelená/červená). Linka z View, bez plátna. */
 export function ZoneDivider({ kind }: { kind: 'promote' | 'demote' }) {
   const { c, space, size, stroke } = useTheme();
   const label = kind === 'promote' ? copy.league.promote : copy.league.demote;
   const Icon = kind === 'promote' ? ChevronUp : ChevronDown;
   return (
     <View
-      // Zóna je popisek v tabulce, ne nadpis: jediný nadpis obrazovky je titulek v TabHeaderu.
+      // Zóna je popisek v tabulce, ne nadpis: jediný nadpis obrazovky je titulek hlavičky.
       accessible
       accessibilityLabel={label}
-      style={{ height: size.hit, flexDirection: 'row', alignItems: 'center', gap: space.s, paddingHorizontal: space.l }}
+      style={{ minHeight: size.hit, flexDirection: 'row', alignItems: 'center', gap: space.s, paddingHorizontal: space.l }}
     >
       <Icon size={size.badgeIcon} color={c.muted} strokeWidth={stroke.icon} />
       <Text variant="label" tone="muted">{label}</Text>
-      <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: c.rule }} />
+      <DotRule />
     </View>
   );
 }

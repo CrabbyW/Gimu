@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { SectionLabel } from '@/components/ui/SectionLabel';
+import { DotRow } from '@/components/dots';
+import { PillButton } from '@/components/ui/PillButton';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { ValueWheelSheet, type WheelOption } from '@/components/ui/ValueWheelSheet';
 import { copy } from '@/data/copy';
 import { useCountUp } from '@/hooks/useCountUp';
@@ -32,9 +31,14 @@ const unitOf = (g: SeasonGoal): string => {
 /** Rezerva nad cílem v kole hodnot (milník se dá i překonat). */
 const WHEEL_HEADROOM = 10;
 
+/** Tečky pokroku cíle: 20 (jedna = 5 %) ve dvou řádcích po 10, řádek 10 × 16 − 6 = 154 pt se vejde i na 320 pt. */
+const GOAL_DOTS = 20;
+const GOAL_COLS = 10;
+
 /**
- * Progres cíle sezóny (Teplá litina §3.4): karta, typ cíle jako SectionLabel, `display` „{hodnota} / {cíl} jednotka“
- * + progress bar. U milníku primary „Zapsat hodnotu“ přes celou šířku karty → ValueWheelSheet.
+ * Cíl sezóny (Nothing Dot fáze 2): dlaždice, mono štítek „CÍL SEZÓNY“, název cíle, Doto `display` hodnota
+ * s malou jednotkou „/ 30 DNÍ“ a tečkový pokrok `DotRow` 2 × 10 (1 tečka = 5 %). U milníku pilulka
+ * „Zapsat hodnotu“ → ValueWheelSheet. 1 plátno.
  */
 export function SeasonGoalCard({ progress, onRecord }: Props) {
   const { space } = useTheme();
@@ -44,18 +48,19 @@ export function SeasonGoalCard({ progress, onRecord }: Props) {
   // Count-up při prvním zobrazení (400 ms); popisek pro čtečku nese vždy konečnou hodnotu.
   const counted = decimal(useCountUp(value, motion.countFirstMs, Number.isInteger(value) ? 0 : 1));
   const a11y = copy.season.progressA11y(shown, decimal(target), unit);
+  const ratio = met ? 1 : target > 0 ? Math.min(1, Math.max(0, value / target)) : 0;
   return (
-    <Card style={{ gap: space.m }}>
-      <SectionLabel>{copy.season.goalLabel}</SectionLabel>
-      <Text variant="headline">{goal.kind === 'milestone' ? goal.label : copy.season.goalKinds[goal.kind]}</Text>
+    <Tile style={{ gap: space.m }}>
+      <Text variant="label" tone="muted" accessibilityRole="header">{copy.season.goalLabel}</Text>
       <View accessible accessibilityLabel={a11y} style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: space.s }}>
         <Text variant="display">{counted}</Text>
-        <Text variant="caption" tone="muted">{copy.season.progressOf(decimal(target), unit)}</Text>
+        <Text variant="label" tone="muted">{copy.season.progressOf(decimal(target), unit)}</Text>
       </View>
-      <ProgressBar value={value} max={target} accessibilityLabel={a11y} />
+      <DotRow total={GOAL_DOTS} fraction={ratio} columns={GOAL_COLS} />
+      <Text variant="headline">{goal.kind === 'milestone' ? goal.label : copy.season.goalKinds[goal.kind]}</Text>
       {met ? <Text variant="body" tone="muted">{copy.season.met}</Text> : null}
       {goal.kind === 'milestone' && onRecord ? <RecordValue initial={goal.current} target={goal.target} onRecord={onRecord} /> : null}
-    </Card>
+    </Tile>
   );
 }
 
@@ -76,7 +81,7 @@ function RecordValue({ initial, target, onRecord }: { initial: number; target: n
 
   return (
     <View style={{ gap: space.s, marginTop: space.s }}>
-      <Button label={copy.season.record} onPress={() => { setError(null); setOpen(true); }} loading={busy} />
+      <PillButton label={copy.season.record} onPress={() => { setError(null); setOpen(true); }} loading={busy} />
       {error ? <Text variant="caption" tone="muted" accessibilityRole="alert">{error}</Text> : null}
       <ValueWheelSheet
         visible={open}

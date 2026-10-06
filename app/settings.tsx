@@ -2,11 +2,13 @@ import { router } from 'expo-router';
 import { ChevronRight, X } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Button } from '@/components/ui/Button';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Reveal } from '@/components/ui/choreo';
-import { Screen } from '@/components/ui/Screen';
+import { PillButton } from '@/components/ui/PillButton';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { Toggle } from '@/components/ui/Toggle';
 import { ValueWheelSheet } from '@/components/ui/ValueWheelSheet';
 import { copy } from '@/data/copy';
@@ -21,11 +23,13 @@ import { opacity, useTheme } from '@/theme';
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 const HOURS = REMINDER_HOURS;
 
-/** Nastavení (§7.9, Teplá litina). Řádky odděluje jen hairline `rule` (jedna technika). Připomínka: Toggle + čas přes ValueWheelSheet;
- *  Odezva: dva nezávislé přepínače haptiky a zvuku;
- *  při `denied` vysvětlení a cesta do systému, na webu jen věta, že notifikace nejdou. */
+/** Nastavení (Nothing Dot): Doto titulek a kulatý křížek (ScreenHeader), pod ním sekce s mono štítkem.
+ *  Řádky jedné sekce leží v jedné dlaždici a dělí je jen vlasová linka `rule` (jediná technika oddělení).
+ *  Vzhled je pilulkový SegmentedControl bez dlaždice (pilulka je sama plocha). Připomínka: Toggle + čas přes
+ *  ValueWheelSheet + test; při `denied` vysvětlení a cesta do systému, na webu jen věta, že notifikace nejdou. */
 export default function SettingsScreen() {
-  const { c, space, size, stroke, radius } = useTheme();
+  const { c, space, size, stroke } = useTheme();
+  const insets = useSafeAreaInsets();
   const prefs = useSettingsPrefs();
   const [wheelOpen, setWheelOpen] = useState(false);
   const profile = useProfile();
@@ -33,14 +37,14 @@ export default function SettingsScreen() {
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { hapticsEnabled, setHapticsEnabled, soundEnabled, setSoundEnabled } = prefs;
-  // Motion: řádky nastoupí po sobě (fade + 10 pt, 260 ms punch, po 50 ms) při každém otevření.
-  // Modal je nová scéna: nástup se hraje při každém otevření.
+  // Modal je nová scéna: nástup sekcí se hraje při každém otevření.
   const first = true;
 
   const web = Platform.OS === 'web';
   const denied = !web && prefs.permission === 'denied';
   const blocked = web || denied;
   const on = prefs.enabled && !blocked;
+  const testDisabled = blocked || prefs.permission !== 'granted' || busy;
 
   const sendTest = async () => {
     if (busy) return;
@@ -49,58 +53,58 @@ export default function SettingsScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: size.hitLarge }}>
-        <Text variant="title" accessibilityRole="header">{copy.settings.title}</Text>
-        <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={copy.common.back} style={{ width: size.hit, height: size.hit, alignItems: 'flex-end', justifyContent: 'center' }}>
-          <X size={size.icon} color={c.text} strokeWidth={stroke.icon} />
-        </Pressable>
-      </View>
-      <ScrollView contentContainerStyle={{ paddingBottom: space.xxl }} showsVerticalScrollIndicator={false}>
+    <View style={{ flex: 1, backgroundColor: c.base }}>
+      <ScreenHeader title={copy.settings.title} actions={[{ icon: X, label: copy.common.back, onPress: () => router.back() }]} />
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: insets.bottom + space.xxl, gap: space.xl }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Cíle nahoře: to jediné tady mění trénink, ostatní je vzhled a odezva. */}
-        <Row i={0} play={first}>
+        <Section i={0} play={first}>
           <GoalsSection profile={profile} play={first} />
-        </Row>
+        </Section>
 
-        <Row i={1} play={first}>
-          <Text variant="label" tone="muted">{copy.settings.theme}</Text>
+        <Section i={1} play={first} label={copy.settings.appearance}>
           <SegmentedControl
             options={THEMES.map((t) => ({ value: t, label: copy.settings.themeOptions[t] }))}
             value={prefs.theme}
             onChange={(t) => { haptics.tick(); prefs.setTheme(t); }}
           />
-        </Row>
+        </Section>
 
-        <Row i={2} play={first}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
-            <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.reminder}</Text>
-            <Toggle value={on} disabled={blocked} label={copy.settings.reminder} onChange={(v) => { haptics.tick(); void prefs.setEnabled(v); }} />
-          </View>
-          {web ? <Text variant="caption" tone="muted">{copy.settings.unsupported}</Text> : null}
-          {denied ? (
-            <View style={{ gap: space.s, alignItems: 'flex-start' }}>
-              <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">{copy.settings.denied}</Text>
-              <Button label={copy.settings.openSettings} variant="secondary" onPress={prefs.openSystemSettings} />
-            </View>
-          ) : null}
-          {/* Čas připomínky: řádek → ValueWheelSheet (stejný výběr jako v onboardingu). */}
-          <Pressable
-            onPress={() => setWheelOpen(true)}
-            disabled={!on}
-            accessibilityRole="button"
-            accessibilityLabel={`${copy.settings.hourPick} ${copy.settings.hourValue(prefs.hour)}`}
-            accessibilityState={{ disabled: !on }}
-            style={({ pressed }) => ({
-              minHeight: size.hit, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m,
-              opacity: on ? 1 : opacity.disabled, backgroundColor: pressed ? c.raised : 'transparent', borderRadius: radius.s,
-            })}
-          >
-            <Text variant="body">{copy.settings.hourPick}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
+        <Section i={2} play={first} label={copy.settings.reminderSection}>
+          <Tile pad="none">
+            <TileRow>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
+                <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.reminder}</Text>
+                <Toggle value={on} disabled={blocked} label={copy.settings.reminder} onChange={(v) => { haptics.tick(); void prefs.setEnabled(v); }} />
+              </View>
+              {web ? <Text variant="caption" tone="muted">{copy.settings.unsupported}</Text> : null}
+              {denied ? (
+                <View style={{ gap: space.m }}>
+                  <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">{copy.settings.denied}</Text>
+                  <PillButton label={copy.settings.openSettings} variant="secondary" onPress={prefs.openSystemSettings} />
+                </View>
+              ) : null}
+            </TileRow>
+            {/* Čas připomínky: řádek → ValueWheelSheet (stejný výběr jako v onboardingu). */}
+            <PressRow
+              onPress={() => setWheelOpen(true)}
+              disabled={!on}
+              accessibilityLabel={`${copy.settings.hourPick} ${copy.settings.hourValue(prefs.hour)}`}
+            >
+              <Text variant="body" style={{ flex: 1 }}>{copy.settings.hourPick}</Text>
               <Text variant="stat">{copy.settings.hourValue(prefs.hour)}</Text>
               <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
-            </View>
-          </Pressable>
+            </PressRow>
+            <PressRow last onPress={() => void sendTest()} disabled={testDisabled} accessibilityLabel={copy.settings.sendTest}>
+              <View style={{ flex: 1, gap: space.xs }}>
+                <Text variant="body">{copy.settings.sendTest}</Text>
+                {note ? <Text variant="telemetry" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
+              </View>
+              <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
+            </PressRow>
+          </Tile>
           <ValueWheelSheet
             visible={wheelOpen}
             title={copy.settings.hourPick}
@@ -109,52 +113,51 @@ export default function SettingsScreen() {
             onSave={(i) => { const h = HOURS[i]; if (h !== undefined) void prefs.setHour(h); setWheelOpen(false); }}
             onClose={() => setWheelOpen(false)}
           />
-        </Row>
+        </Section>
 
         {/* Motion spec §6.2: haptika a zvuk jsou dva nezávislé přepínače. */}
-        <Row i={3} play={first}>
-          <Text variant="label" tone="muted">{copy.settings.feedback}</Text>
-          <SwitchRow title={copy.settings.haptics} line={copy.settings.hapticsLine} value={hapticsEnabled} onChange={setHapticsEnabled} />
-          <SwitchRow title={copy.settings.sound} line={copy.settings.soundLine} value={soundEnabled} onChange={setSoundEnabled} />
-        </Row>
-
-        <Row i={4} play={first}>
-          <Button label={copy.settings.sendTest} variant="secondary" disabled={blocked || prefs.permission !== 'granted' || busy} onPress={() => void sendTest()} />
-          {note ? <Text variant="label" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
-        </Row>
+        <Section i={3} play={first} label={copy.settings.feedback}>
+          <Tile pad="none">
+            <TileRow>
+              <SwitchRow title={copy.settings.haptics} line={copy.settings.hapticsLine} value={hapticsEnabled} onChange={setHapticsEnabled} />
+            </TileRow>
+            <TileRow last>
+              <SwitchRow title={copy.settings.sound} line={copy.settings.soundLine} value={soundEnabled} onChange={setSoundEnabled} />
+            </TileRow>
+          </Tile>
+        </Section>
 
         {__DEV__ ? (
-          <Reveal play={first} delay={intro.modal.at + intro.modal.step * 5} rise={intro.modal.rise}>
-          <Pressable
-            onPress={() => router.push('/dev')}
-            accessibilityRole="link"
-            accessibilityLabel={copy.settings.dev}
-            style={{ minHeight: size.hitLarge, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}
-          >
-            <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.dev}</Text>
-            <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
-          </Pressable>
-          </Reveal>
+          <Section i={4} play={first}>
+            <Tile pad="none">
+              <PressRow last onPress={() => router.push('/dev')} accessibilityLabel={copy.settings.dev} role="link">
+                <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.dev}</Text>
+                <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
+              </PressRow>
+            </Tile>
+          </Section>
         ) : null}
       </ScrollView>
-    </Screen>
+    </View>
   );
 }
 
 type GoalRoute = '/goals/milestones' | '/goals/weight' | '/goals/dream' | '/goals/path';
 const tg = copy.goals;
 
-/** Sekce Cíle: čtyři řádky (název `bodyStrong`, aktuální hodnota `caption muted`, chevron) → editory v `app/goals/*`.
- *  Načítání = hodnoty `…`, chyba = věta + Zkusit znovu (zbytek Nastavení funguje dál). */
+/** Sekce Cíle: čtyři řádky v jedné dlaždici (název `bodyStrong`, aktuální hodnota `caption muted`, chevron) → editory
+ *  v `app/goals/*`. Načítání = hodnoty „Načítám“, chyba = věta + [ZKUSIT ZNOVU] (zbytek Nastavení funguje dál). */
 function GoalsSection({ profile, play }: { profile: ReturnType<typeof useProfile>; play: boolean }) {
   const { space } = useTheme();
   const paths = usePathOptions();
   if (profile.status === 'error') {
     return (
-      <View style={{ gap: space.m, alignItems: 'flex-start' }}>
-        <Text variant="label" tone="muted" accessibilityRole="header">{tg.section}</Text>
-        <Text variant="caption" tone="muted" accessibilityRole="alert">{tg.loadError}</Text>
-        <Button label={copy.common.retry} variant="secondary" onPress={profile.retry} />
+      <View style={{ gap: space.m }}>
+        <SectionLabel>{tg.section}</SectionLabel>
+        <Tile style={{ gap: space.m }}>
+          <Text variant="body" accessibilityRole="alert">{tg.loadError}</Text>
+          <PillButton label={copy.common.retry} variant="secondary" onPress={profile.retry} />
+        </Tile>
       </View>
     );
   }
@@ -162,54 +165,87 @@ function GoalsSection({ profile, play }: { profile: ReturnType<typeof useProfile
   const loading = profile.status === 'loading';
   const value = (v: string | undefined) => (loading ? copy.common.loading : v ?? '');
   const w = p?.weightGoal;
-  // Motion (polish 2026-10-05): řádky po `intro.goalRows.step` za nástupem sekce (Row i=0); hodnoty, které
-  // dorazí až po načtení, se prolnou (klíč stavu → remount Reveal). Timing, žádná pružina: řádky jsou klikatelné.
+  // Motion (polish 2026-10-05): řádky po `intro.goalRows.step` za nástupem sekce; hodnoty, které dorazí až po
+  // načtení, se prolnou (klíč stavu → remount Reveal). Timing, žádná pružina: řádky jsou klikatelné.
   const rowAt = (k: number) => intro.modal.at + intro.goalRows.step * (k + 1);
   return (
-    <View style={{ gap: space.xs }}>
-      <Text variant="label" tone="muted" accessibilityRole="header">{tg.section}</Text>
-      <GoalRow play={play} delay={rowAt(0)} loading={loading} title={tg.rows.milestones} route="/goals/milestones" disabled={!p}
-        value={value(p?.milestones.map((m) => (m.custom ? copy.onboarding.milestones.customChip(m.label, m.target, m.unit) : m.label)).join(' · '))} />
-      <GoalRow play={play} delay={rowAt(1)} loading={loading} title={tg.rows.weight} route="/goals/weight" disabled={!p}
-        value={value(w ? (w.kind === 'none' ? tg.weightNone : tg.weightValue(w.kind, w.startKg, w.targetKg)) : undefined)} />
-      <GoalRow play={play} delay={rowAt(2)} loading={loading} title={tg.rows.dream} route="/goals/dream" disabled={!p} value={value(p?.dreamBody)} />
-      <GoalRow play={play} delay={rowAt(3)} loading={loading} title={tg.rows.path} route="/goals/path" disabled={!p} value={value(paths.find((x) => x.id === p?.path)?.name)} />
+    <View style={{ gap: space.m }}>
+      <SectionLabel>{tg.section}</SectionLabel>
+      <Tile pad="none">
+        <GoalRow play={play} delay={rowAt(0)} loading={loading} title={tg.rows.milestones} route="/goals/milestones" disabled={!p}
+          value={value(p?.milestones.map((m) => (m.custom ? copy.onboarding.milestones.customChip(m.label, m.target, m.unit) : m.label)).join(' · '))} />
+        <GoalRow play={play} delay={rowAt(1)} loading={loading} title={tg.rows.weight} route="/goals/weight" disabled={!p}
+          value={value(w ? (w.kind === 'none' ? tg.weightNone : tg.weightValue(w.kind, w.startKg, w.targetKg)) : undefined)} />
+        <GoalRow play={play} delay={rowAt(2)} loading={loading} title={tg.rows.dream} route="/goals/dream" disabled={!p} value={value(p?.dreamBody)} />
+        <GoalRow last play={play} delay={rowAt(3)} loading={loading} title={tg.rows.path} route="/goals/path" disabled={!p} value={value(paths.find((x) => x.id === p?.path)?.name)} />
+      </Tile>
     </View>
   );
 }
 
-/** Řádek cíle: celá plocha je dotyková (min. `hitLarge`), stisk = výplň `raised` jako u času připomínky. */
-function GoalRow({ title, value, route, disabled, play, delay, loading }: {
-  title: string; value: string; route: GoalRoute; disabled: boolean; play: boolean; delay: number; loading: boolean;
+/** Řádek cíle: celá šířka dlaždice je dotyková (min. `hitLarge`), stisk = výplň `tilePressed`. */
+function GoalRow({ title, value, route, disabled, play, delay, loading, last = false }: {
+  title: string; value: string; route: GoalRoute; disabled: boolean; play: boolean; delay: number; loading: boolean; last?: boolean;
 }) {
-  const { c, space, size, stroke, radius } = useTheme();
+  const { c, space, size, stroke } = useTheme();
   const [loadingAtMount] = useState(loading);
   return (
     <Reveal play={play} delay={delay} rise={intro.modal.rise} config={motion.reveal}>
-    <Pressable
-      onPress={() => router.push(route)}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={tg.rowA11y(title, value)}
-      accessibilityState={{ disabled }}
-      style={({ pressed }) => ({
-        minHeight: size.hitLarge, flexDirection: 'row', alignItems: 'center', gap: space.m, paddingVertical: space.s,
-        backgroundColor: pressed ? c.raised : 'transparent', borderRadius: radius.s,
-      })}
-    >
-      <View style={{ flex: 1, gap: space.xs }}>
-        <Text variant="bodyStrong">{title}</Text>
-        <Reveal key={loading ? 'loading' : 'ready'} play={loadingAtMount && !loading} rise={0} config={motion.reveal}>
-          <Text variant="caption" tone="muted" numberOfLines={2}>{value}</Text>
-        </Reveal>
-      </View>
-      <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
-    </Pressable>
+      <PressRow last={last} onPress={() => router.push(route)} disabled={disabled} dimWhenDisabled={false} accessibilityLabel={tg.rowA11y(title, value)}>
+        <View style={{ flex: 1, gap: space.xs }}>
+          <Text variant="bodyStrong">{title}</Text>
+          <Reveal key={loading ? 'loading' : 'ready'} play={loadingAtMount && !loading} rise={0} config={motion.reveal}>
+            <Text variant="caption" tone="muted" numberOfLines={2}>{value}</Text>
+          </Reveal>
+        </View>
+        <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
+      </PressRow>
     </Reveal>
   );
 }
 
-/** Řádek přepínače: název `bodyStrong`, pod ním věta `caption muted`, vpravo Toggle (bez systémového tintu). */
+/** Mono štítek sekce nad dlaždicí (VERZÁLKY dodá varianta `telemetry`). */
+function SectionLabel({ children }: { children: string }) {
+  return <Text variant="telemetry" tone="muted" accessibilityRole="header">{children}</Text>;
+}
+
+/** Statický řádek v dlaždici: vnitřní okraj `tilePad`, pod ním vlasová linka `rule` (kromě posledního). */
+function TileRow({ children, last = false }: { children: ReactNode; last?: boolean }) {
+  const { c, space, size } = useTheme();
+  return (
+    <View style={{ paddingHorizontal: size.tilePad, paddingVertical: space.m, gap: space.s, borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
+      {children}
+    </View>
+  );
+}
+
+/** Klikatelný řádek v dlaždici (min. `hitLarge`), stisk = `tilePressed`. Zakázaný se ztlumí na `opacity.disabled`
+ *  (kromě řádků cílů při načítání: text „Načítám“ tam stav nese sám). */
+function PressRow({ children, onPress, disabled = false, dimWhenDisabled = true, last = false, accessibilityLabel, role = 'button' }: {
+  children: ReactNode; onPress(): void; disabled?: boolean; dimWhenDisabled?: boolean; last?: boolean; accessibilityLabel: string; role?: 'button' | 'link';
+}) {
+  const { c, space, size } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole={role}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => ({
+        minHeight: size.hitLarge, flexDirection: 'row', alignItems: 'center', gap: space.m,
+        paddingHorizontal: size.tilePad, paddingVertical: space.m,
+        backgroundColor: pressed ? c.tilePressed : 'transparent',
+        borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth, borderBottomColor: c.rule,
+        opacity: disabled && dimWhenDisabled ? opacity.disabled : 1,
+      })}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
+/** Řádek přepínače: název `bodyStrong`, pod ním věta `caption muted`, vpravo Toggle-pilulka. */
 function SwitchRow({ title, line, value, onChange }: { title: string; line: string; value: boolean; onChange(v: boolean): void }) {
   const { space } = useTheme();
   return (
@@ -223,11 +259,13 @@ function SwitchRow({ title, line, value, onChange }: { title: string; line: stri
   );
 }
 
-function Row({ children, i, play }: { children: ReactNode; i: number; play: boolean }) {
-  const { c, space } = useTheme();
+/** Sekce: mono štítek (volitelný) nad obsahem; nástup po `intro.modal.step`. */
+function Section({ children, i, play, label }: { children: ReactNode; i: number; play: boolean; label?: string }) {
+  const { space } = useTheme();
   const M = intro.modal;
   return (
-    <Reveal play={play} delay={M.at + M.step * i} rise={M.rise} style={{ paddingVertical: space.l, gap: space.m, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
+    <Reveal play={play} delay={M.at + M.step * i} rise={M.rise} style={{ gap: space.m }}>
+      {label ? <SectionLabel>{label}</SectionLabel> : null}
       {children}
     </Reveal>
   );

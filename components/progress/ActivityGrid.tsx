@@ -1,110 +1,64 @@
-import { useEffect, useState } from 'react';
-import { View, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import { EmptyHint } from '@/components/ui/EmptyHint';
+import { View } from 'react-native';
+import { DotMatrix } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
-import { ease, intro, useMotionSafe } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { intro } from '@/lib/motion';
 import type { GridCell } from '@/logic/progress';
+import { dots, useTheme } from '@/theme';
+import { ACTIVITY_CELLS, activityCells } from './layout';
 
 interface Props {
   cells: GridCell[];
-  /** Dnes je odcvičeno (`todayDone` z `useProfileStats` → `logic/mascotMood.todayStatus`): dnešek = plná tečka s prstencem. */
+  /** Dnes je odcvičeno (`todayDone` z `useProfileStats`): dnešek se počítá jako aktivní den. */
   todayDone?: boolean;
-  /** Úvodní sled (motion): buňky se vyplní po dnech od nejstaršího. */
+  /** Úvodní sled (motion): sken matice zleva. */
   play?: boolean;
 }
 
-const COLS = 7;
+/** Index dnešní buňky v mřížce, nebo null (mimo okno). */
+const todayOf = (cells: GridCell[]) => {
+  const i = cells.findIndex((x) => x.state === 'today');
+  return i < 0 ? null : i;
+};
 
-/** „2026-09-29“ → „29. 9.“ (popisek týdne vlevo od řádku). */
-function weekLabel(day: string): string {
-  const [, m, d] = day.split('-').map(Number);
-  return copy.progress.weekShort(d ?? 0, m ?? 0);
-}
-
-/** Mřížka aktivity (Teplá litina §3.3): sloupce Po–Ne, vlevo datum pondělí každého týdne.
- *  Tečky ve stejném jazyce jako DayDot: plná `text` = aktivní, prstenec `accentGraphic` = dnes,
- *  obrys `faint` = bez aktivity, budoucí dny se nekreslí (slot zůstane prázdný, mřížka nepřeskočí).
- *  Prázdný stav (žádný aktivní den): jen aktuální týden + jedna věta, ne pět řad prázdných koleček. */
+/**
+ * Aktivita (Nothing Dot fáze 2, obr. 2): celoplošná dlaždice s `DotMatrix` 7 × 5 (sloupce = dny Po–Ne,
+ * řádky = posledních 5 týdnů). Rozsvícená tečka = odcvičený den, dnešek nese vlasový prstenec, nad sloupci
+ * mono osa dnů. Vpravo nahoře mono součet. Prázdný stav: celá matice zhasnutá + věta, žádné NaN ani díry.
+ * Jedno plátno; dotyková vlna je vlastní gesto matice.
+ */
 export function ActivityGrid({ cells, todayDone = false, play = false }: Props) {
-  const { c, space, size, radius, stroke } = useTheme();
-  // Odcvičený dnešek je aktivní den (počet pro čtečku i prázdný stav), jen vypadá jinak.
-  const active = cells.filter((x) => x.state === 'active').length + (todayDone && cells.some((x) => x.state === 'today') ? 1 : 0);
-  const empty = active === 0;
-  const ring = size.dot + 2 * (size.todayRingGap + stroke.todayDot);
-  const weeks: GridCell[][] = [];
-  for (let i = 0; i < cells.length; i += COLS) weeks.push(cells.slice(i, i + COLS));
-  const shown = empty ? weeks.slice(-1) : weeks;
-  // Sloupec s datem: šířka pro „29. 12.“ v caption (≈ 6 znaků × 0.6 em × 13 pt), z tokenu.
-  const dateCol = size.weekCol;
-  const d = size.dot;
-
+  const { space } = useTheme();
+  const A = dots.activity;
+  const days = cells.map((x) => ({ date: x.day, active: x.state === 'active' || (x.state === 'today' && todayDone) }));
+  const { lit, today } = activityCells(days, todayOf(cells));
+  const active = lit.filter(Boolean).length;
+  // Osa: popisek dne vystředěný nad sloupcem teček (střed první tečky = `rLit`).
+  const axisShift = dots.matrix.rLit - A.pitch / 2;
   return (
-    <View style={{ gap: space.m }}>
-      <View accessible accessibilityLabel={copy.progress.gridA11y(active)} style={{ gap: space.s }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ width: dateCol }} />
-          {copy.progress.weekdaysShort.map((w) => (
-            <Text key={w} variant="caption" tone="muted" style={{ flex: 1, textAlign: 'center' }}>{w}</Text>
+    <Tile style={{ gap: space.m }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.m }}>
+        <Text variant="label" tone="muted" accessibilityRole="header">{copy.progress.activityLabel}</Text>
+        <Text variant="label">{copy.progress.activeTally(active, ACTIVITY_CELLS)}</Text>
+      </View>
+      <View style={{ gap: space.s }}>
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', marginLeft: axisShift }}>
+          {copy.progress.weekdays.map((w) => (
+            <Text key={w} variant="label" tone="muted" maxFontSizeMultiplier={1} style={{ width: A.pitch, textAlign: 'center', letterSpacing: 0 }}>{w}</Text>
           ))}
         </View>
-        {shown.map((week, wi) => (
-          <View key={week[0]?.day ?? wi} style={{ flexDirection: 'row', alignItems: 'center', minHeight: size.todayRow / 2 + space.s }}>
-            <Text variant="caption" tone="muted" style={{ width: dateCol, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
-              {week[0] ? weekLabel(week[0].day) : ''}
-            </Text>
-            {week.map((x, di) => (
-              <View key={x.day} style={{ flex: 1, alignItems: 'center' }}>
-                {x.state === 'future' ? <View style={{ width: d, height: d }} /> : x.state === 'today' && todayDone ? (
-                  // Odcvičený dnešek: plná tečka `text` (je to aktivní den) + vnější prstenec `accentGraphic` (je to dnes).
-                  // Prstenec leží absolutně kolem tečky, řádek ani sloupec se nerozšíří.
-                  <View style={{ width: d, height: d, alignItems: 'center', justifyContent: 'center' }}>
-                    <View
-                      style={{
-                        position: 'absolute', width: ring, height: ring, borderRadius: radius.full,
-                        borderWidth: stroke.todayDot, borderColor: c.accentGraphic,
-                      }}
-                    />
-                    <Cell
-                      play={play}
-                      delay={intro.grid.at + (wi * COLS + di) * intro.grid.step}
-                      style={{ width: d, height: d, borderRadius: radius.full, backgroundColor: c.text }}
-                    />
-                  </View>
-                ) : (
-                  <Cell
-                    play={play}
-                    delay={intro.grid.at + (wi * COLS + di) * intro.grid.step}
-                    style={{
-                      width: d, height: d, borderRadius: radius.full,
-                      backgroundColor: x.state === 'active' ? c.text : 'transparent',
-                      borderWidth: x.state === 'active' ? 0 : stroke.icon,
-                      borderColor: x.state === 'today' ? c.accentGraphic : c.faint,
-                    }}
-                  />
-                )}
-              </View>
-            ))}
-          </View>
-        ))}
+        <DotMatrix
+          cols={A.cols}
+          rows={A.rows}
+          lit={lit}
+          today={today}
+          pitch={A.pitch}
+          accessibilityLabel={copy.progress.gridA11y(active)}
+          intro={play ? intro.grid.at : false}
+        />
       </View>
-      {empty ? <EmptyHint>{copy.progress.activityEmpty}</EmptyHint> : null}
-    </View>
+      {active === 0 ? <Text variant="caption" tone="muted">{copy.progress.activityEmpty}</Text> : null}
+    </Tile>
   );
-}
-
-/** Buňka dne: při úvodním sledu se „vyplní“ (opacita 0 → 1, scale 0.6 → 1, 180 ms ease-out), den po dni
- *  po 12 ms (35 buněk ≈ 420 ms). Timing, ne pružina: je to záznam, ne fyzický předmět. Omezený pohyb: stojí. */
-function Cell({ play, delay, style }: { play: boolean; delay: number; style: ViewStyle }) {
-  const { reduced } = useMotionSafe();
-  const [animate] = useState(play && !reduced);
-  const t = useSharedValue(animate ? 0 : 1);
-  useEffect(() => {
-    if (animate) t.value = withDelay(delay, withTiming(1, { duration: intro.grid.cellMs, easing: ease.out }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const a = useAnimatedStyle(() => ({ opacity: t.value, transform: [{ scale: 0.6 + 0.4 * t.value }] }));
-  return <Animated.View style={[style, a]} />;
 }

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useCallback, useRef, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Reveal } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
@@ -59,24 +59,28 @@ interface Props {
   children: ReactNode;
 }
 
-/** Rám editoru cíle (Teplá litina): mono kicker „Cíle“ + křížek, display titulek, lead `muted`,
- *  obsah a spodní lišta Zrušit / Uložit. Uložit je jediné plné CTA obrazovky. */
+/** Rám editoru cíle (Nothing Dot): mono kicker CÍLE + kulatý křížek 44, Doto titulek (`display`), lead `muted`,
+ *  obsah o `space.xl` níž a spodní pilulky [ZRUŠIT] / [ULOŽIT]. Uložit je jediné plné CTA obrazovky. */
 const G = intro.goals;
 
 export function GoalEditorFrame({ title, lead, canSave, busy, error, onSave, children }: Props) {
-  const { c, space, size, stroke } = useTheme();
+  const { c, space, size, stroke, radius } = useTheme();
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: c.base }}>
       <Screen edges={['top']} scroll>
         {/* Motion (polish 2026-10-05): kicker → titulek+lead → obsah po `intro.goals.step`, 480 ms ease.out, bez pružiny.
             Hraje při každém otevření editoru (modal se mountuje znovu). Lišta Zrušit/Uložit stojí. */}
         <Reveal play delay={G.at} rise={G.rise} config={motion.reveal} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: size.hitLarge }}>
-          <Text variant="label" tone="muted">{copy.goals.section}</Text>
+          <Text variant="telemetry" tone="muted">{copy.goals.section}</Text>
+          {/* Kulaté ikonové tlačítko 44 jako v ScreenHeader (obr. 2): `tile` + vlasová hrana. */}
           <Pressable
             onPress={() => router.back()}
             accessibilityRole="button"
             accessibilityLabel={copy.goals.close}
-            style={{ width: size.hit, height: size.hit, alignItems: 'flex-end', justifyContent: 'center' }}
+            style={({ pressed }) => ({
+              width: size.iconButton, height: size.iconButton, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
+              backgroundColor: pressed ? c.tilePressed : c.tile, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
+            })}
           >
             <X size={size.icon} color={c.text} strokeWidth={stroke.icon} />
           </Pressable>

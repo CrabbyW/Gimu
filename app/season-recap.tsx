@@ -1,18 +1,17 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Alert, Platform, Pressable, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
 import Animated, { FadeIn, FadeInLeft, FadeInRight, ReduceMotion, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DotField } from '@/components/dots';
 import { Mascot } from '@/components/mascot';
 import { RecapSlide } from '@/components/season/RecapSlide';
 import { SeasonBadge } from '@/components/season/SeasonBadge';
 import { decimal } from '@/components/season/format';
-import { Button } from '@/components/ui/Button';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { MeasureLine } from '@/components/ui/MeasureLine';
-import { Telemetry } from '@/components/ui/Telemetry';
+import { PillButton } from '@/components/ui/PillButton';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
@@ -20,7 +19,7 @@ import { seasonActions, useRecap, useSeasonStatus } from '@/hooks/useSeason';
 import { haptics } from '@/lib/haptics';
 import { motion, useMotionSafe } from '@/lib/motion';
 import type { SeasonRecap } from '@/services/contracts';
-import { useTheme } from '@/theme';
+import { dots, opacity, useTheme } from '@/theme';
 import type { MascotStage } from '@/types';
 
 const r = copy.recap;
@@ -60,9 +59,9 @@ export default function SeasonRecapScreen() {
 interface Slide { key: string; celebrate: boolean; render(): ReactNode }
 
 function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId: string; seasonName: string; recap: SeasonRecap; claimedInitially: boolean }) {
-  const { c, space, size, stroke } = useTheme();
+  const { c, space, size, stroke, radius } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const [claimed, setClaimed] = useState(claimedInitially);
   const [claiming, setClaiming] = useState(false);
@@ -100,7 +99,12 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
           value={decimal(ba.after)}
           unit={unit}
           line={label}
-          footer={<Telemetry items={[{ key: r.before, value: decimal(ba.before), unit }, { key: r.after, value: decimal(ba.after), unit }]} />}
+          footer={
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: space.l, rowGap: space.xs }}>
+              <Text variant="label" tone="muted">{r.beforeAfterValue(r.before, decimal(ba.before), unit)}</Text>
+              <Text variant="label">{r.beforeAfterValue(r.after, decimal(ba.after), unit)}</Text>
+            </View>
+          }
         />
       ),
     });
@@ -121,11 +125,9 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
         onAccent={earned}
         line={earned ? r.rewardEarned : r.rewardMissed}
         footer={
-          <View style={{ gap: space.m, alignItems: 'flex-start' }}>
-            <View style={{ flexDirection: 'row', gap: space.s, flexWrap: 'wrap' }}>
-              <Button label={claimed ? r.claimed : r.claim} onPress={() => { void claim(); }} disabled={claimed || claiming} onAccent={earned} />
-              <Button label={r.share} variant="secondary" onPress={shareSoon} onAccent={earned} />
-            </View>
+          <View style={{ gap: space.s }}>
+            <PillButton label={claimed ? r.claimed : r.claim} onPress={() => { void claim(); }} disabled={claimed} loading={claiming} onAccent={earned} />
+            <PillButton label={r.share} variant="secondary" onPress={shareSoon} onAccent={earned} />
             {claimError ? <Text variant="caption" accessibilityRole="alert" style={{ color: earned ? c.onAccent : c.danger }}>{r.claimError}</Text> : null}
           </View>
         }
@@ -167,20 +169,28 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
 
   return (
     <Animated.View style={[{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }, floodStyle]}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m, paddingLeft: space.l, paddingRight: space.s, paddingTop: space.s }}>
-        <MeasureLine
-          progress={(i + 1) / total}
-          label={r.progressLabel}
-          value={r.progressValue(i + 1, total)}
-          accessibilityLabel={r.progressA11y(i + 1, total)}
-          onAccent={celebrate}
-          style={{ flex: 1 }}
-        />
+      {/* Tečkové pole za snímky (Nothing Dot): doznívá dolů, jedno plátno. Na oslavné ploše (inverze) se nekreslí:
+          zhasnuté tečky by na plné `text` ploše četly jako šum. */}
+      {celebrate ? null : (
+        <DotField width={width} height={height / 2} fade="down" style={{ position: 'absolute', left: 0, top: 0 }} />
+      )}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m, paddingLeft: space.l, paddingRight: space.l, paddingTop: space.s }}>
+        <View accessible accessibilityRole="progressbar" accessibilityLabel={r.progressA11y(i + 1, total)} style={{ flex: 1, gap: space.s }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text variant="label" tone={celebrate ? 'onAccent' : 'muted'}>{r.progressLabel}</Text>
+            <Text variant="label" tone={celebrate ? 'onAccent' : 'text'}>{r.progressValue(i + 1, total)}</Text>
+          </View>
+          <RecapDots total={total} at={i} onAccent={celebrate} />
+        </View>
         <Pressable
           onPress={close}
           accessibilityRole="button"
           accessibilityLabel={r.close}
-          style={{ width: size.hit, height: size.hit, alignItems: 'center', justifyContent: 'center' }}
+          style={({ pressed }) => ({
+            width: size.iconButton, height: size.iconButton, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
+            backgroundColor: celebrate ? 'transparent' : pressed ? c.tilePressed : c.tile,
+            borderWidth: StyleSheet.hairlineWidth, borderColor: celebrate ? c.onAccent : c.edge,
+          })}
         >
           <X size={size.icon} color={celebrate ? c.onAccent : c.text} strokeWidth={stroke.icon} />
         </Pressable>
@@ -200,6 +210,22 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
         </View>
       </View>
     </Animated.View>
+  );
+}
+
+/** Pozice v recapu: jedna tečka = jeden snímek, rozsvícené do aktuálního (jazyk `DotRow`). Z View, ne Skia:
+ *  na oslavné ploše se barvy obrací (`onAccent`), což tečková plátna neumí. */
+function RecapDots({ total, at, onAccent }: { total: number; at: number; onAccent: boolean }) {
+  const { c, radius } = useTheme();
+  const d = dots.row.d;
+  return (
+    <View style={{ flexDirection: 'row', gap: dots.row.gap }}>
+      {Array.from({ length: total }, (_, k) => {
+        const lit = k <= at;
+        const color = onAccent ? c.onAccent : lit ? c.text : c.dotOff;
+        return <View key={k} style={{ width: d, height: d, borderRadius: radius.full, backgroundColor: color, opacity: onAccent && !lit ? opacity.disabled : 1 }} />;
+      })}
+    </View>
   );
 }
 

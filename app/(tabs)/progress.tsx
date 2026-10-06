@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Mascot } from '@/components/mascot';
 import { ActivityGrid } from '@/components/progress/ActivityGrid';
@@ -8,15 +8,15 @@ import { DreamBodyCard } from '@/components/progress/DreamBodyCard';
 import { MilestoneRow } from '@/components/progress/MilestoneRow';
 import { MilestoneSheet } from '@/components/progress/MilestoneSheet';
 import { NumberSheet } from '@/components/progress/NumberSheet';
+import { tileColumns } from '@/components/progress/layout';
 import { WeightChart } from '@/components/progress/WeightChart';
-import { Button } from '@/components/ui/Button';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Stat } from '@/components/ui/Stat';
+import { PillButton } from '@/components/ui/PillButton';
 import { TabHeader } from '@/components/ui/TabHeader';
-import { Telemetry } from '@/components/ui/Telemetry';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { useDisplayStage } from '@/hooks/useDisplayStage';
 import { useProfile } from '@/hooks/useProfile';
@@ -25,7 +25,7 @@ import { progressActions, useProgressView } from '@/hooks/useProgressView';
 import { haptics } from '@/lib/haptics';
 import { intro, motion, stagger, useMotionSafe } from '@/lib/motion';
 import { parseWeight } from '@/logic/onboarding';
-import { useTheme } from '@/theme';
+import { useCompact, useTheme } from '@/theme';
 import type { MascotStage, Milestone, UserProfile } from '@/types';
 
 /** Jak dlouho drží overlay celebrate bez nové kosmetiky (Task 27 Step 7). S kosmetikou čeká na zavření. */
@@ -51,7 +51,9 @@ export default function ProgressScreen() {
 type Celebration = { unlocked: boolean };
 
 function ProgressBody({ profile }: { profile: UserProfile }) {
-  const { c, space } = useTheme();
+  const { space } = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const cols = tileColumns(width, fontScale);
   const view = useProgressView(profile);
   const stats = useProfileStats(profile);
   const stage = useDisplayStage(stats?.stage ?? 1);
@@ -83,47 +85,67 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: space.l, paddingBottom: space.xxl, gap: space.xl }} keyboardShouldPersistTaps="handled">
-        {/* Hero (hloubka a materiál): jedno velké číslo obrazovky = aktivní dny v okně mřížky, vedle tišší
-            nejdelší série. Nula se ukáže taky: prázdný hero by nechal obrazovku bez kotvy, věta v mřížce vysvětlí proč. */}
-        <Reveal play={first} rise={T.rise} style={{ gap: space.s }}>
-          <Text variant="label" tone="muted" accessibilityRole="header">{copy.progress.heroKicker}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', columnGap: space.l, rowGap: space.m }}>
-            <Stat value={activeCount} unit={copy.progress.heroActiveUnit(activeCount)} size="L" />
-            <View accessible accessibilityLabel={`${copy.progress.heroLongestKey}: ${copy.progress.heroLongestValue(longest)}`} style={{ gap: space.xs, paddingBottom: space.s }}>
-              <Text variant="label" tone="muted">{copy.progress.heroLongestKey}</Text>
-              <Text variant="stat">{copy.progress.heroLongestValue(longest)}</Text>
-            </View>
-          </View>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }} keyboardShouldPersistTaps="handled">
+        {/* Hero (obr. 2): dvě dlaždice vedle sebe. Jediné Doto `hero` obrazovky = aktivní dny v okně mřížky;
+            nejdelší série o stupeň tišeji (`display`). Nula se ukáže taky: prázdný hero by nechal obrazovku bez kotvy. */}
+        <Reveal play={first} delay={motion.screenIn.heroAt} rise={T.rise}>
+          <TileGrid cols={cols}>
+            <HeroTile
+              value={activeCount}
+              unit={copy.streak.days(activeCount)}
+              title={copy.progress.activeTitle}
+              sub={copy.progress.activeSub}
+              strong
+              a11y={copy.progress.gridA11y(activeCount)}
+            />
+            <HeroTile
+              value={longest}
+              unit={copy.streak.days(longest)}
+              title={copy.progress.longestTitle}
+              sub={copy.progress.longestSub}
+              a11y={`${copy.progress.heroLongestKey}: ${copy.progress.heroLongestValue(longest)}`}
+            />
+          </TileGrid>
         </Reveal>
 
-        {dreamBody ? <Reveal play={first} delay={T.step} rise={T.rise}><DreamBodyCard text={dreamBody} /></Reveal> : null}
-
-        <Section label={copy.progress.activityLabel} play={first} delay={T.step}>
+        <Reveal play={first} delay={motion.screenIn.heroAt + T.step} rise={T.rise}>
           <ActivityGrid cells={grid} todayDone={todayDone} play={first} />
-        </Section>
+        </Reveal>
 
-        <Section label={copy.progress.milestonesLabel} play={first} delay={T.step * 2}>
-          {milestones.length === 0 ? <Text variant="body" tone="muted">{copy.progress.noMilestones}</Text> : (
-            <View>
+        <Reveal play={first} delay={motion.screenIn.heroAt + T.step * 2} rise={T.rise} style={{ gap: space.s }}>
+          <Text variant="label" tone="muted" accessibilityRole="header" style={{ paddingTop: space.s }}>{copy.progress.milestonesLabel}</Text>
+          {milestones.length === 0 ? (
+            <Tile><Text tone="muted">{copy.progress.noMilestones}</Text></Tile>
+          ) : (
+            <TileGrid cols={cols}>
               {milestones.map((m, i) => (
-                <View key={m.id} style={i > 0 ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule } : undefined}>
-                  <MilestoneRow milestone={m} onPress={() => setEditing(m)} play={first} delay={intro.bars.at + stagger(i, intro.bars.step)} />
-                </View>
+                <MilestoneRow key={m.id} milestone={m} onPress={() => setEditing(m)} play={first} delay={intro.bars.at + stagger(i, intro.bars.step)} />
               ))}
-            </View>
+            </TileGrid>
           )}
-        </Section>
+        </Reveal>
 
         {chart ? (
-          <Section label={copy.progress.weightLabel} play={first} delay={T.step * 3}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.l }}>
-              {latest !== null ? <Stat value={fmtKg(latest)} unit={copy.progress.weightUnit} size="M" /> : null}
-              <Telemetry items={[{ key: copy.progress.weightTarget, value: fmtKg(chart.targetKg), unit: copy.progress.weightUnit }]} style={{ paddingBottom: space.s }} />
-            </View>
-            <WeightChart model={chart} play={first} />
-            <Button label={copy.progress.logWeight} variant="secondary" onPress={() => setWeightOpen(true)} />
-          </Section>
+          <Reveal play={first} delay={motion.screenIn.heroAt + T.step * 3} rise={T.rise}>
+            <Tile style={{ gap: space.m }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.m }}>
+                <Text variant="label" tone="muted" accessibilityRole="header">{copy.progress.weightLabel}</Text>
+                <Text variant="label" tone="muted">{copy.progress.targetLine(chart.targetKg)}</Text>
+              </View>
+              {latest !== null ? (
+                <View accessible accessibilityLabel={copy.progress.weightA11y(fmtKg(latest))} style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.s }}>
+                  <Text variant="display">{fmtKg(latest)}</Text>
+                  <Text variant="headline" tone="muted">{copy.progress.weightUnit}</Text>
+                </View>
+              ) : null}
+              <WeightChart model={chart} play={first} />
+              <PillButton label={copy.progress.logWeightCta} accessibilityHint={copy.progress.logWeight} variant="secondary" onPress={() => setWeightOpen(true)} />
+            </Tile>
+          </Reveal>
+        ) : null}
+
+        {dreamBody ? (
+          <Reveal play={first} delay={motion.screenIn.heroAt + T.step * 4} rise={T.rise}><DreamBodyCard text={dreamBody} /></Reveal>
         ) : null}
       </ScrollView>
 
@@ -148,13 +170,44 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
   );
 }
 
-function Section({ label, children, play = false, delay = 0 }: { label: string; children: ReactNode; play?: boolean; delay?: number }) {
+/** Mřížka dlaždic (obr. 2): po dvou vedle sebe, nebo pod sebou (`tileColumns`: úzký displej / velké písmo).
+ *  Lichá poslední dlaždice ve dvou sloupcích drží poloviční šířku (prázdná buňka), ať se mřížka nerozjede. */
+function TileGrid({ cols, children }: { cols: 1 | 2; children: ReactNode }) {
   const { space } = useTheme();
+  const items = Children.toArray(children);
+  if (cols === 1) return <View style={{ gap: space.m }}>{items}</View>;
+  const rows: ReactNode[][] = [];
+  for (let i = 0; i < items.length; i += 2) rows.push(items.slice(i, i + 2));
   return (
-    <Reveal play={play} delay={delay} rise={intro.tab.rise} style={{ gap: space.m }}>
-      <Text variant="label" tone="muted" accessibilityRole="header">{label}</Text>
-      {children}
-    </Reveal>
+    <View style={{ gap: space.m }}>
+      {rows.map((row, r) => (
+        <View key={r} style={{ flexDirection: 'row', gap: space.m }}>
+          {row.map((item, i) => <View key={i} style={{ flex: 1, minWidth: 0 }}>{item}</View>)}
+          {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Hero dlaždice (obr. 2): velké Doto číslo + malá jednotka vlevo nahoře, název a podtitulek vlevo dole.
+ *  `strong` = jediné `hero` číslo obrazovky; druhá dlaždice o stupeň tišeji (`display`). */
+function HeroTile({ value, unit, title, sub, strong = false, a11y }: {
+  value: number; unit: string; title: string; sub: string; strong?: boolean; a11y: string;
+}) {
+  const { space, size } = useTheme();
+  const compact = useCompact();
+  return (
+    <Tile style={{ minHeight: size.heroTile, justifyContent: 'space-between', gap: space.m }}>
+      <View accessible accessibilityLabel={a11y} style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.s, flexWrap: 'wrap' }}>
+        <Text variant={strong && !compact ? 'hero' : 'display'} numberOfLines={1}>{value}</Text>
+        <Text variant="headline" tone="muted">{unit}</Text>
+      </View>
+      <View>
+        <Text variant="headline" numberOfLines={2}>{title}</Text>
+        <Text variant="caption" tone="muted" numberOfLines={2}>{sub}</Text>
+      </View>
+    </Tile>
   );
 }
 
@@ -198,7 +251,7 @@ function CelebrateOverlay({ stage, equipped, unlocked, onDone }: {
       {unlocked ? (
         <View style={{ alignItems: 'center', gap: space.m }}>
           <Text variant="label">{copy.progress.newCosmetic}</Text>
-          <Button label={copy.progress.toWardrobe} onPress={() => { onDone(); router.push('/wardrobe'); }} />
+          <PillButton label={copy.progress.toWardrobe} onPress={() => { onDone(); router.push('/wardrobe'); }} />
         </View>
       ) : null}
     </Pressable>

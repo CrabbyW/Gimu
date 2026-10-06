@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { GoalEditorFrame, GoalEditorGate, useGoalSubmit } from '@/components/goals/GoalEditorFrame';
 import { PathCard } from '@/components/onboarding/PathCard';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { useGoals } from '@/hooks/useGoals';
 import { usePathOptions } from '@/hooks/useOnboardingDraft';
@@ -18,7 +19,7 @@ export default function PathGoalScreen() {
 
 /** Cesta: tři PathCard z onboardingu. Upozornění na přepnutí mapy se ukáže, až když je vybraná jiná cesta. */
 function PathEditor({ profile, save }: { profile: UserProfile; save: ReturnType<typeof useGoals>['save'] }) {
-  const { c, space, stroke } = useTheme();
+  const { space } = useTheme();
   const paths = usePathOptions();
   const [selected, setSelected] = useState<PathId>(profile.path);
   const { busy, error, submit, clearError } = useGoalSubmit(save);
@@ -39,10 +40,10 @@ function PathEditor({ profile, save }: { profile: UserProfile; save: ReturnType<
         ))}
       </View>
       {changed ? (
-        // Důsledek změny: věta s proužkem `text` vlevo (stejná gramatika jako vybraná karta), ne akcent ani varovná barva.
-        <View style={{ marginTop: space.l, paddingLeft: space.m, borderLeftWidth: stroke.focus, borderLeftColor: c.text }}>
+        // Důsledek změny: statická dlaždice o tón výš (`raised`), ne akcent ani varovná barva.
+        <Tile tone="raised" style={{ marginTop: space.l }}>
           <Text variant="bodyStrong" accessibilityLiveRegion="polite">{t.notice}</Text>
-        </View>
+        </Tile>
       ) : null}
     </GoalEditorFrame>
   );

@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { PathCard } from '@/components/onboarding/PathCard';
+import { Reveal } from '@/components/ui/choreo';
 import { copy } from '@/data/copy';
 import { isDreamPreset, useOnboardingDraft, usePathOptions } from '@/hooks/useOnboardingDraft';
 import { haptics } from '@/lib/haptics';
-import { enterRise } from '@/lib/motion';
+import { stagger } from '@/lib/motion';
 import { useSfx } from '@/lib/sound';
 import { useTheme } from '@/theme';
 import type { PathId } from '@/types';
@@ -38,9 +38,9 @@ export default function PathStep() {
     >
       <View accessibilityRole="radiogroup" style={{ gap: space.s }}>
         {paths.map((p, i) => (
-          <Animated.View key={p.id} entering={enterRise(i)}>
+          <Reveal key={p.id} play delay={stagger(i + 2)}>
             <PathCard path={p} selected={p.id === path} onPress={() => choose(p.id)} />
-          </Animated.View>
+          </Reveal>
         ))}
       </View>
     </OnboardingFrame>

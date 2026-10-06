@@ -31,9 +31,10 @@ export function DotGrid({ cells, columns, size: dotProp, accessibilityLabel }: P
   );
 }
 
-/** Teplá litina §3.4: tečky mluví stejným jazykem jako `DayDot` v legendě (tvar, ne barva):
- *  filled = plná `text`, soft = plná s vnitřním prstencem `base`, outline = obrys `faint`, today = prstenec `accentGraphic`,
- *  empty (budoucí) = třetinová tečka `faint` na `opacity.future` (rastr, nenese informaci k přečtení). */
+/** Nothing Dot fáze 2: tečky z RN View (90 dní sezóny bez Skia plátna), jazyk tečkových prvků:
+ *  filled = rozsvícená `text`, soft (dohnáno) = rozsvícená s vnitřním otvorem `tile` (dlaždice je podklad),
+ *  outline (zmeškáno) = tlumená `dotDim`, empty (budoucí) = zhasnutá `dotOff` na `opacity.future`,
+ *  today = zhasnutá tečka s vlasovým prstencem `text` (jako dnešek v `DotMatrix`). Rozlišení jasem a tvarem, ne barvou. */
 export function Dot({ state, dot }: { state: DotState; dot: number }) {
   const { c, radius, stroke } = useTheme();
   const box = { width: dot, height: dot, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full } as const;
@@ -43,14 +44,18 @@ export function Dot({ state, dot }: { state: DotState; dot: number }) {
     case 'soft':
       return (
         <View style={[box, { backgroundColor: c.text }]}>
-          <View style={{ width: dot / 2, height: dot / 2, borderRadius: radius.full, borderWidth: stroke.slot, borderColor: c.base }} />
+          <View style={{ width: dot / 2.5, height: dot / 2.5, borderRadius: radius.full, backgroundColor: c.tile }} />
         </View>
       );
     case 'outline':
-      return <View style={[box, { borderWidth: stroke.icon, borderColor: c.faint }]} />;
+      return <View style={[box, { backgroundColor: c.dotDim }]} />;
     case 'empty':
-      return <View style={box}><View style={{ width: dot / 3, height: dot / 3, borderRadius: radius.full, backgroundColor: c.faint, opacity: opacity.future }} /></View>;
+      return <View style={[box, { backgroundColor: c.dotOff, opacity: opacity.future }]} />;
     case 'today':
-      return <View style={[box, { borderWidth: stroke.icon, borderColor: c.accentGraphic }]} />;
+      return (
+        <View style={[box, { borderWidth: stroke.hairline, borderColor: c.text }]}>
+          <View style={{ width: dot / 2, height: dot / 2, borderRadius: radius.full, backgroundColor: c.dotOff }} />
+        </View>
+      );
   }
 }

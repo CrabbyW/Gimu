@@ -19,6 +19,8 @@ export const copy = {
     stepLabel: (n: number, total: number) => `KROK ${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}`,
     // Měřicí linka onboardingu (R42): štítek, pozice „02/05“ a hlasitý popis.
     stepKey: 'KROK',
+    // Mono štítek vybrané karty volby (Nothing Dot: výběr = hrana `text` + štítek, ne výplň).
+    selected: 'Vybráno',
     stepValue: (n: number, total: number) => `${String(n).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
     stepA11y: (n: number, total: number) => `Krok ${n} z ${total}`,
     path: { title: 'Vyber si cestu', lead: 'Cestu můžeš později změnit. Opice půjde s\u00A0tebou.' },
@@ -189,6 +191,17 @@ export const copy = {
     lastWeekA11y: (rank: number) => `Minulý týden ${rank}. místo`,
     dismiss: 'Rozumím',
     rowA11y: (rank: number, name: string, xp: number) => `${rank}. místo, ${name}, ${xp} XP`,
+    // Nothing Dot fáze 2: stavový řádek („LIGA BRONZ“ · „● 6 D 2 H“, nezlomitelné mezery), hero pozice a odznak.
+    statusTier: (tier: string) => `LIGA ${String(tier).toUpperCase()}`,
+    statusEnds: (d: number, h: number) => `${d} D ${h} H`,
+    rankOf: (n: number) => `/ ${n}`,
+    heroA11y: (rank: number, n: number) => `Tvoje pozice ${rank}. z ${n}`,
+    heroXp: (xp: string) => `${xp} XP tento týden`,
+    tierKicker: 'ÚROVEŇ',
+    tierInitial: (tier: string) => String(tier).slice(0, 1).toUpperCase(),
+    tierA11y: (tier: string, level: number, total: number) => `Liga ${tier}, úroveň ${level} ze ${total}`,
+    podiumKicker: 'TOP 3 TÝDNE',
+    climbCta: 'Odcvičit lekci',
   },
   progress: {
     dreamLabel: 'DREAM BODY', activityLabel: 'AKTIVITA', milestonesLabel: 'MILNÍKY', weightLabel: 'VÁHA',
@@ -223,6 +236,13 @@ export const copy = {
     milestoneYes: 'Ano', milestoneNo: 'Zatím ne',
     newCosmetic: 'NOVÁ KOSMETIKA', toWardrobe: 'Otevřít Šatník', dismiss: 'Zavřít',
     saveError: 'Uložení se nepovedlo. Zkus to znovu.',
+    // Nothing Dot fáze 2: hero dlaždice, součet aktivity, štítek vize, hodnota váhy a krátká pilulka zápisu.
+    activeTitle: 'Aktivní dny', activeSub: 'Posledních 5 týdnů',
+    longestTitle: 'Nejdelší série', longestSub: 'Tvůj rekord',
+    activeTally: (n: number, total: number) => `${n} / ${total}`,
+    visionLabel: 'VIZE',
+    weightA11y: (kg: string) => `Poslední zápis ${kg} kg`,
+    logWeightCta: 'Zapsat váhu',
   },
   wardrobe: {
     title: 'Šatník',
@@ -242,8 +262,17 @@ export const copy = {
     tileA11y: (name: string, state: string) => `${name}, ${state}`,
     state: { equipped: 'nasazeno, klepni pro sundání', unlocked: 'klepni pro nasazení', buy: 'klepni pro koupi', locked: 'zamčeno' },
     preview: 'Náhled opice s nasazenými věcmi',
+    // Nothing Dot fáze 2: mono štítek zamčené položky a zůstatek banánů pro čtečku.
+    locked: 'ZAMČENO',
+    bananasA11y: (n: number) => `${n} ${czPlural(n, 'banán', 'banány', 'banánů')}`,
   },
   profile: {
+    // Nothing Dot fáze 2: stavový řádek, dlaždice statistik a odkaz do šatníku.
+    pathStatus: (name: string) => `CESTA ${String(name).toUpperCase()}`,
+    xpNumber: (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
+    xpUnit: 'XP', stageOf: (max: number) => `/ ${max}`, statStreak: 'Aktuální série',
+    statLongest: 'Nejdelší série', badgeOf: (total: number) => `/ ${total}`,
+    wardrobeLine: 'Oblečení, doplňky a rámy pro opici',
     xp: 'XP CELKEM', stage: 'STAGE', path: 'CESTA', streak: 'STREAK', badges: 'ODZNAKY',
     wardrobe: 'Šatník', settings: 'Nastavení', noBadges: 'Zatím žádné odznaky.',
     badgeCount: (n: number) => `${n} ${czPlural(n, 'odznak', 'odznaky', 'odznaků')}`,
@@ -373,6 +402,13 @@ export const copy = {
       targetRange: 'Cíl musí být celé číslo od 1 do 1000, aktuální hodnota od 0.',
       deltaRange: 'Zadej změnu od 0,1 do 30 kg.',
     },
+    // Nothing Dot fáze 2: hero odpočtu a prstenec postupu, součet dní, zamčená odměna.
+    daysLeftKicker: 'DNÍ DO KONCE', endedKicker: 'KONEC SEZÓNY',
+    elapsedKicker: 'UPLYNULO',
+    elapsedPct: (pct: number) => `${pct} %`,
+    elapsedA11y: (pct: number) => `Uplynulo ${pct} % sezóny`,
+    gridTally: (done: number, total: number) => `${done} / ${total}`,
+    rewardLocked: 'ODMĚNA · ZAMČENO', selected: 'VYBRÁNO',
     nameMissing: 'Milník potřebuje název.',
     saveError: 'Cíl se nepodařilo uložit. Zkus to znovu.',
   },
@@ -383,6 +419,8 @@ export const copy = {
     claimError: 'Odměnu se nepodařilo převzít. Zkus to znovu.',
     labels: { weight: 'Váha', activeDays: 'Aktivní dny', lessons: 'Lekce' },
     before: 'PŘED', after: 'PO',
+    // Nothing Dot fáze 2: mono řádek „PŘED 12 OPAKOVÁNÍ“ (nezlomitelné mezery uvnitř položky).
+    beforeAfterValue: (key: string, value: string, unit: string) => `${key} ${value} ${unit}`,
     units: { kg: 'kg', reps: 'opakování', seconds: 'sekund', days: 'dní', lessons: 'lekcí' },
     lessonsLine: 'Za celou sezónu. Každá z nich posunula opici.',
     streakUnit: (n: number) => czPlural(n, 'den', 'dny', 'dní'),

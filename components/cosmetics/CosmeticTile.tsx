@@ -1,5 +1,5 @@
 import { Cloud, Lock, Sparkles } from 'lucide-react-native';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import Svg, { Circle, Line, Rect } from 'react-native-svg';
 import { Mascot } from '@/components/mascot';
@@ -8,7 +8,7 @@ import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { useSelectionProgress } from '@/components/ui/useSelectionProgress';
 import { copy } from '@/data/copy';
 import type { useWardrobe } from '@/hooks/useWardrobe';
-import { opacity, useTheme } from '@/theme';
+import { dash, opacity, useTheme } from '@/theme';
 import type { MascotStage } from '@/types';
 import { ProfileFrame } from './ProfileFrame';
 import { SourceBadge } from './SourceBadge';
@@ -25,9 +25,9 @@ interface Props {
   onPress(): void;
 }
 
-/** Dlaždice Šatníku: čtverec 1:1 na `surface` s náhledem položky, pod ním název a SourceBadge.
- *  Nasazená = obrys `text` 2 pt (R42: místo akcentu kontrast; jediný obrys na dlaždici). Zamčená = silueta
- *  (náhled v `opacity.locked`) se zámkem; podmínku získání nese SourceBadge. */
+/** Dlaždice Šatníku (Nothing Dot fáze 2): čtverec 1:1, plocha `tile` + vlasová `edge`, radius 28, uvnitř
+ *  náhled (mini SVG opička, ne Skia), pod ním název a SourceBadge. Nasazená = hrana `text` 2 pt přes `edge`.
+ *  Zamčená = náhled v `opacity.locked`, zámek a mono „ZAMČENO“; podmínku získání nese SourceBadge. */
 export function CosmeticTile({ item, width, stage, seasonName, disabled, onPress }: Props) {
   const { c, space, radius, stroke, size } = useTheme();
   const { cosmetic, unlocked, equipped, canBuy } = item;
@@ -54,27 +54,29 @@ export function CosmeticTile({ item, width, stage, seasonName, disabled, onPress
       <View>
       <View
         style={{
-          width, height: width, borderRadius: radius.l, backgroundColor: c.surface,
-          borderWidth: stroke.focus, borderColor: 'transparent',
+          width, height: width, borderRadius: radius.tile, backgroundColor: c.tile,
+          borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
           alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
         }}
       >
-        <View style={{ opacity: unlocked ? 1 : opacity.locked }}>
+        <View style={{ opacity: unlocked ? 1 : opacity.locked, marginTop: unlocked ? 0 : space.s }}>
           <Preview slot={cosmetic.slot} id={cosmetic.id} stage={stage} box={width - space.l} />
         </View>
+        {/* Zamčená: zámek + mono „ZAMČENO“ (nekupovatelná) v rohu; kupovatelná jen zámek (cenu nese štítek pod dlaždicí). */}
         {unlocked ? null : (
-          <View style={{ position: 'absolute', top: space.s, right: space.s }}>
-            <Lock size={size.badgeIcon + space.xs} color={c.muted} strokeWidth={stroke.icon} />
+          <View style={{ position: 'absolute', top: space.s + space.xs, left: space.s + space.xs, right: space.s, flexDirection: 'row', alignItems: 'center', gap: space.xs }}>
+            <Lock size={size.badgeIcon} color={c.muted} strokeWidth={stroke.icon} />
+            {locked ? <Text variant="badgeLabel" tone="muted" numberOfLines={1} style={{ flexShrink: 1 }}>{copy.wardrobe.locked}</Text> : null}
           </View>
         )}
       </View>
       <Animated.View
         pointerEvents="none"
-        style={[ring, { position: 'absolute', top: 0, left: 0, width, height: width, borderRadius: radius.l, borderWidth: stroke.focus, borderColor: c.text }]}
+        style={[ring, { position: 'absolute', top: 0, left: 0, width, height: width, borderRadius: radius.tile, borderWidth: stroke.focus, borderColor: c.text }]}
       />
       </View>
       <View style={{ gap: space.xs }}>
-        <Text variant="caption" numberOfLines={2}>{cosmetic.name}</Text>
+        <Text variant="caption" tone={locked ? 'muted' : 'text'} numberOfLines={2}>{cosmetic.name}</Text>
         {equipped ? <Text variant="badgeLabel">{copy.wardrobe.equipped}</Text>
           : <SourceBadge cosmetic={cosmetic} seasonName={seasonName} owned={unlocked} />}
       </View>
@@ -94,14 +96,17 @@ function Preview({ slot, id, stage, box }: { slot: WardrobeItem['cosmetic']['slo
     const Icon = id === 'fx-sparks' ? Sparkles : Cloud;
     return <Icon size={size.glyph} color={c.text} strokeWidth={stroke.icon} />;
   }
-  // Pozadí mapy: čtvercový vzorek. Křídový prach = řídké tečky, noční posilovna = tmavá plocha s linkami.
+  // Pozadí mapy: čtvercový vzorek v tečkovém jazyce. Křídový prach = řídký posunutý rastr teček `muted`,
+  // noční posilovna = tmavá plocha s hustými tečkovanými linkami `dotDim`.
   const s = Math.max(0, box);
   const step = s / 5;
   return (
     <Svg width={s} height={s}>
-      <Rect x={0} y={0} width={s} height={s} rx={radius.s} fill={id === 'map-night-gym' ? c.shadow : c.base} />
+      <Rect x={0} y={0} width={s} height={s} rx={radius.l} fill={id === 'map-night-gym' ? c.shadow : c.base} />
       {id === 'map-night-gym'
-        ? [1, 2, 3, 4].map((i) => <Line key={i} x1={0} x2={s} y1={i * step} y2={i * step} stroke={c.rule} strokeWidth={1} />)
+        ? [1, 2, 3, 4].map((i) => (
+          <Line key={i} x1={step / 2} x2={s - step / 2} y1={i * step} y2={i * step} stroke={c.dotDim} strokeWidth={size.loaderDot / 2} strokeLinecap="round" strokeDasharray={dash.dots} />
+        ))
         : [1, 2, 3, 4].flatMap((i) => [1, 2, 3, 4].map((j) => (
           <Circle key={`${i}-${j}`} cx={i * step + ((j % 2) * step) / 2 - step / 4} cy={j * step} r={size.loaderDot / 2} fill={c.muted} />
         )))}

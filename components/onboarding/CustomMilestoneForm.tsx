@@ -1,14 +1,13 @@
 import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { Button } from '@/components/ui/Button';
+import { Reveal } from '@/components/ui/choreo';
+import { PillButton } from '@/components/ui/PillButton';
 import { SegmentedControl, type SegmentOption } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
 import { TextField } from '@/components/ui/TextField';
 import { copy } from '@/data/copy';
 import { now } from '@/lib/clock';
-import { enterRise } from '@/lib/motion';
 import { customMilestone, parseMilestoneTarget } from '@/logic/onboarding';
 import { opacity, useTheme } from '@/theme';
 import type { Milestone, MilestoneUnit } from '@/types';
@@ -56,7 +55,7 @@ export function CustomMilestoneForm({ disabled, onAdd }: { disabled: boolean; on
   }
 
   return (
-    <Animated.View entering={enterRise(0, 8)} style={{ gap: space.l, marginTop: space.m }}>
+    <Reveal play rise={8} style={{ gap: space.l, marginTop: space.m }}>
       <TextField label={t.customLabel} value={label} onChangeText={setLabel} placeholder={t.customPlaceholder} maxLength={CUSTOM_LABEL_MAX} autoFocus />
       <View style={{ gap: space.s }}>
         <Text variant="label" tone="muted">{t.customUnit}</Text>
@@ -75,10 +74,15 @@ export function CustomMilestoneForm({ disabled, onAdd }: { disabled: boolean; on
           error={targetError ? t.customTargetError : null}
         />
       ) : null}
+      {/* Pilulky [PŘIDAT MILNÍK] / [ZRUŠIT]: obě sekundární, plné CTA obrazovky zůstává [POKRAČOVAT] dole. */}
       <View style={{ flexDirection: 'row', gap: space.s }}>
-        <Button label={t.customSubmit} onPress={submit} variant="secondary" disabled={!valid || disabled} style={{ flex: 1 }} />
-        <Button label={t.customCancel} onPress={close} variant="ghost" />
+        <View style={{ flex: 2 }}>
+          <PillButton label={t.customSubmit} onPress={submit} variant="secondary" disabled={!valid || disabled} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <PillButton label={t.customCancel} onPress={close} variant="secondary" />
+        </View>
       </View>
-    </Animated.View>
+    </Reveal>
   );
 }

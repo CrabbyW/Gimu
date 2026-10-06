@@ -41,6 +41,10 @@ export const size = {
   streakSmW: 28, streakSmH: 16, streakLgW: 160, streakLgH: 56,
   // Pevná šířka sloupce XP v lize pro „9 999“ (stat 20 pt, tabulární číslice ≈ 0.6 em).
   leagueXpCol: 64,
+  // Nothing Dot fáze 2: odznak úrovně jako tečkový prstenec 72 (vnitřní tečky ≈ 3 pt, čitelné), prstenec postupu
+  // sezóny 120 (vejde se vedle Doto `displayXL` odpočtu do dlaždice na 390 pt; mono „100 %“ uvnitř 0.46 R ≈ 55 pt),
+  // výška tečkového pole za opičkou profilu / šatníku (prstence stage-up jsou v `dots.stageUp`).
+  tierRing: 72, seasonRing: 120, profileField: 248,
   // Mapa (Teplá litina): šířka popisku pod uzlem, náhled kotouče v kartě první lekce, dlaždice odznaku,
   // výška ghost řádku LockedPreview, počet viditelných řádků kola hodnot.
   nodeLabel: 200, previewPlate: 48, badgeTile: 64, ghostRow: 12, wheelVisible: 5,
@@ -76,8 +80,27 @@ export const dots = {
   path: { pitch: 10, r: 1.5 },
   /** Tečková činka bosse: rozteč 6 = dva sloupce teček na kotouč šíře 12 (tečka `path.r`). */
   boss: { pitch: 6 },
+  /** Tečkový glyf cesty a vize (onboarding, SVG ve viewBoxu 48): rozteč mřížky výplně i obrysu a poloměr tečky.
+   *  SVG, ne Skia: karet je až 7 na obrazovce a web drží nejvýš 12 WebGL pláten (fáze 2, Task 1). */
+  glyph: { view: 48, pitch: 4, r: 1.35 },
   /** Záře aktivní tečky (jen dark): rozmazání BlurMask a poloměr záře vůči tečce. */
   glow: { blur: 4, scale: 1.8 },
+  /** Pódium ligy (fáze 2): sloupec 3 tečky široký (výška = `podiumColumns().dots` řádků), tečka 8. */
+  podium: { cols: 3, d: 8 },
+  /** Tečková linka z RN View (bez Skia, nežere rozpočet pláten): oddělovač zóny ligy, ghost řádky, osa. */
+  rule: { d: 2, gap: 4, max: 96 },
+  /** Mřížka aktivity Progresu: 7 sloupců (dny) × 5 řádků (týdny), rozteč 22 (≈ 7 × 22 = 154 pt na šířku dlaždice). */
+  activity: { cols: 7, rows: 5, pitch: 22 },
+  /** Dny sezóny: tečka a mezera podle spec §6.4 (10 / 6), 14 na řádek (2 týdny), aby 90 dní dalo ≤ 7 řádků. */
+  season: { d: 10, perRow: 14 },
+  /** Tečkový graf váhy: průměr bodu a posledního (zářícího) bodu. */
+  chart: { d: 6, dLast: 10 },
+  /** Podstavec profilu: stoh tří `DotPlate` zploštělých na elipsu (`squash`), průměry od spodního, svislý
+   *  rozestup středů elips (`step`) a kg kotoučů (počet prstenců: těžší dole). */
+  pedestal: { squash: 0.35, sizes: [176, 148, 120], step: 18, kg: [25, 20, 15] },
+  /** Stage-up: průměr prstence stage 240 (Doto `displayXL` číslice uvnitř vnitřního prstence 0.46 R ≈ 110)
+   *  a o kolik opička (podíl své velikosti) přesahuje pod spodní hranu prstence, na které sedí. */
+  stageUp: { ring: 240, mascotDrop: 0.45 },
 } as const;
 // Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
 // `statMaxScale` = strop zvětšení tokenu `stat` (1.4): pevné sloupce čísel (XP v lize) rostou jen do něj.
@@ -92,7 +115,8 @@ export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4, grain: 0.05, 
   edgeLit: 0.16 } as const;
 // `glint` = odlesk na hraně litinového kotouče (`text` na 24 %): jediné místo, kde kov „chytá“ světlo.
 // Přerušovaná cílová linie grafu váhy (SVG strokeDasharray).
-export const dash = { target: '4 6' } as const;
+// `dots` = tečkovaná linka v SVG (nulový úsek + kulatý konec = tečka, rozteč 6): cílová linie tečkového grafu váhy.
+export const dash = { target: '4 6', dots: '0 6' } as const;
 // Tloušťky čar instrument vrstvy: Lucide obrys 1.5, aktivní úsek měřicí linky 2,
 // fokus/výběr bez akcentu (spodní linka pole, proužek vybrané karty) 2, prstenec výdrže 3
 // (měřidlo v `text` na stopě `rule`; tenčí než dřív, protože už ho nenese barva, ale kontrast).

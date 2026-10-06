@@ -14,9 +14,11 @@ interface Props {
   onPress?(): void;
 }
 
-/** Dlaždice odznaku 64 (Teplá litina §3.5). Získaný = plná litina (`plate15`) se symbolem v `text`
- *  a názvem pod ním. Zamčený = obrys siluety ve `faint` na `surface` se zámkem `muted` a podmínkou
- *  `caption muted`. Obrys místo plné `faint` výplně: zámek `muted` na plné `faint` ploše by neměl kontrast. */
+/**
+ * Odznak 64 (Nothing Dot fáze 2): kruh z RN View, ne Skia (odznaků je víc, než dovolí rozpočet pláten).
+ * Získaný = plná `text` plocha s medailí v `onText` a názvem pod ní (nejsilnější tvar v sekci).
+ * Zamčený = obrys `dotDim` se zámkem `muted` a podmínkou: ukazuje, co dál, ne co chybí.
+ */
 export function BadgeTile({ name, condition, earned, onPress }: Props) {
   const { c, space, radius, size, stroke } = useTheme();
   const d = size.badgeTile;
@@ -32,12 +34,12 @@ export function BadgeTile({ name, condition, earned, onPress }: Props) {
       <View
         style={{
           width: d, height: d, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center',
-          backgroundColor: earned ? c.plate15 : 'transparent',
-          borderWidth: earned ? 0 : stroke.icon, borderColor: c.faint,
+          backgroundColor: earned ? c.text : 'transparent',
+          borderWidth: earned ? 0 : stroke.icon, borderColor: c.dotDim,
         }}
       >
         {earned
-          ? <Medal size={size.icon} color={c.text} strokeWidth={stroke.icon} />
+          ? <Medal size={size.icon} color={c.onText} strokeWidth={stroke.icon} />
           : <Lock size={size.badgeIcon} color={c.muted} strokeWidth={stroke.icon} />}
       </View>
       <Text variant="caption" tone={earned ? 'text' : 'muted'} numberOfLines={2} style={{ textAlign: 'center' }}>

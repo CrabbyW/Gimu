@@ -378,6 +378,9 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
 }
 
 const center = { textAlign: 'center' as const };
+/** Oddělovač položek popisku uzlu (shodný s `copy.map.nodeInfo`) a nezlomitelná mezera uvnitř položky. */
+const SEP = ' · ';
+const nbsp = (s: string) => s.replace(/ /g, ' ');
 
 /** Popisek pod uzlem (tabulka stavů). Metadata z dat: počet cviků, `estMinutes`, XP.
  *  current = název `headline` + metadata + „+N XP“ (akci nese plovoucí pilulka obrazovky a tap na kotouč);
@@ -385,8 +388,11 @@ const center = { textAlign: 'center' as const };
 function NodeLabel({ node, state, minutes, bossAfter }: {
   node: MapNode; state: NodeState; minutes: number; bossAfter: number;
 }) {
-  const info = copy.map.nodeInfo(node.exerciseCount, minutes);
-  const withXp = `${info} · ${copy.map.xpGain(node.xp)}`;
+  // Nezlomitelné mezery uvnitř položek (jako `xpBreakdownLabel`): mono je širší a na 390 pt se popisek zalomí,
+  // tak ať se zalomí jen mezi položkami („4 CVIKY · 3 MIN“ / „+20 XP“), nikdy „+20“ a „XP“ zvlášť.
+  const items = [...copy.map.nodeInfo(node.exerciseCount, minutes).split(SEP), copy.map.xpGain(node.xp)].map(nbsp);
+  const info = items.slice(0, -1).join(SEP);
+  const withXp = items.join(SEP);
   const current = state === 'current';
   const isBoss = node.lesson.isBoss;
   let lines: ReactNode;

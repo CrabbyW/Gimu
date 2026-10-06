@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { BlurMask, Canvas, Group, Points } from '@shopify/react-native-skia';
 import { Easing, ReduceMotion, useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { motion, useMotionSafe } from '@/lib/motion';
-import { dots } from '@/theme';
+import { dots, useTheme } from '@/theme';
 import { ringDots, rowLit } from './geometry';
 import { scanCount, type Pt } from './animate';
 import { glowPad, toPoints, useDotInk } from './ink';
@@ -24,6 +24,8 @@ interface Props {
   /** Nástup spirálou (`motion.dotScanMs`): vnější rastr se rozvine od středu ven, vnitřní prstenec doběhne
    *  od 12 hodin. Číslo = zpoždění v ms, false = stojí hned. Změny `progress` doběhnou plynule. */
   intro?: boolean | number;
+  /** Na zlaté ploše stage-up: rozsvícené `onSeasonGold`, zhasnuté/tlumené tmavší zlato, bez záře. */
+  onGold?: boolean;
 }
 
 /** Geometrie prstence: vnitřní tečky (start nahoře) a vnější rozptýlený disk. Exportované pro motion (spirála). */
@@ -43,8 +45,10 @@ export function ringLayout(size: number, count: number = dots.ring.count) {
 
 /** Progresový prstenec (obr. 3): rastr drobných teček `dotDim` kolem a uvnitř prstenec většich teček,
  *  rozsvícený do `progress` v `text` (dark se září), zbytek `dotOff`. Nástup spirálou a plynulé změny (motion). */
-export function DotRing({ progress, size, count = dots.ring.count, accessibilityLabel, children, intro = true }: Props) {
-  const ink = useDotInk();
+export function DotRing({ progress, size, count = dots.ring.count, accessibilityLabel, children, intro = true, onGold = false }: Props) {
+  const themeInk = useDotInk();
+  const { c } = useTheme();
+  const ink = onGold ? { on: c.onSeasonGold, off: c.goldDotOff, dim: c.goldDotDim, glow: null } : themeInk;
   const layout = useMemo(() => ringLayout(size, count), [size, count]);
   const pad = glowPad(layout.innerDot * 2);
   const { inner, outer, litCount } = useMemo(() => {

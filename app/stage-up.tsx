@@ -6,6 +6,7 @@ import Animated, {
   useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DotRing } from '@/components/dots';
 import { Mascot, MASCOT_SIZES } from '@/components/mascot';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Text } from '@/components/ui/Text';
@@ -14,17 +15,22 @@ import { useProfile } from '@/hooks/useProfile';
 import { haptics } from '@/lib/haptics';
 import { ease, motion, stageUp, useMotionSafe } from '@/lib/motion';
 import { parseStageParam } from '@/logic/mascot';
-import { useTheme } from '@/theme';
+import { dots, useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage } from '@/types';
 
 const NO_COSMETICS: Partial<Record<CosmeticSlot, string>> = {};
-const XL = MASCOT_SIZES.XL;
+/** Plocha scény = prstenec stage (Nothing Dot fáze 2); opička M sedí na jeho spodní hraně. */
+const BOX = dots.stageUp.ring;
+const MASCOT = MASCOT_SIZES.M;
+const MASCOT_DROP = MASCOT * dots.stageUp.mascotDrop;
+/** Počet stage opice (BABY · TEENAGER · ALPHA): prstenec se rozsvítí do stage / STAGES. */
+const STAGES = Object.keys(copy.stageUp.names).length;
 // Sekvence §7.4 / plán B Task 26 Step 3 (ms od zobrazení): `stageUp` v lib/motion.
 const T = stageUp;
 const SHRUNK = T.shrunk;
-const RING_R = (XL / 2) * SHRUNK;
+const RING_R = (BOX / 2) * SHRUNK;
 const SHARDS = 8;
-const SHARD_TRAVEL = XL / 2;
+const SHARD_TRAVEL = BOX / 2;
 const FADE = motion.calmFade;
 
 /** Na mapu (stejně jako „Pokračovat“ z oslavy lekce), s id odemčeného uzlu pro unlock sekvenci. */
@@ -48,13 +54,14 @@ export default function StageUpScreen() {
 
 function BlankAccent() {
   const { c } = useTheme();
-  return <View style={{ flex: 1, backgroundColor: c.accent }} />;
+  return <View style={{ flex: 1, backgroundColor: c.seasonGold }} />;
 }
 
 /**
- * Stage-up (§7.4): celá plocha v akcentu (§6.8 výjimka, oslava = povolený akcent, R43 IWF červená). Stará opice se smrští
- * do kruhu, kruh praskne, vyskočí nová stage v celebrate. Opice uprostřed (výjimka pro maskota),
- * štítek a titulek pod ní vlevo jako popisek exponátu. Inkoust všude `onAccent`.
+ * Stage-up (Nothing Dot fáze 2): celá plocha `seasonGold` (spec §2.1, jediná plošná výjimka z monochromu).
+ * Uprostřed tečkový prstenec stage s Doto `displayXL` číslem, na jeho spodní hraně sedí opička v celebrate.
+ * Starý stage (prstenec + opička) se smrští a praskne, nový nastoupí. Štítek a titulek vlevo pod scénou jako
+ * popisek exponátu, inkoust `onSeasonGold`. Omezený pohyb: rovnou finální stav, fade 200 ms. 2 plátna.
  */
 function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotStage; unlocked: string | undefined }) {
   const { c, space, stroke } = useTheme();
@@ -127,33 +134,54 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
     toMap(unlocked);
   };
 
-  const center = { position: 'absolute', left: 0, top: 0, width: XL, height: XL, alignItems: 'center', justifyContent: 'center' } as const;
+  const center = { position: 'absolute', left: 0, top: 0, width: BOX, height: BOX, alignItems: 'center', justifyContent: 'center' } as const;
+  const ink = { color: c.onSeasonGold };
   return (
-    <View style={{ flex: 1, backgroundColor: c.accent, paddingTop: insets.top }} accessibilityViewIsModal>
+    <View style={{ flex: 1, backgroundColor: c.seasonGold, paddingTop: insets.top }} accessibilityViewIsModal>
       <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: space.l, gap: space.xl }}>
-        <View style={{ width: XL, height: XL, alignSelf: 'center' }} accessible accessibilityLabel={copy.stageUp.a11y(to, name)}>
+        <View style={{ width: BOX, height: BOX + MASCOT_DROP, alignSelf: 'center' }} accessible accessibilityLabel={copy.stageUp.a11y(to, name)}>
+          {/* Starý stage: tečkový prstenec rozsvícený do from/3 s Doto číslem a opičkou. Motion ho smrští
+              a „rozpadne“ (úlomky = tečky), pak nastoupí nový. */}
           {reduced ? null : (
             <Animated.View style={[center, oldStyle]}>
-              <Mascot stage={from} mood="idle" size="XL" cosmetics={cosmetics} />
+              <StageRing stage={from} />
+              <View style={{ position: 'absolute', bottom: -MASCOT_DROP }}>
+                <Mascot stage={from} mood="idle" size={MASCOT} cosmetics={cosmetics} decorative />
+              </View>
             </Animated.View>
           )}
           {reduced ? null : (
             <Animated.View pointerEvents="none" style={[center, ringStyle]}>
-              <View style={{ width: RING_R * 2, height: RING_R * 2, borderRadius: RING_R, borderWidth: stroke.focus, borderColor: c.onAccent }} />
+              <View style={{ width: RING_R * 2, height: RING_R * 2, borderRadius: RING_R, borderWidth: stroke.focus, borderColor: c.onSeasonGold }} />
             </Animated.View>
           )}
           {reduced ? null : Array.from({ length: SHARDS }, (_, k) => <Shard key={k} index={k} burst={burst} />)}
           <Animated.View style={[center, newStyle]}>
-            <Mascot stage={to} mood="celebrate" size="XL" cosmetics={cosmetics} />
+            <StageRing stage={to} />
+            {/* Opička sedí na spodní hraně prstence (jako na kotouči mapy): jediný barevný subjekt. */}
+            <View style={{ position: 'absolute', bottom: -MASCOT_DROP }}>
+              <Mascot stage={to} mood="celebrate" size={MASCOT} cosmetics={cosmetics} decorative />
+            </View>
           </Animated.View>
         </View>
         <Animated.View style={[{ gap: space.s }, textStyle]}>
-          <Text variant="label" tone="onAccent">{copy.stageUp.label(to, name)}</Text>
-          <Text variant="display" tone="onAccent" accessibilityRole="header">{copy.stageUp.title}</Text>
+          <Text variant="label" style={ink}>{copy.stageUp.label(to, name)}</Text>
+          <Text variant="display" style={ink} accessibilityRole="header">{copy.stageUp.title}</Text>
         </Animated.View>
       </View>
       <BigActionBar primary={{ label: copy.stageUp.cta, onPress: onContinue, disabled: !ready || leaving, onAccent: true }} />
     </View>
+  );
+}
+
+/** Prstenec stage (Nothing Dot fáze 2): `DotRing` na zlaté ploše, rozsvícený do stage / 3 (BABY 1/3 … ALPHA 3/3),
+ *  uprostřed číslo stage Doto `displayXL` v `onSeasonGold`. Statický: nástup a rozpad řídí scéna. */
+function StageRing({ stage }: { stage: MascotStage }) {
+  const { c } = useTheme();
+  return (
+    <DotRing progress={stage / STAGES} size={BOX} intro={false} onGold>
+      <Text variant="displayXL" maxFontSizeMultiplier={1} style={{ color: c.onSeasonGold }} importantForAccessibility="no">{stage}</Text>
+    </DotRing>
   );
 }
 
@@ -172,7 +200,7 @@ function Shard({ index, burst }: { index: number; burst: SharedValue<number> }) 
   return (
     <Animated.View
       pointerEvents="none"
-      style={[{ position: 'absolute', left: XL / 2 - s / 2, top: XL / 2 - s / 2, width: s, height: s, borderRadius: radius.full, backgroundColor: c.onAccent }, style]}
+      style={[{ position: 'absolute', left: BOX / 2 - s / 2, top: BOX / 2 - s / 2, width: s, height: s, borderRadius: radius.full, backgroundColor: c.onSeasonGold }, style]}
     />
   );
 }

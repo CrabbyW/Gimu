@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { ChoiceCard } from '@/components/onboarding/ChoiceCard';
 import { CustomDreamField } from '@/components/onboarding/CustomDreamField';
 import { DreamGlyph } from '@/components/onboarding/DreamGlyph';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
+import { Reveal } from '@/components/ui/choreo';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
-import { enterRise } from '@/lib/motion';
+import { stagger } from '@/lib/motion';
 import { useSfx } from '@/lib/sound';
 import { isDreamPreset, useDreamOptions, useOnboardingDraft } from '@/hooks/useOnboardingDraft';
 import { isDreamValid } from '@/logic/onboarding';
@@ -41,7 +41,7 @@ export default function DreamStep() {
     >
       <View accessibilityRole="radiogroup" style={{ gap: space.s }}>
         {options.map((o, i) => (
-          <Animated.View key={o.id} entering={enterRise(i)}>
+          <Reveal key={o.id} play delay={stagger(i + 2)}>
             <ChoiceCard
               title={o.title}
               line={o.line}
@@ -49,9 +49,9 @@ export default function DreamStep() {
               onPress={() => { feedback(); setCustom(false); set({ dreamBody: o.sentence }); }}
               renderGlyph={(color, bg) => <DreamGlyph glyph={o.glyph} color={color} bg={bg} size={glyph} />}
             />
-          </Animated.View>
+          </Reveal>
         ))}
-        <Animated.View entering={enterRise(options.length)}>
+        <Reveal play delay={stagger(options.length + 2)}>
           <ChoiceCard
             title={t.customTitle}
             line={t.customLine}
@@ -59,11 +59,11 @@ export default function DreamStep() {
             onPress={() => { feedback(); if (!custom) { setCustom(true); if (isDreamPreset(dreamBody)) set({ dreamBody: '' }); } }}
             renderGlyph={(color, bg) => <DreamGlyph glyph="custom" color={color} bg={bg} size={glyph} />}
           />
-        </Animated.View>
+        </Reveal>
         {custom ? (
-          <Animated.View entering={enterRise(0, 8)}>
+          <Reveal play rise={8}>
             <CustomDreamField value={dreamBody} onChange={(dreamBody) => set({ dreamBody })} />
-          </Animated.View>
+          </Reveal>
         ) : null}
       </View>
     </OnboardingFrame>

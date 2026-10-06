@@ -7,6 +7,7 @@ import { MilestoneChip } from '@/components/onboarding/MilestoneChip';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { Text } from '@/components/ui/Text';
 import { TextField } from '@/components/ui/TextField';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { useGoals } from '@/hooks/useGoals';
 import { useMilestonePresets } from '@/hooks/useOnboardingDraft';
@@ -103,10 +104,12 @@ function MilestonesEditor({ profile, save }: { profile: UserProfile; save: Retur
         <View style={{ gap: space.s }}>
           <SectionLabel value={t.count(list.length, MILESTONES_MAX)}>{t.yours}</SectionLabel>
           {hint ? <Text variant="caption" tone={limitHit > 0 ? 'text' : 'muted'} accessibilityLiveRegion="polite">{hint}</Text> : null}
-          <View>
-            {list.map((m) => (
+          {/* Nothing Dot: řádky v jedné dlaždici, oddělené vlasovou linkou `rule` (jako sekce Nastavení). */}
+          <Tile pad="none">
+            {list.map((m, i) => (
               <MilestoneRow
                 key={m.id}
+                last={i === list.length - 1}
                 milestone={m}
                 target={targets[m.id] ?? String(m.target)}
                 targetError={targetErrors[m.id] === true}
@@ -120,7 +123,7 @@ function MilestonesEditor({ profile, save }: { profile: UserProfile; save: Retur
                 onRemove={() => remove(m.id)}
               />
             ))}
-          </View>
+          </Tile>
         </View>
 
         <View style={{ gap: space.m }}>
@@ -146,6 +149,8 @@ function MilestonesEditor({ profile, save }: { profile: UserProfile; save: Retur
 }
 
 interface RowProps {
+  /** Poslední řádek dlaždice nemá dělicí linku (hranu dělá dlaždice). */
+  last: boolean;
   milestone: Milestone;
   target: string;
   targetError: boolean;
@@ -155,15 +160,15 @@ interface RowProps {
   onRemove(): void;
 }
 
-/** Řádek milníku: název `bodyStrong`, pokrok `caption muted`, vpravo křížek 44 pt; pod ním pole cíle (u „splněno“ není).
- *  Řádky odděluje jen hairline `rule` (stejná technika jako Nastavení). */
-function MilestoneRow({ milestone: m, target, targetError, canRemove, onTarget, onTargetBlur, onRemove }: RowProps) {
+/** Řádek milníku: název `bodyStrong`, pokrok `caption muted`, vpravo kulatý křížek 44 pt; pod ním pole cíle (u „splněno“ není).
+ *  Řádky odděluje jen hairline `rule` uvnitř dlaždice. */
+function MilestoneRow({ last, milestone: m, target, targetError, canRemove, onTarget, onTargetBlur, onRemove }: RowProps) {
   const { c, space, size, stroke, radius } = useTheme();
   const parsed = parseMilestoneTarget(target);
   // Název sleduje psaný cíl živě, aby se „10 shybů“ s polem 15 nerozcházelo.
   const label = displayLabel(parsed !== null && parsed !== m.target ? retarget(m, parsed) : m);
   return (
-    <View style={{ paddingVertical: space.m, gap: space.m, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
+    <View style={{ paddingVertical: space.m, paddingHorizontal: size.tilePad, gap: space.m, borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth, borderBottomColor: c.rule }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="bodyStrong">{label}</Text>
@@ -177,7 +182,9 @@ function MilestoneRow({ milestone: m, target, targetError, canRemove, onTarget, 
           accessibilityState={{ disabled: !canRemove }}
           style={({ pressed }) => ({
             width: size.hit, height: size.hit, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full,
-            backgroundColor: pressed ? c.raised : 'transparent', opacity: canRemove ? 1 : opacity.disabled,
+            // Ikona opticky na hraně obsahu (dotyková plocha 44 přesahuje do vnitřního okraje dlaždice).
+            marginRight: -(size.hit - size.icon) / 2,
+            backgroundColor: pressed ? c.tilePressed : 'transparent', opacity: canRemove ? 1 : opacity.disabled,
           })}
         >
           <X size={size.icon} color={c.text} strokeWidth={stroke.icon} />

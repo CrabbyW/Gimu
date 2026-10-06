@@ -1,21 +1,22 @@
 import { router } from 'expo-router';
-import { ChevronRight, Shirt } from 'lucide-react-native';
+import { ChevronRight, Settings, Shirt } from 'lucide-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { ProfileFrame } from '@/components/cosmetics/ProfileFrame';
-import { Mascot, MASCOT_SIZES } from '@/components/mascot';
+import { DotField, useDotTouch } from '@/components/dots';
+import { Mascot } from '@/components/mascot';
+import { tileColumns } from '@/components/progress/layout';
 import { BadgeTile } from '@/components/ui/BadgeTile';
-import { Card } from '@/components/ui/Card';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { PlateStack } from '@/components/ui/PlateStack';
-import { SectionLabel } from '@/components/ui/SectionLabel';
+import { PlateStack, plateStackHeight } from '@/components/ui/PlateStack';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { StatGrid } from '@/components/ui/StatGrid';
-import { StreakBarbell } from '@/components/ui/StreakBarbell';
-import { TabHeader } from '@/components/ui/TabHeader';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { useBadgeProgress } from '@/hooks/useBadgeProgress';
 import { useCountUp } from '@/hooks/useCountUp';
@@ -24,15 +25,32 @@ import { usePathOptions } from '@/hooks/useOnboardingDraft';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
-import { layout, useTheme } from '@/theme';
+import { dots, useTheme } from '@/theme';
 import type { UserProfile } from '@/types';
+
+/** Nejvyšší stage opice (BABY · TEENAGER · ALPHA): jednotka „/ 3“ u dlaždice stage. */
+const MAX_STAGE = Object.keys(copy.stageUp.names).length;
+/** Opička stojí na horním kotouči: zapustí se do stohu o polovinu výšky horní elipsy. */
+const topEllipse = () => dots.pedestal.sizes[dots.pedestal.sizes.length - 1]! * dots.pedestal.squash;
 
 export default function ProfileScreen() {
   const { c } = useTheme();
   const profile = useProfile();
+  const data = profile.status === 'ready' ? profile.data : null;
+  const stats = useProfileStats(data);
+  const pathName = usePathOptions().find((p) => p.id === data?.path)?.name ?? data?.path ?? '';
   return (
     <View style={{ flex: 1, backgroundColor: c.base }}>
-      <TabHeader title={copy.tabs.profile} onSettings={() => router.push('/settings')} />
+      <ScreenHeader
+        title={copy.tabs.profile}
+        actions={[{ icon: Settings, label: copy.header.settings, onPress: () => router.push('/settings') }]}
+        status={data && stats ? {
+          left: copy.profile.pathStatus(pathName),
+          right: copy.status.streak(stats.streak),
+          live: !stats.todayDone,
+          rightA11y: copy.status.streakA11y(stats.streak, stats.todayDone),
+        } : undefined}
+      />
       {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.profile.errorWhat} onRetry={profile.retry} />
           : <ProfileBody profile={profile.data!} />}
@@ -40,15 +58,19 @@ export default function ProfileScreen() {
   );
 }
 
-/** Profil (§7.8). Hierarchie: opice L v rámu (hrdina) → XP jako jediné velké číslo → telemetrie
- *  (stage, cesta, streak) → odznaky → odkazy. Řádky odkazů dělí jen hairline `rule`. */
+/**
+ * Profil (Nothing Dot fáze 2). Hierarchie: opička (jediný barevný subjekt) na tečkovém poli, stojící na stohu
+ * tří tečkových kotoučů → statistiky jako dlaždice 2×N (XP jediné napočítávané číslo) → odznaky → Šatník.
+ * Plátna: pole 1 + podstavec 3 = 4.
+ */
 function ProfileBody({ profile }: { profile: UserProfile }) {
   const { c, space, size, stroke } = useTheme();
+  const { width, fontScale } = useWindowDimensions();
+  const cols = tileColumns(width, fontScale);
   const stats = useProfileStats(profile);
   const stage = useDisplayStage(stats?.stage ?? 1);
-  const pathName = usePathOptions().find((p) => p.id === profile.path)?.name ?? profile.path;
   // Motion: úvodní sled jen při prvním zobrazení tabu. Rám se rozevře, opice v něm dosedne pružinou,
-  // XP napočítá (700 ms expo.out), pak telemetrie, odznaky a odkazy po 70 ms.
+  // XP napočítá (700 ms expo.out), pak dlaždice, odznaky a Šatník po 70 ms.
   const first = useFirstShow('tab:profile');
   const P = intro.profile;
   const T = intro.tab;
@@ -57,71 +79,76 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
   const badges = useBadgeProgress(profile);
   const streak = stats?.streak ?? 0;
   const longest = stats?.longestStreak ?? 0;
-  const todayDone = stats?.todayDone ?? false;
-  const { width } = useWindowDimensions();
-  const stacked = width < layout.narrow;
+  // Dotyková vlna pole za opičkou (spec §4.1); gesto jen čte dotyky, scroll nebere.
+  const field = useDotTouch();
+  const [heroW, setHeroW] = useState(0);
+  const stackH = plateStackHeight();
 
   return (
-    <ScrollView contentContainerStyle={{ padding: space.l, paddingBottom: space.xxl, gap: space.xl }}>
-      {/* Hrdina (hloubka a materiál): opička M v rámu stojí na podstavci ze tří litinových kotoučů, uprostřed
-          obrazovky; pod ní cesta. Podstavec dává opičce zem a váhu, místo aby plavala vedle textu. */}
-      <View style={{ alignItems: 'center', gap: space.m }}>
-        <View style={{ alignItems: 'center' }}>
-          <FrameIn play={first}>
-            {(mascotStyle) => (
-              <ProfileFrame frameId={profile.equipped.profileFrame} size={MASCOT_SIZES.M}>
-                <Animated.View style={mascotStyle}>
-                  <Mascot stage={stage} mood="idle" size="M" cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
-                </Animated.View>
-              </ProfileFrame>
-            )}
-          </FrameIn>
-          <PlateStack count={size.pedestalCount} width={size.pedestalW} play={first} delay={intro.pedestal.at} />
-        </View>
-        <Text variant="body" tone="muted" style={{ textAlign: 'center' }}>{copy.profile.pathLine(pathName)}</Text>
-      </View>
-
-      {/* Karta série: jediný nositel streaku na profilu (StreakBarbell lg + číslo `display` v accentText). */}
-      <Reveal play={first} delay={P.xpAt} rise={T.rise}>
-        <Card style={{ gap: space.m }}>
-          <SectionLabel>{copy.profile.streakLabel}</SectionLabel>
-          <View
-            accessible
-            accessibilityLabel={streak > 0 ? (todayDone ? copy.streak.a11yDone(streak) : copy.streak.a11yPending(streak)) : copy.streak.none}
-            style={{ flexDirection: stacked ? 'column' : 'row', alignItems: stacked ? 'flex-start' : 'center', justifyContent: 'space-between', gap: space.m }}
-          >
-            <StreakBarbell variant="lg" streak={streak} longest={longest} todayDone={todayDone} />
-            <Text variant="display" tone={streak > 0 ? 'accent' : 'muted'}>{copy.profile.streakDays(streak)}</Text>
+    <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
+      {/* Hrdina: opička velká na tečkovém poli, stojí na podstavci ze tří tečkových kotoučů. */}
+      <GestureDetector gesture={field.gesture}>
+        <View onLayout={(e) => setHeroW(e.nativeEvent.layout.width)} style={{ height: size.profileField + stackH / 2, alignItems: 'center', justifyContent: 'flex-end' }}>
+          {heroW > 0 ? (
+            <DotField width={heroW} height={size.profileField} fade="up" touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
+          ) : null}
+          <View style={{ alignItems: 'center' }}>
+            <View style={{ marginBottom: -topEllipse() / 2, zIndex: 1 }}>
+              <FrameIn play={first}>
+                {(mascotStyle) => (
+                  <ProfileFrame frameId={profile.equipped.profileFrame} size={size.wardrobePreview}>
+                    <Animated.View style={mascotStyle}>
+                      <Mascot stage={stage} mood="idle" size={size.wardrobePreview} cosmetics={profile.equipped} accessibilityLabel={copy.mascot.label.idle} />
+                    </Animated.View>
+                  </ProfileFrame>
+                )}
+              </FrameIn>
+            </View>
+            <PlateStack play={first} delay={intro.pedestal.at} />
           </View>
-          <Text variant="caption" tone="muted">
-            {longest > 0 ? `${copy.streak.longest(longest)} · ${todayDone ? copy.today.done : copy.today.pending}` : copy.today.pending}
-          </Text>
-        </Card>
-      </Reveal>
+        </View>
+      </GestureDetector>
 
-      <Reveal play={first} delay={P.xpAt + T.step} rise={T.rise}>
+      <Reveal play={first} delay={P.xpAt} rise={T.rise}>
         <StatGrid
+          cols={cols}
           items={[
-            { label: copy.profile.statXp, value: copy.profile.xpValue(xpShown), a11y: `${copy.profile.statXp}: ${xp}` },
-            { label: copy.profile.statStage, value: copy.profile.stageValue(stage) },
+            { value: copy.profile.xpNumber(xpShown), unit: copy.profile.xpUnit, label: copy.profile.statXp, a11y: `${copy.profile.statXp}: ${xp}` },
+            { value: String(stage), unit: copy.profile.stageOf(MAX_STAGE), label: copy.profile.statStage },
+            { value: String(streak), unit: copy.streak.days(streak), label: copy.profile.statStreak },
+            { value: String(longest), unit: copy.streak.days(longest), label: copy.profile.statLongest },
           ]}
         />
       </Reveal>
 
-      <Reveal play={first} delay={P.xpAt + T.step * 2} rise={T.rise} style={{ gap: space.m }}>
-        <View accessible accessibilityLabel={copy.profile.badgeRatioA11y(badges.earned, badges.total)}>
-          <SectionLabel value={copy.profile.badgeRatio(badges.earned, badges.total)}>{copy.profile.badges}</SectionLabel>
-        </View>
-        {/* Získané první, zamčené za nimi: siluety ukazují, co dál, ne co chybí. */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.m }}>
-          {[...badges.items].sort((a, b) => Number(b.earned) - Number(a.earned)).map((b) => (
-            <BadgeTile key={b.id} name={b.name} condition={b.condition} earned={b.earned} />
-          ))}
-        </View>
+      <Reveal play={first} delay={P.xpAt + T.step} rise={T.rise}>
+        <Tile style={{ gap: space.m }}>
+          <View accessible accessibilityLabel={copy.profile.badgeRatioA11y(badges.earned, badges.total)} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text variant="label" tone="muted" accessibilityRole="header">{copy.profile.badges}</Text>
+            <Text variant="label">{copy.profile.badgeRatio(badges.earned, badges.total)}</Text>
+          </View>
+          {badges.items.length === 0 ? <Text tone="muted">{copy.profile.noBadges}</Text> : (
+            // Získané první, zamčené za nimi: ukazují, co dál, ne co chybí.
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.m }}>
+              {[...badges.items].sort((a, b) => Number(b.earned) - Number(a.earned)).map((b) => (
+                <BadgeTile key={b.id} name={b.name} condition={b.condition} earned={b.earned} />
+              ))}
+            </View>
+          )}
+        </Tile>
       </Reveal>
 
-      <Reveal play={first} delay={P.xpAt + T.step * 3} rise={T.rise} style={{ borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule }}>
-        <LinkRow label={copy.profile.wardrobe} icon={<Shirt size={size.icon} color={c.text} strokeWidth={stroke.icon} />} onPress={() => router.push('/wardrobe')} />
+      <Reveal play={first} delay={P.xpAt + T.step * 2} rise={T.rise}>
+        <Tile onPress={() => router.push('/wardrobe')} accessibilityLabel={copy.profile.wardrobe} accessibilityHint={copy.profile.wardrobeLine}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
+            <Shirt size={size.icon} color={c.text} strokeWidth={stroke.icon} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text variant="headline">{copy.profile.wardrobe}</Text>
+              <Text variant="caption" tone="muted">{copy.profile.wardrobeLine}</Text>
+            </View>
+            <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
+          </View>
+        </Tile>
       </Reveal>
     </ScrollView>
   );
@@ -149,20 +176,4 @@ function FrameIn({ play, children }: { play: boolean; children(mascotStyle: obje
   const frame = useAnimatedStyle(() => ({ opacity: f.value, transform: [{ scale: calm ? 1 : 0.88 + 0.12 * f.value }] }));
   const mascotStyle = useAnimatedStyle(() => ({ opacity: Math.min(1, m.value * 1.5), transform: [{ scale: calm ? 1 : 0.85 + 0.15 * m.value }] }));
   return <Animated.View style={frame}>{children(mascotStyle)}</Animated.View>;
-}
-
-function LinkRow({ label, icon, onPress }: { label: string; icon: ReactNode; onPress(): void }) {
-  const { c, space, size, stroke } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="link"
-      accessibilityLabel={label}
-      style={{ minHeight: size.hitLarge, flexDirection: 'row', alignItems: 'center', gap: space.m, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.rule }}
-    >
-      {icon}
-      <Text variant="bodyStrong" style={{ flex: 1 }}>{label}</Text>
-      <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
-    </Pressable>
-  );
 }

@@ -12,8 +12,9 @@ interface Props {
   disabled?: boolean;
 }
 
-/** Přepínač 52×32 v ploše min. 44 pt (Task 29, R42). Vypnutý: stopa `rule`, knoflík `muted`.
- *  Zapnutý: stopa `text`, knoflík `base` — stav nese kontrast a poloha knoflíku, ne akcent.
+/** Přepínač-pilulka 52×32 v ploše min. 44 pt (Nothing Dot). Vypnutý: stopa `dotOff` (zhasnutá tečka), knoflík
+ *  `muted` (≥ 3:1 proti dlaždici, nese stav). Zapnutý: výplň `text`, knoflík `onText` — stejná inverze jako
+ *  primární pilulka; stav nese kontrast a poloha knoflíku, ne akcent.
  *  Pohyb: knoflík přejede a barvy se prolnou za 180 ms (timing, bez pružiny: na ovládání se klepe).
  *  Omezený pohyb: změna hned. Stav (`value`) se mění okamžitě, animace ho jen znázorňuje. */
 export function Toggle({ value, onChange, label, disabled = false }: Props) {
@@ -25,9 +26,9 @@ export function Toggle({ value, onChange, label, disabled = false }: Props) {
   useEffect(() => {
     on.set(reduced ? (value ? 1 : 0) : withTiming(value ? 1 : 0, motion.toggle));
   }, [value, reduced, on]);
-  const trackStyle = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(on.value, [0, 1], [c.rule, c.text]) }));
+  const trackStyle = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(on.value, [0, 1], [c.dotOff, c.text]) }));
   const knobStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(on.value, [0, 1], [c.muted, c.base]),
+    backgroundColor: interpolateColor(on.value, [0, 1], [c.muted, c.onText]),
     transform: [{ translateX: on.value * travel }],
   }));
   return (

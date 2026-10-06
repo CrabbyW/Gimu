@@ -1,10 +1,11 @@
 import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { ValueWheelSheet } from '@/components/ui/ValueWheelSheet';
 import { copy } from '@/data/copy';
 import { REMINDER_HOURS, useSettingsPrefs } from '@/hooks/useSettingsPrefs';
@@ -18,7 +19,7 @@ const DEFAULT_HOUR = 18;
  *  „Pokračovat“ uloží čas a zapne připomínku přes `useSettingsPrefs.setEnabled` (ten sám požádá o oprávnění;
  *  odmítnutí krok neblokuje, připomínka jen zůstane vypnutá). Ghost „Bez připomínky“ ji nechá vypnutou. */
 export default function ReminderStep() {
-  const { c, space, size, stroke, radius } = useTheme();
+  const { c, space, size, stroke } = useTheme();
   const prefs = useSettingsPrefs();
   const stored = prefs.hour;
   const [hour, setHour] = useState(REMINDER_HOURS.includes(stored) ? stored : DEFAULT_HOUR);
@@ -51,22 +52,15 @@ export default function ReminderStep() {
   return (
     <OnboardingFrame step={5} title={t.title} lead={t.lead} canContinue onContinue={() => { void onContinue(); }}>
       <View style={{ gap: space.l }}>
-        <Pressable
-          onPress={() => setOpen(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t.timeA11y(time)}
-          style={({ pressed }) => ({
-            minHeight: size.hitLarge, paddingHorizontal: space.m, borderRadius: radius.l,
-            backgroundColor: pressed ? c.raised : c.surface,
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m,
-          })}
-        >
-          <Text variant="body" tone="muted">{t.timeLabel}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
-            <Text variant="display">{time}</Text>
+        {/* Nothing Dot (obr. 2): dlaždice se štítkem nahoře a velkým Doto číslem dole. Čas je jediné
+            rozhodnutí kroku, proto `hero`; klepnutí otevře kolo hodnot. */}
+        <Tile onPress={() => setOpen(true)} accessibilityLabel={t.timeA11y(time)}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
+            <Text variant="telemetry" tone="muted">{t.timeLabel}</Text>
             <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
           </View>
-        </Pressable>
+          <Text variant="hero" style={{ marginTop: space.m }}>{time}</Text>
+        </Tile>
         <Button label={t.skip} variant="ghost" onPress={onSkip} style={{ alignSelf: 'flex-start' }} />
       </View>
       <ValueWheelSheet

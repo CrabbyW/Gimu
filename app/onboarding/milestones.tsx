@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { CustomMilestoneForm } from '@/components/onboarding/CustomMilestoneForm';
 import { MilestoneChip } from '@/components/onboarding/MilestoneChip';
 import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
+import { Reveal } from '@/components/ui/choreo';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useMilestonePresets, useOnboardingDraft } from '@/hooks/useOnboardingDraft';
-import { enterRise } from '@/lib/motion';
+import { stagger } from '@/lib/motion';
 import { MILESTONES_MAX, MILESTONES_MIN, toggleMilestone } from '@/logic/onboarding';
 import { useTheme } from '@/theme';
 import type { Milestone } from '@/types';
@@ -65,14 +65,14 @@ export default function MilestonesStep() {
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.s }}>
           {chips.map((m, i) => (
-            <Animated.View key={m.id} entering={enterRise(i, 8)}>
+            <Reveal key={m.id} play delay={stagger(i + 2)} rise={8}>
               <MilestoneChip
                 label={m.custom ? t.customChip(m.label, m.target, m.unit) : m.label}
                 selected={isSelected(m.id)}
                 onPress={() => toggle(m)}
                 shakeSignal={shakes[m.id] ?? 0}
               />
-            </Animated.View>
+            </Reveal>
           ))}
         </View>
         <CustomMilestoneForm

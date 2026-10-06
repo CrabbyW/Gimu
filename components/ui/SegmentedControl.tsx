@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { motion, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
@@ -9,15 +9,20 @@ export interface SegmentOption<T extends string> { value: T; label: string }
 
 interface Props<T extends string> { options: readonly SegmentOption<T>[]; value: T | null; onChange(value: T): void }
 
-const BORDER = 1;
+/** Hrana pilulky: vlasová, jako dlaždice. */
+const BORDER = StyleSheet.hairlineWidth;
 
-/** Přepínač se stejně širokými segmenty. Vybraný je inverzní (pozadí `text`, písmo `base`)
- *  a jeho pozadí se k novému výběru posune v UI timingu. Pozadí nese vlastní kopii popisků
- *  v barvě `base`, posunutou proti němu: během posunu je každé písmeno ostré a kontrastní,
- *  ať leží na pozadí výběru, nebo mimo něj. */
+/**
+ * Přepínač v pilulce (Nothing Dot §2.3): vnější pilulka `tile` s vlasovou hranou `edge`, uvnitř o `space.xs`
+ * odsazená vybraná pilulka s výplní `text` a popiskem `onText` (stejná inverze jako primární CTA).
+ * Celková výška `size.control` + 2 × `space.xs` = 56 = `size.pill`, takže sedí v řadě s pilulkovými tlačítky.
+ * Výběr se k nové volbě posune v UI timingu. Pozadí nese vlastní kopii popisků posunutou proti němu:
+ * během posunu je každé písmeno ostré a kontrastní, ať leží na výběru, nebo mimo něj.
+ */
 export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
   const { c, radius, space, size } = useTheme();
   const { reduced } = useMotionSafe();
+  const inset = space.xs;
   const [width, setWidth] = useState(0);
   const index = options.findIndex((o) => o.value === value);
   const segment = options.length > 0 ? width / options.length : 0;
@@ -34,13 +39,15 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
 
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const inverseLabels = useAnimatedStyle(() => ({ transform: [{ translateX: -x.value }] }));
-  const cell = { flex: 1, minHeight: size.control, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.s } as const;
+  // Čtyři volby na 320 pt (jednotky milníku) mají buňku ~60 pt: popisek se smí zmenšit, ne oříznout.
+  const cell = { flex: 1, minHeight: size.control, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs } as const;
+  const fit = { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.8 } as const;
 
   return (
     <View
       accessibilityRole="radiogroup"
-      onLayout={(e) => setWidth(e.nativeEvent.layout.width - BORDER * 2)}
-      style={{ flexDirection: 'row', borderWidth: BORDER, borderColor: c.rule, borderRadius: radius.full, overflow: 'hidden' }}
+      onLayout={(e) => setWidth(e.nativeEvent.layout.width - (BORDER + inset) * 2)}
+      style={{ flexDirection: 'row', padding: inset, backgroundColor: c.tile, borderWidth: BORDER, borderColor: c.edge, borderRadius: radius.full }}
     >
       {options.map((o) => {
         const selected = o.value === value;
@@ -51,9 +58,9 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
             accessibilityRole="radio"
             accessibilityLabel={o.label}
             accessibilityState={{ selected, checked: selected }}
-            style={cell}
+            style={({ pressed }) => [cell, { borderRadius: radius.full, backgroundColor: pressed && !selected ? c.tilePressed : 'transparent' }]}
           >
-            <Text variant="bodyStrong" tone="muted" numberOfLines={1}>{o.label}</Text>
+            <Text variant="bodyStrong" tone="muted" {...fit}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -62,12 +69,12 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           aria-hidden
-          style={[indicator, { pointerEvents: 'none', position: 'absolute', top: 0, bottom: 0, left: 0, width: segment, borderRadius: radius.full, backgroundColor: c.text, overflow: 'hidden' }]}
+          style={[indicator, { pointerEvents: 'none', position: 'absolute', top: inset, bottom: inset, left: inset, width: segment, borderRadius: radius.full, backgroundColor: c.text, overflow: 'hidden' }]}
         >
           <Animated.View style={[inverseLabels, { position: 'absolute', top: 0, bottom: 0, left: 0, width, flexDirection: 'row' }]}>
             {options.map((o) => (
               <View key={o.value} style={cell}>
-                <Text variant="bodyStrong" numberOfLines={1} style={{ color: c.base }}>{o.label}</Text>
+                <Text variant="bodyStrong" {...fit} style={{ color: c.onText }}>{o.label}</Text>
               </View>
             ))}
           </Animated.View>

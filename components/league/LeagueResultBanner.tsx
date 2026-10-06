@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { Button } from '@/components/ui/Button';
-import { RegMark } from '@/components/ui/RegMark';
-import { Telemetry } from '@/components/ui/Telemetry';
+import { PillButton } from '@/components/ui/PillButton';
 import { Text } from '@/components/ui/Text';
+import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { haptics } from '@/lib/haptics';
 import { motion, useMotionSafe } from '@/lib/motion';
@@ -19,11 +18,12 @@ const SLIDE = 24;
 const FADE = { duration: 200 };
 
 /**
- * Výsledek minulého týdne. Vysune se shora (`motion.ui`); u postupu odznak nové úrovně naskočí pružinou
- * `motion.pop` (herní odměna) + haptika success. Omezený pohyb: jen 200ms fade, bez pružiny.
+ * Výsledek minulého týdne (Nothing Dot fáze 2): dlaždice s tečkovým odznakem nové úrovně vlevo, mono štítkem
+ * „MINULÝ TÝDEN · 3. MÍSTO“, větou výsledku a sekundární pilulkou. Vysune se shora (`motion.ui`); u postupu
+ * odznak naskočí `motion.pop` (herní odměna, není klikatelný) + haptika success. Omezený pohyb: 200 ms fade.
  */
 export function LeagueResultBanner({ result, toTierName, onDismiss }: Props) {
-  const { c, space, radius } = useTheme();
+  const { space } = useTheme();
   const { reduced } = useMotionSafe();
   const shown = useSharedValue(0);
   const badge = useSharedValue(result.outcome === 'promote' && !reduced ? 0.6 : 1);
@@ -47,20 +47,18 @@ export function LeagueResultBanner({ result, toTierName, onDismiss }: Props) {
     shown.set(withTiming(0, reduced ? FADE : motion.uiExit, (done) => { if (done) scheduleOnRN(onDismiss); }));
   };
 
-  const line = copy.league.result[result.outcome](toTierName);
   return (
-    <Animated.View accessibilityLiveRegion="polite" style={[box, { marginHorizontal: space.l, marginTop: space.m }]}>
-      {/* Hero karta (R42): registrační značky v rozích, odsazená od okrajů, aby `+` byly celé vidět. */}
-      <RegMark>
-        <View style={{ backgroundColor: c.surface, borderRadius: radius.l, padding: space.l, flexDirection: 'row', alignItems: 'center', gap: space.l, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.edge }}>
-          <Animated.View style={badgeStyle}><TierBadge tierName={toTierName} bare /></Animated.View>
-          <View style={{ flex: 1, gap: space.s, alignItems: 'flex-start' }}>
-            <Telemetry items={[{ key: copy.league.lastWeekKey, value: `${result.rank}.`, unit: copy.league.placeUnit, a11y: copy.league.lastWeekA11y(result.rank) }]} />
-            <Text variant="bodyStrong">{line}</Text>
-            <Button label={copy.league.dismiss} variant="secondary" onPress={close} />
+    <Animated.View accessibilityLiveRegion="polite" style={[box, { marginHorizontal: space.l, marginBottom: space.m }]}>
+      <Tile style={{ gap: space.m }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
+          <Animated.View style={badgeStyle}><TierBadge tierId={result.toTier} tierName={toTierName} /></Animated.View>
+          <View style={{ flex: 1, minWidth: 0, gap: space.xs }}>
+            <Text variant="label" tone="muted" accessibilityLabel={copy.league.lastWeekA11y(result.rank)}>{copy.league.lastWeek(result.rank)}</Text>
+            <Text variant="bodyStrong">{copy.league.result[result.outcome](toTierName)}</Text>
           </View>
         </View>
-      </RegMark>
+        <PillButton label={copy.league.dismiss} variant="secondary" onPress={close} />
+      </Tile>
     </Animated.View>
   );
 }
