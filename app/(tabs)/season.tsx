@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { ComebackCard } from '@/components/season/ComebackCard';
 import { shortDate } from '@/components/season/format';
 import { RewardCard } from '@/components/season/RewardCard';
@@ -26,6 +26,7 @@ import type { SeasonStatus } from '@/services/contracts';
 import { useTheme } from '@/theme';
 import type { SeasonGoal } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
+import { IntentScrollView } from '@/components/dots';
 
 const LOCK_RISE = intro.lockIn.rise;
 
@@ -101,7 +102,7 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }} showsVerticalScrollIndicator={false}>
+    <IntentScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }} showsVerticalScrollIndicator={false}>
       <Reveal play={first} delay={motion.screenIn.heroAt} rise={intro.tab.rise}>
         <SeasonHeader season={season} daysLeft={daysLeft} intro={first ? motion.screenIn.heroAt : false} />
       </Reveal>
@@ -150,6 +151,6 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
           </>
         )}
       </Reveal>
-    </ScrollView>
+    </IntentScrollView>
   );
 }

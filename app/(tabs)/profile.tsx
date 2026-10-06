@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ChevronRight, Settings, Shirt } from 'lucide-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ScrollView, View, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { ProfileFrame } from '@/components/cosmetics/ProfileFrame';
@@ -27,6 +27,7 @@ import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
 import { dots, useTheme } from '@/theme';
 import type { UserProfile } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
+import { IntentScrollView } from '@/components/dots';
 
 /** Nejvyšší stage opice (BABY · TEENAGER · ALPHA): jednotka „/ 3“ u dlaždice stage. */
 const MAX_STAGE = Object.keys(copy.stageUp.names).length;
@@ -95,7 +96,7 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
   const stackH = plateStackHeight();
 
   return (
-    <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
+    <IntentScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
       {/* Hrdina: opička velká na tečkovém poli, stojí na podstavci ze tří tečkových kotoučů. */}
       <GestureDetector gesture={reactions.touch}>
         <View style={{ height: size.profileField + stackH / 2, alignItems: 'center', justifyContent: 'flex-end' }}>
@@ -157,7 +158,7 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
           </View>
         </Tile>
       </Reveal>
-    </ScrollView>
+    </IntentScrollView>
   );
 }
 

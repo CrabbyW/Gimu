@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, ScrollView, useWindowDimensions, View } from 'react-native';
+import { FlatList, useWindowDimensions, View } from 'react-native';
 import { LeagueResultBanner } from '@/components/league/LeagueResultBanner';
 import { LeagueRow } from '@/components/league/LeagueRow';
 import { Podium } from '@/components/league/Podium';
@@ -26,6 +26,7 @@ import { services, type LeagueWeekView } from '@/services';
 import { useCompact, useTheme } from '@/theme';
 import type { LeagueEntry } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
+import { IntentScrollView } from '@/components/dots';
 
 const LS = intro.leagueScroll;
 
@@ -91,7 +92,7 @@ function LockedLeague({ view }: { view: LeagueWeekView }) {
   const { space } = useTheme();
   const name = tierName(view.tier);
   return (
-    <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
+    <IntentScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
       <Tile style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
         <TierBadge tierId={view.tier} tierName={name} dim />
         <View style={{ flex: 1, minWidth: 0, gap: space.xs }}>
@@ -104,7 +105,7 @@ function LockedLeague({ view }: { view: LeagueWeekView }) {
         body={copy.league.lockedBody(view.entries.length)}
         cta={{ label: copy.league.lockedCta, onPress: toMap }}
       />
-    </ScrollView>
+    </IntentScrollView>
   );
 }
 

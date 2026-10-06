@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Keyboard, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
+import { IntentScrollView } from '@/components/dots/scrollIntent';
 import { ReactiveBackground, type ReactiveTone } from '@/components/dots/ReactiveBackground';
 import { useTheme } from '@/theme';
 import { RevealOnFocusContext, type RevealOnFocus } from './revealOnFocus';
@@ -81,7 +82,7 @@ function RevealingScroll({ children }: { children?: ReactNode }) {
   return (
     <RevealOnFocusContext.Provider value={context}>
       <View ref={viewport} onLayout={reveal} style={{ flex: 1 }}>
-        <ScrollView
+        <IntentScrollView
           ref={scroller}
           onScroll={onScroll}
           scrollEventThrottle={16}
@@ -89,7 +90,7 @@ function RevealingScroll({ children }: { children?: ReactNode }) {
           contentContainerStyle={{ flexGrow: 1, paddingHorizontal: space.l, paddingBottom: space.xl }}
         >
           {children}
-        </ScrollView>
+        </IntentScrollView>
       </View>
     </RevealOnFocusContext.Provider>
   );

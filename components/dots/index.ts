@@ -7,3 +7,4 @@ export { useDotInk, type DotTouch } from './ink';
 export { useDotTouch } from './useDotTouch';
 export { SkiaGuard } from './SkiaGuard';
 export { DotBurst } from './DotBurst';
+export { IntentScrollView, ScrollIntentProvider, useScrollIntent } from './scrollIntent';

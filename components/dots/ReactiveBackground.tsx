@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
-import { GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { dots, useTheme } from '@/theme';
 import { DotField } from './DotField';
 import { backgroundPitch } from './geometry';
+import { ScrollIntentProvider, useScrollIntent } from './scrollIntent';
 import { useDotTouch } from './useDotTouch';
 
 export type ReactiveTone = 'base' | 'gold';
@@ -25,11 +26,14 @@ interface Props {
  * odsune tečky a rozjasní je. Kořen obrazovky: `GestureDetector` s gestem `useDotTouch` (Manual, nikdy
  * se neaktivuje → scroll, tapy i další gesta běží souběžně). Pole je absolutně v kořeni a nescrolluje,
  * takže souřadnice doteku = souřadnice kořene. Jedno Skia plátno; vše na UI vlákně.
- * Omezený pohyb: pole statické (řeší `useDotTouch`).
+ * Záměr scrollu (`useScrollIntent`): `IntentScrollView` uvnitř se rozjede jen při jasně svislém tahu,
+ * vodorovné a šikmé tahy patří tečkám. Omezený pohyb: pole statické (řeší `useDotTouch`), gesta stejná.
  */
 export function ReactiveBackground({ tone = 'base', interactive = true, visible = true, accessibilityViewIsModal, style, children }: Props) {
   const { c } = useTheme();
   const field = useDotTouch(interactive && visible);
+  const play = useScrollIntent(interactive && visible);
+  const gesture = useMemo(() => Gesture.Simultaneous(field.gesture, play), [field.gesture, play]);
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -37,7 +41,7 @@ export function ReactiveBackground({ tone = 'base', interactive = true, visible 
   };
   const ink = tone === 'gold' ? { off: c.goldDotOff, on: c.goldDotDim } : undefined;
   return (
-    <GestureDetector gesture={field.gesture}>
+    <GestureDetector gesture={gesture}>
       <View onLayout={onLayout} accessibilityViewIsModal={accessibilityViewIsModal} style={[{ flex: 1 }, style]}>
         {box && visible ? (
           <DotField
@@ -50,7 +54,7 @@ export function ReactiveBackground({ tone = 'base', interactive = true, visible 
             style={{ position: 'absolute', left: 0, top: 0 }}
           />
         ) : null}
-        {children}
+        <ScrollIntentProvider gesture={interactive && visible ? play : null}>{children}</ScrollIntentProvider>
       </View>
     </GestureDetector>
   );

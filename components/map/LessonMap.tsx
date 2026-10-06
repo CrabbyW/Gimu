@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Pressable, View, useWindowDimensions, type ScrollView } from 'react-native';
 import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, type MascotReactions } from '@/components/mascot';
-import { plateOuterRadius } from '@/components/dots';
+import { IntentScrollView, plateOuterRadius } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { feedback } from '@/lib/feedback';
@@ -287,7 +287,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   return (
     // Jedna ambientní hodina pro rotaci, kometu a dech všech kotoučů (motion §3), běží jen se zaostřenou mapou.
     <AmbientClock>
-    <ScrollView
+    <IntentScrollView
       ref={scroll}
       // Průhledná: pod mapou je `base` obrazovky (a tečkové pole hlavičky), UI zůstává monochromní (spec §2.1).
       // Přes celou výšku obrazovky: hlavička nahoře a CTA dole leží nad mapou, cesta pod nimi plynule odjíždí.
@@ -441,7 +441,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         />
       ) : null}
       </View>
-    </ScrollView>
+    </IntentScrollView>
     </AmbientClock>
   );
 }

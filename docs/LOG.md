@@ -852,3 +852,10 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Baseline snímků vědomě přegenerována (`npm run e2e:update`) na produkčním buildu — důvod: změna cílového buildu, ne změna UI.
 - Hook: Edit s CRLF souborem (normalizace konců řádků), PowerShell `Stop-Process -Name node|cloudflared` / `Get-Process node | Stop-Process` / `Stop-Process -Id <8082>`, pravidla jen v pozici příkazu (text v heredocu neblokuje). 21 testů.
 - Expo Go server uživatele se při QA souběhu zasekl; boss ho obnovil (zastavení vlastní úlohy + ukončení visícího procesu), bundle předem stažen.
+
+## motion-agent — záměr scrollu nad tečkovým pozadím (2026-10-06)
+- Nové `components/dots/scrollIntent.tsx`: `useScrollIntent` je Manual gesto, které po `motion.scrollIntent.slop` (10 pt) rozhodne. Když |dy| > `verticalRatio` (2)·|dx|, gesto selže a scroll se rozjede. Jinak se aktivuje, tah patří tečkám a vlnu dál kreslí `useDotTouch`. Při druhém prstu gesto selže. `IntentScrollView` je ScrollView v `Gesture.Native().requireExternalGestureToFail(intent)` z kontextu. Mimo pozadí se chová jako obyčejný ScrollView.
+- Zapojení: `ReactiveBackground` (Simultaneous s vlnou, provider; při `interactive`/`visible` false se nepoužije), mapa `app/(tabs)/index.tsx` (Simultaneous s vlnou a reakcemi opičky) a `IntentScrollView` v LessonMap, Screen, league, profile, progress, season, settings, lesson/[id], wardrobe (jen vnější, vodorovné sloty zůstávají nativní). ValueWheelSheet a dev se nemění.
+- Rozhodnutí: vnořená gesta s menším prahem vyhrají dřív, totiž kotouč (8 pt) a tab bar (6 pt, ten leží mimo pozadí). Tap a podržení nemají pohyb, takže gesto se neaktivuje. Při omezeném pohybu se gesta chovají stejně, vypne se jen vlna.
+- Výsledky: tsc OK, eslint OK, jest 68/682 OK, e2e 80/80 (2.9 min). Baseline se nemění, vizuálně se nic nemění.
+- Otevřené: chování nativního UIScrollView vůči `requireExternalGestureToFail` se musí ověřit na iPhonu. Kdyby scroll startoval i při šikmém tahu, zbývá záložní varianta: aktivace „play“ gesta scroll zruší.

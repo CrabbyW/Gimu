@@ -88,6 +88,8 @@ export const motion = {
   tabSlideMs: 260,
   /** Přejetí prstem po tab baru: od kolika pt vodorovného posunu je to tah, ne tap. */
   tabScrub: { activeOffset: 6 },
+  /** Záměr scrollu nad tečkovým pozadím: po `slop` pt se rozhodne; scroll jen když |dy| > `verticalRatio`·|dx| (do ~27° od svislé), jinak tah patří tečkám. */
+  scrollIntent: { slop: 10, verticalRatio: 2 },
   /** Nástup obrazovky: hlavička → hero → dlaždice ve vlně. */
   screenIn: { headerAt: 0, heroAt: 80, step: 60, durationMs: 480, rise: 12, maxTiles: 8 },
 

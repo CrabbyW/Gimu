@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { markNavigation } from '@/lib/navGuard';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, BackHandler, Platform, ScrollView, View } from 'react-native';
+import { Alert, BackHandler, Platform, View } from 'react-native';
 import { ExerciseCard } from '@/components/lesson/ExerciseCard';
 import { LessonCompleteScene } from '@/components/lesson/LessonCompleteScene';
 import { LessonProgress } from '@/components/lesson/LessonProgress';
@@ -21,6 +21,7 @@ import { services, type LessonResult } from '@/services';
 import { useTheme } from '@/theme';
 import type { CosmeticSlot, Exercise } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
+import { IntentScrollView } from '@/components/dots';
 
 const NO_COSMETICS: Partial<Record<CosmeticSlot, string>> = {};
 
@@ -174,10 +175,10 @@ function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, always
 
   return (
     <>
-      <ScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: space.l, paddingBottom: space.xl }}>
+      <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: space.l, paddingBottom: space.xl }}>
         <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} />
         {extra > 0 ? <Text variant="caption" tone="muted" style={{ marginTop: space.s }}>{copy.lesson.extra(extra, hold)}</Text> : null}
-      </ScrollView>
+      </IntentScrollView>
       <View style={{ marginHorizontal: -space.l }}>
         <BigActionBar
           primary={{ ...primary, disabled: busy || timer.status === 'done' }}

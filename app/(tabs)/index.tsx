@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DotField, DotRing, useDotTouch } from '@/components/dots';
+import { DotField, DotRing, ScrollIntentProvider, useDotTouch, useScrollIntent } from '@/components/dots';
 import { backgroundPitch } from '@/components/dots/geometry';
 import { LessonMap } from '@/components/map/LessonMap';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
@@ -59,7 +59,9 @@ export default function TrainingScreen() {
   // Reakce opičky (fáze 3): sleduje prst po celé obrazovce (gesto jen čte dotyky), usíná při nečinnosti
   // zaostřené mapy, mává po návratu do appky a kývne na start lekce.
   const reactions = useMascotReactions(useScreenFocused());
-  const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch), [field.gesture, reactions.touch]);
+  // Záměr scrollu: mapa (`IntentScrollView`) se rozjede jen při jasně svislém tahu, jinak tah patří tečkám.
+  const play = useScrollIntent();
+  const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch, play), [field.gesture, reactions.touch, play]);
 
   if (profile.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
   if (view.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.path} onRetry={view.retry} />;
@@ -77,6 +79,7 @@ export default function TrainingScreen() {
       unlocked={unlocked ?? null}
       render={(intro) => (
         <GestureDetector gesture={touch}>
+        <ScrollIntentProvider gesture={play}>
         {/* Obrazovka sahá až pod plovoucí tab bar (záporný okraj ruší rezervu scény): mapa jede přes celou výšku. */}
         <View style={{ flex: 1, backgroundColor: c.base, marginBottom: -clearance }}>
           {/* Reaktivní tečkové pozadí přes celou obrazovku (jako ReactiveBackground jinde): stojí, mapa jede nad ním,
@@ -167,6 +170,7 @@ export default function TrainingScreen() {
             </View>
           ) : null}
         </View>
+        </ScrollIntentProvider>
         </GestureDetector>
       )}
     />

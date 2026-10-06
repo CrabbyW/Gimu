@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, ReduceMotion, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Mascot } from '@/components/mascot';
 import { ActivityGrid } from '@/components/progress/ActivityGrid';
@@ -29,6 +29,7 @@ import { parseWeight } from '@/logic/onboarding';
 import { useCompact, useTheme } from '@/theme';
 import type { MascotStage, Milestone, UserProfile } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
+import { IntentScrollView } from '@/components/dots';
 
 /** Jak dlouho drží overlay celebrate bez nové kosmetiky (Task 27 Step 7). S kosmetikou čeká na zavření. */
 const CELEBRATE_MS = 1800;
@@ -89,7 +90,7 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }} keyboardShouldPersistTaps="handled">
+      <IntentScrollView contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }} keyboardShouldPersistTaps="handled">
         {/* Hero (obr. 2): dvě dlaždice vedle sebe. Jediné Doto `hero` obrazovky = aktivní dny v okně mřížky;
             nejdelší série o stupeň tišeji (`display`). Nula se ukáže taky: prázdný hero by nechal obrazovku bez kotvy. */}
         <Reveal play={first} delay={motion.screenIn.heroAt} rise={T.rise}>
@@ -155,7 +156,7 @@ function ProgressBody({ profile }: { profile: UserProfile }) {
         {dreamBody ? (
           <Reveal play={first} delay={motion.screenIn.heroAt + T.step * 4} rise={T.rise}><DreamBodyCard text={dreamBody} /></Reveal>
         ) : null}
-      </ScrollView>
+      </IntentScrollView>
 
       <MilestoneSheet milestone={editing} onSave={saveMilestone} onClose={() => setEditing(null)} />
       <NumberSheet

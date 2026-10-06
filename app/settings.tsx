@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ChevronRight, X } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Reveal } from '@/components/ui/choreo';
 import { PillButton } from '@/components/ui/PillButton';
@@ -22,6 +22,7 @@ import { services } from '@/services';
 import { useDevControls } from '@/hooks/useDevControls';
 import { opacity, useTheme } from '@/theme';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
+import { IntentScrollView } from '@/components/dots';
 
 const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 const HOURS = REMINDER_HOURS;
@@ -69,7 +70,7 @@ export default function SettingsScreen() {
   return (
     <ReactiveBackground style={{ backgroundColor: c.base }}>
       <ScreenHeader intro={first} title={copy.settings.title} actions={[{ icon: X, label: copy.common.back, onPress: () => router.back() }]} />
-      <ScrollView
+      <IntentScrollView
         contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: insets.bottom + space.xxl, gap: space.xl }}
         showsVerticalScrollIndicator={false}
       >
@@ -163,7 +164,7 @@ export default function SettingsScreen() {
             </Tile>
           </Section>
         ) : null}
-      </ScrollView>
+      </IntentScrollView>
     </ReactiveBackground>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { CosmeticTile, type WardrobeItem } from '@/components/cosmetics/CosmeticTile';
-import { DotField, useDotTouch } from '@/components/dots';
+import { DotField, IntentScrollView, useDotTouch } from '@/components/dots';
 import { Reveal } from '@/components/ui/choreo';
 import { Mascot } from '@/components/mascot';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
@@ -138,7 +138,7 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ paddingBottom: space.xxl, gap: space.l }} showsVerticalScrollIndicator={false}>
+    <IntentScrollView contentContainerStyle={{ paddingBottom: space.xxl, gap: space.l }} showsVerticalScrollIndicator={false}>
       {/* Náhled (Nothing Dot fáze 2): opička na tečkovém poli v dlaždici, pole reaguje na dotek. Vpravo dole
           zůstatek banánů (Doto `dotStat` + mono štítek): měna je kontext nákupu, ne hrdina. 1 plátno. */}
       <Reveal play={first} delay={M.at} rise={M.rise}>
@@ -198,6 +198,6 @@ function WardrobeBody({ items, bananas, equipped }: BodyProps) {
             );
           }) : null}
       </View>
-    </ScrollView>
+    </IntentScrollView>
   );
 }
