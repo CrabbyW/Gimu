@@ -11,8 +11,10 @@ K ruční kontrole na zařízení: scroll mapy vs. roztočení kotouče, haptika
 dotOff v light, dotykové plochy 44 pt, zamčený boss neotevírá popover (záměr?), kotouč částečně pod pruhem CTA po dosunutí mapy.
 Otevřené pro fázi 2: web limit ~16 WebGL kontextů (mapa dnes 10 pláten).
 
+## Fáze 2 HOTOVÁ — QA kolo 2 SCHVÁLENO, rating kolo 2 = 100/100 (plán `docs/superpowers/plans/2026-10-06-nothing-dot-faze2.md`)
+K ruční kontrole: stage-up CTA onGold a první snímek staré opičky, plynulost RingShatter/DotBurst, scroll ligy za 2. obrazovku, podstavec profilu 320 pt, hero sezóny 360 pt, fontScale 1.4.
+
 ## Potom
-- Fáze 2: liga, progres, sezóna, profil/šatník, nastavení/cíle, stage-up, onboarding. Onboarding má překryv lead textu s 1. kartou a díru mezi 1. a 2. kartou (`/onboarding/path`, `/onboarding/dream`).
 - Fáze 3: 15 reakcí opičky (`logic/mascotReactions.ts`).
 - Nový plán napsat pro každou fázi zvlášť (superpowers:writing-plans).
 
