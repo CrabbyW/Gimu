@@ -35,6 +35,8 @@ export interface UserProfile {
   seasonClaims: Record<string, { at: string; cosmeticIds: string[]; badgeIds: string[] }>;
   /** Chybí u profilů před R44 = žádný dluh. */
   trainingDebt?: TrainingDebt;
+  /** Demo profil z dev menu: každý cvik jde přeskočit (přeskočení se počítá jako odcvičené, aby šla vidět oslava). */
+  demo?: boolean;
 }
 
 export interface OnboardingInput {

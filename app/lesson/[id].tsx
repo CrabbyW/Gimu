@@ -49,6 +49,8 @@ export default function LessonScreen() {
   const leaving = useRef(false);
   const profile = useProfile();
   const cosmetics = profile.status === 'ready' ? profile.data?.equipped ?? NO_COSMETICS : NO_COSMETICS;
+  // Demo: přeskočit jde každý cvik a přeskok se počítá jako odcvičený (lekce doběhne do oslavy, žádná slepá ulička).
+  const demo = profile.status === 'ready' && profile.data?.demo === true;
 
   const advance = useCallback(async (didIt: boolean = true) => {
     if (lesson.status !== 'ready' || phase.kind !== 'exercise') return;
@@ -130,7 +132,7 @@ export default function LessonScreen() {
           suspended={quitOpen}
           extra={lesson.data.extras[index] ?? 0}
           onDone={() => void advance(true)}
-          onSkip={canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
+          onSkip={demo ? () => void advance(true) : canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
         />
       </Screen>
     </View>

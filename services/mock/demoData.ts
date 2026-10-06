@@ -37,6 +37,7 @@ export function buildDemoProfile(now: Date): UserProfile {
   const weightGoal = { kind: 'lose' as const, startKg: 82, targetKg: 78 };
   const season = SEASONS.find((s) => s.startDate <= today && today <= s.endDate);
   return {
+    demo: true,
     path: 'bodyControl', dreamBody: 'Free handstand',
     milestones: [
       { id: 'lsit-10', label: 'L-sit 10 s', target: 10, unit: 'seconds', current: 10, custom: false },
