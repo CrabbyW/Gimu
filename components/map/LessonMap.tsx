@@ -51,6 +51,9 @@ interface Props {
   intro?: boolean;
   /** Místo pod posledním uzlem pro plovoucí CTA obrazovky (pt), aby ho šlo odscrollovat. */
   footerSpace?: number;
+  /** Výška překryvné hlavičky obrazovky (pt): mapa běží přes celou výšku a první prvek začíná pod ní.
+   *  Souřadnice uzlů zůstávají vnitřní (posunutý obal); viditelný výřez = [scrollY, scrollY + výška − topInset − footerSpace]. */
+  topInset?: number;
   /** Reakce opičky (fáze 3): opička na mapě je hratelná a reaguje na scroll, roztočení kotouče a ztrátu série. */
   reactions?: MascotReactions;
 }
@@ -71,7 +74,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, reactions }: Props) {
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, reactions }: Props) {
   const { space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -122,8 +125,9 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   }, []);
   const scrollToNode = useCallback((id: string, animated: boolean) => {
     const p = posOf(id);
-    if (p && viewportH > 0) scrollTo(Math.max(0, p.y - viewportH * 0.4), animated);
-  }, [posOf, viewportH, scrollTo]);
+    // Uzel na 40 % výřezu pod překryvnou hlavičkou (vnitřní souřadnice: horní hrana výřezu = scrollY).
+    if (p && viewportH > 0) scrollTo(Math.max(0, p.y - Math.max(0, viewportH - topInset) * 0.4), animated);
+  }, [posOf, viewportH, topInset, scrollTo]);
 
   // Omezený pohyb: opička se na nový uzel jen prolne (200 ms), bez oblouku.
   const crossfade = useSharedValue(1);
@@ -248,7 +252,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     const p = posOf(n.lesson.id);
     // Dokončený uzel nahoru (nepřekryje aktuální uzel ani opici), jinak dolů; podle místa ve výřezu.
     // Spodek výřezu bez pruhu s CTA (`footerSpace`), který mapu překrývá — jinak se popover schová pod pilulku.
-    const visibleBottom = scrollY.current + viewportH - footerSpace;
+    // Překryvná hlavička (`topInset`) zakrývá horní kus výřezu: vnitřní horní hrana viditelné mapy = scrollY.
+    const visibleBottom = scrollY.current + viewportH - topInset - footerSpace;
     const nodeTop = p ? p.y - p.size / 2 : 0;
     const nodeBottom = p ? p.y + p.size / 2 : 0;
     const above = p
@@ -283,8 +288,9 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     <ScrollView
       ref={scroll}
       // Průhledná: pod mapou je `base` obrazovky (a tečkové pole hlavičky), UI zůstává monochromní (spec §2.1).
-      style={{ flex: 1, overflow: 'hidden' }}
-      contentContainerStyle={{ height }}
+      // Přes celou výšku obrazovky: hlavička nahoře a CTA dole leží nad mapou, cesta pod nimi plynule odjíždí.
+      style={{ flex: 1 }}
+      contentContainerStyle={{ height: height + topInset }}
       onLayout={(e) => setViewportH(e.nativeEvent.layout.height)}
       onScroll={(e) => {
         const y = e.nativeEvent.contentOffset.y;
@@ -300,6 +306,10 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       }}
       scrollEventThrottle={32}
     >
+      {/* Obal posunutý o výšku překryvné hlavičky: všechny vnitřní souřadnice (uzly, cesta, opička, popover)
+          zůstávají beze změny, první prvek začíná pod hlavičkou a jde pod ni odscrollovat. Absolutní děti
+          by `paddingTop` obsahu ignorovaly, proto margin obalu. */}
+      <View pointerEvents="box-none" style={{ marginTop: topInset, height }}>
       {seasonal.mapTexture ? <DotTexture width={width} height={height} color={seasonal.mapTexture} /> : null}
       <PathLine
         width={width} height={height} positions={layout.positions} reached={reached} drawing={drawing}
@@ -422,6 +432,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
           onClose={() => setSelected(null)}
         />
       ) : null}
+      </View>
     </ScrollView>
     </AmbientClock>
   );
@@ -430,6 +441,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
 const center = { textAlign: 'center' as const };
 /** Oddělovač položek popisku uzlu (shodný s `copy.map.nodeInfo`) a nezlomitelná mezera uvnitř položky. */
 const SEP = ' · ';
+const JOIN = ' · ';
 const nbsp = (s: string) => s.replace(/ /g, ' ');
 
 /** Popisek pod uzlem (tabulka stavů). Metadata z dat: počet cviků, `estMinutes`, XP.
@@ -441,8 +453,15 @@ function NodeLabel({ node, state, minutes, bossAfter }: {
   // Nezlomitelné mezery uvnitř položek (jako `xpBreakdownLabel`): mono je širší a na 390 pt se popisek zalomí,
   // tak ať se zalomí jen mezi položkami („4 CVIKY · 3 MIN“ / „+20 XP“), nikdy „+20“ a „XP“ zvlášť.
   const items = [...copy.map.nodeInfo(node.exerciseCount, minutes).split(SEP), copy.map.xpGain(node.xp)].map(nbsp);
-  const info = items.slice(0, -1).join(SEP);
-  const withXp = items.join(SEP);
+  const info = items.slice(0, -1).join(JOIN);
+  // XP na vlastním řádku: mono je široká a „… · +20 XP“ se na telefonu zalamovalo náhodně (QA, uživatel).
+  const xp = items[items.length - 1];
+  const meta = (
+    <>
+      <Text variant="telemetry" tone="muted" numberOfLines={1} style={center}>{info}</Text>
+      <Text variant="telemetry" tone="muted" numberOfLines={1} style={center}>{xp}</Text>
+    </>
+  );
   const current = state === 'current';
   const isBoss = node.lesson.isBoss;
   let lines: ReactNode;
@@ -450,14 +469,14 @@ function NodeLabel({ node, state, minutes, bossAfter }: {
     lines = (
       <>
         <Text variant="headline" style={center}>{copy.map.bossTitle}</Text>
-        <Text variant="telemetry" tone="muted" style={center}>{state === 'locked' ? copy.map.bossUnlock(bossAfter) : withXp}</Text>
+        {state === 'locked' ? <Text variant="telemetry" tone="muted" style={center}>{copy.map.bossUnlock(bossAfter)}</Text> : meta}
       </>
     );
   } else if (current) {
     lines = (
       <>
         <Text variant="headline" numberOfLines={2} style={center}>{node.lesson.title}</Text>
-        <Text variant="telemetry" tone="muted" style={center}>{withXp}</Text>
+        {meta}
       </>
     );
   } else if (state === 'locked') {

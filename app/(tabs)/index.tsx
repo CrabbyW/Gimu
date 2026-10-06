@@ -8,6 +8,8 @@ import { LessonMap } from '@/components/map/LessonMap';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { currentSection, SectionHero } from '@/components/map/SectionHero';
 import { Card } from '@/components/ui/Card';
+import { EdgeFade } from '@/components/ui/EdgeFade';
+import { tabBarClearance } from '@/components/ui/FloatingTabBar';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PillButton } from '@/components/ui/PillButton';
@@ -20,7 +22,7 @@ import { useLessonMinutes } from '@/hooks/useLessonMinutes';
 import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
-import { dots, useTheme } from '@/theme';
+import { dots, opacity, useTheme } from '@/theme';
 
 /** Výška pole za hlavičkou: tolik řádků, kolik dovolí strop teček při dané šířce. */
 const fieldHeight = (width: number) => {
@@ -35,11 +37,17 @@ const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
  * Trénink (Nothing Dot §6): stavový řádek „SEKCE 01 · ● 12 DNÍ“, jednořádkový Doto titulek sekce, tenký řádek
  * pokroku (tečky + „0 / 9“), pod ním mapa tečkových kotoučů s opičkou na aktuálním a plovoucí pilulka `[ZAČÍT LEKCI]`.
  * Hierarchie: nejsilnější plocha obrazovky je jediná plná pilulka; nejsilnější číslo je pokrok v hero.
- * Za hlavičkou leží tečkové pole, které směrem dolů dozní (mapa pod ním stojí na čistém `base`).
+ * Mapa běží přes celou výšku (i pod tab barem); hlavička + řádek sekce jsou překryv se závojem `base`
+ * (EdgeFade), pod kterým cesta plynule odjíždí. Tečkové pole patří hlavičce a stojí.
  */
 export default function TrainingScreen() {
   const { c, space, size } = useTheme();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // Rezerva scény pro plovoucí tab bar; mapa ji záporným okrajem přebírá a jede i pod tab barem.
+  const clearance = tabBarClearance(insets.bottom, size.tabPill, space.m);
+  // Výška překryvu (hlavička + řádek sekce) = horní odsazení obsahu mapy.
+  const [overlayH, setOverlayH] = useState(0);
   const { unlocked } = useLocalSearchParams<{ unlocked?: string }>();
   const profile = useProfile();
   const data = profile.status === 'ready' ? profile.data : null;
@@ -74,9 +82,53 @@ export default function TrainingScreen() {
       unlocked={unlocked ?? null}
       render={(intro) => (
         <GestureDetector gesture={touch}>
-        <View style={{ flex: 1, backgroundColor: c.base }}>
-          {/* Pole za hlavičkou: strop `dots.field.max` utne řádky dole, pásma ho nechají doznít do čistého `base`. */}
-          <DotField width={width} height={fieldHeight(width)} fade="down" touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
+        {/* Obrazovka sahá až pod plovoucí tab bar (záporný okraj ruší rezervu scény): mapa jede přes celou výšku. */}
+        <View style={{ flex: 1, backgroundColor: c.base, marginBottom: -clearance }}>
+          {/* Mapa přes celou výšku; mountuje se až se změřenou hlavičkou, aby úvodní dojetí na aktuální uzel
+              počítalo se správným výřezem. */}
+          {overlayH > 0 ? (
+            <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}>
+              <LessonMap
+                view={viewData}
+                stats={stats}
+                minutesOf={minutesOf}
+                cosmetics={data.equipped}
+                unlockedLessonId={unlocked ?? null}
+                onOpenLesson={open}
+                onUnlockSequenceEnd={clearUnlocked}
+                intro={intro}
+                topInset={overlayH}
+                // Pod posledním uzlem: tab bar + pilulka CTA, ať jde poslední prvek odscrollovat nad ně.
+                footerSpace={clearance + (currentId ? size.pill + space.m * 2 : space.m)}
+                reactions={reactions}
+              />
+            </View>
+          ) : null}
+          {/* Závoj `base` za hlavičkou: nahoře (status bar) plný, na spodní hraně hlavičky `opacity.veilEdge`,
+              pod ní dozní do průhledna. Cesta pod hlavičkou ustupuje do hloubky, titulek zůstává čitelný. */}
+          <EdgeFade
+            direction="down"
+            width={width}
+            height={overlayH + size.edgeFade}
+            stops={[
+              { at: 0, opacity: 1 },
+              { at: insets.top / (overlayH + size.edgeFade), opacity: 1 },
+              { at: overlayH / (overlayH + size.edgeFade), opacity: opacity.veilEdge },
+              { at: 1, opacity: 0 },
+            ]}
+            style={{ position: 'absolute', left: 0, top: 0 }}
+          />
+          {/* Pole teček patří hlavičce (stojí, vlna z dotyku sedí na prstu), oříznuté na její výšku; nad závojem,
+              takže zůstává ostré i když pod ním jede mapa. */}
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: overlayH, overflow: 'hidden' }}>
+            <DotField width={width} height={fieldHeight(width)} fade="down" touch={field.touch} style={{ position: 'absolute', left: 0, top: 0 }} />
+          </View>
+          {/* Překryv: hlavička + řádek sekce. Prázdná místa propouští tah do mapy pod sebou. */}
+          <View
+            pointerEvents="box-none"
+            onLayout={(e) => setOverlayH(Math.round(e.nativeEvent.layout.height))}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0 }}
+          >
           {/* Nástup obrazovky (motion.screenIn): hlavička 0 → hero 80 (vnitřní sled SectionHero) → kotouče mapy. */}
           <Reveal play={intro} delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={HEADER_IN}>
           <ScreenHeader
@@ -99,22 +151,18 @@ export default function TrainingScreen() {
               <Text tone="muted">{copy.map.brokenBody(stats.longestStreak)}</Text>
             </Card>
           ) : null}
-          <LessonMap
-            view={viewData}
-            stats={stats}
-            minutesOf={minutesOf}
-            cosmetics={data.equipped}
-            unlockedLessonId={unlocked ?? null}
-            onOpenLesson={open}
-            onUnlockSequenceEnd={clearUnlocked}
-            intro={intro}
-            footerSpace={currentId ? size.pill + space.m * 2 : 0}
-            reactions={reactions}
-          />
+          </View>
           {currentId ? (
-            // Plná plocha `base` pod pilulkou: mapa pod ní mizí čistou hranou (dřív vykukovaly vršky tečkové činky
-            // bosse jako „shluky teček“ nad CTA).
-            <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.l, paddingTop: space.m, paddingBottom: space.m, backgroundColor: c.base }}>
+            // Mapa jede i pod pilulkou a tab barem. Jemný závoj za pilulkou (plná strana dole, `veilEdge` → 0)
+            // utlumí tečky cesty kolem CTA, aby se nesrážely s hranou pilulky; pilulka sama je plná výplň.
+            <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: clearance, paddingHorizontal: space.l, paddingTop: space.m, paddingBottom: space.m }}>
+              <EdgeFade
+                direction="up"
+                width={width}
+                height={size.edgeFade + size.pill + space.m * 2}
+                stops={[{ at: 0, opacity: opacity.veilEdge }, { at: 1, opacity: 0 }]}
+                style={{ position: 'absolute', left: 0, bottom: 0 }}
+              />
               <PillButton label={copy.map.startLesson} onPress={() => open(currentId)} />
             </View>
           ) : null}

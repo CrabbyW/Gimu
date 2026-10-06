@@ -15,6 +15,8 @@ export const size = {
   // Živá tečka stavového řádku 6, tečkový prstenec výdrže 260 (Doto 64 + jednotka se vejde do vnitřního prstence),
   // minimální výška hero dlaždice mapy (číslo nahoře, název dole jako obr. 2).
   liveDot: 6, holdRing: 260, heroTile: 148,
+  // Doznění závoje pod překryvnou hlavičkou a nad plovoucí CTA (EdgeFade): mapa pod nimi mizí plynule, ne hranou.
+  edgeFade: 40,
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
   // Karta volby v onboardingu (vize těla, R36) a její glyf; glyf cesty je `glyph`.
   choiceCard: 80, choiceGlyph: 40, glyph: 48,
@@ -67,6 +69,8 @@ export const size = {
 export const dots = {
   /** DotField: rozteč 14 (spec §2.4), poloměr tečky, strop počtu teček (spec §7: ~600), počet pásem doznívání. */
   field: { pitch: 14, r: 1.25, max: 600, bands: 4 },
+  // Reaktivní pozadí obrazovek (`ReactiveBackground`): klidové tečky na polovičním krytí, ať obsah nepřebíjí.
+  background: { restOpacity: 0.5 },
   /** DotRow (obr. 5): průměr tečky a mezera mezi tečkami i řádky. */
   row: { d: 10, gap: 6 },
   /** DotMatrix (obr. 2): rozteč, poloměr zhasnuté a rozsvícené tečky, mezera prstence dneška. */
@@ -112,7 +116,9 @@ export const layout = { narrow: 360, fontScale: 1.3, statMaxScale: 1.4 } as cons
 // `floor` = mřížka podlahy pod siluetou cviku (linky `rule` na `surface`, ať nepřebije postavu).
 export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4, grain: 0.05, floor: 0.7, glint: 0.24,
   // Nothing Dot §3: rozjasněná hrana stisknuté dlaždice (vrstva `text` přes `edge`).
-  edgeLit: 0.16 } as const;
+  edgeLit: 0.16,
+  // Závoj pod překryvnou hlavičkou mapy (EdgeFade): `base` krytí na spodní hraně hlavičky; nahoře 1, pod ní doznívá do 0.
+  veilEdge: 0.72 } as const;
 // `glint` = odlesk na hraně litinového kotouče (`text` na 24 %): jediné místo, kde kov „chytá“ světlo.
 // Přerušovaná cílová linie grafu váhy (SVG strokeDasharray).
 // `dots` = tečkovaná linka v SVG (nulový úsek + kulatý konec = tečka, rozteč 6): cílová linie tečkového grafu váhy.
@@ -126,8 +132,10 @@ export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, pl
   // Litinový kotouč (viewBox 100): soustružená drážka 0.5, odlesk hrany 1.6, zkosení otvoru 1.
   groove: 0.5, glint: 1.6, bevel: 1 } as const;
 
-// Nejmenší měřítko písma jednořádkového titulku (adjustsFontSizeToFit): Doto `display` 40 → 26 pt, pořád nadpis.
-export const fontScale = { titleMin: 0.65 } as const;
+// Nejmenší měřítko písma jednořádkového titulku (adjustsFontSizeToFit): Doto `display` 40 → 24 pt, pořád nadpis.
+// 0.6: nejdelší název sekce („Strength basics“, 15 znaků) se na 320 pt (272 pt šířky) vejde i s rezervou.
+// `dotAdvance` = odhad šířky znaku Doto v em (monospace): web neumí adjustsFontSizeToFit, velikost dopočítá ScreenHeader.
+export const fontScale = { titleMin: 0.6, dotAdvance: 0.68 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 // StreakBarbell: radius kotouče sm 1 / lg 2 (spec §2.7).
