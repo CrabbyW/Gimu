@@ -18,7 +18,9 @@ export function checkBash(cmd, owners) {
   for (const m of c.matchAll(/taskkill\b[^|;&]*[\/\\]{1,2}PID\s+(\d+)/gi)) {
     if (owners.port8082.includes(Number(m[1]))) return 'Zakázáno: PID naslouchá na portu 8082 (Expo Go uživatele).';
   }
-  if (/\bCI=(1|true)\b/i.test(c) && /expo\s+start/.test(c)) return 'Zakázáno: Metro s CI=1 nesleduje změny souborů. Spusť bez CI.';
+  // Jen skutečné spuštění: `CI=1` před `expo start` v jednom příkazu (bez oddělovače). Text, který se o CI=1 jen
+  // zmiňuje (dokumentace v heredocu), neblokuje.
+  if (/\bCI=(1|true)\b[^\n|;&`]*\bexpo\s+start\b/i.test(cmd)) return 'Zakázáno: Metro s CI=1 nesleduje změny souborů. Spusť bez CI.';
   // Přepis (>) append-only dokumentů; připsání (>>) je v pořádku.
   if (/(^|[^>])>\s*["']?[^\s"'|;&]*docs[\\/](QA|LOG)\.md/i.test(c)) {
     return 'Zakázáno: docs/QA.md a docs/LOG.md jsou append-only — připisuj přes >> nebo Edit.';

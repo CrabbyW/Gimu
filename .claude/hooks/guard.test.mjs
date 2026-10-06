@@ -11,6 +11,10 @@ test('povolí kill procesu na 8081', () => assert.equal(checkBash('taskkill //F 
 test('blokuje zabití cloudflared', () => assert.ok(checkBash('taskkill //F //IM cloudflared.exe', owners)));
 test('blokuje CI=1 s expo start', () => assert.ok(checkBash('CI=1 npx expo start --web --port 8081', owners)));
 test('povolí expo start bez CI', () => assert.equal(checkBash('npx expo start --web --port 8081 --clear', owners), null));
+test('blokuje CI=1 přes cd && (stejný segment po &&? ne — dva příkazy)', () => assert.ok(checkBash('cd app && CI=1 npx expo start', owners)));
+test('povolí text, který CI=1 jen zmiňuje', () => {
+  assert.equal(checkBash("python - <<'X'\ns = '`npx expo start --web`, NIKDY s `CI=1`'\nX", owners), null);
+});
 test('blokuje přepis QA přes >', () => assert.ok(checkBash('echo x > docs/QA.md', owners)));
 test('povolí připsání do LOG přes >>', () => assert.equal(checkBash('cat >> docs/LOG.md <<EOF', owners), null));
 test('blokuje Write na QA.md a LOG.md', () => {
