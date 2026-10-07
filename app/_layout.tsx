@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PlateFlight } from '@/components/transition/PlateFlight';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { useActiveSeason } from '@/hooks/useActiveSeason';
 import { useHydrated } from '@/hooks/useHydrated';
@@ -78,6 +79,8 @@ function RootStack() {
             <Stack.Screen name="goals/path" options={{ presentation: 'modal' }} />
             <Stack.Screen name="dev" options={{ presentation: 'modal' }} />
           </Stack>
+          {/* Let kotouče mapa → lekce (spec §2.3): overlay nad Stackem, dotyky nebere. */}
+          <PlateFlight />
         </NavigationThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

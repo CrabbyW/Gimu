@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -12,6 +12,7 @@ import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { feedback as fb } from '@/lib/feedback';
 import { haptics } from '@/lib/haptics';
 import { ease, motion, spring, useMotionSafe } from '@/lib/motion';
+import { registerPlate } from '@/lib/plateFlight';
 import { playSfx } from '@/lib/sound';
 import type { NodeState } from '@/logic/map';
 import { useTheme } from '@/theme';
@@ -57,6 +58,8 @@ interface Props {
    *  na UI vlákně a `onSpinStart` se zavolá při každém novém roztočení. */
   spinOut?: SharedValue<number>;
   onSpinStart?(): void;
+  /** Id lekce: kotouč se zaregistruje pro let do lekce (`lib/plateFlight`, změří se při startu). */
+  flightId?: string;
 }
 
 const TAU = Math.PI * 2;
@@ -69,7 +72,7 @@ const COMET_HOME = -Math.PI / 2;
 
 /** Kulatý uzel mapy (Nothing Dot): kotouč z teček (`DotPlate`), bez stínu a bez plného prstence.
  *  Popisek a opička nejsou děti uzlu (kreslí je LessonMap jako sourozence), takže pohyb kotouče je nehýbe. */
-export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0, rotation, comet, intro, spinOut, onSpinStart }: Props) {
+export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPress, unlocking = false, onUnlocked, justCompleted = false, checkHidden = false, shakeKey = 0, rotation, comet, intro, spinOut, onSpinStart, flightId }: Props) {
   const { size } = useTheme();
   const { reduced } = useMotionSafe();
   // Ambient (spec §3): kotouč se točí 360° / 40 s, aktuální / 24 s; kometa obíhá; záře aktuálního dýchá.
@@ -95,8 +98,10 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
   const shake = useShake(shakeKey, reduced);
   const feedback = usePressFeedback(0.94);
   const slop = Math.max(0, (size.hitLarge - nodeSize) / 2);
+  const box = useRef<Animated.View>(null);
+  useEffect(() => (flightId ? registerPlate(flightId, box.current, kg, state) : undefined), [flightId, kg, state]);
   return (
-    <Animated.View style={[{ width: nodeSize, height: nodeSize }, shake]}>
+    <Animated.View ref={box} style={[{ width: nodeSize, height: nodeSize }, shake]}>
       <GestureDetector gesture={spin.gesture}>
       <Animated.View style={feedback.style}>
       <Pressable

@@ -415,3 +415,22 @@ export const intro = {
   modal: { at: 60, step: 50, rise: 10 },
 };
 
+
+/**
+ * Let kotouče (elite fáze 1, spec §2.3): kotouč z mapy přeletí do řady teček lekce, cestou se zmenší
+ * a pootočí, v posledních `fadeFrom` dráhy se rozpustí do řady. `ms` 450–600, křivka `ease.exit`
+ * (rozjezd i dosednutí, žádná pružina). Dokud lekce nezměří cíl, kotouč visí na místě; když cíl nepřijde
+ * do `waitMaxMs`, prolne se pryč. Omezený pohyb: jen prolnutí `calmFade` na místě, bez letu.
+ * Lekce měří cíl až po `settleMs` (dojetí modalu), měření má strop `measureMaxMs`. Oslava: tečky
+ * vyletí ze shluku v místě, kam kotouč zmizel (tvar kotouče × `gatherSpread`).
+ */
+export const plateFlight = { ms: 520, turns: 0.5, fadeFrom: 0.65, waitMaxMs: 1600, settleMs: 380, measureMaxMs: 120, gatherSpread: 0.2 };
+
+/**
+ * Hlavičkový překryv mapy (dluh Task 3): když zmizí bublina průvodce nebo dlaždice, výška překryvu
+ * a odsazení mapy dojedou timingem (`ms`, ease.out) místo skoku. Bublina se prolne pryč za `outMs`.
+ * Šipka bubliny: tečky dříku se rozsvítí postupně od bubliny k cíli (sken, `scanStepMs` na tečku),
+ * pak jednou za `idleMs` přeběhne světlo (`pulseMs`) od bubliny k cíli, ať šipka ukazuje směr. Omezený pohyb: statická.
+ */
+export const overlayResize = { ms: 260, outMs: 160 };
+export const guideArrow = { scanStepMs: 70, idleMs: 2600, pulseMs: 420 };

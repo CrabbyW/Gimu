@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, View, useWindowDimensions, type ScrollView } from 'react-native';
-import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
@@ -54,6 +54,8 @@ interface Props {
   /** Výška překryvné hlavičky obrazovky (pt): mapa běží přes celou výšku a první prvek začíná pod ní.
    *  Souřadnice uzlů zůstávají vnitřní (posunutý obal); viditelný výřez = [scrollY, scrollY + výška − topInset − footerSpace]. */
   topInset?: number;
+  /** Dojezd změny `topInset` (pt, → 0): obsah se posune o tolik dolů, takže změna výšky hlavičky neskočí. */
+  insetShift?: SharedValue<number>;
   /** Reakce opičky (fáze 3): opička na mapě je hratelná a reaguje na scroll, roztočení kotouče a ztrátu série. */
   reactions?: MascotReactions;
 }
@@ -74,7 +76,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, reactions }: Props) {
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions }: Props) {
   const { space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -131,6 +133,10 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
 
   // Omezený pohyb: opička se na nový uzel jen prolne (200 ms), bez oblouku.
   const crossfade = useSharedValue(1);
+  // Dojezd změny výšky hlavičky (index.tsx): jen sdílená hodnota, ve workletu nic jiného.
+  const noShift = useSharedValue(0);
+  const shift = insetShift ?? noShift;
+  const shiftStyle = useAnimatedStyle(() => ({ transform: [{ translateY: shift.value }] }));
 
   // Parametr bez platného páru: neznámá nebo už dokončená lekce se jen smaže. Zamčená znamená,
   // že mapa ještě ukazuje data před dokončením lekce; počká se na nová.
@@ -317,7 +323,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       {/* Obal posunutý o výšku překryvné hlavičky: všechny vnitřní souřadnice (uzly, cesta, opička, popover)
           zůstávají beze změny, první prvek začíná pod hlavičkou a jde pod ni odscrollovat. Absolutní děti
           by `paddingTop` obsahu ignorovaly, proto margin obalu. */}
-      <View pointerEvents="box-none" style={{ marginTop: topInset, height }}>
+      <Animated.View pointerEvents="box-none" style={[{ marginTop: topInset, height }, shiftStyle]}>
       {seasonal.mapTexture ? <DotTexture width={width} height={height} color={seasonal.mapTexture} /> : null}
       <PathLine
         width={width} height={height} positions={layout.positions} reached={reached} drawing={drawing}
@@ -375,7 +381,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
               />
             ) : (
               <PlateNode
-                kg={n.lesson.plateKg} size={p.size} state={state} accessibilityLabel={label}
+                kg={n.lesson.plateKg} size={p.size} state={state} accessibilityLabel={label} flightId={n.lesson.id}
                 onPress={() => onNodePress(n, state)} shakeKey={shakes[n.lesson.id]}
                 unlocking={unlocking} onUnlocked={onUnlocked}
                 spinOut={state === 'current' ? plateSpin : undefined}
@@ -440,7 +446,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
           onClose={() => setSelected(null)}
         />
       ) : null}
-      </View>
+      </Animated.View>
     </IntentScrollView>
     </AmbientClock>
   );

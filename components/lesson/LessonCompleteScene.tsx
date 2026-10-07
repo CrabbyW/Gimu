@@ -21,7 +21,8 @@ import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { feedback } from '@/lib/feedback';
 import { fire } from '@/lib/haptics';
-import { ease, lessonDone as L, motion, spring, useMotionSafe } from '@/lib/motion';
+import { ease, lessonDone as L, motion, plateFlight as PF, spring, useMotionSafe } from '@/lib/motion';
+import { takeLastRect } from '@/lib/plateFlight';
 import { playSfx, setDucking } from '@/lib/sound';
 import { REACTION_COOLDOWN_MS } from '@/logic/mascotReactions';
 import { nextLessonId } from '@/logic/map';
@@ -109,6 +110,9 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   // --- Rozměry: plocha scény (onLayout) a střed kotouče v ní (measureInWindow) ---
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
   const [center, setCenter] = useState<Pt | null>(null);
+  // Let kotouče (spec §2.3): kam kotouč v lekci zmizel (okno). Tečky pak slétají odtud, jinak z pole kolem středu.
+  const [lastPlate] = useState(takeLastRect);
+  const [flyFrom, setFlyFrom] = useState<Pt | null>(null);
   const rootRef = useRef<View>(null);
   const plateRef = useRef<View>(null);
   const contentW = (box?.w ?? 0) - 2 * space.l;
@@ -117,7 +121,10 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   const kg = lesson.plateKg;
   const measure = () => {
     rootRef.current?.measureInWindow((rx, ry) => {
-      plateRef.current?.measureInWindow((px, py, pw, ph) => setCenter({ x: px - rx + pw / 2, y: py - ry + ph / 2 }));
+      plateRef.current?.measureInWindow((px, py, pw, ph) => {
+        if (lastPlate) setFlyFrom({ x: lastPlate.x + lastPlate.width / 2 - rx, y: lastPlate.y + lastPlate.height / 2 - ry });
+        setCenter({ x: px - rx + pw / 2, y: py - ry + ph / 2 });
+      });
     });
   };
   const onRootLayout = (e: LayoutChangeEvent) => {
@@ -130,11 +137,14 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
     if (!box || !center || P <= 0) return null;
     const targets = plateDots(kg, P / 2 - dotR);
     const grid = fieldGrid(box.w, box.h, dots.field.pitch, L.fieldMax);
-    const src = gatherSources(targets, P / 2, ringCountForKg(kg), center.x, center.y, grid);
+    // Známá poloha kotouče z lekce: tečky vyletí z malého shluku tam (tvar kotouče × `PF.gatherSpread`).
+    const src = flyFrom
+      ? targets.map((d) => ({ x: flyFrom.x - center.x + d.x * PF.gatherSpread, y: flyFrom.y - center.y + d.y * PF.gatherSpread }))
+      : gatherSources(targets, P / 2, ringCountForKg(kg), center.x, center.y, grid);
     const rank = new Array<number>(targets.length);
     spiralOrder(targets).forEach((idx, r) => { rank[idx] = r / targets.length; });
     return { src, tgt: targets.map((d) => ({ x: d.x, y: d.y })), rank, shock: ringDots(SHOCK_DOTS, P / 2 - dotR).map((d) => ({ x: d.x + center.x, y: d.y + center.y })) };
-  }, [box, center, P, dotR, kg]);
+  }, [box, center, flyFrom, P, dotR, kg]);
 
   // --- Stav (React) ---
   const cheer: Mood = 'celebrate';

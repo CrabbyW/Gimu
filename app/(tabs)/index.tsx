@@ -1,7 +1,8 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotField, DotRing, ScrollIntentProvider, useDotTouch, useScrollIntent } from '@/components/dots';
 import { backgroundPitch } from '@/components/dots/geometry';
@@ -19,7 +20,9 @@ import { PillButton } from '@/components/ui/PillButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { ease, motion } from '@/lib/motion';
+import { ease, motion, overlayResize, plateFlight, useMotionSafe } from '@/lib/motion';
+import { endStart, launchFromPlate, tryBeginStart } from '@/lib/plateFlight';
+import type { GuideId } from '@/logic/guide';
 import { useFinishSetup } from '@/hooks/useGoals';
 import { useGuide } from '@/hooks/useGuide';
 import { useLeague } from '@/hooks/useLeague';
@@ -47,6 +50,27 @@ export default function TrainingScreen() {
   const clearance = tabBarClearance(insets.bottom, size.tabPill, space.m);
   // Výška překryvu (hlavička + řádek sekce) = horní odsazení obsahu mapy.
   const [overlayH, setOverlayH] = useState(0);
+  // Změna výšky překryvu (zmizí bublina nebo dlaždice): obsah mapy a závoj dojedou timingem z rozdílu
+  // starého a nového odsazení k nule (UI vlákno), takže mapa neposkočí. Při mountu (0) bez animace.
+  const { reduced } = useMotionSafe();
+  const insetShift = useSharedValue(0);
+  const lastOverlayH = useRef(0);
+  const onOverlayLayout = (h: number) => {
+    const prev = lastOverlayH.current;
+    if (h === prev) return;
+    lastOverlayH.current = h;
+    if (prev > 0 && !reduced) {
+      insetShift.value = insetShift.value + (prev - h);
+      insetShift.value = withTiming(0, { duration: overlayResize.ms, easing: ease.out, reduceMotion: ReduceMotion.Never });
+    }
+    setOverlayH(h);
+  };
+  // Veil (EdgeFade) kreslený pro novou výšku se během dojezdu natáhne shora na starou (scaleY od horní hrany).
+  const veilH = overlayH + size.edgeFade;
+  const veilStyle = useAnimatedStyle(() => {
+    const k = veilH > 0 ? (veilH + insetShift.value) / veilH : 1;
+    return { transform: [{ translateY: ((k - 1) * veilH) / 2 }, { scaleY: k }] };
+  });
   const { unlocked } = useLocalSearchParams<{ unlocked?: string }>();
   const profile = useProfile();
   const data = profile.status === 'ready' ? profile.data : null;
@@ -67,6 +91,19 @@ export default function TrainingScreen() {
   const play = useScrollIntent();
   // First run (elite fáze 1): průvodce „Tap the plate to start“ a řádek „Finish setup“ v hlavičkovém překryvu.
   const guide = useGuide('map');
+  // Odcházející bublina: zápis „viděno“ proběhne hned, bublina se ještě `overlayResize.outMs` prolíná pryč.
+  const [ghost, setGhost] = useState<GuideId | null>(null);
+  const ghostTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (ghostTimer.current) clearTimeout(ghostTimer.current); }, []);
+  const dismissGuide = () => {
+    if (!guide.id) return;
+    setGhost(guide.id);
+    guide.dismiss();
+    if (ghostTimer.current) clearTimeout(ghostTimer.current);
+    ghostTimer.current = setTimeout(() => setGhost(null), overlayResize.outMs);
+  };
+  // Start lekce je zamčený proti dvojímu ťuknutí; návrat na mapu ho odemkne.
+  useFocusEffect(useCallback(() => { endStart(); }, []));
   const setup = useFinishSetup();
   const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch, play), [field.gesture, reactions.touch, play]);
 
@@ -77,11 +114,16 @@ export default function TrainingScreen() {
   const section = currentSection(viewData);
   const sad = !stats.isNew && stats.mood === 'sad';
   const currentId = viewData.currentLessonId;
+  // Start lekce (CTA i popover uzlu): dvojí ťuknutí = jedna navigace. Kotouč se změří a vzlétne (overlay
+  // `PlateFlight`), navigace jde hned po měření (max `plateFlight.measureMaxMs`); selhání měření = bez letu.
   const open = (id: string) => {
-    guide.dismiss();
+    if (!tryBeginStart()) return;
+    dismissGuide();
     reactions.report({ type: 'lessonStart' });
-    router.push({ pathname: '/lesson/[id]', params: { id } });
+    const go = () => router.push({ pathname: '/lesson/[id]', params: { id } });
+    launchFromPlate(id, plateFlight.measureMaxMs).then(go, go);
   };
+  const bubbleId = guide.id ?? ghost;
   return (
     <MapContent
       unlocked={unlocked ?? null}
@@ -116,6 +158,7 @@ export default function TrainingScreen() {
                 onUnlockSequenceEnd={clearUnlocked}
                 intro={intro}
                 topInset={overlayH}
+                insetShift={insetShift}
                 // Pod posledním uzlem: tab bar + pilulka CTA, ať jde poslední prvek odscrollovat nad ně.
                 footerSpace={clearance + (currentId ? size.pill + space.m * 2 : space.m)}
                 reactions={reactions}
@@ -124,6 +167,7 @@ export default function TrainingScreen() {
           ) : null}
           {/* Závoj `base` za hlavičkou: nahoře (status bar) plný, na spodní hraně hlavičky `opacity.veilEdge`,
               pod ní dozní do průhledna. Cesta pod hlavičkou ustupuje do hloubky, titulek zůstává čitelný. */}
+          <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0 }, veilStyle]}>
           <EdgeFade
             direction="down"
             width={width}
@@ -134,12 +178,12 @@ export default function TrainingScreen() {
               { at: overlayH / (overlayH + size.edgeFade), opacity: opacity.veilEdge },
               { at: 1, opacity: 0 },
             ]}
-            style={{ position: 'absolute', left: 0, top: 0 }}
           />
+          </Animated.View>
           {/* Překryv: hlavička + řádek sekce. Prázdná místa propouští tah do mapy pod sebou. */}
           <View
             pointerEvents="box-none"
-            onLayout={(e) => setOverlayH(Math.round(e.nativeEvent.layout.height))}
+            onLayout={(e) => onOverlayLayout(Math.round(e.nativeEvent.layout.height))}
             style={{ position: 'absolute', left: 0, right: 0, top: 0 }}
           >
           {/* Nástup obrazovky (motion.screenIn): hlavička 0 → hero 80 (vnitřní sled SectionHero) → kotouče mapy. */}
@@ -167,9 +211,9 @@ export default function TrainingScreen() {
           {/* Krátký onboarding: jednořádková dlaždice (výška 44), ne karta, aby cesta nepřišla o místo. */}
           {setup.needed ? <FinishSetupTile /> : null}
           {/* Průvodce: pod hlavičkou, šipka dolů k aktuálnímu kotouči (ten je hned pod překryvem). Nikdy u CTA dole. */}
-          {guide.id && currentId ? (
+          {bubbleId && currentId ? (
             <View style={{ paddingHorizontal: space.l, marginTop: space.s }}>
-              <GuideBubble id={guide.id} arrow="down" onDismiss={guide.dismiss} delay={motion.screenIn.headerAt} />
+              <GuideBubble id={bubbleId} arrow="down" onDismiss={dismissGuide} leaving={!guide.id} delay={motion.screenIn.headerAt} />
             </View>
           ) : null}
           </View>
