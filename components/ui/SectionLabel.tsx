@@ -1,5 +1,5 @@
 import { View, type StyleProp, type ViewStyle } from 'react-native';
-import { useTheme } from '@/theme';
+import { useTheme, tabularNums } from '@/theme';
 import { Text } from './Text';
 
 interface Props {
@@ -16,7 +16,7 @@ export function SectionLabel({ children, value, style }: Props) {
   return (
     <View style={[{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space.m }, style]}>
       <Text variant="label" tone="muted" accessibilityRole="header" style={{ flexShrink: 1 }}>{children}</Text>
-      {value !== undefined ? <Text variant="caption" tone="muted" style={{ fontVariant: ['tabular-nums'] }}>{value}</Text> : null}
+      {value !== undefined ? <Text variant="caption" tone="muted" style={tabularNums}>{value}</Text> : null}
     </View>
   );
 }

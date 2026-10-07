@@ -1,6 +1,7 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { useMemo } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
-import { Canvas, Points } from '@shopify/react-native-skia';
+import { Points } from '@shopify/react-native-skia';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 import { lessonDone, motion } from '@/lib/motion';
 import { dots } from '@/theme';
@@ -105,12 +106,12 @@ export function DotField({ width, height, pitch = dots.field.pitch, fade = 'none
   return (
     <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width, height }, style]}>
       <SkiaGuard style={{ width, height }}>
-        <Canvas testID="dotfield-canvas" style={{ width, height }}>
+        <DecorCanvas testID="dotfield-canvas" style={{ width, height }}>
           {bands.map((b, i) => (
             <BandPoints key={i} index={i} moved={moved} color={ink.off} opacity={b.opacity * restOpacity} strokeWidth={dots.field.r * 2} />
           ))}
           <Points points={litPoints} mode="points" color={ink.on} opacity={litOpacity} strokeWidth={dots.field.r * 2} strokeCap="round" />
-        </Canvas>
+        </DecorCanvas>
       </SkiaGuard>
     </View>
   );

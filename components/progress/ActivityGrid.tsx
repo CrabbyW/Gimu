@@ -1,3 +1,4 @@
+import { StateView } from '@/components/ui/StateView';
 import { View } from 'react-native';
 import { DotMatrix } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
@@ -58,7 +59,7 @@ export function ActivityGrid({ cells, todayDone = false, play = false }: Props) 
           intro={play ? intro.grid.at : false}
         />
       </View>
-      {active === 0 ? <Text variant="caption" tone="muted">{copy.progress.activityEmpty}</Text> : null}
+      {active === 0 ? <StateView kind="empty" inline message={copy.progress.activityEmpty} /> : null}
     </Tile>
   );
 }

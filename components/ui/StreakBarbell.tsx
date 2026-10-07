@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import Svg, { Line, Rect } from 'react-native-svg';
 import { copy } from '@/data/copy';
-import { useTheme } from '@/theme';
+import { useTheme, tabularNums } from '@/theme';
 import { Text } from './Text';
 
 export type StreakBarbellVariant = 'sm' | 'lg';
@@ -111,7 +111,7 @@ export function StreakBarbell({ variant, streak, longest, todayDone }: Props) {
         {fallen}
       </Svg>
       {s.overflow > 0 ? (
-        <Text variant="caption" tone="accent" style={{ fontVariant: ['tabular-nums'] }}>{copy.streak.overflow(s.overflow)}</Text>
+        <Text variant="caption" tone="accent" style={tabularNums}>{copy.streak.overflow(s.overflow)}</Text>
       ) : null}
     </View>
   );

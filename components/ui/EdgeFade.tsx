@@ -23,7 +23,7 @@ export function EdgeFade({ direction, width, height, stops = DEFAULT_STOPS, styl
   if (width <= 0 || height <= 0) return null;
   return (
     <View pointerEvents="none" style={[{ width, height }, style]}>
-      <Svg width={width} height={height}>
+      <Svg aria-hidden width={width} height={height}>
         <Defs>
           <LinearGradient id={id} x1="0" y1={direction === 'down' ? '0' : '1'} x2="0" y2={direction === 'down' ? '1' : '0'}>
             {stops.map((s, i) => <Stop key={i} offset={s.at} stopColor={c.base} stopOpacity={s.opacity} />)}

@@ -41,7 +41,7 @@ export function Grain() {
       importantForAccessibility="no-hide-descendants"
       style={[StyleSheet.absoluteFill, { opacity: opacity.grain }]}
     >
-      <Svg width="100%" height="100%">
+      <Svg aria-hidden width="100%" height="100%">
         <Defs>
           <Pattern id={id} width={tile} height={tile} patternUnits="userSpaceOnUse">
             {dots.map((d, i) => (

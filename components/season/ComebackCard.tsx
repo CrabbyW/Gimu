@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
-import { useTheme } from '@/theme';
+import { useTheme, tabularNums } from '@/theme';
 import type { ISODate } from '@/types';
 import { shortDate } from './format';
 
@@ -18,7 +18,7 @@ export function ComebackCard({ repairWindow, reachable }: Props) {
   return (
     <Tile style={{ gap: space.s }}>
       <Text variant="headline" accessibilityRole="header">{copy.season.comebackTitle}</Text>
-      <Text variant="body" tone="muted">{n > 0 ? copy.season.comebackBody(n) : copy.season.comebackEmpty}</Text>
+      <Text variant="body" tone="muted" style={tabularNums}>{n > 0 ? copy.season.comebackBody(n) : copy.season.comebackEmpty}</Text>
       {n > 0 ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: space.s, marginTop: space.xs }}>
           <Text variant="label" tone="muted">{copy.season.comebackWindow}</Text>

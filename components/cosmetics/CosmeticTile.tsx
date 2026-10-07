@@ -107,7 +107,7 @@ function Preview({ slot, id, stage, box }: { slot: WardrobeItem['cosmetic']['slo
   const s = Math.max(0, box);
   const step = s / 5;
   return (
-    <Svg width={s} height={s}>
+    <Svg aria-hidden width={s} height={s}>
       <Rect x={0} y={0} width={s} height={s} rx={radius.l} fill={id === 'map-night-gym' ? c.shadow : c.base} />
       {id === 'map-night-gym'
         ? [1, 2, 3, 4].map((i) => (

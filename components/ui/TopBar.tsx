@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { copy } from '@/data/copy';
 import { useCountUp } from '@/hooks/useCountUp';
 import { intro as T } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { useTheme, tabularNums } from '@/theme';
 import { Reveal } from './choreo';
 import { StreakPill } from './StreakPill';
 import { Text } from './Text';
@@ -35,7 +35,7 @@ export function TopBar({ streak, longestStreak, todayDone, xp, tierLabel, showTo
           <StreakPill streak={streak} longest={longestStreak} todayDone={todayDone} />
         </Reveal>
         <Reveal play={intro} delay={m.telemetry} rise={8}>
-          <Text variant="caption" tone="muted" accessibilityLabel={copy.map.xpA11y(xp)} style={{ fontVariant: ['tabular-nums'] }}>
+          <Text variant="caption" tone="muted" accessibilityLabel={copy.map.xpA11y(xp)} style={tabularNums}>
             {copy.map.xpTotal(xpShown)}
           </Text>
         </Reveal>

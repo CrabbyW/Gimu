@@ -178,7 +178,7 @@ export default function TrainingScreen() {
               />
             </View>
           ) : null}
-          {/* Závoj `base` za hlavičkou: nahoře (status bar) plný, na spodní hraně hlavičky `opacity.veilEdge`,
+          {/* Závoj `base` za hlavičkou: plný přes status bar i text hlavičky, na spodní hraně `opacity.veilEdge`,
               pod ní dozní do průhledna. Cesta pod hlavičkou ustupuje do hloubky, titulek zůstává čitelný. */}
           <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0 }, veilStyle]}>
           <EdgeFade
@@ -188,6 +188,9 @@ export default function TrainingScreen() {
             stops={[
               { at: 0, opacity: 1 },
               { at: insets.top / (overlayH + size.edgeFade), opacity: 1 },
+              // Elite fáze 4: za textem hlavičky plný závoj (odscrollované popisky uzlů za titulkem neprosvítají
+              // jako duchové); prolnutí do `veilEdge` až v posledních `space.s` pod obsahem hlavičky.
+              { at: Math.max(0, overlayH - space.s) / (overlayH + size.edgeFade), opacity: 1 },
               { at: overlayH / (overlayH + size.edgeFade), opacity: opacity.veilEdge },
               { at: 1, opacity: 0 },
             ]}

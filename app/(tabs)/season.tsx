@@ -50,7 +50,7 @@ export default function SeasonScreen() {
           right: copy.season.range(shortDate(season.startDate), shortDate(season.endDate)),
         } : undefined}
       />
-      {status.status === 'loading' ? <DotLoaderScreen />
+      {status.status === 'loading' ? <DotLoaderScreen edges={[]} />
         : status.status === 'error' ? <ErrorState edges={[]} what={copy.season.errorWhat} onRetry={status.retry} />
           : status.data === null ? <NoSeason />
             : <SeasonBody status={status.data} />}

@@ -15,6 +15,9 @@ export const copy = {
     loadError: (what: string) => `Couldn’t load ${what}.`,
     // Předmět věty „Couldn’t load …“.
     loadTarget: { profile: 'your profile', path: 'your path', lesson: 'the lesson', lessonResult: 'the lesson result' },
+    // StateView (elite fáze 4): druhá věta chyby říká, co udělat; postup je uložený v zařízení, nic se neztratilo.
+    loadErrorHint: 'Your progress is safe on this phone. Try again in a moment.',
+    errorMascotA11y: 'The monkey looks puzzled',
   },
   tabs: { training: 'Train', league: 'League', progress: 'Progress', season: 'Season', profile: 'Profile' },
   onboarding: {
@@ -95,7 +98,8 @@ export const copy = {
     nodeMeta: (kg: number, exercises: string, xp: number) => `${kg} kg · ${exercises} · +${xp} XP`,
     boss: 'BOSS', closePopover: 'Close lesson details',
     nodeState: { locked: 'locked', current: 'current', done: 'done' },
-    nodeA11y: (order: number, title: string, kg: number, state: string) => `Lesson ${order}, ${title}, ${kg} kilograms, ${state}`,
+    // Elite fáze 4: VoiceOver ohlásí název, stav a minuty (spec §2.3).
+    nodeA11y: (order: number, title: string, kg: number, state: string, minutes: number) => `Lesson ${order}, ${title}, ${state}, about ${minutes} min, ${kg} kilograms`,
     league: (tier: string) => `LEAGUE · ${tier}`,
     streakA11y: (n: number) => `Streak ${days(n)}`,
     xpA11y: (n: number) => `${n} XP total`,

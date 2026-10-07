@@ -1,6 +1,7 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { Canvas, Group, Points, vec } from '@shopify/react-native-skia';
+import { Group, Points, vec } from '@shopify/react-native-skia';
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
 import { motion } from '@/lib/motion';
 import { ringLayout } from './DotRing';
@@ -49,12 +50,12 @@ export function DotBurst({ size, progress, color }: Props) {
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: box, height: box }}>
       <SkiaGuard style={{ width: box, height: box }}>
-        <Canvas style={{ width: box, height: box }}>
+        <DecorCanvas style={{ width: box, height: box }}>
           <Group opacity={opacity} transform={[{ translateX: pad }, { translateY: pad }]}>
             <Points points={outer} mode="points" color={color} strokeWidth={geo.outerD} strokeCap="round" />
             <Points points={inner} mode="points" color={color} strokeWidth={geo.innerD} strokeCap="round" />
           </Group>
-        </Canvas>
+        </DecorCanvas>
       </SkiaGuard>
     </View>
   );

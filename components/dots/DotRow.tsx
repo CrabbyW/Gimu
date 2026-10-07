@@ -1,6 +1,7 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { useMemo } from 'react';
 import { View } from 'react-native';
-import { BlurMask, Canvas, Group, Points } from '@shopify/react-native-skia';
+import { BlurMask, Group, Points } from '@shopify/react-native-skia';
 import { useDerivedValue } from 'react-native-reanimated';
 import { dots } from '@/theme';
 import { rowLit } from './geometry';
@@ -69,7 +70,7 @@ export function DotRow({ total, fraction, columns, dot = dots.row.d, accessibili
   return (
     <View {...a11y} style={{ width, height }}>
       <SkiaGuard style={{ width, height }}>
-        <Canvas testID="dotrow-canvas" pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: width + pad * 2, height: height + pad * 2 }}>
+        <DecorCanvas testID="dotrow-canvas" pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: width + pad * 2, height: height + pad * 2 }}>
           <Group opacity={fade}>
             <Points points={off} mode="points" color={ink.off} strokeWidth={dot} strokeCap="round" />
             {ink.glow ? (
@@ -80,7 +81,7 @@ export function DotRow({ total, fraction, columns, dot = dots.row.d, accessibili
             <Points points={lit} mode="points" color={ink.on} strokeWidth={dot} strokeCap="round" />
             <Points points={fresh} mode="points" color={ink.on} opacity={freshOpacity} strokeWidth={dot} strokeCap="round" />
           </Group>
-        </Canvas>
+        </DecorCanvas>
       </SkiaGuard>
     </View>
   );

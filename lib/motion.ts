@@ -136,6 +136,8 @@ export const motion = {
   celebrateRestMs: 600,
   // DotLoader (port @dotmatrix dotm-square-11 „Echo Ring“): mřížka 5×5, cyklus 1500 ms / speed,
   // výchozí speed 1.25, trojice opacit z dotmatrix-loader.css (--dmx-opacity-*).
+  /** StateView (elite fáze 4): skeleton se ukáže až po `skeletonDelayMs`, ať rychlé načtení nebliká. Pulz dodá motion. */
+  stateView: { skeletonDelayMs: 300 },
   dotLoader: { cycleMs: 1500, speed: 1.25, opacityBase: 0.16, opacityMid: 0.32, opacityPeak: 1 },
   /** Omezený pohyb: místo pružiny a posunu jen krátké prolnutí (spec §6.7). */
   calmFade: { duration: 200, easing: ease.out } satisfies WithTimingConfig,

@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import { copy } from '../../data/copy';
 import { expect, test } from '../fixtures';
 import { collectErrors, loadDemo, visible, waitForIdle } from '../helpers';
+import { textsUnder } from '../textGeometry';
 
 /** Replika opičky (elite fáze 3): ťuknutí na opičku na mapě → bublina s větou z `copy.mascotLines`,
  *  po `LINE_SHOW_MS` (2.4 s) + odchodu (`lineBubble.outMs`) zmizí. Bublina je celá ve viewportu a pod hlavičkou. */
@@ -30,25 +31,7 @@ async function expectGeometry(page: Page) {
   // Pod hlavičkou: horní hrana bubliny pod spodní hranou nadpisu (žádná kolize).
   expect(b.y).toBeGreaterThanOrEqual(head.y + head.height);
   // Bublina nekryje žádný viditelný text mapy (popisky uzlů, nadpisy sekcí): co leží pod ní, musí ustoupit (opacity 0).
-  const covered = await page.evaluate((box) => {
-    const bubble = document.querySelector('[data-testid="mascot-line"]');
-    const seen = (el: Element | null): boolean => {
-      for (let e = el; e; e = e.parentElement) if (Number(getComputedStyle(e).opacity) === 0) return false;
-      return true;
-    };
-    const hits: string[] = [];
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-      const el = n.parentElement;
-      const text = (n.textContent ?? '').trim();
-      if (!el || !text || bubble?.contains(el) || !seen(el)) continue;
-      const range = document.createRange(); range.selectNodeContents(n);
-      for (const r of Array.from(range.getClientRects())) {
-        if (r.width && r.height && r.left < box.x + box.width && r.right > box.x && r.top < box.y + box.height && r.bottom > box.y) hits.push(text);
-      }
-    }
-    return hits;
-  }, b);
+  const covered = await textsUnder(page, b, '[data-testid="mascot-line"]');
   expect(covered).toEqual([]);
 }
 

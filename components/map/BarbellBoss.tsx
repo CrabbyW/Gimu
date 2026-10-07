@@ -80,7 +80,7 @@ function Barbell({ state }: { state: NodeState }) {
     if (!rects.some((r) => x >= r.x - DOT_PITCH / 2 && x <= r.x + r.w + DOT_PITCH / 2)) pts.push({ x, y: MID });
   }
   return (
-    <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+    <Svg aria-hidden width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
       {pts.map((p, i) => <Circle key={i} cx={p.x} cy={p.y} r={dots.path.r} fill={ink} />)}
       <SvgText x={W / 2} y={MID - 10} fontFamily={svgType.label.fontFamily} fontSize={svgType.label.fontSize} letterSpacing={svgType.label.letterSpacing} textAnchor="middle" fill={locked ? c.muted : c.text}>
         {copy.map.boss}

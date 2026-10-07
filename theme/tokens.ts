@@ -147,10 +147,11 @@ export const stroke = { icon: 1.5, measure: 2, focus: 2, ring: 3, chart: 1.5, pl
   // Litinový kotouč (viewBox 100): soustružená drážka 0.5, odlesk hrany 1.6, zkosení otvoru 1.
   groove: 0.5, glint: 1.6, bevel: 1 } as const;
 
-// Nejmenší měřítko písma jednořádkového titulku (adjustsFontSizeToFit): Doto `display` 40 → 24 pt, pořád nadpis.
-// 0.6: nejdelší název sekce („Strength basics“, 15 znaků) se na 320 pt (272 pt šířky) vejde i s rezervou.
+// Nejmenší měřítko písma jednořádkového titulku (adjustsFontSizeToFit): Doto `display` 40 → 28 pt (spodní hranice Doto).
+// Elite fáze 4: dlouhé titulky se zkracují obsahem, ne písmem — názvy sekcí ≤ 12 znaků („Strength 101“ ≈ 228 pt při 28 pt)
+// se na 320 pt (272 pt šířky) vejdou.
 // `dotAdvance` = odhad šířky znaku Doto v em (monospace): web neumí adjustsFontSizeToFit, velikost dopočítá ScreenHeader.
-export const fontScale = { titleMin: 0.6, dotAdvance: 0.68 } as const;
+export const fontScale = { titleMin: 0.7, dotAdvance: 0.68 } as const;
 // Geometrie materiálu (kov, ne UI): tloušťky a poloměry vycházející z fyzického tvaru
 // činky/kotouče, ne ze spec §6.6 škály radiusů. Viz docs/LOG.md 2026-09-30 (ruling boss).
 // StreakBarbell: radius kotouče sm 1 / lg 2 (spec §2.7).
@@ -228,6 +229,23 @@ export const type = {
   // „TRÉNINK“ 7 × (0.6 × 10 + 0.5) ≈ 46 pt se vejde do pětiny 320 pt (64 pt minus vnitřní okraje).
   tabLabelCompact: { fontFamily: font.mono, fontSize: 10, lineHeight: 12, letterSpacing: ls(10, 0.05), textTransform: 'uppercase' as const },
 } as const;
+
+// Tabulární číslice jen u čísel a štítků (R18, elite fáze 4: všechna čísla XP, série, čas, liga).
+// Inter v tnum rozšiřuje i spojovník, takže běžný text („muscle-up“, „-3 kg“) má proporcionální číslice.
+export const tabularVariants: Record<keyof typeof type, boolean> = {
+  hero: true, heroShort: true, headline: false, stat: true, tab: false,
+  displayXL: true, display: true, dotTitleShort: true, title: true, choiceTitle: false, label: true, body: false, bodyStrong: false, caption: false,
+  input: false, inputLarge: false, counter: true, badgeLabel: true, tierName: false, telemetry: true, tabLabelCompact: true, dotStat: true, pill: true,
+};
+/** Styl tabulárních číslic pro čísla v proporcionálním stupni (caption, headline): jediný zdroj `tabular-nums`. */
+export const tabularNums = { fontVariant: ['tabular-nums' as const] };
+// Strop systémového zvětšení písma (spec §2.4, elite fáze 4): Doto stupně rostou nejvýš 1.3×, ať při 1.4×
+// zůstanou ≥ 28 pt a nepřetečou; prvky v pevné geometrii (tab bar, pilulka, štítky) taky 1.3×.
+export const typeMaxScale: Partial<Record<keyof typeof type, number>> = {
+  displayXL: 1, hero: 1.2, heroShort: 1.2, display: 1.3, dotTitleShort: 1.3, dotStat: 1.3, counter: 1.3,
+  title: 1.5, choiceTitle: 1.3, headline: 1.6, bodyStrong: 1.6, body: 2, caption: 1.8,
+  label: 1.3, tab: 1.3, stat: 1.4, pill: 1.3, telemetry: 1.3, badgeLabel: 1.2, tabLabelCompact: 1.2, tierName: 1.2,
+};
 
 // Šířkové zlomy v pt. `compact` = displeje užší než 375 (iPhone SE 1. gen., 320 pt): menší stupně
 // u prvků, které jinak ořezávají (tab bar, název sezóny, oslava lekce).

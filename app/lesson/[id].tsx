@@ -21,7 +21,7 @@ import { now } from '@/lib/clock';
 import { canSkip } from '@/logic/adaptive';
 import { nextPhase, type LessonPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
-import { useShort, useTheme } from '@/theme';
+import { useShort, useTheme, tabularNums } from '@/theme';
 import type { CosmeticSlot, Exercise } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 import { IntentScrollView } from '@/components/dots';
@@ -201,7 +201,7 @@ function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, always
     <>
       <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.m : space.xl }}>
         <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} />
-        {extra > 0 ? <Text variant="caption" tone="muted" style={{ marginTop: space.s }}>{copy.lesson.extra(extra, hold)}</Text> : null}
+        {extra > 0 ? <Text variant="caption" tone="muted" style={[tabularNums, { marginTop: space.s }]}>{copy.lesson.extra(extra, hold)}</Text> : null}
         {/* Bublina průvodce je součástí obsahu: nezmenšuje výšku scrollu a nikdy nekryje text cviku. */}
         {guide ? <View style={{ marginTop: short ? space.s : space.m }}>{guide}</View> : null}
       </IntentScrollView>

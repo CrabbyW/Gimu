@@ -46,7 +46,7 @@ export default function ProgressScreen() {
   return (
     <ReactiveBackground style={{ backgroundColor: c.base }}>
       <TabHeader title={copy.tabs.progress} intro={headerIn} />
-      {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
+      {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen edges={[]} />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.progress.errorWhat} onRetry={profile.retry} />
           : <ProgressBody profile={profile.data!} />}
     </ReactiveBackground>

@@ -1,6 +1,7 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
-import { BlurMask, Canvas, Circle, Group, Points } from '@shopify/react-native-skia';
+import { BlurMask, Circle, Group, Points } from '@shopify/react-native-skia';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { Easing, ReduceMotion, useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { motion, useMotionSafe } from '@/lib/motion';
@@ -99,7 +100,7 @@ export function DotMatrix({ cols, rows, lit, today, pitch = dots.matrix.pitch, a
   const body = (
     <View {...a11y} style={{ width, height }}>
       <SkiaGuard style={{ width, height }}>
-        <Canvas testID="dotmatrix-canvas" pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: width + pad * 2, height: height + pad * 2 }}>
+        <DecorCanvas testID="dotmatrix-canvas" pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: width + pad * 2, height: height + pad * 2 }}>
           <Group opacity={fade}>
             <Points points={offPts} mode="points" color={ink.off} strokeWidth={m.r * 2} strokeCap="round" />
             {/* Rozjasnění zhasnutých teček u prstu: vrstva `text` přes `dotOff`. */}
@@ -114,7 +115,7 @@ export function DotMatrix({ cols, rows, lit, today, pitch = dots.matrix.pitch, a
               <Circle cx={todayAt.x} cy={todayAt.y} r={m.rLit + m.todayGap} color={ink.on} style="stroke" strokeWidth={stroke.hairline} />
             ) : null}
           </Group>
-        </Canvas>
+        </DecorCanvas>
       </SkiaGuard>
     </View>
   );

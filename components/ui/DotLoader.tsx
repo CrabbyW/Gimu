@@ -8,6 +8,8 @@ import { copy } from '@/data/copy';
 import { DOT_GRID, echoBloom, echoDelay, echoOpacity, remapOpacity, ringOf, staticBloomLevel, staticOpacity } from '@/lib/dotLoader';
 import { motion, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
+import type { Edge } from 'react-native-safe-area-context';
+import { StateView } from './StateView';
 
 interface Props {
   /** Strana mřížky v pt; výchozí `size.loader`. */
@@ -125,7 +127,7 @@ function Dot({ left, top, dotSize, fill, clock, delay, levels, reduced, staticOp
           pointerEvents="none"
           style={[{ position: 'absolute', left: left + dotSize / 2 - reach, top: top + dotSize / 2 - reach, width: reach * 2, height: reach * 2 }, glowStyle]}
         >
-          <Svg width={reach * 2} height={reach * 2}>
+          <Svg aria-hidden width={reach * 2} height={reach * 2}>
             <Defs>
               <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%">
                 <Stop offset={0} stopColor={fill} stopOpacity={1} />
@@ -144,12 +146,7 @@ function Dot({ left, top, dotSize, fill, clock, delay, levels, reduced, staticOp
   );
 }
 
-/** Celoplošný stav načítání: DotLoader uprostřed na pozadí `base`. */
-export function DotLoaderScreen() {
-  const { c } = useTheme();
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.base }}>
-      <DotLoader />
-    </View>
-  );
+/** Celoplošný stav načítání (elite fáze 4): tečkový skeleton `StateView` po krátkém zpoždění, ne spinner. */
+export function DotLoaderScreen({ edges }: { edges?: readonly Edge[] } = {}) {
+  return <StateView kind="loading" edges={edges} />;
 }

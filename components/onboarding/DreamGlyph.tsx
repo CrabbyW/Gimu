@@ -19,7 +19,7 @@ export function DreamGlyph({ glyph, color, size }: Props) {
   const d = useMemo(() => dotsPath(glyphDots(glyph), dots.glyph.r), [glyph]);
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Svg width={size} height={size} viewBox={`0 0 ${dots.glyph.view} ${dots.glyph.view}`}>
+      <Svg aria-hidden width={size} height={size} viewBox={`0 0 ${dots.glyph.view} ${dots.glyph.view}`}>
         <Path d={d} fill={color} />
       </Svg>
     </View>

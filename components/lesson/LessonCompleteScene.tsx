@@ -1,3 +1,4 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -6,7 +7,7 @@ import Animated, {
   withDelay, withRepeat, withSequence, withSpring, withTiming, type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurMask, Canvas, Group, Points, vec } from '@shopify/react-native-skia';
+import { BlurMask, Group, Points, vec } from '@shopify/react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
 import { DotField, DotPlate, DotRow, SkiaGuard, plateDotRadius, useDotInk, useDotTouch } from '@/components/dots';
 import { spiralLerp, type Pt } from '@/components/dots/animate';
@@ -29,7 +30,7 @@ import { nextLessonId } from '@/logic/map';
 import type { GuideId } from '@/logic/guide';
 import type { LessonResult } from '@/services';
 import type { LessonPathView } from '@/services/contracts';
-import { dots, useCompact, useShort, useTheme } from '@/theme';
+import { dots, useCompact, useShort, useTheme, tabularNums } from '@/theme';
 import type { CosmeticSlot, Lesson, Mood } from '@/types';
 import { celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, once, prideBeat, stepOf, xpBreakdownLabel, xpTickStep } from './celebration';
 
@@ -385,7 +386,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
                         <Text variant="dotStat">{`+${xpShown}`}</Text>
                         <Text variant="telemetry" tone="muted">XP</Text>
                       </View>
-                      <Text variant="caption" tone="muted" numberOfLines={2}>{xpBreakdownLabel(result.xp, XP_LABELS)}</Text>
+                      <Text variant="caption" tone="muted" numberOfLines={2} style={tabularNums}>{xpBreakdownLabel(result.xp, XP_LABELS)}</Text>
                     </View>
                     {result.streak > 0 ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
@@ -411,7 +412,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
         {/* Tečky v letu a shock prstenec nad obsahem (dotyky propouští). */}
         {box && flight && !calm ? (
           <SkiaGuard>
-            <Canvas pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: box.w, height: box.h }}>
+            <DecorCanvas pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: box.w, height: box.h }}>
               <Group transform={swellTransform} origin={origin}>
                 {ink.glow ? (
                   <Points points={flyingPts} mode="points" color={ink.glow} strokeWidth={dotR * 2 * dots.glow.scale} strokeCap="round">
@@ -423,7 +424,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
               <Group transform={shockTransform} origin={origin} opacity={shockOpacity}>
                 <Points points={flight.shock} mode="points" color={ink.on} strokeWidth={dotR * 2} strokeCap="round" />
               </Group>
-            </Canvas>
+            </DecorCanvas>
           </SkiaGuard>
         ) : null}
         {/* CTA nastoupí zdola v `lessonDone.ctaAt`; místo je rezervované, layout se nehýbe. Do té doby tap přeskočí. */}

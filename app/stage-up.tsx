@@ -1,3 +1,4 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { router, useLocalSearchParams } from 'expo-router';
 import { markNavigation } from '@/lib/navGuard';
 import { useEffect, useMemo, useState, useRef } from 'react';
@@ -5,7 +6,7 @@ import { View } from 'react-native';
 import Animated, {
   Easing, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay, withSequence, withSpring, withTiming, type SharedValue,
 } from 'react-native-reanimated';
-import { Canvas, Group, Points, vec } from '@shopify/react-native-skia';
+import { Group, Points, vec } from '@shopify/react-native-skia';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotRing, ringLayout, SkiaGuard } from '@/components/dots';
 import { rowLit } from '@/components/dots/geometry';
@@ -222,12 +223,12 @@ function RingShatter({ from, to, progress, opacity }: { from: MascotStage; to: M
   return (
     <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: BOX, height: BOX }}>
       <SkiaGuard style={{ width: BOX, height: BOX }}>
-        <Canvas style={{ width: BOX, height: BOX }}>
+        <DecorCanvas style={{ width: BOX, height: BOX }}>
           <Group opacity={opacity}>
             <Points points={off} mode="points" color={c.goldDotOff} strokeWidth={geo.d} strokeCap="round" />
             <Points points={lit} mode="points" color={c.onSeasonGold} strokeWidth={geo.d} strokeCap="round" />
           </Group>
-        </Canvas>
+        </DecorCanvas>
       </SkiaGuard>
     </View>
   );

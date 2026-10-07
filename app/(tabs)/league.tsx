@@ -23,7 +23,7 @@ import { tierName } from '@/hooks/useTierName';
 import { formatCountdown, isLeagueLocked } from '@/logic/league';
 import { intro, motion, stagger } from '@/lib/motion';
 import { services, type LeagueWeekView } from '@/services';
-import { useCompact, useTheme } from '@/theme';
+import { useCompact, useTheme, tabularNums } from '@/theme';
 import type { LeagueEntry } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 import { IntentScrollView } from '@/components/dots';
@@ -79,7 +79,7 @@ export default function LeagueScreen() {
           rightA11y: copy.league.countdownA11y(left.d, left.h, left.m),
         } : undefined}
       />
-      {loading ? <DotLoaderScreen />
+      {loading ? <DotLoaderScreen edges={[]} />
         : league.status === 'error' ? <ErrorState edges={[]} what={copy.league.errorWhat} onRetry={league.retry} />
           : locked ? <LockedLeague view={league.data} />
             : <Standings view={league.data} />}
@@ -183,7 +183,7 @@ function Standings({ view }: { view: LeagueWeekView }) {
               style={{ flexDirection: 'row', alignItems: 'baseline', gap: space.s, flexShrink: 1 }}
             >
               <Text variant={compact ? 'display' : 'hero'}>{view.myRank}</Text>
-              <Text variant="headline" tone="muted">{copy.league.rankOf(view.entries.length)}</Text>
+              <Text variant="headline" tone="muted" style={tabularNums}>{copy.league.rankOf(view.entries.length)}</Text>
             </View>
             <TierBadge tierId={view.tier} tierName={name} intro={first ? motion.screenIn.heroAt : false} />
           </View>

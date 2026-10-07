@@ -55,7 +55,7 @@ export default function ProfileScreen() {
           rightA11y: copy.status.streakA11y(stats.streak, stats.todayDone),
         } : undefined}
       />
-      {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen />
+      {profile.status === 'loading' || (profile.status === 'ready' && !profile.data) ? <DotLoaderScreen edges={[]} />
         : profile.status === 'error' ? <ErrorState edges={[]} what={copy.profile.errorWhat} onRetry={profile.retry} />
           : <ProfileBody profile={profile.data!} />}
     </ReactiveBackground>

@@ -6,7 +6,7 @@ import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { intro, motion } from '@/lib/motion';
-import { dots, useTheme } from '@/theme';
+import { dots, useTheme, tabularNums } from '@/theme';
 import type { LeagueEntry } from '@/types';
 import { podiumColumns } from './podiumLayout';
 
@@ -59,7 +59,7 @@ export function Podium({ entries, play = false, meReaction = null }: {
                 <Reveal play={play} delay={at + P.mascotLag + P.labelLag} rise={P.rise} config={motion.reveal} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
                   <Text variant="dotStat" tone={rank === 1 ? 'text' : 'muted'}>{rank}</Text>
                   <Text variant={entry.isMe ? 'bodyStrong' : 'caption'} numberOfLines={1} style={{ textAlign: 'center' }}>{entry.name}</Text>
-                  <Text variant="caption" tone="muted" numberOfLines={1}>{copy.league.podiumXp(entry.xpThisWeek)}</Text>
+                  <Text variant="caption" tone="muted" numberOfLines={1} style={tabularNums}>{copy.league.podiumXp(entry.xpThisWeek)}</Text>
                 </Reveal>
               </View>
             );

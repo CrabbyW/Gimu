@@ -1,8 +1,8 @@
+import { StateView } from '@/components/ui/StateView';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Animated, { useAnimatedProps, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
-import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { ease, intro, useMotionSafe } from '@/lib/motion';
 import type { WeightChartModel } from '@/logic/progress';
@@ -79,7 +79,7 @@ export function WeightChart({ model, play = false }: Props) {
           </Svg>
         ) : null}
       </View>
-      {n === 0 ? <Text variant="caption" tone="muted">{copy.progress.weightEmpty}</Text> : null}
+      {n === 0 ? <StateView kind="empty" inline message={copy.progress.weightEmpty} /> : null}
     </View>
   );
 }

@@ -4,7 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View, type NativeScrollEvent,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { copy } from '@/data/copy';
 import { feedback } from '@/lib/feedback';
-import { useTheme } from '@/theme';
+import { useTheme, tabularNums } from '@/theme';
 import { Button } from './Button';
 import { Text } from './Text';
 
@@ -100,7 +100,7 @@ export function ValueWheelSheet({ visible, title, options, selectedIndex, onSave
                     accessibilityLabel={o.label}
                     style={{ height: row, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
                   >
-                    <Text variant={active ? 'headline' : 'body'} tone={active ? 'text' : 'muted'} style={{ fontVariant: ['tabular-nums'] }} maxFontSizeMultiplier={1.3}>
+                    <Text variant={active ? 'headline' : 'body'} tone={active ? 'text' : 'muted'} style={tabularNums} maxFontSizeMultiplier={1.3}>
                       {o.label}
                     </Text>
                     {active ? <Check size={size.icon} color={c.accentGraphic} strokeWidth={stroke.icon} /> : null}

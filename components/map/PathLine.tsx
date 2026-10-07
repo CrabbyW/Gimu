@@ -45,7 +45,7 @@ export function PathLine({ width, height, positions, reached, drawing = null, la
     return { i, a: startOf(i), b: end === undefined ? topOf(b) : { x: b.x, y: end - EDGE_GAP } };
   });
   return (
-    <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
+    <Svg aria-hidden width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
       {segments.map(({ i, a, b }) => (
         <Path key={i} d={segmentPath(a, b)} stroke={reached[i] && drawing !== i ? c.text : c.dotDim} {...DOTS} />
       ))}

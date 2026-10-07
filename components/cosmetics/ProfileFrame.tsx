@@ -25,7 +25,7 @@ export function ProfileFrame({ frameId, size: inner, children }: Props) {
   const dotted = { fill: 'none', strokeLinecap: 'round' as const, strokeDasharray: `0 ${dots.rule.gap + dots.rule.d}` };
   return (
     <View style={{ width: outer, height: outer, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={outer} height={outer} style={{ position: 'absolute' }}>
+      <Svg aria-hidden width={outer} height={outer} style={{ position: 'absolute' }}>
         {frameId === 'frame-plate-ring' ? (
           <>
             <Circle cx={r} cy={r} r={r - stroke.ring} stroke={c.text} strokeWidth={stroke.ring} {...dotted} />

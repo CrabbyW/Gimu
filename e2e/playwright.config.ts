@@ -22,7 +22,8 @@ const projects: Project[] = SIZES.flatMap(({ w, h }) =>
     const name = `w${w}-${scheme}`;
     return {
       name,
-      testMatch: name === 'w390-dark' ? /(flows|visual)[\/].*\.spec\.ts$/ : /visual[\/].*\.spec\.ts$/,
+      testMatch: name === 'w390-dark' ? /(flows|visual|a11y)[\/].*\.spec\.ts$/
+        : name === 'w320-dark' ? /(visual|a11y)[\/].*\.spec\.ts$/ : /visual[\/].*\.spec\.ts$/,
       use: { viewport: { width: w, height: h }, colorScheme: scheme, hasTouch: false },
     } satisfies Project;
   }),

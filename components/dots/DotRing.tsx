@@ -1,6 +1,7 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { View } from 'react-native';
-import { BlurMask, Canvas, Group, Points } from '@shopify/react-native-skia';
+import { BlurMask, Group, Points } from '@shopify/react-native-skia';
 import { Easing, ReduceMotion, useDerivedValue, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { motion, useMotionSafe } from '@/lib/motion';
 import { dots, useTheme } from '@/theme';
@@ -87,7 +88,7 @@ export function DotRing({ progress, size, count = dots.ring.count, accessibility
   return (
     <View {...a11y} style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <SkiaGuard style={{ position: 'absolute', width: size, height: size }}>
-        <Canvas
+        <DecorCanvas
           testID="dotring-canvas"
           pointerEvents="none"
           style={{ position: 'absolute', left: -pad, top: -pad, width: size + pad * 2, height: size + pad * 2 }}
@@ -103,7 +104,7 @@ export function DotRing({ progress, size, count = dots.ring.count, accessibility
             <Points points={lit} mode="points" color={ink.on} strokeWidth={layout.innerDot * 2} strokeCap="round" />
             <Points points={fresh} mode="points" color={ink.on} opacity={freshOpacity} strokeWidth={layout.innerDot * 2} strokeCap="round" />
           </Group>
-        </Canvas>
+        </DecorCanvas>
       </SkiaGuard>
       {children}
     </View>

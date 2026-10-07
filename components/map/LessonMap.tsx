@@ -385,7 +385,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       {flat.map((n, i) => {
         const p = layout.positions[i]!;
         const state = shown[i]!;
-        const label = copy.map.nodeA11y(n.lesson.order, n.lesson.title, n.lesson.plateKg, copy.map.nodeState[state]);
+        const label = copy.map.nodeA11y(n.lesson.order, n.lesson.title, n.lesson.plateKg, copy.map.nodeState[state], minutesOf[n.lesson.id] ?? 1);
         const unlocking = pair?.nextId === n.lesson.id && frame.next === 'unlocking';
         const onUnlocked = () => advance(5);
         const isPrev = pair?.prevId === n.lesson.id;
@@ -601,7 +601,7 @@ function Scrim({ width, height, color, onPress }: { width: number; height: numbe
 /** Sezónní textura mapy: 4px tečky po 24 pt. */
 function DotTexture({ width, height, color }: { width: number; height: number; color: string }) {
   return (
-    <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
+    <Svg aria-hidden width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
       <Defs>
         <Pattern id="map-texture" width={TEXTURE_STEP} height={TEXTURE_STEP} patternUnits="userSpaceOnUse">
           <Circle cx={TEXTURE_STEP / 2} cy={TEXTURE_STEP / 2} r={2} fill={color} />

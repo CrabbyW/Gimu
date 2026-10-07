@@ -1,10 +1,5 @@
-import { View } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
-import { copy } from '@/data/copy';
-import { useTheme } from '@/theme';
-import { Button } from './Button';
-import { Screen } from './Screen';
-import { Text } from './Text';
+import { StateView } from './StateView';
 
 interface Props {
   /** Co se nepodařilo načíst, ve 4. pádě (`copy.common.loadTarget.*`). Nepoužije se, když je zadané `message`. */
@@ -18,15 +13,7 @@ interface Props {
   edges?: readonly Edge[];
 }
 
-/** Jednotný chybový stav obrazovky (spec §9): co selhalo a jak to zkusit znovu. Zarovnáno vlevo. */
-export function ErrorState({ what, message, actionLabel, onRetry, edges }: Props) {
-  const { space } = useTheme();
-  return (
-    <Screen edges={edges}>
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: space.l }}>
-        <Text variant="title" accessibilityRole="alert">{message ?? copy.common.loadError(what ?? '')}</Text>
-        <Button label={actionLabel ?? copy.common.retry} onPress={onRetry} variant="secondary" />
-      </View>
-    </Screen>
-  );
+/** Jednotný chybový stav obrazovky (spec §9, elite fáze 4): opička + co selhalo + co udělat + Retry. Tenký obal `StateView`. */
+export function ErrorState(props: Props) {
+  return <StateView kind="error" {...props} />;
 }

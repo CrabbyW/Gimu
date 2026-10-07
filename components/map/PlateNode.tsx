@@ -175,7 +175,7 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked, rotation }: { kg: Plate
         <DotPlate kg={kg} size={size} state="current" decorative rotation={rotation} />
       </Animated.View>
       <View pointerEvents="none" style={{ position: 'absolute', left: inset, top: inset, width: ring, height: ring, transform: [{ rotate: '-90deg' }] }}>
-        <Svg width={ring} height={ring}>
+        <Svg aria-hidden width={ring} height={ring}>
           <AnimatedCircle
             cx={ring / 2} cy={ring / 2} r={r} fill="none" stroke={c.text} strokeWidth={stroke.hairline}
             strokeDasharray={`${circumference} ${circumference}`} animatedProps={ringProps}
@@ -194,7 +194,7 @@ function DrawnCheck({ size, reduced }: { size: number; reduced: boolean }) {
   }, [offset, reduced]);
   const props = useAnimatedProps(() => ({ strokeDashoffset: offset.value }));
   return (
-    <Svg width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }} pointerEvents="none">
+    <Svg aria-hidden width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }} pointerEvents="none">
       <AnimatedPath
         d={CHECK_PATH} stroke={c.text} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
         strokeDasharray={`${CHECK_LENGTH} ${CHECK_LENGTH}`} animatedProps={props}

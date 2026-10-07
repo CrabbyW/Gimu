@@ -1,7 +1,8 @@
+import { DecorCanvas } from '@/components/dots/DecorCanvas';
 import { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { Check, Lock } from 'lucide-react-native';
-import { BlurMask, Canvas, Circle, Group, Points, vec } from '@shopify/react-native-skia';
+import { BlurMask, Circle, Group, Points, vec } from '@shopify/react-native-skia';
 import { Easing, ReduceMotion, useDerivedValue, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -150,7 +151,7 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
   return (
     <View {...a11y} style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <SkiaGuard fallback={<FallbackRim size={size} locked={locked} />}>
-        <Canvas testID="dotplate-canvas" pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: box, height: box }}>
+        <DecorCanvas testID="dotplate-canvas" pointerEvents="none" style={{ position: 'absolute', left: -pad, top: -pad, width: box, height: box }}>
           <Group opacity={canvasOpacity}>
           <Group transform={spin} origin={vec(mid, mid)}>
             {glow ? (
@@ -172,7 +173,7 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
             </Group>
           ) : null}
           </Group>
-        </Canvas>
+        </DecorCanvas>
       </SkiaGuard>
       {center}
     </View>
