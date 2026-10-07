@@ -17,7 +17,7 @@ const maxScale: Partial<Record<TypeVariant, number>> = {
 // Tabulární číslice jen u čísel a štítků (R18). Inter v tnum rozšiřuje i spojovník,
 // takže běžný text („muscle-up“, „-3 kg“) má proporcionální číslice.
 const TABULAR: Record<TypeVariant, boolean> = {
-  hero: true, headline: false, stat: true, tab: false,
+  hero: true, heroShort: true, headline: false, stat: true, tab: false,
   displayXL: true, display: true, dotTitleShort: true, title: true, choiceTitle: false, label: true, body: false, bodyStrong: false, caption: false,
   input: false, inputLarge: false, counter: true, badgeLabel: true, tierName: false, telemetry: true, tabLabelCompact: true, dotStat: true, pill: true,
 };

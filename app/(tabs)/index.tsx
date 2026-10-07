@@ -246,6 +246,9 @@ export default function TrainingScreen() {
                 stops={[{ at: 0, opacity: opacity.veilEdge }, { at: 1, opacity: 0 }]}
                 style={{ position: 'absolute', left: 0, bottom: 0 }}
               />
+              {/* Nízký displej (QA f1 k3 ⚠️): mezi pilulkou a tab barem prosvítal scrollovaný text mapy.
+                  Plný závoj `base` od spodní hrany pilulky až ke dnu obrazovky (pod tab barem). */}
+              {short ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: -clearance, height: clearance + space.m, backgroundColor: c.base }} /> : null}
               <PillButton label={copy.map.startLesson} onPress={() => open(currentId)} />
             </View>
           ) : null}

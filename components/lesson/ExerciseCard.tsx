@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { intro, motion } from '@/lib/motion';
-import { useTheme } from '@/theme';
+import { useShort, useTheme } from '@/theme';
 import type { Exercise } from '@/types';
 import { ExerciseSilhouette } from './ExerciseSilhouette';
 import { HoldTimer } from './HoldTimer';
@@ -25,27 +25,33 @@ const { step, rise } = intro.card;
 // ~62 znaků Interu 16 pt (průměrná šířka znaku ≈ 8 pt): pohodlná délka řádku na tabletu.
 const MEASURE = 496;
 
-interface Props { exercise: Exercise; /** Jen u výdrže. */ timer?: HoldTimerState }
+interface Props {
+  exercise: Exercise; /** Jen u výdrže. */ timer?: HoldTimerState;
+  /** Pod kartou je bublina průvodce: na nízkém displeji ještě menší panel siluety. */
+  guided?: boolean;
+}
 
 /** Karta cviku (Nothing Dot §6): panel = dlaždice se siluetou stojící na „podlaze“ z teček (pole doznívá
  *  nahoru k horizontu), pod ním JEDNO velké Doto číslo (opakování, u výdrže tečkový odpočet) — to má
  *  cvičenec v hlavě —, pak název a popis techniky. Silueta zůstává beze změny (subjekt, ne ozdoba). */
-export function ExerciseCard({ exercise, timer }: Props) {
+export function ExerciseCard({ exercise, timer, guided = false }: Props) {
   const { space, size } = useTheme();
+  // Nízký displej (320×568): menší panel, menší číslo a těsnější mezery — vše nad lištou bez scrollu.
+  const short = useShort();
   return (
-    <Animated.View entering={enter} exiting={exit} style={{ gap: space.l }}>
-      <Tile pad="none" style={{ height: size.silhouettePanel }}>
+    <Animated.View entering={enter} exiting={exit} style={{ gap: short ? space.m : space.l }}>
+      <Tile pad="none" style={{ height: short ? (guided ? size.silhouettePanelGuide : size.silhouettePanelShort) : size.silhouettePanel }}>
         {/* Podlaha se prolne první (zem dřív než postava), pak silueta. */}
         <Reveal play delay={intro.floor.at} rise={intro.floor.rise} config={motion.reveal} style={StyleSheet.absoluteFill}><Floor /></Reveal>
         {/* Vnitřní sled karty (motion): panel přijede s kartou, silueta v něm se zvedne o úder později,
             pak číslo, název a popis po 50 ms. Celý sled ≤ 260 + 200 ms. */}
-        <Reveal play delay={step} rise={rise} style={{ flex: 1, padding: space.m }}><ExerciseSilhouette id={exercise.silhouette} /></Reveal>
+        <Reveal play delay={step} rise={rise} style={{ flex: 1, padding: short ? space.s : space.m }}><ExerciseSilhouette id={exercise.silhouette} /></Reveal>
       </Tile>
-      <View style={{ gap: space.s }}>
+      <View style={{ gap: short ? space.xs : space.s }}>
         <Reveal play delay={step * 2} rise={rise}>
           {exercise.type === 'hold' && timer
             ? <HoldTimer timer={timer} total={exercise.amount} />
-            : <Stat size="L" value={exercise.amount} unit={copy.lesson.reps} />}
+            : <Stat size={short ? 'M' : 'L'} value={exercise.amount} unit={copy.lesson.reps} />}
         </Reveal>
         <Reveal play delay={step * 3} rise={rise}><Text variant="title" accessibilityRole="header">{exercise.name}</Text></Reveal>
         <Reveal play delay={step * 4} rise={rise}><Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{exercise.description}</Text></Reveal>

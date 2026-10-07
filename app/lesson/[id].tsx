@@ -21,7 +21,7 @@ import { now } from '@/lib/clock';
 import { canSkip } from '@/logic/adaptive';
 import { nextPhase, type LessonPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
-import { useTheme } from '@/theme';
+import { useShort, useTheme } from '@/theme';
 import type { CosmeticSlot, Exercise } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 import { IntentScrollView } from '@/components/dots';
@@ -44,6 +44,8 @@ export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const lesson = useLesson(id);
   const { c } = useTheme();
+  // Nízký displej: kompaktní bublina průvodce (bez štítku) přes celou šířku, ať zabere co nejméně výšky.
+  const short = useShort();
   const [phase, setPhase] = useState<LessonPhase>({ kind: 'exercise', index: 0 });
   const [result, setResult] = useState<LessonResult | null>(null);
   const [quitOpen, setQuitOpen] = useState(false);
@@ -149,7 +151,7 @@ export default function LessonScreen() {
           suspended={quitOpen}
           extra={lesson.data.extras[index] ?? 0}
           onDone={() => { lessonGuide.dismiss(); void advance(true); }}
-          guide={lessonGuide.id ? <GuideBubble id={lessonGuide.id} text={exercise.type === 'reps' ? copy.guide.lessonReps : copy.guide.lessonHold} arrow="down" align="end" onDismiss={lessonGuide.dismiss} /> : null}
+          guide={lessonGuide.id ? <GuideBubble id={lessonGuide.id} text={exercise.type === 'reps' ? copy.guide.lessonReps : copy.guide.lessonHold} arrow="down" align="end" compact={short} stretch={short} onDismiss={lessonGuide.dismiss} /> : null}
           onAct={lessonGuide.dismiss}
           alwaysSkip={demo}
           onSkip={demo ? () => void advance(true) : canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
@@ -181,6 +183,7 @@ interface StepProps {
 /** Jeden cvik: karta a spodní lišta. Klíčovaný cvikem, takže odpočet výdrže začíná pro každý cvik znovu. */
 function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, alwaysSkip = false, guide, onAct }: StepProps) {
   const { space } = useTheme();
+  const short = useShort();
   const hold = exercise.type === 'hold';
   const timer = useHoldTimer(hold ? exercise.amount : 0, onDone);
   const { pause } = timer;
@@ -196,8 +199,8 @@ function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, always
 
   return (
     <>
-      <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: space.l, paddingBottom: space.xl }}>
-        <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} />
+      <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.m : space.xl }}>
+        <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} />
         {extra > 0 ? <Text variant="caption" tone="muted" style={{ marginTop: space.s }}>{copy.lesson.extra(extra, hold)}</Text> : null}
       </IntentScrollView>
       {guide ? <View style={{ paddingTop: space.s }}>{guide}</View> : null}

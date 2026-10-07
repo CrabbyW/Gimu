@@ -930,3 +930,12 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 
 ## 2026-10-07 · boss · QA fáze 1 kolo 3 = NESCHVÁLENO → kolo 4 (vědomá výjimka z „max 3 kola“)
 - Kolo 3 schválilo opravy first run, zablokovalo starou vadu z fáze 0 (lekce na w320: lišta usekává odpočet, název cviku mimo výřez), kterou odhalilo až zpřísněné pravidlo „kolize/ořez = ❌“ z dnešního dne. Výjimka: vada není z této fáze a oprava je malá (kompaktní lekce) — boss povoluje 4. kolo QA.
+
+## 2026-10-07 design-agent — fáze 1, oprava QA kolo 3 (lekce na 320×568)
+- Kompaktní lekce přes `useShort()` (výška < 640): nové tokeny `size.silhouettePanelShort` 120, `size.silhouettePanelGuide` 80 (nízký displej + bublina průvodce), `size.holdRingShort` 160 a typ `heroShort` (Doto 42/56, stupeň škály). Menší mezery karty (l→m, s→xs), scroll paddingTop l→s, opakování `Stat` M místo L.
+- Proč 160 + Doto 42, ne 144 + Doto 64: při 144 „10“ v Doto 64 sahalo na vnitřní kruh teček (kolize, viděno na snímku).
+- Bublina průvodce v lekci na nízkém displeji `compact` + `stretch` (bez štítku MONKEY, přes celou šířku), karta s ní dostane panel 80 → název i první řádek popisu zůstanou nad bublinou (ověřeno first run w320 dark/light).
+- Ověřeno snímky w320: výdrž Crow, Wall handstand, Forearm plank (celý popis), opakování Hollow rock — nic se nekryje s lištou.
+- ⚠️ mapa w320: na nízkém displeji plný závoj `c.base` od spodní hrany pilulky [START LESSON] až ke dnu obrazovky (pod tab barem), scrollovaný text už neprosvítá. Na vyšších displejích beze změny (mapa dál jede pod tab barem, záměr).
+- Běhy: `tsc` OK, `jest` 703/703, `eslint .` 0 problémů (s `--ignore-pattern e2e/report/**` — vygenerovaný Playwright HTML report, gitignorovaný, ESLint ho jinak lintuje; doporučuji přidat do ignores v eslint.config, nesahal jsem), `e2e:update --grep lekce` → nová baseline w320-dark/light `lesson.png` (úmyslná změna, prohlédnuto), pak `playwright flows visual` 107/107.
+- Otevřené: v first run na w320 je zbytek popisu výdrže pod prvním řádkem dostupný scrollem, dokud je bublina vidět; po jejím zavření se panel vrátí na 120.

@@ -5,7 +5,7 @@ import { DotRing } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { ease, intro, motion, useMotionSafe } from '@/lib/motion';
-import { typography, useTheme } from '@/theme';
+import { typography, useShort, useTheme } from '@/theme';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
 const PULSE_FROM = motion.holdPulse.fromS;
@@ -25,6 +25,7 @@ export const holdFraction = (secondsLeft: number, total?: number) =>
  *  Stav a ovládání drží `useHoldTimer` v rodiči, který kreslí i akční lištu. */
 export function HoldTimer({ timer, total }: Props) {
   const { space, size } = useTheme();
+  const short = useShort();
   const { reduced } = useMotionSafe();
   const { secondsLeft, status, countdown } = timer;
 
@@ -72,16 +73,16 @@ export function HoldTimer({ timer, total }: Props) {
       accessibilityRole="timer"
       accessibilityLabel={`${secondsLeft} ${copy.lesson.seconds.toLowerCase()}`}
       // Prstenec na středu obrazovky; uvnitř jen Doto číslo, štítek stojí pod prstencem (nikdy přes tečky).
-      style={{ alignSelf: 'center', alignItems: 'center', gap: space.s }}
+      style={{ alignSelf: 'center', alignItems: 'center', gap: short ? space.xs : space.s }}
     >
       <Animated.View style={pulse}>
-        <DotRing progress={holdFraction(secondsLeft, total)} size={size.holdRing}>
+        <DotRing progress={holdFraction(secondsLeft, total)} size={short ? size.holdRingShort : size.holdRing}>
           {counting ? (
             <Animated.View style={cdStyle}>
-              <Text variant="hero" maxFontSizeMultiplier={1}>{countdown}</Text>
+              <Text variant={short ? 'heroShort' : 'hero'} maxFontSizeMultiplier={1}>{countdown}</Text>
             </Animated.View>
           ) : (
-            <Text variant="hero" maxFontSizeMultiplier={1}>{secondsLeft}</Text>
+            <Text variant={short ? 'heroShort' : 'hero'} maxFontSizeMultiplier={1}>{secondsLeft}</Text>
           )}
         </DotRing>
       </Animated.View>

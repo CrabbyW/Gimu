@@ -15,6 +15,9 @@ export const size = {
   // Živá tečka stavového řádku 6, tečkový prstenec výdrže 260 (Doto 64 + jednotka se vejde do vnitřního prstence),
   // minimální výška hero dlaždice mapy (číslo nahoře, název dole jako obr. 2).
   liveDot: 6, holdRing: 260, heroTile: 148,
+  // Nízký displej (useShort, 568 pt): prstenec výdrže 160 s číslem `heroShort` (Doto 42),
+  // aby „10“ nesahalo na vnitřní kruh teček.
+  holdRingShort: 160,
   // Kotouč oslavy na nízkém displeji (< breakpoint.short): strop průměru, ať se titulek, série a CTA nepřekrývají.
   celebratePlateShort: 128,
   // Doznění závoje pod překryvnou hlavičkou a nad plovoucí CTA (EdgeFade): mapa pod nimi mizí plynule, ne hranou.
@@ -65,7 +68,11 @@ export const size = {
   grainTile: 96, heroBarbellW: 136, heroBarbellH: 36,
   podiumFirst: 80, podiumSecond: 72, podiumThird: 64, podiumMascot: 48,
   podiumFirstCount: 5, podiumSecondCount: 3, podiumThirdCount: 2, pedestalCount: 3,
-  pedestalW: 176, pedestalPlateH: 12, silhouettePanel: 240, floorStep: 24, floorRows: 5, plateUnitMin: 72,
+  pedestalW: 176, pedestalPlateH: 12, silhouettePanel: 240,
+  // Nízký displej: panel siluety 120, aby na 320×568 nad lištou zůstal časovač, název i první řádek popisu.
+  silhouettePanelShort: 120,
+  // Nízký displej + bublina průvodce (first run) nad lištou: panel 80, ať název a popis nezajedou pod bublinu.
+  silhouettePanelGuide: 80, floorStep: 24, floorRows: 5, plateUnitMin: 72,
 } as const;
 // Nothing Dot §2.4: tečkové prvky (Skia, `components/dots/`). Vše v pt, poměry (`…Frac`, ×R) vůči poloměru prvku.
 export const dots = {
@@ -173,6 +180,8 @@ export const type = {
   // Doto má vysoký ascender a české háčky/čárky nad verzálkami: řádek 1.3 em, jinak glyfy přetečou box
   // a sousední text se překryje (web onboarding, 2026-10-05).
   hero: { fontFamily: font.dot, fontSize: 64, lineHeight: 84, letterSpacing: 0 },
+  // Hero na nízkém displeji (568 pt): stupeň 42 škály, uvnitř menšího prstence výdrže.
+  heroShort: { fontFamily: font.dot, fontSize: 42, lineHeight: 56, letterSpacing: 0 },
   // Titulek karty, název lekce.
   headline: { fontFamily: font.bodyStrong, fontSize: 18, lineHeight: 24 },
   // Čísla statistik, XP v lize.
