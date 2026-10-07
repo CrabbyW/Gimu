@@ -7,27 +7,37 @@ import { useSettings } from '@/store/settings';
 // Cizí hudbu nepřerušujeme (mixWithOthers); jen scéna oslavy ji na chvíli ztlumí (`setDucking`).
 // Přepínač `soundEnabled` je nezávislý na haptice.
 
-/* Zvuky: Kenney (kenney.nl), licence CC0, z knihovny SFX skillu brag. Převod ffmpeg do WAV 44.1 kHz mono 16 bit
- * (hraje iOS i Android), postup v docs/LOG.md. */
+/* Zvuková paleta (elite fáze 2): syntetizovaná skriptem `scripts/gen-sounds.mjs` (C dur pentatonika, suché tečkové
+ * tóny), WAV 44.1 kHz mono 16-bit. Gramatika: pokrok stoupá, chyba klesá. Přegenerování: `node scripts/gen-sounds.mjs`. */
 const SOURCES = {
-  /** Nacvaknutí kotouče: impactPlate_heavy_003 (kov) + impactSoft_medium_001 (tělo úderu), lowpass 9 kHz. */
-  plateSnap: require('../assets/sounds/plate-snap.wav'),
-  /** Výběr v nabídce: ui/click2, −4.4 dB, lowpass 8 kHz. */
-  select: require('../assets/sounds/select.wav'),
-  /** Odemčení uzlu: interface/bong_001, −3 dB. */
-  unlock: require('../assets/sounds/unlock.wav'),
-  /** Suchý dřevěný klik (odpočet, XP ticky, kotouč série): impactWood_light_002, 60 ms, lowpass 7 kHz. */
+  /** Jemný krok (odpočet, XP, kotouč série): A5, 25 ms. */
   tick: require('../assets/sounds/tick.wav'),
-  /** Kovový cink oslavy: impactBell_heavy_003, ořez s fade-out, lowpass 7 kHz, −6 dB. */
-  ring: require('../assets/sounds/ring.wav'),
-  /** Tlumený gong (rekord, stage-up): impactBell_heavy_000 o kvintu níž, 1.8 s, lowpass 3.5 kHz. */
-  gong: require('../assets/sounds/gong.wav'),
+  /** Výběr volby: E5, 35 ms. */
+  select: require('../assets/sounds/select.wav'),
+  /** Nacvaknutí kotouče / konec výdrže: E4 + B4, 90 ms. */
+  snap: require('../assets/sounds/snap.wav'),
+  /** Odemčení uzlu: C5–E5–G5. */
+  unlock: require('../assets/sounds/unlock.wav'),
+  /** Konec lekce, podpis oslavy: C5–G5–C6. */
+  success: require('../assets/sounds/success.wav'),
+  /** Chyba formuláře, zamčeno: G4–D4. */
+  error: require('../assets/sounds/error.wav'),
+  /** Let kotouče: šumový sweep. */
+  swoosh: require('../assets/sounds/swoosh.wav'),
+  /** Reakce opičky na ťuknutí: C6, 40 ms. */
+  pop: require('../assets/sounds/pop.wav'),
+  /** Stage-up: C5–E5–G5–C6. */
+  levelUp: require('../assets/sounds/level-up.wav'),
 } satisfies Record<string, AudioSource>;
 
 export type SfxName = keyof typeof SOURCES;
+/** Registr pro testy pokrytí (každý zvuk z mapy odezvy existuje). */
+export const SFX_NAMES = Object.keys(SOURCES) as SfxName[];
 
-/** Hlasitost 30 %, dlouhé dozvuky 25 % (§6.2.3). */
-const VOLUME: Record<SfxName, number> = { plateSnap: 0.3, select: 0.3, unlock: 0.3, tick: 0.3, ring: 0.25, gong: 0.25 };
+/** Hlasitost: krátké tiky 35 %, ostatní 60 % (spec fáze 2 §2). */
+const VOLUME: Record<SfxName, number> = {
+  tick: 0.35, select: 0.35, pop: 0.35, snap: 0.6, unlock: 0.6, success: 0.6, error: 0.6, swoosh: 0.5, levelUp: 0.6,
+};
 
 const players = new Map<SfxName, AudioPlayer>();
 let ready = false;
@@ -73,4 +83,4 @@ export function setDucking(on: boolean): void {
 export const useSfx = (name: SfxName) => () => playSfx(name);
 
 /** Nacvaknutí kotouče při dopadu (spec §7.3). */
-export const useClickSound = () => useSfx('plateSnap');
+export const useClickSound = () => useSfx('snap');

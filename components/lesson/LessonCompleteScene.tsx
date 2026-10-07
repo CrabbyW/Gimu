@@ -236,7 +236,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
       // Omezený pohyb: konečný stav jedním prolnutím, potvrzení dokončení zůstává hmatové (jen success).
       sceneIn.value = withTiming(1, { duration: L.reducedMs, easing: ease.out, ...NEVER });
       for (const [, kind] of celebrationHaptics(true)) fire(kind);
-      playSfx('plateSnap');
+      playSfx('snap');
       reportReaction({ type: 'lessonDone' });
       return;
     }
@@ -262,7 +262,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
       wave.value = 0;
       wave.value = withTiming(1, { duration: L.shockWaveMs, easing: Easing.out(Easing.cubic), ...NEVER });
       startSpin(true);
-      playSfx('plateSnap');
+      playSfx('snap');
     });
     // 1450: opička, titulek, XP, série.
     at(cheerStep.at, () => {
