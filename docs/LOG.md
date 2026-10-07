@@ -955,3 +955,11 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 ### 2026-10-07 qa-agent: elite fáze 1, QA kolo 5 (HEAD 2c8dfb8)
 - Ověřil: tsc/eslint 0, jest 703/703, e2e 115/115, perf 4/4, log bez nových ERROR; w320/w375 first-run-lesson, demo lesson, first-run-map, mapa (i ad hoc odscrollovaná), oslavy, /setup.
 - Verdikt: SCHVÁLENO. ⚠️ jen dekorativní šipka bubliny v lekci na w320 částečně pod lištou (design-agent, volitelně).
+
+## 2026-10-07 motion-agent: elite fáze 2, Task 2 (napojení zvuku a haptiky)
+- Napojeno: `flightStart` (PlateFlight, start letu po přistání cíle; omezený pohyb = let není, bez zvuku), `lessonDone` (LessonCompleteScene: success úder podpisu `celebrationHaptics` jde přes `feedback('lessonDone')` = haptika + zvuk success naráz; omezený pohyb jen `lessonDone`, dřívější `playSfx('snap')` vypuštěn; snap při nacvaknutí zůstává `playSfx`, heavy nese podpis), `stageUp` (stage-up: místo `haptics.success()` v bornAt i v omezeném pohybu), `guideShow` (GuideBubble: jednou za mount po `delay` Reveal, ne při odchodu), `setupDone` (/setup po úspěšném uložení před `router.back()`).
+- `playSfx` tichý fallback už v kódu (try/catch, chybějící přehrávač) – pokryto testem `lib/__tests__/sound.test.ts`, tamtéž `playsInSilentMode: false` (preload i ducking).
+- Integrační testy `lib/__tests__/feedbackWiring.test.ts`: lessonDone = haptika + zvuk, vypnuté Zvuky, vypnutá Haptika, omezovač 40 ms, grep napojení nových id.
+- Rozhodnuto sám: reduced oslava lekce bez snap zvuku (jen success podpis); guideShow i při omezeném pohybu (zvuk není pohyb).
+- Běhy: tsc OK, eslint OK, jest 75 suites / 718 + nové testy OK, test:node 25/25, e2e 115/115.
+- Otevřené: ověření na iPhonu (tichý režim, souběh snap+success).

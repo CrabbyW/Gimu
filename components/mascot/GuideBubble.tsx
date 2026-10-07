@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { feedback } from '@/lib/feedback';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing, ReduceMotion, cancelAnimation, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
@@ -53,6 +54,13 @@ export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0,
   const arrowView = floating ? null : <DotArrow dir={arrow} play={play} delay={delay} style={{ alignSelf, marginHorizontal: size.tilePad }} />;
   // Odchod: prolnutí `overlayResize.outMs` (výšku pak plynule dorovná volající, mapa neposkočí).
   const out = useSharedValue(1);
+  // Nástup: jeden tichý tik, když se bublina poprvé ukáže (po `delay` Reveal); jen jednou za mount.
+  const announced = useRef(false);
+  useEffect(() => {
+    if (!play || leaving || announced.current) return;
+    const t = setTimeout(() => { announced.current = true; feedback('guideShow'); }, delay);
+    return () => clearTimeout(t);
+  }, [play, leaving, delay]);
   useEffect(() => {
     if (leaving) out.value = withTiming(0, { duration: overlayResize.outMs, easing: ease.exit, ...NEVER });
   }, [leaving, out]);

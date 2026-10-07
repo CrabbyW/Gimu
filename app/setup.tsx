@@ -18,6 +18,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useSettingsPrefs } from '@/hooks/useSettingsPrefs';
 import { intro } from '@/lib/motion';
 import { useTheme } from '@/theme';
+import { feedback } from '@/lib/feedback';
 
 const t = copy.setup;
 type Route = '/goals/dream' | '/goals/milestones' | '/goals/weight' | '/settings';
@@ -51,7 +52,7 @@ export default function SetupScreen() {
     const ok = await complete();
     inFlight.current = false;
     setBusy(false);
-    if (ok) router.back(); else setFailed(true);
+    if (ok) { feedback('setupDone'); router.back(); } else setFailed(true);
   };
 
   const w = p.weightGoal;

@@ -15,6 +15,7 @@ import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
 import { haptics } from '@/lib/haptics';
+import { feedback } from '@/lib/feedback';
 import { ease, motion, stageUp, useMotionSafe } from '@/lib/motion';
 import { parseStageParam } from '@/logic/mascot';
 import { dots, useTheme } from '@/theme';
@@ -89,7 +90,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
       // Omezený pohyb: rovnou nová opice (fade 200 ms), haptika zůstává.
       newOpacity.set(withTiming(1, FADE));
       textOpacity.set(withTiming(1, FADE));
-      haptics.success();
+      feedback('stageUp');
     } else {
       // 1) Stará opička se stáhne a zmizí (příprava, ease-out, bez pružiny); prstenec se nadechne.
       oldMascot.set(withDelay(T.shrinkAt, withTiming(0, { duration: T.shrinkMs, easing: motion.reveal.easing })));
@@ -105,7 +106,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
       // 3) Dolet: nový prstenec převezme tečky, opička vyskočí pružinou (odměna).
       newRing.set(withDelay(T.bornAt, withTiming(1, { duration: T.handoffMs })));
       newScale.set(withDelay(T.bornAt, withSpring(1, motion.pop)));
-      timers.push(setTimeout(() => haptics.success(), T.bornAt));
+      timers.push(setTimeout(() => feedback('stageUp'), T.bornAt));
       textOpacity.set(withDelay(T.textAt, withTiming(1, motion.ui)));
     }
     timers.push(setTimeout(() => setReady(true), reduced ? FADE.duration : T.ctaAt));

@@ -5,6 +5,7 @@ import { FullWindowOverlay } from 'react-native-screens';
 import { scheduleOnRN } from 'react-native-worklets';
 import { DotPlate } from '@/components/dots';
 import { ease, motion, plateFlight as PF, useMotionSafe } from '@/lib/motion';
+import { feedback } from '@/lib/feedback';
 import { clear, getFlight, subscribe, type Flight } from '@/lib/plateFlight';
 
 const NEVER = { reduceMotion: ReduceMotion.Never };
@@ -44,6 +45,7 @@ function FlyingPlate({ flight }: { flight: Flight }) {
 
   useEffect(() => {
     if (!landed || reduced) return;
+    feedback('flightStart'); // kotouč se právě odlepil (omezený pohyb: let není, zvuk taky ne)
     p.value = withTiming(1, { duration: PF.ms, easing: ease.exit, ...NEVER }, (done) => { if (done) scheduleOnRN(clear); });
     return () => cancelAnimation(p);
   }, [landed, reduced, p]);

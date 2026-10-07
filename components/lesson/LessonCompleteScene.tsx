@@ -20,7 +20,7 @@ import { useLessonMinutes } from '@/hooks/useLessonMinutes';
 import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { feedback } from '@/lib/feedback';
-import { fire } from '@/lib/haptics';
+import { fire, type HapticKind } from '@/lib/haptics';
 import { ease, lessonDone as L, motion, plateFlight as PF, spring, useMotionSafe } from '@/lib/motion';
 import { takeLastRect } from '@/lib/plateFlight';
 import { playSfx, setDucking } from '@/lib/sound';
@@ -223,6 +223,8 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
     setXpShown(result.xp.total);
     setCtaReady(true);
   };
+  // Success úder podpisu jde přes mapu odezvy (haptika + zvuk success naráz, žádné dvojí přehrání).
+  const signature = (kind: HapticKind) => { if (kind === 'success') feedback('lessonDone'); else fire(kind); };
   const skipGate = useRef<ReturnType<typeof once> | null>(null);
   const skipToEnd = () => { (skipGate.current ??= once(doSkip)).run(); };
 
@@ -235,8 +237,8 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
     if (calm) {
       // Omezený pohyb: konečný stav jedním prolnutím, potvrzení dokončení zůstává hmatové (jen success).
       sceneIn.value = withTiming(1, { duration: L.reducedMs, easing: ease.out, ...NEVER });
-      for (const [, kind] of celebrationHaptics(true)) fire(kind);
-      playSfx('snap');
+      // Podpis = success haptika + zvuk success v jednom okamžiku (feedback 'lessonDone').
+      for (const [, kind] of celebrationHaptics(true)) signature(kind);
       reportReaction({ type: 'lessonDone' });
       return;
     }
@@ -246,7 +248,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
     const cheerStep = stepOf(tl, 'mascot');
     const cta = stepOf(tl, 'cta');
     // Haptický podpis: každý úder plánovaný z UI vlákna (sedí na snímek s animací); přeskočení zbytek zruší.
-    for (const [ms, kind] of celebrationHaptics(false)) at(ms, () => fire(kind));
+    for (const [ms, kind] of celebrationHaptics(false)) at(ms, () => signature(kind));
     // 0: vlna od kotouče přeběhne pole.
     wave.value = withDelay(field.at, withTiming(1, { duration: field.durationMs, easing: Easing.out(Easing.quad), ...NEVER }));
     // 200: let teček (lineární průběh, každá tečka má vlastní ease-out v `flying`).
@@ -262,7 +264,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
       wave.value = 0;
       wave.value = withTiming(1, { duration: L.shockWaveMs, easing: Easing.out(Easing.cubic), ...NEVER });
       startSpin(true);
-      playSfx('snap');
+      playSfx('snap'); // haptiku (heavy) nese podpis `celebrationHaptics`
     });
     // 1450: opička, titulek, XP, série.
     at(cheerStep.at, () => {
