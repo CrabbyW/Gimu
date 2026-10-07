@@ -1001,3 +1001,7 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Řešení: popisky pod bublinou po dobu repliky **ustoupí** (opacity 0, čtečka je přeskočí, místo v layoutu zůstává → nic neposkočí). Ustoupí jen to, co obdélník bubliny (šířka `lineW`, výška `dots.line.room` nad opičkou) skutečně kryje: popisky uzlů (`NodeLabel hidden`) i nadpis sekce. Proč ne přesun bubliny: nad opičkou je vždy předchozí uzel s popiskem, do strany na w320 není místo; mono věta přes ztlumený mono text by se četla špatně. Prolnutí popisku je případně práce pro motion-agenta (teď statický stav). `LineBubbleMotion` beze změny.
 - `e2e/flows/mascot-line.spec.ts`: `expectGeometry` nově kontroluje, že žádný viditelný text (opacity řetězce > 0) mimo bublinu nemá s bublinou průnik; běží na w390 i w320.
 - Ověření: tsc OK, eslint OK, jest 740/740, `npm run e2e` 117/117 (bez nových baseline). Dočasný test (smazán) nasnímal w320/w430 dark/light po ťuknutí: bublina čistá, popisek „Overhead…“ / dokončeného uzlu skrytý, nic nekoliduje s hlavičkou ani CTA.
+
+### qa-agent: elite fáze 3 QA kolo 2 (7bc1f5b)
+- SCHVÁLENO. tsc, eslint, jest 740, test:node a e2e 117/117 jsou zelené. Mutační kontrola (`HIDDEN` s opacity 1) nový e2e test shodí na w390 i w320. Snímky w320/w430 dark/light jsou čisté a popisek se po replice vrací. Native log bez nového ERROR.
+- Otevřené: prolnutí skrytého popisku (motion), potvrdit záměr u vyblednutých popisků pod hlavičkou (design).

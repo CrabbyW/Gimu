@@ -470,3 +470,25 @@ iPhone checklist (max. 5)
 3. Se zapnutým VoiceOver dvakrát ťukni na opičku: replika se přečte.
 4. Dokonči lekci s novým rekordem série: řádek rekordu a hrdost opičky sedí do rytmu oslavy, bez zvuku navíc. Skip oslavu přeskočí čistě.
 5. Se zapnutým Reduce Motion udělej totéž: řádek rekordu je hned, proud zhruba po 1,2 s a nic necuká.
+
+## QA elite fáze 3, kolo 2: HEAD 7bc1f5b (oprava překryvu LineBubble po 952a497)
+
+Verdikt: **SCHVÁLENO** pro HEAD `7bc1f5b939e47f29e6c81733a4c842370cfb995d`.
+
+- ✅ `npx tsc --noEmit` čisté, `npx eslint .` čisté, `npx jest` 78 sad / 740 testů, `npm run test:node` 0 fail.
+- ✅ `npm run e2e` (dist na 8083) 117/117, žádná nová baseline.
+- ✅ Test opravdu chytá chybu: dočasně jsem dal `HIDDEN = { opacity: 1 }`, oba testy v `mascot-line` (w390 i w320) spadly s `covered = ["Upside down", …]`. Po vrácení přes `git checkout` prošly 2/2, pracovní strom je čistý.
+- ✅ Snímky po ťuknutí na opičku na w320 a w430, dark i light (dočasný spec, smazaný): bublina je celá ve viewportu, pod hlavičkou a nad CTA a nepřekrývá žádný viditelný text. Skrytý je jen popisek „Upside down“ (dokončený uzel nad opičkou), na všech 5 kombinacích (včetně w390-dark).
+- ✅ Skrývá se jen to, co bublina kryje: před ťuknutím 0 prvků s opacity 0, během repliky 1 („Upside down“), po zmizení bubliny zase 0. Popisek se vrátí, ověřeno i na snímku w320-dark po zmizení. Nadpis sekce, popisky ostatních uzlů, boss i CTA zůstávají vidět.
+- ✅ Přístupnost: skrytý `NodeLabel` má `accessibilityElementsHidden` a `importantForAccessibility="no-hide-descendants"`. Prvek zůstává v layoutu, takže nic neposkočí.
+- ✅ Nativní log `$TEMP/expogo.log` se nezměnil (283 ř., naposledy zapsán 07:08). Poslední ERROR na ř. 225 je historický → žádný nový ERROR. Fáze 3 v Expo Go zatím neběžela.
+- ⚠️ (motion-agent) Popisek zmizí a vrátí se skokově, bez prolnutí. Funkčně je to v pořádku, prolnutí by bylo čistší.
+- ⚠️ (design-agent, netýká se této změny) Na w320/w430 jsou pod průsvitnou hlavičkou vidět vyblednuté popisky odscrollovaných uzlů („Shoulders down“ za tečkami postupu, „Overhead“ za nadpisem). Jde o záměrné podjíždění pod hlavičku a je to i ve schválených baseline. Design by měl potvrdit, že je to zamýšlené.
+- Odhad obdélníku bubliny používá `L.room`, ne skutečnou výšku. Skutečná bublina (44–60 pt) se do něj na všech měřených šířkách vešla.
+
+iPhone checklist:
+1. Ťukni na opičku na mapě: popisek nad ní zmizí jen po dobu repliky, potom se vrátí. Nic neposkočí ani nebliká.
+2. Rychle ťukej na opičku asi 10×: haptika se nezdvojuje, popisek nezůstane skrytý.
+3. Se zapnutým VoiceOver projdi mapu během repliky: skrytý popisek se nepřečte, replika ano.
+4. Na iPhonu s Dynamic Island: bublina je pod hlavičkou a mimo safe area.
+5. Plynulost: posun mapy pod hlavičku při replice nesmí cukat.
