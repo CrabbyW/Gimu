@@ -8,4 +8,4 @@ export {
   type Fonts, type Mascot, type Material, type Radius, type Size, type Space, type StatSize, type Stroke, type TypeVariant,
 } from './tokens';
 export { inkOn } from './ink';
-export { useCompact } from './useCompact';
+export { useCompact, useShort } from './useCompact';

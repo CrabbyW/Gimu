@@ -25,6 +25,10 @@ interface Props {
   play?: boolean;
   /** true = bublina odchází (už je zapsaná jako viděná): prolne se pryč, volající ji pak odmontuje. */
   leaving?: boolean;
+  /** Přepis věty (např. lekce podle typu cviku); jinak `copy.guide[id]`. */
+  text?: string;
+  /** Nízký displej: bez štítku MONKEY, věta se vejde na jeden řádek. */
+  compact?: boolean;
 }
 
 const NEVER = { reduceMotion: ReduceMotion.Never };
@@ -35,9 +39,9 @@ const NEVER = { reduceMotion: ReduceMotion.Never };
  * umisťuje mimo CTA a tab bar. Tap kamkoli na bublinu = zmizí. Jediná plocha ve stylu `raised` (o tón výš),
  * žádný akcent: důležitost nese poloha, ne barva. Nástup jemný (Reveal); detaily pohybu = motion-agent.
  */
-export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0, play = true, leaving = false }: Props) {
+export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0, play = true, leaving = false, text: override, compact = false }: Props) {
   const { c, space, radius, size } = useTheme();
-  const text = copy.guide[id];
+  const text = override ?? copy.guide[id];
   const alignSelf = align === 'start' ? 'flex-start' : align === 'end' ? 'flex-end' : 'center';
   const arrowView = <DotArrow dir={arrow} play={play} delay={delay} style={{ alignSelf, marginHorizontal: size.tilePad }} />;
   // Odchod: prolnutí `overlayResize.outMs` (výšku pak plynule dorovná volající, mapa neposkočí).
@@ -64,7 +68,7 @@ export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0,
           borderRadius: radius.l, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
         })}
       >
-        <Text variant="label" tone="muted">{copy.guide.kicker}</Text>
+        {compact ? null : <Text variant="label" tone="muted">{copy.guide.kicker}</Text>}
         <Text variant="pill" style={{ flexShrink: 1 }}>{text.toUpperCase()}</Text>
       </Pressable>
       {arrow === 'down' ? arrowView : null}

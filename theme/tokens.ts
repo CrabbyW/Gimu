@@ -15,6 +15,8 @@ export const size = {
   // Živá tečka stavového řádku 6, tečkový prstenec výdrže 260 (Doto 64 + jednotka se vejde do vnitřního prstence),
   // minimální výška hero dlaždice mapy (číslo nahoře, název dole jako obr. 2).
   liveDot: 6, holdRing: 260, heroTile: 148,
+  // Kotouč oslavy na nízkém displeji (< breakpoint.short): strop průměru, ať se titulek, série a CTA nepřekrývají.
+  celebratePlateShort: 128,
   // Doznění závoje pod překryvnou hlavičkou a nad plovoucí CTA (EdgeFade): mapa pod nimi mizí plynule, ne hranou.
   edgeFade: 40,
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
@@ -180,6 +182,8 @@ export const type = {
   // lineHeight ≥ 1.0 em, aby Android neořízl horní dotahy Interu (Bebas snesl 0.9).
   displayXL: { fontFamily: font.dot, fontSize: 110, lineHeight: 143, letterSpacing: 0 },
   display: { fontFamily: font.dot, fontSize: 40, lineHeight: 52, letterSpacing: 0 },
+  // Titulek oslavy na nízkém displeji (< breakpoint.short): Doto 28 (spodní hranice Doto), „Plate on the bar.“ na jeden řádek v 320.
+  dotTitleShort: { fontFamily: font.dot, fontSize: 28, lineHeight: 36, letterSpacing: 0 },
   // Číslo dlaždice (obr. 2 „200 lbs“): Doto 28, nejmenší povolený stupeň písma Doto.
   dotStat: { fontFamily: font.dot, fontSize: 28, lineHeight: 36, letterSpacing: 0 },
   // Nadpis obrazovky: Inter 600 24 (Teplá litina; dřív Light 33).
@@ -214,7 +218,8 @@ export const type = {
 
 // Šířkové zlomy v pt. `compact` = displeje užší než 375 (iPhone SE 1. gen., 320 pt): menší stupně
 // u prvků, které jinak ořezávají (tab bar, název sezóny, oslava lekce).
-export const breakpoint = { compact: 375 } as const;
+// `short` = výška okna pod 640 (iPhone SE 1. gen., 568 pt): oslava a mapa prvního průchodu se zhustí.
+export const breakpoint = { compact: 375, short: 640 } as const;
 
 // Odhad šířky glyfů pro rozpočet layoutu (ne vykreslování). Inter Light, tabulární číslice a „+“
 // ≈ 0.6 em, po trackingu display −0.03 em; 0.62 nechává rezervu na rozdíly renderu.

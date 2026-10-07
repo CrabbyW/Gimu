@@ -127,9 +127,9 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   }, []);
   const scrollToNode = useCallback((id: string, animated: boolean) => {
     const p = posOf(id);
-    // Uzel na 40 % výřezu pod překryvnou hlavičkou (vnitřní souřadnice: horní hrana výřezu = scrollY).
-    if (p && viewportH > 0) scrollTo(Math.max(0, p.y - Math.max(0, viewportH - topInset) * 0.4), animated);
-  }, [posOf, viewportH, topInset, scrollTo]);
+    // Uzel na 40 % viditelného výřezu (pod překryvnou hlavičkou, nad pruhem CTA `footerSpace`) (vnitřní souřadnice: horní hrana výřezu = scrollY).
+    if (p && viewportH > 0) scrollTo(Math.max(0, p.y - Math.max(0, viewportH - topInset - footerSpace) * 0.4), animated);
+  }, [posOf, viewportH, topInset, footerSpace, scrollTo]);
 
   // Omezený pohyb: opička se na nový uzel jen prolne (200 ms), bez oblouku.
   const crossfade = useSharedValue(1);

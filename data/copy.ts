@@ -465,12 +465,16 @@ export const copy = {
   guide: {
     mapStart: 'Tap the plate to start',
     lessonHold: 'Hold the timer or tap Done',
+    // Cvik na opakování nemá časovač: stejná bublina, jiná věta (výběr podle `exercise.type`).
+    lessonReps: 'Do the reps, then tap Done',
     celebrationFirst: 'That’s your first plate',
     kicker: 'MONKEY',
     dismissA11y: 'Dismiss tip',
   },
   // Krátký onboarding (elite fáze 1): cíle se doplní až po první lekci.
   setup: {
+    // Nízký displej: krátký štítek, aby se nevyřízl (celé znění nese tileA11y).
+    tileShort: (n: number) => `Setup · ${n}`,
     tile: (n: number) => `Finish setup · ${n} ${plural(n, 'step', 'steps')}`,
     tileA11y: (n: number) => `Finish setup, ${n} ${plural(n, 'step', 'steps')} left`,
     setGoals: 'Set your goals',

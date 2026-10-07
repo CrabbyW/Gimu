@@ -149,7 +149,7 @@ export default function LessonScreen() {
           suspended={quitOpen}
           extra={lesson.data.extras[index] ?? 0}
           onDone={() => { lessonGuide.dismiss(); void advance(true); }}
-          guide={lessonGuide.id ? <GuideBubble id={lessonGuide.id} arrow="down" align="end" onDismiss={lessonGuide.dismiss} /> : null}
+          guide={lessonGuide.id ? <GuideBubble id={lessonGuide.id} text={exercise.type === 'reps' ? copy.guide.lessonReps : copy.guide.lessonHold} arrow="down" align="end" onDismiss={lessonGuide.dismiss} /> : null}
           onAct={lessonGuide.dismiss}
           alwaysSkip={demo}
           onSkip={demo ? () => void advance(true) : canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}

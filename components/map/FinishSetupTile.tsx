@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { useTheme } from '@/theme';
+import { useShort, useTheme } from '@/theme';
 
 /** Kroky „Finish setup“: vize, milníky, váha, připomínka (app/setup.tsx). */
 export const SETUP_STEPS = 4;
@@ -15,6 +15,7 @@ export const SETUP_STEPS = 4;
  */
 export function FinishSetupTile() {
   const { c, space, size, radius, stroke } = useTheme();
+  const short = useShort();
   return (
     <Pressable
       onPress={() => router.push('/setup')}
@@ -28,7 +29,7 @@ export function FinishSetupTile() {
       })}
     >
       <View style={{ width: size.liveDot, height: size.liveDot, borderRadius: size.liveDot / 2, backgroundColor: c.text }} />
-      <Text variant="label" style={{ flex: 1 }} numberOfLines={1}>{copy.setup.tile(SETUP_STEPS)}</Text>
+      <Text variant="label" style={{ flex: 1 }} numberOfLines={1}>{short ? copy.setup.tileShort(SETUP_STEPS) : copy.setup.tile(SETUP_STEPS)}</Text>
       <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
     </Pressable>
   );

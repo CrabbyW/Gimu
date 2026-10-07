@@ -30,7 +30,7 @@ import { useLessonMinutes } from '@/hooks/useLessonMinutes';
 import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
-import { dots, opacity, useTheme } from '@/theme';
+import { dots, opacity, useShort, useTheme } from '@/theme';
 
 /** Nástup hlavičky (motion.screenIn): shared value, ne layout animace (ta na webu nechá prvek `absolute`). */
 const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
@@ -105,6 +105,8 @@ export default function TrainingScreen() {
   // Start lekce je zamčený proti dvojímu ťuknutí; návrat na mapu ho odemkne.
   useFocusEffect(useCallback(() => { endStart(); }, []));
   const setup = useFinishSetup();
+  // Nízký displej (568): kompaktní bublina průvodce (bez štítku, jeden řádek), ať aktuální kotouč zůstane nad CTA.
+  const short = useShort();
   const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch, play), [field.gesture, reactions.touch, play]);
 
   if (profile.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
@@ -200,7 +202,9 @@ export default function TrainingScreen() {
             }}
           />
           </Reveal>
-          <SectionHero view={viewData} intro={intro} />
+          {/* Nízký displej v prvním průchodu (svítí bublina): prázdná řada pokroku 0/9 ustoupí, aby aktuální kotouč
+              i s opičkou a popiskem zůstal mezi překryvem a CTA. Po startu lekce se vrátí. */}
+          {short && bubbleId && currentId ? null : <SectionHero view={viewData} intro={intro} />}
           {/* Karta „První lekce“ zrušena: minuty a XP nese popisek aktuálního uzlu, mapě zůstane výška. */}
           {sad ? (
             <Card style={{ marginHorizontal: space.l, marginTop: space.s, gap: space.xs }}>
@@ -213,7 +217,7 @@ export default function TrainingScreen() {
           {/* Průvodce: pod hlavičkou, šipka dolů k aktuálnímu kotouči (ten je hned pod překryvem). Nikdy u CTA dole. */}
           {bubbleId && currentId ? (
             <View style={{ paddingHorizontal: space.l, marginTop: space.s }}>
-              <GuideBubble id={bubbleId} arrow="down" onDismiss={dismissGuide} leaving={!guide.id} delay={motion.screenIn.headerAt} />
+              <GuideBubble id={bubbleId} arrow="down" compact={short} onDismiss={dismissGuide} leaving={!guide.id} delay={motion.screenIn.headerAt} />
             </View>
           ) : null}
           </View>

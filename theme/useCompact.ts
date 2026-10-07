@@ -6,3 +6,9 @@ export function useCompact(): boolean {
   const { width } = useWindowDimensions();
   return width < breakpoint.compact;
 }
+
+/** true na nízkých displejích (výška < `breakpoint.short`, 568 pt třída). */
+export function useShort(): boolean {
+  const { height } = useWindowDimensions();
+  return height < breakpoint.short;
+}

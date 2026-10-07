@@ -29,7 +29,7 @@ import { nextLessonId } from '@/logic/map';
 import type { GuideId } from '@/logic/guide';
 import type { LessonResult } from '@/services';
 import type { LessonPathView } from '@/services/contracts';
-import { dots, useCompact, useTheme } from '@/theme';
+import { dots, useCompact, useShort, useTheme } from '@/theme';
 import type { CosmeticSlot, Lesson, Mood } from '@/types';
 import { celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, once, stepOf, xpBreakdownLabel, xpTickStep } from './celebration';
 
@@ -93,10 +93,13 @@ interface Props {
  * Odchod appky do pozadí = přeskočení na konec.
  */
 export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, guide, onSetGoals }: Props) {
-  const { c, space } = useTheme();
+  const { c, space, size } = useTheme();
   const ink = useDotInk();
   const insets = useSafeAreaInsets();
   const compact = useCompact();
+  // Nízký displej (568): menší kotouč, bez řádku „Tomorrow“, [SET YOUR GOALS] jako textová akce. Nic se nepřekrývá.
+  const short = useShort();
+  const tight = compact || short;
   const { reduced } = useMotionSafe();
   // Sekvence se rozhodne jednou při vstupu; přepnutí omezení pohybu uprostřed ji nerestartuje.
   const [calm] = useState(reduced);
@@ -116,7 +119,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   const rootRef = useRef<View>(null);
   const plateRef = useRef<View>(null);
   const contentW = (box?.w ?? 0) - 2 * space.l;
-  const P = Math.max(0, Math.min(contentW * L.plateFrac, L.plateMax));
+  const P = Math.max(0, Math.min(contentW * L.plateFrac, short ? size.celebratePlateShort : L.plateMax));
   const dotR = plateDotRadius(P);
   const kg = lesson.plateKg;
   const measure = () => {
@@ -334,10 +337,10 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
           <Animated.View style={[{ flex: 1 }, sceneStyle]}>
             {/* Průhledná plocha (ne `Screen`, ten má plnou `base`): pod obsahem musí být vidět pole teček. */}
             <View style={{ flex: 1, paddingTop: insets.top, paddingHorizontal: space.l }}>
-              <Animated.View style={[{ paddingTop: compact ? space.l : space.xl }, textStyle]}>
-                <Text variant="display" accessibilityRole="header">{title}</Text>
+              <Animated.View style={[{ paddingTop: short ? space.m : compact ? space.l : space.xl }, textStyle]}>
+                <Text variant={short ? 'dotTitleShort' : 'display'} accessibilityRole="header">{title}</Text>
               </Animated.View>
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: compact ? space.l : space.xl }}>
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: short ? space.m : compact ? space.l : space.xl }}>
                 <View ref={plateRef} onLayout={measure} style={{ width: P, height: P }}>
                   {P > 0 ? (
                     <Animated.View style={plateStyle}>
@@ -348,7 +351,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
                 {/* Průvodce: místo rezervované od začátku (layout se nehne a let teček míří na správný střed kotouče),
                     viditelný až s CTA. Šipka nahoru ke kotouči. */}
                 {guide ? (
-                  <View style={{ marginTop: -(compact ? space.m : space.l), alignSelf: 'stretch' }}>
+                  <View style={{ marginTop: -(tight ? space.s : space.l), alignSelf: 'stretch' }}>
                     <GuideBubble id={guide.id} arrow="up" play={ctaReady} onDismiss={guide.dismiss} />
                   </View>
                 ) : null}
@@ -380,7 +383,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
                     ) : null}
                   </Animated.View>
                 </View>
-                {tomorrow ? (
+                {tomorrow && !short ? (
                   <Animated.View style={[{ alignSelf: 'stretch' }, textStyle]}>
                     <Text variant="caption" tone="muted">{tomorrow}</Text>
                   </Animated.View>
@@ -410,11 +413,21 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
         {/* CTA nastoupí zdola v `lessonDone.ctaAt`; místo je rezervované, layout se nehýbe. Do té doby tap přeskočí. */}
         <Animated.View
           pointerEvents={ctaReady ? 'auto' : 'none'}
-          style={[{ paddingHorizontal: space.l, paddingTop: space.m, paddingBottom: insets.bottom + space.m }, ctaStyle]}
+          style={[{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.m, paddingBottom: insets.bottom + (short ? space.s : space.m) }, ctaStyle]}
         >
           <PillButton label={t.cta} onPress={onContinue} disabled={!ctaReady} />
           {/* Krátký onboarding: doplnění cílů jako sekundární cesta; [CONTINUE] zůstává jediné plné CTA. */}
-          {onSetGoals ? (
+          {onSetGoals && short ? (
+            <Pressable
+              onPress={onSetGoals}
+              disabled={!ctaReady}
+              accessibilityRole="button"
+              accessibilityLabel={copy.setup.setGoals}
+              style={{ minHeight: size.hit, alignItems: 'center', justifyContent: 'center' }}
+            >
+              {({ pressed }) => <Text variant="pill" tone={pressed ? undefined : 'muted'}>{`[${copy.setup.setGoals.toUpperCase()}]`}</Text>}
+            </Pressable>
+          ) : onSetGoals ? (
             <PillButton label={copy.setup.setGoals} variant="secondary" onPress={onSetGoals} disabled={!ctaReady} style={{ marginTop: space.s }} />
           ) : null}
         </Animated.View>

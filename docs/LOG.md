@@ -890,3 +890,16 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Udělal: `e2e/flows/first-run.spec.ts` (celý first run, dvojí tap, čas do lekce 6.3 s, starý profil), `e2e/flows/map-ripple.spec.ts` (dluh fáze 0, ověřeno kontrolním během bez tahu), nové vizuální baseline `first-run-map`, `first-run-setup`, `first-run-celebration` × 8 (vědomě přes `--update-snapshots --grep first-run`). tsc/eslint 0, jest 703/703, e2e 107/107, perf 4/4, nativní log bez nových ERROR.
 - Rozhodl sám: toky klikají [DONE], když `canSkip` skryje [SKIP] (záměr adaptivity); dvojí navigaci ověřuji přes `history.length`.
 - Verdikt: NESCHVÁLENO. Na w320 se překrývá první oslava (kotouč přes titulek, pilulky přes sérii) a mapa prvního průchodu (CTA přes kotouč, useknutá dlaždice) → design-agent; po opravě přegenerovat baseline w320 `first-run-map` a `first-run-celebration`. Copy bubliny lekce u cviku na opakování (⚠️).
+
+## 2026-10-07 · design-agent · elite fáze 1, oprava QA kolo 1 (w320×568)
+- Nový zlom výšky `breakpoint.short = 640` + hook `useShort()` (theme/useCompact.ts); token `size.celebratePlateShort = 128`, typ `dotTitleShort` (Doto 28/36).
+- Oslava (`LessonCompleteScene`): na nízkém displeji kotouč strop 128 (P stále z `contentW * L.plateFrac`, jen jiný strop – motion měření středu beze změny), titulek Doto 28 (2 řádky v 320), užší mezery, bez řádku „Tomorrow“, [SET YOUR GOALS] jako textová akce v závorkách (min. 44 pt, muted → text při stisku) pod [CONTINUE]. Rezervace GuideBubble zůstává.
+- Mapa: dlaždice na nízkém displeji „SETUP · 4“ (a11y nese celé znění), bublina průvodce `compact` (bez štítku MONKEY, jeden řádek), v prvním průchodu na nízkém displeji se skryje prázdná řada pokroku SectionHero (vrací se po startu lekce). `LessonMap.scrollToNode` nově počítá 40 % viditelného výřezu i bez pruhu CTA (`footerSpace`) – na všech šířkách aktuální uzel s popiskem leží nad [START LESSON].
+- Lekce: `copy.guide.lessonReps` „Do the reps, then tap Done“ pro cviky `type: 'reps'`, „Hold the timer or tap Done“ jen pro výdrž; `GuideBubble` má volitelný `text` override.
+- Baseline vědomě přegenerované: first-run-map/celebration w320 (dark/light; ostatní šířky beze změny), demo `map` (všech 8 – posun scrollu o footerSpace) a demo `celebration` w320 (dark/light). w320 snímky zkontrolovány okem: nic se nepřekrývá (+20 XP na mapě těsně nad hranou CTA).
+- Běhy: tsc 0 chyb, jest 71/71 sad (703 testů), eslint čistý, e2e flows+visual 107/107.
+- Otevřené: na mapě w320 hrot šipky bubliny sedí na hlavě opičky (míří na ni, záměr); řada pokroku se v prvním průchodu na SE neukazuje.
+
+## 2026-10-07 · boss · Rozhodnutí k opravám w320 (fáze 1)
+- Schváleno: skrytí prázdné řady pokroku 0/9 při first run na nízkém displeji; `scrollToNode` odečítá `footerSpace` (aktuální uzel nad pruhem CTA, nová demo baseline mapy na všech šířkách — vědomá změna).
+- Otevřené (nízká priorita, motion): `lastRect` letu přežije zavřenou lekci do dalšího `launch` (projeví se jen u oslavy z deep linku).
