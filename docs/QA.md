@@ -423,3 +423,25 @@ Přísnější pravidlo (.claude/agents/qa-agent.md): kolize nebo ořez textu na
 3. První oslava: tečky slétají z místa, kam kotouč dolétl.
 4. První cvik s bublinou: titulek i popis celé, bublina ve scrollu pod popisem, po Start plynule zmizí; dole safe area nad lištou drží.
 5. Reduce Motion + VoiceOver: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“.
+
+## QA elite fáze 2: zvuk a haptika (HEAD 7636146; 65d362f + 9106914 + 7636146)
+Verdikt: **SCHVÁLENO** pro HEAD `7636146c398075965128fb42f316c9d3271b918d`.
+- ✅ `tsc --noEmit` 0 chyb, `eslint .` 0, `jest` 75 sad / 718 testů, `npm run test:node` 25/25, `npm run e2e` 115/115 (bez nových baseline).
+- ✅ `lib/feedback.ts`: haptika a zvuk ve stejném ticku, zvuk přes `sfxGate` (40 ms na stejný zvuk, různé zvuky se neblokují); `logic/sfxGate.ts` je čistá logika s časem zvenku.
+- ✅ `lib/feedbackMap.ts`: navigace (tab/cta/tapLight/wheelStep) bez zvuku; `mascotTap` → `['selection','pop']`; všech 9 zvuků existuje v `assets/sounds/`.
+- ✅ `lib/sound.ts`: preload jednou (`_layout`), web bez zvuku, `soundEnabled` se kontroluje při každém přehrání, chyby se tiše spolknou, chybějící přehrávač → no-op. `playsInSilentMode:false` + mixWithOthers, ducking jen při oslavě.
+- ✅ PlateFlight: `flightStart` jen při skutečném letu (reduce motion → ticho).
+- ✅ LessonCompleteScene: success jen jednou (`signature` mapuje úder 'success' na `lessonDone`, ostatní údery jsou jen haptika); `snap` je jen zvuk, protože heavy nese podpis; reakce `lessonDone` → 'celebrate' nevolá `mascotJoy`, takže success se nezdvojí. Platí i pro reduce motion (celebrationHaptics(true) → 1× lessonDone).
+- ✅ stage-up: `stageUp` přesně 1× v obou větvích (reduced i plné).
+- ✅ GuideBubble: `guideShow` 1× za mount (ref `announced`, timer se při unmountu ruší).
+- ✅ setup: `setupDone` jen při `ok`, jinak stav chyby bez zvuku.
+- ✅ Rychlé opakování: brzdí ho gate (stejný zvuk ≥ 40 ms), haptiku negatuje (záměr, jako v minulých fázích).
+- ✅ Nativní log `$TEMP/expogo.log`: beze změny od minulého kola (283 ř., poslední ERROR na ř. 225 je historický, viz výše) → žádný nový ERROR. ⚠️ V logu ale není nový bundle, takže fáze 2 v Expo Go ještě neběžela; zvuk na nativu ověří až iPhone checklist.
+- ⚠️ (motion-agent, ne blokující) Na webu je zvuk záměrně vypnutý, takže e2e ho neověří; ladění hlasitostí 35/50/60 % je jen odhad od stolu.
+
+### iPhone checklist
+1. Hlasitost: tick/pop jsou tiché, success/levelUp zřetelné, ale nepřeřvou hudbu (ta se při oslavě ztlumí a pak vrátí).
+2. Ladění dohromady: odpočet 3-2-1-GO, konec lekce (snap → success) a stage-up znějí jako jedna rodina, nic neskřípe.
+3. Tichý režim (boční přepínač): žádný zvuk, haptika dál funguje; přepínač Zvuk v Nastavení vypne zvuk, ale haptiku nechá.
+4. Haptika sedí na zvuk: nacvaknutí kotouče, success v oslavě a ťuknutí na opičku (pop) přijdou v tom samém okamžiku.
+5. Rychlé ťukání na opičku / tab bar: žádné „bzučení“ ani zasekávání.

@@ -963,3 +963,5 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Rozhodnuto sám: reduced oslava lekce bez snap zvuku (jen success podpis); guideShow i při omezeném pohybu (zvuk není pohyb).
 - Běhy: tsc OK, eslint OK, jest 75 suites / 718 + nové testy OK, test:node 25/25, e2e 115/115.
 - Otevřené: ověření na iPhonu (tichý režim, souběh snap+success).
+
+- qa-agent (elite fáze 2, HEAD 7636146): SCHVÁLENO. tsc/eslint/jest 718/test:node 25/e2e 115 zelené, napojení feedback bez dvojitých success, expogo.log bez nového ERROR (fáze 2 ale na iPhonu ještě neběžela). Nic jsem neopravoval. Otevřené: iPhone checklist (hlasitost, tichý režim, sladění haptiky a zvuku).
