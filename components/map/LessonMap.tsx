@@ -4,7 +4,7 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withD
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
-import { LineBubble, Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, type MascotReactions } from '@/components/mascot';
+import { LineBubbleMotion, Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, type MascotReactions } from '@/components/mascot';
 import { IntentScrollView, plateOuterRadius } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -430,13 +430,12 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
             stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={!seated}
             onTap={onMascotTap}
           />
-          {line ? (
-            <LineBubble
-              text={line}
-              arrowX={spot.x - lineLeft}
-              style={{ position: 'absolute', bottom: '100%', left: lineLeft - (spot.x - MASCOT / 2), width: lineW }}
-            />
-          ) : null}
+          {/* Nástup/odchod a výměnu textu řídí motion obal; po vypršení repliky se odchod dopřehraje. */}
+          <LineBubbleMotion
+            text={line}
+            arrowX={spot.x - lineLeft}
+            style={{ position: 'absolute', bottom: '100%', left: lineLeft - (spot.x - MASCOT / 2), width: lineW }}
+          />
         </Animated.View>
       ) : spot ? (
         <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0 }, mascotStyle]}>

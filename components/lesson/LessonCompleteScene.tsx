@@ -31,7 +31,7 @@ import type { LessonResult } from '@/services';
 import type { LessonPathView } from '@/services/contracts';
 import { dots, useCompact, useShort, useTheme } from '@/theme';
 import type { CosmeticSlot, Lesson, Mood } from '@/types';
-import { celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, once, stepOf, xpBreakdownLabel, xpTickStep } from './celebration';
+import { celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, once, prideBeat, stepOf, xpBreakdownLabel, xpTickStep } from './celebration';
 
 const t = copy.complete;
 const XP_LABELS = { lesson: t.xpLesson, boss: t.xpBoss, replay: t.xpReplay, first: t.xpFirst, streak: t.xpStreak };
@@ -176,6 +176,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   const spin = useSharedValue(0);
   const mascotIn = useSharedValue(calm ? 1 : 0);
   const textIn = useSharedValue(calm ? 1 : 0);
+  const recordIn = useSharedValue(calm ? 1 : 0);
   const ctaIn = useSharedValue(calm ? 1 : 0);
   const xp = useSharedValue(calm ? result.xp.total : 0);
   const steps = useRef<SharedValue<number>[]>([]);
@@ -216,7 +217,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
     swell.value = 1;
     shock.value = 0;
     xp.value = result.xp.total;
-    for (const v of [plateOn, mascotIn, textIn, ctaIn, sceneIn]) { cancelAnimation(v); v.value = withTiming(1, fin); }
+    for (const v of [plateOn, mascotIn, textIn, recordIn, ctaIn, sceneIn]) { cancelAnimation(v); v.value = withTiming(1, fin); }
     if (spin.value === 0) startSpin();
     setMood(cheer);
     setSeriesLit(result.streak);
@@ -240,6 +241,9 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
       // Podpis = success haptika + zvuk success v jednom okamžiku (feedback 'lessonDone').
       for (const [, kind] of celebrationHaptics(true)) signature(kind);
       reportReaction({ type: 'lessonDone' });
+      // Rekord: řádek je hned vidět (recordIn = 1), hrdost až po cooldownu celebrate.
+      const calmBeat = prideBeat({ streakRecord: result.streakRecord, seriesGain, reduced: true, cheerAt: 0, scanMs: 0, cooldownMs: REACTION_COOLDOWN_MS });
+      if (calmBeat.proudAt !== null) at(calmBeat.proudAt, () => reportReaction({ type: 'streakUp' }));
       return;
     }
     const field = stepOf(tl, 'field');
@@ -278,9 +282,14 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
       // Řada se rozsvítí skenem (`DotRow` intro) a po něm přibude dnešní tečka.
       const scanMs = (motion.dotScanMs * Math.max(1, result.streak - 1)) / total;
       at(cheerStep.at + scanMs, () => { setSeriesLit(result.streak); feedback('seriesPlate'); });
-      // Hrdost po oslavě: až skončí její cooldown, jinak by ji vyšší priorita celebrate zahodila.
-      at(cheerStep.at + Math.max(scanMs, REACTION_COOLDOWN_MS), () => reportReaction({ type: 'streakUp' }));
     }
+    // Hrdost po oslavě (a při rekordu v tom samém taktu nástup řádku rekordu, bez zvuku a haptiky navíc).
+    const beat = prideBeat({
+      streakRecord: result.streakRecord, seriesGain, reduced: false, cheerAt: cheerStep.at,
+      scanMs: seriesGain ? (motion.dotScanMs * Math.max(1, result.streak - 1)) / total : 0, cooldownMs: REACTION_COOLDOWN_MS,
+    });
+    if (beat.proudAt !== null) at(beat.proudAt, () => reportReaction({ type: 'streakUp' }));
+    if (beat.recordAt !== null) recordIn.value = withDelay(beat.recordAt, withTiming(1, { ...motion.reveal, ...NEVER }));
     // 2600: CTA zdola, až po doznění XP a heartbeatu.
     at(cta.at, () => { setCtaReady(true); ctaIn.value = withTiming(1, { ...motion.reveal, ...NEVER }); });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sekvence běží jednou, až je geometrie
@@ -320,6 +329,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   const plateStyle = useAnimatedStyle(() => ({ opacity: plateOn.value, transform: [{ scale: swell.value }] }));
   const rise = calm ? 0 : space.m;
   const mascotStyle = useAnimatedStyle(() => ({ opacity: Math.min(1, mascotIn.value), transform: [{ translateY: (1 - mascotIn.value) * rise }] }));
+  const recordStyle = useAnimatedStyle(() => ({ opacity: recordIn.value, transform: [{ translateY: (1 - recordIn.value) * L.recordRise }] }));
   const textStyle = useAnimatedStyle(() => ({ opacity: textIn.value, transform: [{ translateY: (1 - textIn.value) * rise }] }));
   const ctaRise = calm ? 0 : L.ctaRise;
   // CTA se s omezeným pohybem prolíná se scénou (ne dřív než obsah).
@@ -343,7 +353,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
                 <Text variant={short ? 'dotTitleShort' : 'display'} accessibilityRole="header">{title}</Text>
                 {/* Nový rekord série (elite fáze 3): jeden mono řádek pod titulkem, barva textu (žádný akcent). */}
                 {result.streakRecord ? (
-                  <Text variant="telemetry" numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: space.xs }}>{copy.complete.record(result.streak)}</Text>
+                  <Animated.View style={recordStyle}><Text variant="telemetry" numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: space.xs }}>{copy.complete.record(result.streak)}</Text></Animated.View>
                 ) : null}
               </Animated.View>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: short ? space.m : compact ? space.l : space.xl }}>

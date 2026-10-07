@@ -176,3 +176,18 @@ export function gatherSources(
     return { x: gx - cx, y: gy - cy };
   });
 }
+
+/** Hrdost a rekord série v oslavě (elite fáze 3 §4), ms od zobrazení scény; `null` = nespouští se.
+ *  `proudAt`: reakce `proud` (událost `streakUp`) až po cooldownu oslavy, jinak by ji vyšší priorita celebrate
+ *  zahodila, a ne dřív, než sken řady dojde k dnešní tečce. Hlásí se při přírůstku série nebo rekordu.
+ *  `recordAt`: nástup řádku rekordu, jen při `streakRecord`, ve stejném taktu jako hrdost (rekord = hrdost).
+ *  Bez zvuku a haptiky navíc: podpis `celebrationHaptics` zůstává beze změny.
+ *  Omezený pohyb: řádek je hned v konečném stavu (0), hrdost po cooldownu reakce celebrate. */
+export function prideBeat(o: {
+  streakRecord: boolean; seriesGain: boolean; reduced: boolean; cheerAt: number; scanMs: number; cooldownMs: number;
+}): { proudAt: number | null; recordAt: number | null } {
+  if (o.reduced) return o.streakRecord ? { proudAt: o.cooldownMs, recordAt: 0 } : { proudAt: null, recordAt: null };
+  if (!o.seriesGain && !o.streakRecord) return { proudAt: null, recordAt: null };
+  const proudAt = o.cheerAt + Math.max(o.scanMs, o.cooldownMs);
+  return { proudAt, recordAt: o.streakRecord ? proudAt : null };
+}

@@ -1,5 +1,5 @@
 import { lessonDone } from '@/lib/motion';
-import { barbellLayout, celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, plateHeight, plateWidth, splitPlates, xpBreakdownLabel } from '../celebration';
+import { barbellLayout, celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, plateHeight, prideBeat, plateWidth, splitPlates, xpBreakdownLabel } from '../celebration';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- oficiální jest mocky knihoven */
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
@@ -104,5 +104,26 @@ describe('oslava z teček (Nothing Dot §5)', () => {
       expect(Math.abs(gy - Math.round(gy))).toBeLessThan(1e-6);
       expect(Math.hypot(s.x, s.y)).toBeGreaterThan(Math.hypot(targets[i]!.x, targets[i]!.y));
     });
+  });
+});
+
+describe('prideBeat: hrdost a řádek rekordu (elite fáze 3 §4)', () => {
+  const base = { cheerAt: 1450, scanMs: 300, cooldownMs: 1200, reduced: false };
+  test('bez rekordu se řádek nespouští; proud jen při přírůstku série', () => {
+    expect(prideBeat({ ...base, streakRecord: false, seriesGain: true })).toEqual({ proudAt: 2650, recordAt: null });
+    expect(prideBeat({ ...base, streakRecord: false, seriesGain: false })).toEqual({ proudAt: null, recordAt: null });
+  });
+  test('rekord: proud a řádek ve stejném taktu, po cooldownu celebrate a po skenu řady', () => {
+    expect(prideBeat({ ...base, streakRecord: true, seriesGain: true })).toEqual({ proudAt: 2650, recordAt: 2650 });
+    expect(prideBeat({ ...base, scanMs: 1500, streakRecord: true, seriesGain: true })).toEqual({ proudAt: 2950, recordAt: 2950 });
+  });
+  test('rekord nemění haptický podpis (žádný úder navíc)', () => {
+    const at = prideBeat({ ...base, streakRecord: true, seriesGain: true }).recordAt!;
+    expect(celebrationHaptics(false).some(([ms]) => ms === at)).toBe(false);
+    expect(celebrationHaptics(false)).toHaveLength(11);
+  });
+  test('omezený pohyb: řádek hned, proud po cooldownu; bez rekordu nic', () => {
+    expect(prideBeat({ ...base, reduced: true, streakRecord: true, seriesGain: true })).toEqual({ proudAt: 1200, recordAt: 0 });
+    expect(prideBeat({ ...base, reduced: true, streakRecord: false, seriesGain: true })).toEqual({ proudAt: null, recordAt: null });
   });
 });

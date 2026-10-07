@@ -8,6 +8,7 @@ export { ReactiveMascot } from './ReactiveMascot';
 export { useMascotReactions, useScreenFocused, type MascotReactions } from './useMascotReactions';
 export type { MascotReaction, MascotGaze } from './types';
 export { LineBubble } from './LineBubble';
+export { LineBubbleMotion } from './LineBubbleMotion';
 export { IdleMascot } from './IdleMascot';
 export { useMascotIdle } from './useMascotIdle';
 export type { MascotIdle } from './types';

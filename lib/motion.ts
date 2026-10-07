@@ -297,6 +297,8 @@ export const lessonDone = {
   /** Dvojitý „heartbeat“ po doběhu XP: odstup úderů. */
   heartbeatGap: 120,
   reducedMs: 200,
+  /** Řádek rekordu série (fáze 3) vyjede o tolik pt zdola spolu s hrdostí opičky (`prideBeat`), `motion.reveal`. */
+  recordRise: 8,
   /** Doběh na konečný stav při přeskočení (tap kamkoli). */
   skipMs: 150,
 };
@@ -434,3 +436,9 @@ export const plateFlight = { ms: 520, turns: 0.5, fadeFrom: 0.65, waitMaxMs: 160
  */
 export const overlayResize = { ms: 260, outMs: 160 };
 export const guideArrow = { scanStepMs: 70, idleMs: 2600, pulseMs: 420 };
+/**
+ * Replika opičky `LineBubble` (elite fáze 3): nástup z hrotu (origin = hrot nad opičkou) prolnutím, posunem
+ * o `rise` pt a scale `fromScale` → 1 za `inMs` (`ease.out`, bez zákmitu); odchod rychlejší `outMs` (`ease.exit`).
+ * Výměna textu za běhu = jen nový text (žádné blikání). Omezený pohyb: jen prolnutí stejnými délkami.
+ */
+export const lineBubble = { inMs: 220, outMs: 150, rise: 6, fromScale: 0.9 };
