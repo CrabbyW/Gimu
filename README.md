@@ -105,4 +105,4 @@ Samostatný Remotion projekt v `video/` (appka na něm nezávisí, Metro/Jest/ES
 Viz [`docs/STATUS.md`](./docs/STATUS.md).
 
 ## Zvuky
-Zvukové efekty v `assets/sounds/` (`plate-snap.wav`, `select.wav`, `unlock.wav`) pocházejí od [Kenney](https://kenney.nl/) (licence CC0, public domain), převzaté z SFX knihovny skillu brag a upravené přes ffmpeg (mix, lowpass, WAV 44.1 kHz mono). Zdroje jsou zapsané v `docs/LOG.md` (UX2).
+Všech 9 zvuků v `assets/sounds/` (`tick`, `select`, `snap`, `unlock`, `success`, `error`, `swoosh`, `pop`, `level-up`) je syntetizovaných deterministickým skriptem `scripts/gen-sounds.mjs` (C dur pentatonika, WAV 44.1 kHz mono 16-bit). Přegenerování: `npm run gen:sounds`. Mapa událost → haptika + zvuk je v `lib/feedbackMap.ts`, omezovač opakování (40 ms) v `logic/sfxGate.ts`.

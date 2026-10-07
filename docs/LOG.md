@@ -965,3 +965,9 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Otevřené: ověření na iPhonu (tichý režim, souběh snap+success).
 
 - qa-agent (elite fáze 2, HEAD 7636146): SCHVÁLENO. tsc/eslint/jest 718/test:node 25/e2e 115 zelené, napojení feedback bez dvojitých success, expogo.log bez nového ERROR (fáze 2 ale na iPhonu ještě neběžela). Nic jsem neopravoval. Otevřené: iPhone checklist (hlasitost, tichý režim, sladění haptiky a zvuku).
+
+## boss — elite fáze 2, Task 1 (65d362f, 9106914)
+- Udělal: generátor `scripts/gen-sounds.mjs` + 9 WAV (staré Kenney gong/ring/plate-snap smazány), registr `lib/sound.ts`, `logic/sfxGate.ts`, `lib/feedbackMap.ts` + testy (node 25, jest pokrytí mapy).
+- Rozhodl sám: syntéza místo nahrávek; hlasitost 0.35 krátké / 0.5 swoosh / 0.6 ostatní; gate 40 ms na stejný zvuk; navigace bez zvuku; `plateSnap` přejmenován na `snap`.
+- Chyba procesu: 65d362f commitnut s 1 padající sadou a 3 lint chybami, opraveno v 9106914.
+- Otevřené: hlasitosti neověřené uchem (iPhone checklist); README Zvuky aktualizováno.
