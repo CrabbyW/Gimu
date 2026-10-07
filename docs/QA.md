@@ -398,3 +398,28 @@ Přísnější pravidlo (.claude/agents/qa-agent.md): kolize nebo ořez textu na
 3. První oslava: tečky slétají z místa, kam kotouč dolétl.
 4. První cvik s bublinou na tvém iPhonu: titulek i popis cviku celé, bublina nic nepřekrývá a po Start plynule zmizí.
 5. Reduce Motion + VoiceOver: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“.
+
+---
+
+## QA elite fáze 1, kolo 5 (HEAD `2c8dfb8`), 2026-10-07
+
+**Verdikt pro HEAD `2c8dfb8`: SCHVÁLENO.**
+
+### Build a testy
+- ✅ tsc 0, eslint 0, jest 703/703, `npm run e2e` 115/115 (do lekce 6.1 s), `npm run e2e:perf` 4/4.
+- ✅ Nativní log: 283 řádků, ERROR jen ř. 30–225 (staré, f0173ee). Nic nového.
+
+### Prohlídka (kolize/ořez = ❌)
+- ✅ first-run-lesson w320 dark a w375 light: ilustrace, kruh 25, GET READY, „Dead hang“ a celý popis, pod ním bublina v obsahu scrollu, nic nepřekrývá. Nález kola 4 opraven.
+- ✅ lesson (demo, Crow) w320 light: celé.
+- ✅ first-run-map, oslavy (first run i demo) a /setup w320/w375: beze změny čisté.
+- ✅ map w320 dark (nová baseline): pod [START LESSON] plný podklad, mezi CTA a tab barem už žádný text.
+- ✅ map odscrollovaná ad hoc (w320 dark dolů i nahoru, w375 light dolů): u CTA nic neprosvítá, uzly a popisky se nepřekrývají. Obsah nahoře zajíždí pod závoj hlavičky (posuvný obsah, tlumený podle návrhu), není to pevná kolize.
+- ⚠️ first-run-lesson w320: z tečkové šipky bubliny je nad lištou vidět jen jedna tečka (zbytek pod lištou při klidové pozici scrollu). Dekorace, ne text; design-agent může na kompaktu šipku vypustit.
+
+### iPhone checklist
+1. Let kotouče mapa → lekce plynulý, bez bliknutí nad fullScreenModal.
+2. Rychlý dvojí tap na Start lesson: jedna lekce, jedna haptika.
+3. První oslava: tečky slétají z místa, kam kotouč dolétl.
+4. První cvik s bublinou: titulek i popis celé, bublina ve scrollu pod popisem, po Start plynule zmizí; dole safe area nad lištou drží.
+5. Reduce Motion + VoiceOver: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“.

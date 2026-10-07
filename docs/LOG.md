@@ -951,3 +951,7 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - ⚠️ mapa w320: plný podklad pod [START LESSON] funguje (ověřeno ad hoc odscrollovaně 0/40/150/300/600 px, dark i light — mezi pilulkou a tab barem jen `base`). QA viděl zastaralou baseline `map.png` w320 z 11:05 (před opravou); nový render se lišil pod prahem 1 %, takže `--update-snapshots` ji nepřepsal. Smazána a vědomě přegenerována (`npm run e2e:update -- --grep "s demo profilem mapa"`). Nad pilulkou prosvítá jen ztlumené „BOSS“ pod závojem (záměr).
 - Běhy: `tsc --noEmit` OK, `eslint .` OK, `jest` 71/71 sad, 703/703 testů, `npm run e2e` 115/115 passed.
 - Otevřené: práh 1 % u toHaveScreenshot pouští drobné, ale významné změny na malých plochách (pruh pod CTA) — zvážit nižší práh pro w320.
+
+### 2026-10-07 qa-agent: elite fáze 1, QA kolo 5 (HEAD 2c8dfb8)
+- Ověřil: tsc/eslint 0, jest 703/703, e2e 115/115, perf 4/4, log bez nových ERROR; w320/w375 first-run-lesson, demo lesson, first-run-map, mapa (i ad hoc odscrollovaná), oslavy, /setup.
+- Verdikt: SCHVÁLENO. ⚠️ jen dekorativní šipka bubliny v lekci na w320 částečně pod lištou (design-agent, volitelně).
