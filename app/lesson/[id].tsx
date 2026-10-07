@@ -202,8 +202,9 @@ function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, always
       <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.m : space.xl }}>
         <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} />
         {extra > 0 ? <Text variant="caption" tone="muted" style={{ marginTop: space.s }}>{copy.lesson.extra(extra, hold)}</Text> : null}
+        {/* Bublina průvodce je součástí obsahu: nezmenšuje výšku scrollu a nikdy nekryje text cviku. */}
+        {guide ? <View style={{ marginTop: short ? space.s : space.m }}>{guide}</View> : null}
       </IntentScrollView>
-      {guide ? <View style={{ paddingTop: space.s }}>{guide}</View> : null}
       <View style={{ marginHorizontal: -space.l }}>
         <BigActionBar
           primary={{ ...primary, onPress: () => { onAct?.(); primary.onPress(); }, disabled: busy || timer.status === 'done' }}

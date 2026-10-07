@@ -943,3 +943,11 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 ### 2026-10-07 qa-agent: elite fáze 1, QA kolo 4 (HEAD 6da8f1b)
 - Ověřil: tsc/eslint 0, jest 703/703, e2e 107/107, perf 4/4, log bez nových ERROR; baseline + ad hoc snímky lekce prvního průchodu (3 cviky) na w320 dark/light a w375 dark.
 - Lekce demo w320 ✅ opraveno. Verdikt: NESCHVÁLENO — ❌ bublina průvodce na 1. cviku first run (výdrž) usekne titulek „Dead hang“ (w375) a popis (w320) → design-agent; doporučena nová baseline `first-run-lesson`. ⚠️ demo mapa w320 stále ukazuje „Section boss“ mezi CTA a tab barem.
+
+## design-agent — elite fáze 1, oprava QA kola 4 (2026-10-07)
+- ❌ Bublina průvodce v lekci (1. cvik first run) přesunuta z prostoru mezi `IntentScrollView` a lištou DO obsahu scrollu, pod popis cviku (šipka dolů k [START] zůstává). Už nezkracuje výšku scrollu, nekryje titulek ani popis.
+- Rozhodnutí: aby bublina byla vidět bez scrollu (jinak by průvodce na w375 skončil pod přehybem), karta v režimu průvodce zmenšuje panel siluety: běžný displej `silhouettePanelShort` (120), nízký `silhouettePanelGuide` (80). Token `silhouettePanelGuide` tedy zůstává (už ne kvůli zmenšenému scrollu, ale kvůli místu pro bublinu v obsahu). Silueta zůstává viditelná.
+- Nová baseline `first-run-lesson` (e2e/visual/screens.spec.ts) pro všech 8 projektů — `npm run e2e:update -- --grep "first-run lekce"`. Prohlédnuto w320/w375 dark+light: titulek, popis i bublina celé nad lištou, nic ořezané.
+- ⚠️ mapa w320: plný podklad pod [START LESSON] funguje (ověřeno ad hoc odscrollovaně 0/40/150/300/600 px, dark i light — mezi pilulkou a tab barem jen `base`). QA viděl zastaralou baseline `map.png` w320 z 11:05 (před opravou); nový render se lišil pod prahem 1 %, takže `--update-snapshots` ji nepřepsal. Smazána a vědomě přegenerována (`npm run e2e:update -- --grep "s demo profilem mapa"`). Nad pilulkou prosvítá jen ztlumené „BOSS“ pod závojem (záměr).
+- Běhy: `tsc --noEmit` OK, `eslint .` OK, `jest` 71/71 sad, 703/703 testů, `npm run e2e` 115/115 passed.
+- Otevřené: práh 1 % u toHaveScreenshot pouští drobné, ale významné změny na malých plochách (pruh pod CTA) — zvážit nižší práh pro w320.

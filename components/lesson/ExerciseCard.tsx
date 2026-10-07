@@ -27,7 +27,7 @@ const MEASURE = 496;
 
 interface Props {
   exercise: Exercise; /** Jen u výdrže. */ timer?: HoldTimerState;
-  /** Pod kartou je bublina průvodce: na nízkém displeji ještě menší panel siluety. */
+  /** Pod popisem je bublina průvodce (v obsahu scrollu): menší panel siluety, aby se bublina vešla nad lištu bez scrollu. */
   guided?: boolean;
 }
 
@@ -40,7 +40,7 @@ export function ExerciseCard({ exercise, timer, guided = false }: Props) {
   const short = useShort();
   return (
     <Animated.View entering={enter} exiting={exit} style={{ gap: short ? space.m : space.l }}>
-      <Tile pad="none" style={{ height: short ? (guided ? size.silhouettePanelGuide : size.silhouettePanelShort) : size.silhouettePanel }}>
+      <Tile pad="none" style={{ height: guided ? (short ? size.silhouettePanelGuide : size.silhouettePanelShort) : (short ? size.silhouettePanelShort : size.silhouettePanel) }}>
         {/* Podlaha se prolne první (zem dřív než postava), pak silueta. */}
         <Reveal play delay={intro.floor.at} rise={intro.floor.rise} config={motion.reveal} style={StyleSheet.absoluteFill}><Floor /></Reveal>
         {/* Vnitřní sled karty (motion): panel přijede s kartou, silueta v něm se zvedne o úder později,

@@ -92,6 +92,14 @@ test.describe('first run', () => {
     await shoot(page, 'first-run-map');
   });
 
+  test('first-run lekce (1. cvik s bublinou)', async ({ page }) => {
+    await pill(page, 'Start lesson').click();
+    await page.waitForURL(/\/lesson\//);
+    await expect(pill(page, 'Start')).toBeVisible();
+    await expect(visible(page.getByRole('button', { name: 'Tap Start and hold the position' }))).toBeVisible();
+    await shoot(page, 'first-run-lesson');
+  });
+
   test('first-run setup', async ({ page }) => {
     await visible(page.getByRole('button', { name: /^Finish setup/ })).click();
     await page.waitForURL(/\/setup/);
