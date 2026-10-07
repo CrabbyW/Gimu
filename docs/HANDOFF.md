@@ -1,4 +1,11 @@
-# Kde jsme skončili (aktualizováno 2026-10-06)
+# Kde jsme skončili (aktualizováno 2026-10-07)
+
+## Elite program HOTOVÝ (podprojekty 0–4) — všechny 85/85 „čeká na iPhone“ (2026-10-07)
+- **2 zvuk + haptika** (QA 1 kolo): 9 syntetizovaných zvuků (`scripts/gen-sounds.mjs`), mapa odezvy `lib/feedbackMap.ts`, omezovač 40 ms, nová id napojená (let kotouče, konec lekce, stage-up, průvodce, setup).
+- **3 opička 2.0** (QA 2 kola): repliky na ťuknutí (`logic/mascotLines.ts`, `LineBubble`), popisky pod bublinou se prolnou, rekord série v oslavě (`streakRecord`, `prideBeat`).
+- **4 audit** (QA 2 kola): `StateView` (skeleton/chyba/prázdno), skryté dekorace, strop písma + tabulární číslice z theme, Reduce Motion prolnutí, a11y e2e, ochrana dat při chybě čtení úložiště (`store/db.ts`).
+- Čeká: uživatelovo „ok“ k iPhone checklistům fází 0–4 (docs/QA.md) → 100/100.
+- Otevřené (nízká priorita): `store/settings.ts` bez ochrany při chybě čtení; e2e test chybové obrazovky úložiště; test velkého písma jen 1.4× (přidat 2×); „BOSS“ 2 px nad CTA na w320-dark; perf v ratingu fáze 4 převzat z QA kola 1.
 
 ## Redesign „Nothing Dot“ — fáze 1 (systém + mapa + lekce + oslava)
 - Spec: `docs/superpowers/specs/2026-10-05-nothing-dot-redesign-design.md`
