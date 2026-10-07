@@ -14,7 +14,7 @@ import { playSfx } from '@/lib/sound';
 import { ease, intro as T, motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import type { LessonPathView, MapNode } from '@/services/contracts';
-import { dots, useTheme } from '@/theme';
+import { dots, typography, useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
 import { AmbientClock } from './ambient';
 import { BarbellBoss } from './BarbellBoss';
@@ -262,6 +262,11 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const lineLeft = spot ? Math.min(Math.max(L.edge, spot.x - lineW / 2), width - L.edge - lineW) : 0;
   // Bublina nad opičkou nesmí zajet pod překryvnou hlavičku: chybí-li nad opičkou místo `L.room`, mapa o rozdíl sjede.
   const spotTop = spot ? spot.y - MASCOT / 2 : 0;
+  // Popisky pod bublinou po dobu repliky ustoupí (průhledné, čtečka je přeskočí): mono věta přes mono popisek
+  // by se četla jako chyba (QA fáze 3: zpod hrany koukalo „U“). Ustoupí jen ty, které bublina skutečně kryje.
+  const lineRect = line && spot ? { l: lineLeft, r: lineLeft + lineW, t: spotTop - L.room, b: spotTop } : null;
+  const underLine = (l: number, r: number, t: number, b: number) =>
+    lineRect !== null && l < lineRect.r && r > lineRect.l && t < lineRect.b && b > lineRect.t;
   useEffect(() => {
     if (!line || !spot) return;
     const deficit = L.room - (spotTop - scrollY.current);
@@ -367,7 +372,10 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
             variant="label"
             tone="muted"
             accessibilityRole="header"
-            style={{ position: 'absolute', left: space.l, right: space.l, top: p.top - SECTION_LABEL_OFFSET }}
+            style={[
+              { position: 'absolute', left: space.l, right: space.l, top: p.top - SECTION_LABEL_OFFSET },
+              underLine(space.l, width - space.l, p.top - SECTION_LABEL_OFFSET, p.top - SECTION_LABEL_OFFSET + typography.label.lineHeight) ? HIDDEN : null,
+            ]}
           >
             {copy.map.sectionLabel(s.index, s.title)}
           </Text>
@@ -416,6 +424,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
               state={state}
               minutes={minutesOf[n.lesson.id] ?? 1}
               bossAfter={n.section.nodes.filter((m) => !m.lesson.isBoss).length}
+              hidden={underLine(colLeft, colLeft + colW, p.y + p.size / 2 + LABEL_GAP, p.y + p.size / 2 + LABEL_GAP + labelHeight(state, n.lesson.isBoss))}
             />
           </SettleIn>
         );
@@ -487,8 +496,10 @@ const nbsp = (s: string) => s.replace(/ /g, ' ');
 /** Popisek pod uzlem (tabulka stavů). Metadata z dat: počet cviků, `estMinutes`, XP.
  *  current = název `headline` + metadata + „+N XP“ (akci nese plovoucí pilulka obrazovky a tap na kotouč);
  *  locked = název a metadata `caption muted`; done = jen název `caption muted`; boss = „Boss sekce“ + podmínka. */
-function NodeLabel({ node, state, minutes, bossAfter }: {
+function NodeLabel({ node, state, minutes, bossAfter, hidden = false }: {
   node: MapNode; state: NodeState; minutes: number; bossAfter: number;
+  /** Pod bublinou repliky opičky: popisek ustoupí (místo v layoutu zůstává, nic neposkočí). */
+  hidden?: boolean;
 }) {
   // Nezlomitelné mezery uvnitř položek (jako `xpBreakdownLabel`): mono je širší a na 390 pt se popisek zalomí,
   // tak ať se zalomí jen mezi položkami („4 CVIKY · 3 MIN“ / „+20 XP“), nikdy „+20“ a „XP“ zvlášť.
@@ -530,11 +541,19 @@ function NodeLabel({ node, state, minutes, bossAfter }: {
     lines = <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{isBoss ? copy.map.bossTitle : node.lesson.title}</Text>;
   }
   return (
-    <View pointerEvents="box-none" style={{ marginTop: LABEL_GAP, alignItems: 'center' }}>
+    <View
+      pointerEvents="box-none"
+      accessibilityElementsHidden={hidden}
+      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
+      style={[{ marginTop: LABEL_GAP, alignItems: 'center' }, hidden ? HIDDEN : null]}
+    >
       {lines}
     </View>
   );
 }
+
+/** Popisek ustoupil bublině repliky (statický stav; prolnutí případně motion-agent). */
+const HIDDEN = { opacity: 0 } as const;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

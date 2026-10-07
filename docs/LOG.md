@@ -996,3 +996,8 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - **Otevřené / K ruční kontrole (iPhone)**: transformOrigin bubliny na nativu (hrot), plynulost odchodu při rychlém ťukání, oslava s rekordem (řádek + proud) a VoiceOver ohlášení repliky. E2E neověřuje průběh odchodu (jen že nezmizí dřív než po 2.4 s).
 
 - qa-agent (elite fáze 3, HEAD 952a497): NESCHVÁLENO. tsc, eslint, jest 740, test:node a e2e 117/117 jsou zelené a logika replik, rekordu i prideBeat sedí. ❌ Bublina repliky na mapě zakrývá popisek uzlu, na w430 z něj kouká „U“ (design-agent). V expogo.log žádný nový ERROR. Detaily jsou v QA.md.
+
+## 2026-10-07 design-agent — oprava QA fáze 3 kolo 1 (bublina repliky vs. popisky uzlů)
+- Řešení: popisky pod bublinou po dobu repliky **ustoupí** (opacity 0, čtečka je přeskočí, místo v layoutu zůstává → nic neposkočí). Ustoupí jen to, co obdélník bubliny (šířka `lineW`, výška `dots.line.room` nad opičkou) skutečně kryje: popisky uzlů (`NodeLabel hidden`) i nadpis sekce. Proč ne přesun bubliny: nad opičkou je vždy předchozí uzel s popiskem, do strany na w320 není místo; mono věta přes ztlumený mono text by se četla špatně. Prolnutí popisku je případně práce pro motion-agenta (teď statický stav). `LineBubbleMotion` beze změny.
+- `e2e/flows/mascot-line.spec.ts`: `expectGeometry` nově kontroluje, že žádný viditelný text (opacity řetězce > 0) mimo bublinu nemá s bublinou průnik; běží na w390 i w320.
+- Ověření: tsc OK, eslint OK, jest 740/740, `npm run e2e` 117/117 (bez nových baseline). Dočasný test (smazán) nasnímal w320/w430 dark/light po ťuknutí: bublina čistá, popisek „Overhead…“ / dokončeného uzlu skrytý, nic nekoliduje s hlavičkou ani CTA.
