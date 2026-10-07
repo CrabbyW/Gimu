@@ -49,6 +49,7 @@ npm run lint          # expo lint
 - Pohyb jen z `lib/motion.ts`, haptika a zvuk přes `feedback(id)` v `lib/feedback.ts`. Omezený pohyb: vše jen prolnutí 200 ms.
 - Barevný systém (chladný grafit, OKLCH h 255): `docs/design/color-system.md`, CSS export `docs/design/color-system.css`, publikovaná stránka https://claude.ai/artifact/LpUzrZTXNGQoKCopx8fwzy. Tokeny v `theme/palettes.ts` navíc `borderStrong` (hranice ovládacích prvků ≥ 3:1), `focus`, `disabled`, `stateSuccess/Warning/Info` (jen skutečné stavy a data). Kontrast hlídá `theme/__tests__/contrast.test.ts`.
 - First run (elite fáze 1): krátký onboarding Cesta → Zrození → mapa, „Finish setup“ / „Set your goals“ po první oslavě, opička průvodce (jedna bublina na obrazovku), let kotouče mapa → lekce → oslava.
+- Opička 2.0 (elite fáze 3): ťuknutí na opičku na mapě ukáže krátkou mono repliku (`components/mascot/LineBubble.tsx`, `hooks/useMascotLine.ts`, výběr v `logic/mascotLines.ts` podle dneška, série a denní doby, texty `copy.mascotLines`). Sama nemluví, průvodce má přednost, popisky uzlů pod bublinou na dobu repliky zmizí. Rekord série (`LessonResult.streakRecord`) = v oslavě řádek „NEW RECORD · N DAYS“ a hrdá opička (`prideBeat` v `components/lesson/celebration.ts`).
 - Dev menu má sekci **Tečky** se všemi tečkovými komponentami pro vizuální kontrolu.
 - Nastavení: dva nezávislé přepínače **Haptika** a **Zvuky**; tichý režim iOS = ticho.
 
