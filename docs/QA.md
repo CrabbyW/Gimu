@@ -445,3 +445,28 @@ Verdikt: **SCHVÁLENO** pro HEAD `7636146c398075965128fb42f316c9d3271b918d`.
 3. Tichý režim (boční přepínač): žádný zvuk, haptika dál funguje; přepínač Zvuk v Nastavení vypne zvuk, ale haptiku nechá.
 4. Haptika sedí na zvuk: nacvaknutí kotouče, success v oslavě a ťuknutí na opičku (pop) přijdou v tom samém okamžiku.
 5. Rychlé ťukání na opičku / tab bar: žádné „bzučení“ ani zasekávání.
+
+## QA elite fáze 3: opička 2.0 (HEAD 952a497; 0636ece + aaa7ee2 + 952a497), 2026-10-07
+
+Verdikt: **NESCHVÁLENO** (1 vizuální kolize, logika v pořádku).
+
+Ověřeno
+- ✅ `npx tsc --noEmit` 0 chyb, `npx eslint .` 0 nálezů (včetně `local/no-worklet-object-capture`), `npx jest` 78 sad / 740 testů, `npm run test:node` 0 fail.
+- ✅ `npm run e2e` (8083, prod export) 117/117, včetně `flows/mascot-line.spec.ts` (w390 + w320 geometrie: ve viewportu, pod nadpisem).
+- ✅ `logic/mascotLines.ts`: hranice hodin 5/11/17/22, půlnoc = night; priorita todayDone > série ≥ 7 > ≥ 1 > denní doba; ztracená série bez výčitky; žádná věta dvakrát po sobě.
+- ✅ `hooks/useMascotLine.ts`: rychlé ťukání omezeno cooldownem reakcí, timer se čistí při unmountu; průvodce (`blocked`) má přednost, replika hned zmizí.
+- ✅ `ReactiveMascot` onTap: gesto `runOnJS(true)`, v workletu se nic nezachytává; VoiceOver activate taky volá `onTap`.
+- ✅ Rekord série: `streakRecord` jen při streak ≥ 2 a > předchozí nejdelší; při retry lekce se událost nepřidá, rekord se nehlásí podruhé.
+- ✅ `prideBeat`: bez rekordu ani přírůstku série nic; proud až po cheer + max(scan, cooldown); podpis `celebrationHaptics` nezměněn (11 úderů), žádný zvuk navíc. Reduce Motion: řádek hned, proud po cooldownu (1200 ms), jak schválil boss.
+- ✅ Nativní log `$TEMP/expogo.log`: beze změny (283 ř., poslední ERROR ř. 225 je historický) → žádný nový ERROR. Fáze 3 v Expo Go zatím neběžela.
+
+Rozbité
+- ❌ **Bublina repliky zakrývá popisek uzlu na mapě (w430, dark i light).** Postup: demo profil, mapa na w430, ťuknout na opičku. Bublina (x ≈ 100–332, y ≈ 248–297) leží přes popisek dokončeného uzlu nad opičkou a zpod její levé hrany kouká první písmeno („U“). Na w320 je popisek zakrytý celý. Uříznuté písmeno vypadá jako vada, ne jako záměrné překrytí. Patří **design-agentovi**: buď bublinu umístit mimo popisky, nebo popisek po dobu repliky skrýt či ztlumit. Potom přidat do `mascot-line.spec` kontrolu, že se bublina nepřekrývá s textem uzlu. Screenshoty jsou ve scratchpadu QA (bub-320/430 dark/light).
+- Na w320 nadpis, tab bar ani CTA nekolidují a text bubliny („WEEK-PLUS STREAK. RESPECT.“) se neořezává.
+
+iPhone checklist (max. 5)
+1. Na mapě rychle ťukej na opičku ~10×: bublina nebliká, text se mění nejdřív po cooldownu, haptika poskoku se nezdvojuje.
+2. Na iPhonu s malým displejem nebo s Dynamic Island: bublina zůstane pod hlavičkou a mimo safe area.
+3. Se zapnutým VoiceOver dvakrát ťukni na opičku: replika se přečte.
+4. Dokonči lekci s novým rekordem série: řádek rekordu a hrdost opičky sedí do rytmu oslavy, bez zvuku navíc. Skip oslavu přeskočí čistě.
+5. Se zapnutým Reduce Motion udělej totéž: řádek rekordu je hned, proud zhruba po 1,2 s a nic necuká.

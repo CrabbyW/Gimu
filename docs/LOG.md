@@ -994,3 +994,5 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - **Testy**: jest `prideBeat` (4 testy: bez rekordu žádný řádek, takt, beze změny haptiky, reduced). E2E `e2e/flows/mascot-line.spec.ts`: ťuknutí → text z `copy.mascotLines`, viditelná ~1.2 s před koncem, zmizí do 2 s; geometrie (celá ve viewportu, pod nadpisem hlavičky) na w390 i w320 (`test.use` viewport 320×568 v projektu w390-dark).
 - **Výsledky**: tsc 0, eslint 0, jest 78/78 sad (740 testů), test:node 25/25, `npm run e2e` 117 passed, perf-prod 4 passed (mapa i oslava medián fps ≥ 55).
 - **Otevřené / K ruční kontrole (iPhone)**: transformOrigin bubliny na nativu (hrot), plynulost odchodu při rychlém ťukání, oslava s rekordem (řádek + proud) a VoiceOver ohlášení repliky. E2E neověřuje průběh odchodu (jen že nezmizí dřív než po 2.4 s).
+
+- qa-agent (elite fáze 3, HEAD 952a497): NESCHVÁLENO. tsc, eslint, jest 740, test:node a e2e 117/117 jsou zelené a logika replik, rekordu i prideBeat sedí. ❌ Bublina repliky na mapě zakrývá popisek uzlu, na w430 z něj kouká „U“ (design-agent). V expogo.log žádný nový ERROR. Detaily jsou v QA.md.
