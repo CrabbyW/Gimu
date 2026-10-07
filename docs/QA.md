@@ -492,3 +492,39 @@ iPhone checklist:
 3. Se zapnutým VoiceOver projdi mapu během repliky: skrytý popisek se nepřečte, replika ano.
 4. Na iPhonu s Dynamic Island: bublina je pod hlavičkou a mimo safe area.
 5. Plynulost: posun mapy pod hlavičku při replice nesmí cukat.
+
+## QA elite fáze 4 (audit a řemeslo), kolo 1 — HEAD 3ced780 (3bbdd69 design + 3ced780 motion)
+
+**Verdikt: SCHVÁLENO** pro HEAD `3ced78088f2ae159493f7056a32eef87a73ee51e`.
+
+### Brány
+- ✅ `npx tsc --noEmit` 0 chyb, `npx eslint .` 0 nálezů (včetně `local/no-worklet-object-capture`; `useLabelYield` zachytává jen sdílenou hodnotu).
+- ✅ `npx jest` 81 sad / 755 testů zelených, `npm run test:node` zelený.
+- ✅ `npm run e2e` (8083) 159/159 (flows, visual 4 šířky × dark/light, a11y labels + large-text na w320/w390). `npm run e2e:perf` 4/4 (plátna ≤ 12, čas do [START LESSON] ≤ 3 s, medián fps mapa i oslava ≥ 55).
+- ✅ Nativní log `$TEMP/expogo.log` beze změny (283 ř., naposledy zapsán 07:08, poslední ERROR ř. 225 historický) → žádný nový ERROR. Fáze 4 v Expo Go zatím neběžela.
+
+### Review Focus
+- ✅ Nové baseline `map` / `first-run-map` (12 souborů, záznam v LOG design-agenta): prohlédnuty w320 dark + light. „Balance 101“ / „Pulling 101“ v plných 40 pt bez ořezu, závoj hlavičky plný, žádná kolize.
+- ✅ Testy a11y opravdu chytají chyby (mutace, pak vráceno, `git status` čistý):
+  - `PlateNode` s `accessibilityLabel=""` → `a11y popisky: map` ✘ (chyceno).
+  - `typeMaxScale` u label/tab/pill/body/title… = 3 a `SCALE` = 3 → `velké písmo: map` a `lesson` ✘ (detektor kolizí funguje).
+  - ⚠️ Pozor: zvýšit jen strop `typeMaxScale` nad 1.4 test **nechytí** (test škáluje 1.4×, strop nad tím je neaktivní). Velké písmo nad 1.4× (iOS AX velikosti až ~3×) web nehlídá — pokrývá to jen strop v theme. Pro boss/design-agent: zvážit druhý běh s 2× aspoň na mapě a lekci.
+- ⚠️ Chybový stav při selhání úložiště (ověřeno reálně: Playwright `Storage.prototype.getItem` throw, demo profil, `/`, `/league`, `/season`, w320-dark): **neukáže prázdnou obrazovku**, ale ani `ErrorState` — zustand persist hydrataci selže (`onRehydrateStorage` „začínám načisto“, rozhodnutí z dřívějších fází) a vracející se uživatel spadne do onboardingu. Po dokončení onboardingu by se uložený profil přepsal. Není to regrese fáze 4, ale vědomě to tu zapisuji jako riziko ztráty dat → **boss** (`store/db.ts`: při chybě hydratace nezapisovat a ukázat `ErrorState` s Retry). `ErrorState` se tak v praxi zobrazí jen, když vyhodí service; to pokrývá jest (`StateView.test`, `useServiceQuery.test`).
+- ✅ Skeleton nebliká: `useDelayed(skeletonDelayMs 300)`; snímek 120 ms po navigaci na `/progress`, `/league`, `/season` (first run, w320 dark/light) ukazuje rovnou obsah, žádný záblesk teček.
+- ✅ Prázdné stavy w320 dark/light (liga před první lekcí, progres bez historie, sezóna bez cíle) bez kolizí (`textCollisions` = []), čitelné, pozvánka + CTA.
+- ✅ Reduce Motion: `calmFade` nese `ReduceMotion.Never` (jinak by reanimated prolnutí přeskočil → skok), stejně `ExerciseCard`, recap, `LeagueResultBanner`, birth; `useLabelYield` jen krytí, `hidden` platí hned. Skeleton při omezeném pohybu statický.
+- ✅ Žádná regrese dokončení lekce: flows (dokončení, odemčení, XP, liga, persist po reloadu) a vizuál oslavy na všech šířkách zelené, perf oslavy ≥ 55 fps.
+- ⚠️ VoiceOver pořadí na mapě (hlavička → uzly → CTA → tab bar) web neověří spolehlivě → iPhone checklist.
+
+### SPEC
+- ⚠️ `docs/SPEC.md` §mapa: štítek `SEKCE 01 · ZÁKLADY ROVNOVÁHY`. Teď `SECTION 01` + titulek „Balance 101“. „101“ je idiomatický anglický ekvivalent „základů“, struktura (štítek s číslem sekce + název) zůstává → specifikaci neodporuje, jen odchylka v překladu (UI je anglicky od 2026-10-06). Doporučení pro boss: poznámka do SPEC.
+
+### Drobnosti (neblokují)
+- ⚠️ Mapa w320-dark: popisek dalšího uzlu („BOSS“) vykukuje 2 px nad plovoucím CTA. Je to scrollovaný obsah pod překryvem, ne ořez prvku → design-agent, případně prodloužit závoj nad CTA.
+
+### iPhone checklist (uživatel)
+1. Dynamic Type: Nastavení → Zobrazení → Velikost textu na maximum (bez AX): mapa, liga a lekce na SE/mini, titulky a tab bar se nesmí překrývat ani ořezat.
+2. VoiceOver na mapě: přejížděním doprava pořadí hlavička → uzly shora dolů (název, stav, minuty) → [START LESSON] → taby; dekorace a opice se nečtou.
+3. Reduce Motion zapnout: dokončení lekce, liga, onboarding birth a recap jen klidně prolínají, nic neskáče ani nebliká.
+4. Chybový stav / načítání: při studeném startu není vidět blikající skeleton, obrazovky naběhnou rovnou.
+5. Plynulost: scroll mapy a ustupování popisků pod bublinou opičky bez trhání; haptika při dokončení lekce beze změny.

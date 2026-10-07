@@ -1037,3 +1037,7 @@ Co:
 Rozhodl sám: prolnutí popisků i s omezeným pohybem (není to pohyb); ustoupení i u nadpisů sekcí; pulz na řadu (ne na tečku) kvůli výkonu.
 Běhy: tsc OK, eslint OK, jest 81 suites / 755 testů OK, test:node 25/25, `npm run e2e` 159 passed (vč. flows/mascot-line), `npm run e2e:perf` 4/4. Necommitováno.
 Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým Omezit pohyb.
+
+### qa-agent — elite fáze 4 kolo 1 (2026-10-07), HEAD 3ced780
+**Co:** tsc/eslint/jest (755)/test:node, e2e 159/159, e2e:perf 4/4, native log bez nového ERROR. Mutace ověřily a11y labels i large-text testy (vráceno). Reálná sonda selhání úložiště, prázdné stavy w320 dark/light, skeleton bez záblesku. Verdikt **SCHVÁLENO**.
+**Otevřené:** (1) selhání hydratace → onboarding a možné přepsání profilu místo ErrorState (boss, `store/db.ts`); (2) large-text test hlídá jen 1.4×; (3) „Balance 101“ vs. SPEC „ZÁKLADY …“ — doplnit poznámku do SPEC; (4) VoiceOver pořadí mapy jen na iPhonu.
