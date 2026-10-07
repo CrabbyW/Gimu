@@ -25,6 +25,10 @@ export interface UserService {
   updateMilestone(id: string, current: number): Promise<MilestoneUpdateResult>;
   /** Nastavení → Cíle: milníky, cíl váhy, vize těla, cesta. Neplatná změna vyhodí chybu s kódem `GoalsError`. */
   updateGoals(patch: GoalsPatch): Promise<UserProfile>;
+  /** Elite fáze 1: bublina průvodce viděna (jen u first-run profilů). */
+  markGuideSeen(id: string): Promise<void>;
+  /** Elite fáze 1: uživatel dokončil „Finish setup“ (cíle doplněné nebo přeskočené). */
+  completeSetup(): Promise<void>;
   /** Dev menu: přidá XP jako událost `dev-xp` (ne lekce, ruling 17). */
   grantDevXp(amount: number, now: Date): Promise<void>;
   reset(): Promise<void>;

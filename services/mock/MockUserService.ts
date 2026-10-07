@@ -41,6 +41,16 @@ export class MockUserService implements UserService {
     const unlockedCosmeticIds = newlyUnlocked(COSMETICS, ownershipCtx(p), ownershipCtx({ ...p, milestones }));
     return { completed: newlyCompleted(p.milestones, milestones).includes(id), unlockedCosmeticIds };
   }
+  async markGuideSeen(id: string) {
+    const p = requireProfile();
+    if (!p.guideSeen || p.guideSeen.includes(id)) return;
+    useDb.getState().setProfile({ ...p, guideSeen: [...p.guideSeen, id] });
+  }
+  async completeSetup() {
+    const p = requireProfile();
+    if (p.setupDone !== false) return;
+    useDb.getState().setProfile({ ...p, setupDone: true });
+  }
   async updateGoals(patch: GoalsPatch) {
     const p = requireProfile();
     const r = applyGoalsPatch(p, patch);

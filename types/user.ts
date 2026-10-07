@@ -35,6 +35,10 @@ export interface UserProfile {
   seasonClaims: Record<string, { at: string; cosmeticIds: string[]; badgeIds: string[] }>;
   /** Chybí u profilů před R44 = žádný dluh. */
   trainingDebt?: TrainingDebt;
+  /** Krátký onboarding (elite fáze 1): false = cíle čekají na doplnění („Finish setup“). Chybí u starších profilů. */
+  setupDone?: boolean;
+  /** Bubliny průvodce, které uživatel viděl. Pole existuje jen u profilů z krátkého onboardingu (= first run). */
+  guideSeen?: string[];
   /** Demo profil z dev menu: každý cvik jde přeskočit (přeskočení se počítá jako odcvičené, aby šla vidět oslava). */
   demo?: boolean;
 }
@@ -44,4 +48,6 @@ export interface OnboardingInput {
   dreamBody: string;
   milestones: Milestone[];
   weightGoal: WeightGoal;
+  /** Krátký onboarding: false = zbytek cílů se doplní po první oslavě. */
+  setupDone?: boolean;
 }

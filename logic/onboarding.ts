@@ -111,10 +111,22 @@ export function mockWeightHistory(goal: WeightGoal, now: Date, seed: number): We
 }
 
 export function buildInitialProfile(input: OnboardingInput, now: Date): UserProfile {
+  // Krátký onboarding (elite fáze 1) posílá setupDone: false → profil dostane i prázdné guideSeen (first run).
+  const firstRun = input.setupDone === false ? { setupDone: false, guideSeen: [] } : {};
   return {
+    ...firstRun,
     path: input.path, dreamBody: input.dreamBody.trim(), milestones: input.milestones,
     weightGoal: input.weightGoal, weights: mockWeightHistory(input.weightGoal, now, now.getTime() % 100_000),
     activity: [], equipped: {}, owned: [], seasonGoals: {}, leagueTier: 'wood', createdAt: now.toISOString(),
     leagueWeek: weekStart(now), lastLeagueResult: null, badges: [], seasonClaims: {},
   };
 }
+
+/** Výchozí cíle krátkého onboardingu (elite fáze 1): vize = první věta cesty, milníky = prvních MILESTONES_MIN předvoleb.
+ *  Uživatel je doplní až po první oslavě („Finish setup“). */
+export function defaultDraftGoals(presets: readonly Milestone[], dreamSentences: readonly string[]): { dreamBody: string; milestones: Milestone[] } {
+  return { dreamBody: dreamSentences[0] ?? '', milestones: presets.slice(0, MILESTONES_MIN) };
+}
+
+/** Potřebuje profil dokončit nastavení? Jen profily z krátkého onboardingu (`setupDone === false`); staré nikdy. */
+export const needsSetup = (profile: UserProfile): boolean => profile.setupDone === false;
