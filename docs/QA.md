@@ -371,3 +371,30 @@ Přísnější pravidlo (.claude/agents/qa-agent.md): kolize nebo ořez textu na
 3. První oslava: tečky slétají z místa, kam kotouč dolétl.
 4. Bublina přes celou šířku: tap ji plynule zavře, mapa dojede bez skoku, safe area nahoře drží.
 5. Reduce Motion + VoiceOver: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“.
+
+---
+
+## QA elite fáze 1, kolo 4 (HEAD `6da8f1b`, vědomá výjimka z max. 3 kol), 2026-10-07
+
+**Verdikt pro HEAD `6da8f1b`: NESCHVÁLENO** (ořez textu bublinou průvodce v lekci prvního průchodu, w320 i w375).
+
+### Build a testy
+- ✅ tsc 0, eslint 0 (ignoruje e2e/report a test-results), jest 703/703, `npm run e2e` 107/107 (do lekce 6.1 s), `npm run e2e:perf` 4/4.
+- ✅ Nativní log: 283 řádků, ERROR jen ř. 30–225 (staré). Nic nového.
+
+### Prohlídka
+- ✅ lesson (demo, výdrž Crow) w320: ilustrace, kruh 160 s „10“, GET READY, název i celý popis nad lištou. Opraveno.
+- ✅ first run cvik 2 (opakování, Scapular pull) w320 light: číslo, název, popis, bublina „Do the reps, then tap Done“, [DONE] bez kolize.
+- ✅ first run cvik 3 (výdrž Hollow hold, bez bubliny) w320: čisté.
+- ✅ first-run mapa/oslava/setup w320, demo oslava w320/w375: beze změny čisté (kolo 3).
+- ❌ **first run cvik 1 (výdrž Dead hang, s bublinou „Tap Start and hold the position“) w375 dark:** bublina leží přes titulek, z „Dead hang“ je vidět jen horní půlka písmen. Reprodukce: 375×812, reset → path → birth → Start lesson. Snímek pořízen ad hoc (Reduce Motion, po usazení), v baseline tato obrazovka není.
+- ❌ **Totéž w320 dark:** popis cviku je useknutý uprostřed věty („Overhand grip, shoulder-width,“), zbytek je za bublinou / pod hranou scrollu bez náznaku pokračování.
+  - Příčina: bublina se vkládá mezi `IntentScrollView` a lištu (`app/lesson/[id].tsx`, `{guide ? <View …>{guide}</View> : null}`) a ubere výšku scrollu; obsah karty výdrže (ilustrace + kruh + název + popis) se na w320/w375 pak nevejde. Patří design-agentovi: např. bublinu v lekci umístit do scrollu pod popis, nebo v kompaktním režimu zmenšit kruh/ilustraci i při bublině. Doporučuji přidat baseline `first-run-lesson` (první cvik s bublinou), aby to e2e hlídalo.
+- ⚠️ map (demo) w320: mezi [START LESSON] a tab barem je pořád vidět „Section boss“ a štítek „BOSS“ je pod CTA (baseline se nezměnila, plný podklad pod CTA na snímku nevidím). Posuvný obsah, ne pevná kolize; ať design-agent ověří, že oprava „plný podklad“ skutečně platí.
+
+### iPhone checklist
+1. Let kotouče mapa → lekce plynulý, bez bliknutí nad fullScreenModal.
+2. Rychlý dvojí tap na Start lesson: jedna lekce, jedna haptika.
+3. První oslava: tečky slétají z místa, kam kotouč dolétl.
+4. První cvik s bublinou na tvém iPhonu: titulek i popis cviku celé, bublina nic nepřekrývá a po Start plynule zmizí.
+5. Reduce Motion + VoiceOver: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“.

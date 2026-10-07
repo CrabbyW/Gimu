@@ -939,3 +939,7 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - ⚠️ mapa w320: na nízkém displeji plný závoj `c.base` od spodní hrany pilulky [START LESSON] až ke dnu obrazovky (pod tab barem), scrollovaný text už neprosvítá. Na vyšších displejích beze změny (mapa dál jede pod tab barem, záměr).
 - Běhy: `tsc` OK, `jest` 703/703, `eslint .` 0 problémů (s `--ignore-pattern e2e/report/**` — vygenerovaný Playwright HTML report, gitignorovaný, ESLint ho jinak lintuje; doporučuji přidat do ignores v eslint.config, nesahal jsem), `e2e:update --grep lekce` → nová baseline w320-dark/light `lesson.png` (úmyslná změna, prohlédnuto), pak `playwright flows visual` 107/107.
 - Otevřené: v first run na w320 je zbytek popisu výdrže pod prvním řádkem dostupný scrollem, dokud je bublina vidět; po jejím zavření se panel vrátí na 120.
+
+### 2026-10-07 qa-agent: elite fáze 1, QA kolo 4 (HEAD 6da8f1b)
+- Ověřil: tsc/eslint 0, jest 703/703, e2e 107/107, perf 4/4, log bez nových ERROR; baseline + ad hoc snímky lekce prvního průchodu (3 cviky) na w320 dark/light a w375 dark.
+- Lekce demo w320 ✅ opraveno. Verdikt: NESCHVÁLENO — ❌ bublina průvodce na 1. cviku first run (výdrž) usekne titulek „Dead hang“ (w375) a popis (w320) → design-agent; doporučena nová baseline `first-run-lesson`. ⚠️ demo mapa w320 stále ukazuje „Section boss“ mezi CTA a tab barem.
