@@ -274,3 +274,43 @@ iPhone checklist kola (scroll):
 3. Šatník: vodorovné sloty jdou posouvat prstem.
 4. Kotouč a tab bar reagují na tah i tap jako dřív (žádné spolknuté gesto).
 5. Reduce Motion zapnuté: scroll funguje, tečky bez vlny; haptika beze změny.
+
+---
+
+## QA elite fáze 1, Task 5 + kolo 1 (HEAD `9d4b7fc`, commity db91f21, 3f77426, 9d4b7fc), 2026-10-07
+
+**Verdikt pro HEAD `9d4b7fc` (+ necommitnuté e2e soubory tohoto kola): NESCHVÁLENO.** Logika, toky a výkon jsou zelené. Blokuje rozbitý layout prvního průchodu na šířce 320 (oslava a mapa).
+
+### Build a testy
+- ✅ `npx tsc --noEmit` 0 chyb, `npx eslint .` 0, `npx jest` 71 sad / 703 testů.
+- ✅ `npm run e2e` 107/107 (6.7 min), včetně nových toků a 24 nových baseline. `npm run e2e:perf` 4/4 (fps mapa i oslava ≥ 55, čas do [START LESSON] ≤ 3 s, plátna ≤ 12).
+- ✅ Nativní log `$TEMP/expogo.log` (283 ř.): 5 ERROR řádků (ř. 30, 48, 107, 166, 225) pochází z doby před kolem: 4× SyntaxError `app/(tabs)/index.tsx (83:30)` (rozepsaný mezistav, opraveno v f0173ee) a 1× „GestureDetector … view-flattened“ (chyba opravená v f0173ee). Po ř. 225 žádný ERROR.
+
+### Task 5: dodáno
+- `e2e/flows/first-run.spec.ts`: (1) reset → path → birth → mapa (bublina mapStart, Finish setup 4 steps) → dvojí klik Start lesson (assert: `history.length` +1, jedna navigace) → lekce → oslava (bublina „That's your first plate“, [SET YOUR GOALS]) → /setup → Done → mapa bez dlaždice a bez bubliny, i po reloadu. Čas od otevření po start lekce **6.3 s** (≤ 30 s, anotace `time-to-lesson-ms`). (2) starý (demo) profil: bez bubliny a bez Finish setup.
+- `e2e/flows/map-ripple.spec.ts`: tah myší po pravém okraji pozadí mapy změní pixely výřezu oproti klidu. Kontrolní běh bez tahu (3×) dal shodné pixely, takže test nepadá falešně.
+- Vizuální baseline (vědomě, `--update-snapshots --grep first-run`): `first-run-map`, `first-run-setup`, `first-run-celebration` × 8 projektů. **Pozor:** baseline w320 (dark i light) pro `first-run-map` a `first-run-celebration` zachycuje vadu níže; po opravě je musí design-agent vědomě přegenerovat.
+- Poznámka k testům: mimo demo profil skrývá [SKIP] adaptivní pravidlo `canSkip` (lekce by se nezapočítala), takže toky klikají [DONE] a výdrž nechají doběhnout. Je to záměr, ne chyba.
+
+### Review Focus
+- ✅ Starý profil bez bublin a setupu (e2e + jest `needsSetup`).
+- ✅ Reset → nový first run: bubliny i dlaždice znovu (e2e first-run a onboarding).
+- ✅ measure 0 / selhání / bez odpovědi → `launch` vrátí false, navigace proběhne (`launchFromPlate(...).then(go, go)`, jest plateFlight 12 testů).
+- ✅ Dvojí tap = jedna navigace (`tryBeginStart` zámek 1.5 s, `endStart` při fokusu mapy; e2e ověřuje historii).
+- ✅ Čas do lekce ≤ 30 s (6.3 s).
+- ✅ Kód PlateFlight: `FullWindowOverlay` jen pro `Platform.OS === 'ios'`, kořen `pointerEvents="none"`, worklet `useAnimatedStyle` zachytává jen čísla (dx, dy, end, turnDeg, fadeFrom) a sdílené hodnoty `p`, `fade`; tokeny z `lib/motion` (`plateFlight`), žádné hardcoded hodnoty.
+
+### Rozbité (pro design-agenta)
+1. ❌ **Oslava prvního průchodu, w320 (dark i light)**: kotouč překrývá titulek „Plate on the bar.“, dvojice pilulek [CONTINUE] + [SET YOUR GOALS] zakrývá řádek série (1 DAY) a „Tomorrow · …“. Reprodukce: 320×568, reset → path → birth → Start lesson → dokončit lekci. Ve w375+ je to v pořádku; druhá pilulka se na 320 nevejde, kotouč by měl být menší (nebo obsah scrollovat). Soubor `components/lesson/LessonCompleteScene.tsx`.
+2. ❌ **Mapa prvního průchodu, w320**: bublina + dlaždice odsunou cestu tak, že [START LESSON] leží přes popisek kotouče („3 EXERCISES · 3 MIN / +20 XP“ pod pilulkou, název „Grip“ skrytý) a kotouč je napůl pod CTA. Text dlaždice je useknutý („FINISH SETUP · 4 STEP…“). Reprodukce: 320×568, první průchod do mapy. `app/(tabs)/index.tsx`, `components/map/FinishSetupTile.tsx`.
+3. ⚠️ Bublina lekce „Hold the timer or tap Done“ se ukáže i u cviku na opakování (bez časovače). Copy by mělo odpovídat typu cviku (design-agent, `data/copy.ts` + lekce).
+
+### Drobné (neblokuje)
+- ⚠️ `lastRect` letu zůstane po ukončené lekci (quit) do příštího `launch`; projeví se jen u oslavy lekce otevřené deep linkem bez letu (tečky slétnou z místa staré řady teček, která je stejně na stejném místě). Motion-agent, nízká priorita.
+
+### iPhone checklist (to, co web neukáže)
+1. Start lesson z mapy: kotouč plynule přeletí nad lekcí (FullWindowOverlay nad fullScreenModal) do řady teček, bez bliknutí a záseku.
+2. Rychlý dvojí tap na Start lesson: otevře se jen jedna lekce, haptika jen jednou.
+3. První oslava: tečky slétají z místa, kam kotouč dolétl (řada teček nahoře), ne ze středu.
+4. Zavření bubliny průvodce tapem: plynulé prolnutí, mapa dojede nahoru bez skoku, safe area nahoře drží.
+5. Reduce Motion zapnuté: kotouč se jen prolne na místě, lekce se otevře hned, VoiceOver přečte bublinu („Tap the plate to start“).

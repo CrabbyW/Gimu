@@ -885,3 +885,8 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Rozhodl jsem sám: overlay jen během letu (FullWindowOverlay se jinak nemountuje); měření cíle se zpožděním místo měření během nativního přechodu; žádný spring (vše timing).
 - Testy: `lib/__tests__/plateFlight.test.ts` (12, vč. from 0/NaN/null, measure vyhodí / neodpoví, dvojí tap). tsc 0, eslint 0, jest 703/703, `npm run e2e` 80/80 (2.9 min), `e2e:perf` 4/4 (fps mapa i oslava ≥ 55). Web: ruční screenshoty letu potvrdily visení → let k řadě teček → rozpuštění.
 - Otevřené: na iOS ověřit `FullWindowOverlay` nad fullScreenModal v Expo Go a přesnost `measureInWindow` po 380 ms; při skoku výšky překryvu u dolního konce scrollu může ScrollView oříznout offset (vzácné).
+
+### 2026-10-07 qa-agent: elite fáze 1, Task 5 + QA kolo 1 (HEAD 9d4b7fc)
+- Udělal: `e2e/flows/first-run.spec.ts` (celý first run, dvojí tap, čas do lekce 6.3 s, starý profil), `e2e/flows/map-ripple.spec.ts` (dluh fáze 0, ověřeno kontrolním během bez tahu), nové vizuální baseline `first-run-map`, `first-run-setup`, `first-run-celebration` × 8 (vědomě přes `--update-snapshots --grep first-run`). tsc/eslint 0, jest 703/703, e2e 107/107, perf 4/4, nativní log bez nových ERROR.
+- Rozhodl sám: toky klikají [DONE], když `canSkip` skryje [SKIP] (záměr adaptivity); dvojí navigaci ověřuji přes `history.length`.
+- Verdikt: NESCHVÁLENO. Na w320 se překrývá první oslava (kotouč přes titulek, pilulky přes sérii) a mapa prvního průchodu (CTA přes kotouč, useknutá dlaždice) → design-agent; po opravě přegenerovat baseline w320 `first-run-map` a `first-run-celebration`. Copy bubliny lekce u cviku na opakování (⚠️).
