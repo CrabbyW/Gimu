@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, View, useWindowDimensions, type GestureResponderEvent } from 'react-native';
-import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { ReduceMotion, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/mascot';
 import { RecapSlide } from '@/components/season/RecapSlide';
@@ -153,9 +153,10 @@ function RecapDeck({ seasonId, seasonName, recap, claimedInitially }: { seasonId
   const slideIn = dir === null
     ? { delay: intro.modal.at, rise: intro.modal.rise, shift: 0 }
     : { delay: 0, rise: 0, shift: dir * motion.slideShift };
-  // Plocha oslavy (akcent u splněné odměny) se prolne stejným taktem jako snímek, ne skokem.
+  // Plocha oslavy (akcent u splněné odměny) se prolne stejným taktem jako snímek, ne skokem; barva není pohyb,
+  // proto i s omezeným pohybem (jinak by celá plocha bleskla z černé na akcent).
   const flood = useSharedValue(celebrate ? 1 : 0);
-  useEffect(() => { flood.set(withTiming(celebrate ? 1 : 0, motion.slide)); }, [celebrate, flood]);
+  useEffect(() => { flood.set(withTiming(celebrate ? 1 : 0, { ...motion.slide, reduceMotion: ReduceMotion.Never })); }, [celebrate, flood]);
   const floodStyle = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(flood.value, [0, 1], [c.base, c.accent]) }));
 
   // Tap: levá třetina zpět, zbytek dál (čte se jako „pokračovat“). Swipe: vodorovný tah delší než 44 pt.

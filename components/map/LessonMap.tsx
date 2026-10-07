@@ -22,6 +22,7 @@ import { BOSS_SIZE, LABEL_GAP, SECTION_LABEL_OFFSET, labelHeight, layoutNodes, p
 import { NodePopover } from './NodePopover';
 import { PathLine } from './PathLine';
 import { PlateNode } from './PlateNode';
+import { useLabelYield } from './useLabelYield';
 import { HAPPY_MS, UNLOCK_STEPS, findUnlockPair, unlockFrame, type UnlockPhase } from './unlockSequence';
 
 const MASCOT = MASCOT_SIZES.S;
@@ -367,18 +368,13 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         const p = first ? posOf(first.lesson.id) : undefined;
         if (!p) return null;
         return (
-          <Text
+          <SectionLabel
             key={s.index}
-            variant="label"
-            tone="muted"
-            accessibilityRole="header"
-            style={[
-              { position: 'absolute', left: space.l, right: space.l, top: p.top - SECTION_LABEL_OFFSET },
-              underLine(space.l, width - space.l, p.top - SECTION_LABEL_OFFSET, p.top - SECTION_LABEL_OFFSET + typography.label.lineHeight) ? HIDDEN : null,
-            ]}
-          >
-            {copy.map.sectionLabel(s.index, s.title)}
-          </Text>
+            top={p.top - SECTION_LABEL_OFFSET}
+            inset={space.l}
+            hidden={underLine(space.l, width - space.l, p.top - SECTION_LABEL_OFFSET, p.top - SECTION_LABEL_OFFSET + typography.label.lineHeight)}
+            label={copy.map.sectionLabel(s.index, s.title)}
+          />
         );
       })}
 
@@ -501,6 +497,7 @@ function NodeLabel({ node, state, minutes, bossAfter, hidden = false }: {
   /** Pod bublinou repliky opičky: popisek ustoupí (místo v layoutu zůstává, nic neposkočí). */
   hidden?: boolean;
 }) {
+  const fade = useLabelYield(hidden);
   // Nezlomitelné mezery uvnitř položek (jako `xpBreakdownLabel`): mono je širší a na 390 pt se popisek zalomí,
   // tak ať se zalomí jen mezi položkami („4 CVIKY · 3 MIN“ / „+20 XP“), nikdy „+20“ a „XP“ zvlášť.
   const items = [...copy.map.nodeInfo(node.exerciseCount, minutes).split(SEP), copy.map.xpGain(node.xp)].map(nbsp);
@@ -541,19 +538,28 @@ function NodeLabel({ node, state, minutes, bossAfter, hidden = false }: {
     lines = <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{isBoss ? copy.map.bossTitle : node.lesson.title}</Text>;
   }
   return (
-    <View
+    <Animated.View
       pointerEvents="box-none"
       accessibilityElementsHidden={hidden}
       importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}
-      style={[{ marginTop: LABEL_GAP, alignItems: 'center' }, hidden ? HIDDEN : null]}
+      style={[{ marginTop: LABEL_GAP, alignItems: 'center' }, fade]}
     >
       {lines}
-    </View>
+    </Animated.View>
   );
 }
 
-/** Popisek ustoupil bublině repliky (statický stav; prolnutí případně motion-agent). */
-const HIDDEN = { opacity: 0 } as const;
+/** Nadpis sekce na mapě; pod bublinou repliky ustoupí prolnutím jako popisky uzlů. */
+function SectionLabel({ top, inset, hidden, label }: { top: number; inset: number; hidden: boolean; label: string }) {
+  const fade = useLabelYield(hidden);
+  return (
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: inset, right: inset, top }, fade]}>
+      <Text variant="label" tone="muted" accessibilityRole="header" accessibilityElementsHidden={hidden} importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}>
+        {label}
+      </Text>
+    </Animated.View>
+  );
+}
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

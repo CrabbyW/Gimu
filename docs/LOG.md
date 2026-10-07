@@ -1023,3 +1023,17 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 **Běhy:** `tsc` 0 chyb · `eslint .` 0 · `jest` 80 suites / 750 testů zelené · `npm run e2e` 159 passed · `npm run e2e:perf` 4/4 (plátna ≤ 12, mapa ≤ 3 s, fps ≥ 55; `DecorCanvas` počet pláten nemění).
 **Nové baseline (vědomě):** `map.png` a `first-run-map.png` na w320/w375/w390 dark+light (12 souborů) — kratší název sekce „Balance 101“ se vejde v plných 40 pt místo zmenšeného „Balance basics“ a závoj je plný za hlavičkou. Liga v toleranci beze změny baseline.
 **Otevřené:** pulz skeletonu a vstup StateView (motion-agent, Task 2); 1.4× na webu je simulace — skutečné Dynamic Type ověřit na iPhonu (titulek mapy, tab bar, pódium: jména se při 1.4× na w320 zkracují výpustkou, záměrně).
+
+## 2026-10-07 motion-agent — elite fáze 4 (audit), Task 2 motion
+Co:
+- **Skeleton StateView** (`components/ui/StateView.tsx`, hodnoty `motion.stateView`): po `skeletonDelayMs` 300 ms vstup (opacity 0→1 + posun 6 pt, timing 220 ms ease.out), pak jeden sdílený pulz `withRepeat(withTiming 0→1, 1800 ms, linear)`; krytí řady = kosinový dech 0.45–1, každá další řada o 0.14 cyklu později (vlna shora dolů, ne spinner). Pure worklet `skeletonRowOpacity` exportován. Omezený pohyb: statický skeleton, plné krytí, bez vstupu.
+- **Ustoupení popisků pod replikou** (`components/map/useLabelYield.ts`, `motion.labelYield`): popisky uzlů i nadpisy sekcí (dosud skok `HIDDEN`) se prolnou na 0 za 140 ms (ease.exit, rychleji než nástup bubliny 220 ms) a zpět na 1 za 220 ms (ease.out) až po odchodu bubliny (delay 150 ms = `lineBubble.outMs`). Jen krytí, proto ReduceMotion.Never. Stav a11y (`hidden`) platí okamžitě. Nadpis sekce vyčleněn do `SectionLabel` (stejný hook).
+- **Audit Reduce Motion** (mapa, lekce, oslava, stage-up, liga, onboarding, recap):
+  - NALEZENO/OPRAVENO: `motion.calmFade` neměl `reduceMotion: Never` → reanimated (System) náhradní prolnutí přeskočil a byl to skok. Dotčené: stage-up (nová opička + text), liga `LeagueResultBanner` (vlastní FADE → `motion.calmFade`), onboarding `birth` (REDUCED_FADE → `motion.calmFade`). Teď `calmFade` nese Never.
+  - OPRAVENO: lekce `ExerciseCard` — FadeInRight/FadeOutLeft se s omezeným pohybem vypnuly (karta se vyměnila skokem); teď `FadeIn 200 ms`/`FadeOut 150 ms` s Never.
+  - OPRAVENO: recap sezóny — prolnutí plochy oslavy (černá → akcent) s omezeným pohybem bleskalo; barva není pohyb → Never.
+  - OK beze změny: mapa (crossfade, PlateNode, unlock, Reveal v choreo už Never), oslava `LessonCompleteScene` (calm timeline), liga řádky (statické, bez vstupu = v pořádku), MilestoneChip (bez třesení, stav nese text), FloatingTabBar (pilulka skočí na cíl = přijatelné, žádný obsah nezmizí), DotSteps (šířka skočí, OK).
+- Testy: `StateView.test.tsx` +3 (zpoždění 300 ms, pulz jen jeden a nekonečný, Reduce Motion = žádný withRepeat a plné krytí, meze/fáze vlny), nový `components/map/__tests__/useLabelYield.test.tsx` (rytmus vs. lineBubble, timing 0/1 s Never a zpožděním).
+Rozhodl sám: prolnutí popisků i s omezeným pohybem (není to pohyb); ustoupení i u nadpisů sekcí; pulz na řadu (ne na tečku) kvůli výkonu.
+Běhy: tsc OK, eslint OK, jest 81 suites / 755 testů OK, test:node 25/25, `npm run e2e` 159 passed (vč. flows/mascot-line), `npm run e2e:perf` 4/4. Necommitováno.
+Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým Omezit pohyb.

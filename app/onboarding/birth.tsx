@@ -41,7 +41,7 @@ const TEXT_RISE = 12;
 // Víc než výška lišty i se spodní safe area: před naběhnutím je celá pod okrajem obrazovky.
 const CTA_TRAVEL = 160;
 // Omezený pohyb (spec §6.7): místo pružin se konečný stav jen prolne.
-const REDUCED_FADE = { duration: 200 };
+const REDUCED_FADE = motion.calmFade;
 
 /** Krok 5: zrození opice. Scéna je vždy tmavá („tmavá plocha, uprostřed puká kruh“, spec §7.1). */
 export default function BirthStep() {

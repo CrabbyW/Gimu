@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInRight, FadeOut, FadeOutLeft, ReduceMotion } from 'react-native-reanimated';
 import { DotField } from '@/components/dots';
 import { Reveal } from '@/components/ui/choreo';
 import { Stat } from '@/components/ui/Stat';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
-import { intro, motion } from '@/lib/motion';
+import { intro, motion, useMotionSafe } from '@/lib/motion';
 import { useShort, useTheme } from '@/theme';
 import type { Exercise } from '@/types';
 import { ExerciseSilhouette } from './ExerciseSilhouette';
@@ -16,10 +16,13 @@ import type { HoldTimer as HoldTimerState } from './useHoldTimer';
 
 // UX2 výměna cviku (hyperframes: odchod a příchod běží současně, pohyb je předávka):
 // nová karta přijede zprava o 32 pt punch křivkou (`motion.enter`, 260 ms), stará odjede
-// doleva a zmizí (`motion.uiExit`, 150 ms). S omezeným pohybem jen prolnutí (reanimated ReduceMotion).
+// doleva a zmizí (`motion.uiExit`, 150 ms). S omezeným pohybem jen prolnutí bez posunu (`calmEnter`/`calmExit`;
+// výchozí ReduceMotion.System by layout animaci vypnul a karta by se vyměnila skokem).
 const enter = FadeInRight.duration(motion.enter.duration).easing(motion.enter.easing)
   .withInitialValues({ opacity: 0, transform: [{ translateX: 32 }] });
 const exit = FadeOutLeft.duration(motion.uiExit.duration).easing(motion.uiExit.easing);
+const calmEnter = FadeIn.duration(motion.calmFade.duration).reduceMotion(ReduceMotion.Never);
+const calmExit = FadeOut.duration(motion.uiExit.duration).reduceMotion(ReduceMotion.Never);
 
 const { step, rise } = intro.card;
 // ~62 znaků Interu 16 pt (průměrná šířka znaku ≈ 8 pt): pohodlná délka řádku na tabletu.
@@ -38,8 +41,9 @@ export function ExerciseCard({ exercise, timer, guided = false }: Props) {
   const { space, size } = useTheme();
   // Nízký displej (320×568): menší panel, menší číslo a těsnější mezery — vše nad lištou bez scrollu.
   const short = useShort();
+  const { reduced } = useMotionSafe();
   return (
-    <Animated.View entering={enter} exiting={exit} style={{ gap: short ? space.m : space.l }}>
+    <Animated.View entering={reduced ? calmEnter : enter} exiting={reduced ? calmExit : exit} style={{ gap: short ? space.m : space.l }}>
       <Tile pad="none" style={{ height: guided ? (short ? size.silhouettePanelGuide : size.silhouettePanelShort) : (short ? size.silhouettePanelShort : size.silhouettePanel) }}>
         {/* Podlaha se prolne první (zem dřív než postava), pak silueta. */}
         <Reveal play delay={intro.floor.at} rise={intro.floor.rise} config={motion.reveal} style={StyleSheet.absoluteFill}><Floor /></Reveal>

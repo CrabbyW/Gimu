@@ -15,7 +15,7 @@ import { TierBadge } from './TierBadge';
 interface Props { result: LeagueWeekResult; toTierName: string; onDismiss(): void }
 
 const SLIDE = 24;
-const FADE = { duration: 200 };
+const FADE = motion.calmFade;
 
 /**
  * Výsledek minulého týdne (Nothing Dot fáze 2): dlaždice s tečkovým odznakem nové úrovně vlevo, mono štítkem

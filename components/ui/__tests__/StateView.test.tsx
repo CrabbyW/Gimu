@@ -1,5 +1,5 @@
 import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
-import { StateView } from '@/components/ui/StateView';
+import { StateView, skeletonRowOpacity } from '@/components/ui/StateView';
 import { copy } from '@/data/copy';
 import { motion } from '@/lib/motion';
 import { buildTheme } from '@/theme';
@@ -10,6 +10,13 @@ jest.mock('@react-native-async-storage/async-storage', () => require('@react-nat
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 /* eslint-enable @typescript-eslint/no-require-imports */
 jest.mock('@/lib/feedback', () => ({ feedback: jest.fn() }));
+let mockReduced = false;
+jest.mock('@/lib/motion', () => ({ ...jest.requireActual('@/lib/motion'), useMotionSafe: () => ({ reduced: mockReduced }) }));
+const mockRepeat = jest.fn();
+jest.mock('react-native-reanimated', () => {
+  const actual = jest.requireActual('react-native-reanimated');
+  return { __esModule: true, ...actual, default: actual.default, withRepeat: (...a: unknown[]) => { mockRepeat(...a); return actual.withRepeat(...a); } };
+});
 jest.mock('react-native-safe-area-context', () => {
   const { View } = jest.requireActual('react-native');
   return { SafeAreaView: View, useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) };
@@ -31,7 +38,7 @@ const texts = (root: ReactTestInstance) => root.findAll((n) => typeof n.props.ch
 const button = (root: ReactTestInstance) => root.find((n) => n.props.accessibilityRole === 'button' && typeof n.props.onPress === 'function');
 const progress = (root: ReactTestInstance) => root.findAll((n) => n.props.accessibilityRole === 'progressbar' && n.props.accessible === true);
 
-beforeEach(() => jest.useFakeTimers());
+beforeEach(() => { jest.useFakeTimers(); mockReduced = false; mockRepeat.mockClear(); });
 afterEach(() => jest.useRealTimers());
 
 test('loading: přístupný progressbar „Loading“ (busy), tečky skeletonu až po zpoždění', () => {
@@ -79,4 +86,40 @@ test('empty: pozvánka s akcí; inline jen věta', () => {
   const inline = render({ kind: 'empty', inline: true, message: copy.progress.activityEmpty });
   expect(new Set(texts(inline.root))).toEqual(new Set([copy.progress.activityEmpty]));
   expect(inline.root.findAll((n) => n.props.accessibilityRole === 'button')).toHaveLength(0);
+});
+
+const SV = motion.stateView;
+const rows = (root: ReactTestInstance) => root.findAll((n) => n.props.testID === 'skeleton-row' && typeof n.type !== 'string');
+
+test('skeleton: před 300 ms nic a žádný pulz; po zpoždění vstup a jeden sdílený pulz (vlna, ne spinner)', () => {
+  expect(SV.skeletonDelayMs).toBe(300);
+  const r = render({ kind: 'loading' });
+  act(() => { jest.advanceTimersByTime(SV.skeletonDelayMs - 1); });
+  expect(rows(r.root)).toHaveLength(0);
+  expect(mockRepeat).not.toHaveBeenCalled();
+  act(() => { jest.advanceTimersByTime(1); });
+  expect(rows(r.root).length).toBeGreaterThan(0);
+  expect(mockRepeat).toHaveBeenCalledTimes(1);
+  expect(mockRepeat.mock.calls[0]![1]).toBe(-1);
+});
+
+test('skeleton s omezeným pohybem: statický (žádný pulz ani vstup), tečky plně viditelné', () => {
+  mockReduced = true;
+  const r = render({ kind: 'loading' });
+  act(() => { jest.advanceTimersByTime(SV.skeletonDelayMs); });
+  expect(rows(r.root).length).toBeGreaterThan(0);
+  expect(mockRepeat).not.toHaveBeenCalled();
+  const flat = (st: unknown): Record<string, unknown> => Object.assign({}, ...[st].flat(Infinity).filter(Boolean));
+  for (const row of rows(r.root)) expect(flat(row.props.style).opacity ?? 1).toBe(1);
+});
+
+test('skeletonRowOpacity: dech v mezích, řady posunuté ve fázi (vlna shora dolů)', () => {
+  for (let t = 0; t <= 1; t += 0.05) {
+    const o = skeletonRowOpacity(t, 0);
+    expect(o).toBeGreaterThanOrEqual(SV.pulseMin - 1e-9);
+    expect(o).toBeLessThanOrEqual(SV.pulseMax + 1e-9);
+  }
+  expect(skeletonRowOpacity(0, 0)).toBeCloseTo(SV.pulseMin);
+  expect(skeletonRowOpacity(0.5, 0)).toBeCloseTo(SV.pulseMax);
+  expect(skeletonRowOpacity(0.5 + SV.rowStagger, 1)).toBeCloseTo(SV.pulseMax);
 });

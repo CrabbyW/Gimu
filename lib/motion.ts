@@ -137,10 +137,16 @@ export const motion = {
   // DotLoader (port @dotmatrix dotm-square-11 „Echo Ring“): mřížka 5×5, cyklus 1500 ms / speed,
   // výchozí speed 1.25, trojice opacit z dotmatrix-loader.css (--dmx-opacity-*).
   /** StateView (elite fáze 4): skeleton se ukáže až po `skeletonDelayMs`, ať rychlé načtení nebliká. Pulz dodá motion. */
-  stateView: { skeletonDelayMs: 300 },
+  /**
+   * StateView (elite fáze 4): skeleton se ukáže po `skeletonDelayMs`, vstoupí krátkým prolnutím s posunem
+   * `revealRise` pt a pak tečkové řady pomalu dýchají vlnou shora dolů (fáze řady = index × `rowStagger`
+   * cyklu). Žádný spinner. Omezený pohyb: statický skeleton bez pulzu i posunu.
+   */
+  stateView: { skeletonDelayMs: 300, revealMs: 220, revealRise: 6, pulseMs: 1800, pulseMin: 0.45, pulseMax: 1, rowStagger: 0.14 },
   dotLoader: { cycleMs: 1500, speed: 1.25, opacityBase: 0.16, opacityMid: 0.32, opacityPeak: 1 },
-  /** Omezený pohyb: místo pružiny a posunu jen krátké prolnutí (spec §6.7). */
-  calmFade: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
+  /** Omezený pohyb: místo pružiny a posunu jen krátké prolnutí (spec §6.7). ReduceMotion.Never: jinak by
+   *  reanimated se zapnutým omezením prolnutí přeskočil a náhrada by byla skok (elite fáze 4 audit). */
+  calmFade: { duration: 200, easing: ease.out, reduceMotion: ReduceMotion.Never } satisfies WithTimingConfig,
   /** Mikrointerakce ovládání (Toggle, přechod slidu): timing, nikdy pružina (fáze 3: 150–250 ms). */
   toggle: cvak,
   slide: { duration: 200, easing: ease.out } satisfies WithTimingConfig,
@@ -444,3 +450,8 @@ export const guideArrow = { scanStepMs: 70, idleMs: 2600, pulseMs: 420 };
  * Výměna textu za běhu = jen nový text (žádné blikání). Omezený pohyb: jen prolnutí stejnými délkami.
  */
 export const lineBubble = { inMs: 220, outMs: 150, rise: 6, fromScale: 0.9 };
+/**
+ * Popisky uzlů pod replikou: ustoupí prolnutím rychleji, než bublina nastoupí (`outMs` < `lineBubble.inMs`),
+ * a vrátí se až po odchodu bubliny (`backDelayMs` = `lineBubble.outMs`). Prolnutí platí i s omezeným pohybem.
+ */
+export const labelYield = { outMs: 140, inMs: 220, backDelayMs: lineBubble.outMs };

@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
+import Animated, { Easing, ReduceMotion, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import type { Edge } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/mascot';
 import { copy } from '@/data/copy';
-import { motion } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import { opacity, useTheme } from '@/theme';
 import { Button } from './Button';
 import { Screen } from './Screen';
@@ -12,7 +13,8 @@ import { Text } from './Text';
 /*
  * Jednotné stavy obrazovky (elite fáze 4, spec §4):
  * - loading = statický tečkový skeleton ve tvaru obsahu (titulek + dlaždice), ne spinner. Objeví se až po
- *   `motion.stateView.skeletonDelayMs`, takže rychlé načtení nebliká. Pulz teček dodá motion-agent.
+ *   `motion.stateView.skeletonDelayMs`, takže rychlé načtení nebliká. Vstup = krátké prolnutí s posunem, pak řady teček dýchají vlnou
+ *   shora dolů (`skeletonRowOpacity`). Omezený pohyb: statický skeleton.
  * - error = smutná opička + věta „co se pokazilo“ + věta „co udělat“ + [ZKUSIT ZNOVU].
  * - empty = pozvánka (co se tu objeví a čím), volitelně s akcí. `inline` = jen věta uvnitř sekce.
  */
@@ -81,37 +83,64 @@ function useDelayed(ms: number) {
   return shown;
 }
 
-/** Řada zhasnutých teček `dotOff` (stand-in textu). */
-function DotLine({ count, dot }: { count: number; dot: number }) {
+const SV = motion.stateView;
+const NEVER = { reduceMotion: ReduceMotion.Never };
+
+/** Krytí řady `row` v čase `t` (0..1 cyklu pulzu): sinusový dech, každá další řada o `rowStagger` později. */
+export function skeletonRowOpacity(t: number, row: number): number {
+  'worklet';
+  const phase = t - row * SV.rowStagger;
+  const k = 0.5 - 0.5 * Math.cos(phase * 2 * Math.PI);
+  return SV.pulseMin + (SV.pulseMax - SV.pulseMin) * k;
+}
+
+/** Řada zhasnutých teček `dotOff` (stand-in textu). `clock` = sdílený čas pulzu (null = statická). */
+function DotLine({ count, dot, row, clock }: { count: number; dot: number; row: number; clock: SharedValue<number> | null }) {
   const { c, size, radius } = useTheme();
+  const animated = clock !== null;
+  const still = useSharedValue(0);
+  const src = clock ?? still;
+  const pulse = useAnimatedStyle(() => ({ opacity: skeletonRowOpacity(src.value, row) }));
   return (
-    <View style={{ flexDirection: 'row', gap: size.dotGap, overflow: 'hidden' }}>
+    <Animated.View testID="skeleton-row" style={[{ flexDirection: 'row', gap: size.dotGap, overflow: 'hidden' }, animated ? pulse : null]}>
       {Array.from({ length: count }, (_, i) => (
         <View key={i} style={{ width: dot, height: dot, borderRadius: radius.full, backgroundColor: c.dotOff }} />
       ))}
-    </View>
+    </Animated.View>
   );
 }
 
 function LoadingSkeleton({ edges }: { edges?: readonly Edge[] }) {
   const { c, space, size, radius } = useTheme();
-  const shown = useDelayed(motion.stateView.skeletonDelayMs);
+  const shown = useDelayed(SV.skeletonDelayMs);
+  const { reduced } = useMotionSafe();
+  const clock = useSharedValue(0);
+  const enter = useSharedValue(reduced ? 1 : 0);
+  useEffect(() => {
+    if (!shown || reduced) return;
+    enter.value = withTiming(1, { duration: SV.revealMs, easing: ease.out, ...NEVER });
+    clock.value = 0;
+    clock.value = withRepeat(withTiming(1, { duration: SV.pulseMs, easing: Easing.linear, ...NEVER }), -1, false);
+    return () => { cancelAnimation(clock); cancelAnimation(enter); };
+  }, [shown, reduced, clock, enter]);
+  const reveal = useAnimatedStyle(() => ({ opacity: enter.value, transform: [{ translateY: (1 - enter.value) * SV.revealRise }] }));
+  const pulse = reduced ? null : clock;
   let body: ReactNode = null;
   if (shown) {
     body = (
-      <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ gap: space.l, paddingTop: space.l }}>
+      <Animated.View testID="skeleton" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[{ gap: space.l, paddingTop: space.l }, reduced ? null : reveal]}>
         {/* Titulek: dvě řady velkých teček (Doto). */}
         <View style={{ gap: space.s }}>
-          <DotLine count={4} dot={size.dot} />
-          <DotLine count={9} dot={size.dot} />
+          <DotLine count={4} dot={size.dot} row={0} clock={pulse} />
+          <DotLine count={9} dot={size.dot} row={1} clock={pulse} />
         </View>
         {[0, 1, 2].map((i) => (
           <View key={i} style={{ backgroundColor: c.tile, borderRadius: radius.tile, padding: space.m, gap: space.s, opacity: i === 0 ? 1 : opacity.future }}>
-            <DotLine count={6} dot={size.loaderDot * 2} />
-            <DotLine count={24} dot={size.loaderDot} />
+            <DotLine count={6} dot={size.loaderDot * 2} row={2 + i * 2} clock={pulse} />
+            <DotLine count={24} dot={size.loaderDot} row={3 + i * 2} clock={pulse} />
           </View>
         ))}
-      </View>
+      </Animated.View>
     );
   }
   return (
