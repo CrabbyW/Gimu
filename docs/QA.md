@@ -343,3 +343,31 @@ iPhone checklist kola (scroll):
 3. V první oslavě tečky slétají z místa, kam kotouč dolétl.
 4. Zavření bubliny tapem: plynulé prolnutí, mapa dojede bez skoku, horní safe area drží (zkontroluj i na menším iPhonu).
 5. Reduce Motion: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“ srozumitelně.
+
+---
+
+## QA elite fáze 1, kolo 3 (HEAD `1569e1e`), 2026-10-07
+
+Přísnější pravidlo (.claude/agents/qa-agent.md): kolize nebo ořez textu na kterékoli šířce = ❌.
+
+**Verdikt pro HEAD `1569e1e`: NESCHVÁLENO** (1× ❌ na w320 v obrazovce lekce, mimo first-run opravy).
+
+### Build a testy
+- ✅ tsc 0, eslint 0, jest 703/703, `npm run e2e` 107/107 (do lekce 6.1 s), `npm run e2e:perf` 4/4.
+- ✅ Nativní log: 283 řádků, ERROR jen ř. 30–225 (staré, f0173ee). Nic nového.
+
+### Prohlídka snímků (w320 + w375, dark/light; růžový čtverec = maska živé tečky)
+- ✅ first-run-map w320 dark/light: bublina přes celou šířku, šipka vlevo od opičky (ne přes ni), „SETUP · 4“ celé, „+20 XP“ má vzduch nad [START LESSON]. Zbytek „SE…“ za bublinou zmizel.
+- ✅ first-run-celebration w320 dark/light: bez kolizí.
+- ✅ first-run-setup w320: čisté (seznam pokračuje pod [DONE] jako scroll, 4. řádek dostupný scrollem).
+- ✅ celebration (demo) w320/w375, map w375, first-run-map w375: bez kolizí.
+- ✅ Text výdrže: „Tap Start and hold the position“ (bez Done).
+- ❌ **lesson (demo, 1. cvik = výdrž Crow) w320 dark i light:** v klidovém stavu dolní lišta [SKIP]/[START] usekne číslice odpočtu „10“ napůl a název cviku „Crow“ s popisem nejsou vidět vůbec (až po scrollu). Hlavní prvek obrazovky výdrže je oříznutý. Ve w375 je vše celé. Reprodukce: 320×568, demo profil → Start lesson. Patří design-agentovi (`app/lesson/[id].tsx` ExerciseStep / `components/lesson/ExerciseCard`): na kompaktní výšce zmenšit ilustraci nebo kruh časovače (`useCompact`), aby se kruh i název vešly nad lištu. Baseline w320 `lesson` je pak třeba vědomě přegenerovat.
+- ⚠️ map (demo) w320: pod plovoucí [START LESSON] projíždí uzel bosse a mezi CTA a tab barem je vidět „Section boss“. Jde o obsah mapy za plovoucím ovládáním (scroll), aktuální uzel je celý vidět. Doporučuji, aby design-agent posoudil, jestli `footerSpace`/scrollToNode nemá na w320 nechat pod CTA prázdný pruh. Nehodnotím jako ❌, protože jde o posuvný obsah, ne o pevnou kolizi.
+
+### iPhone checklist
+1. Let kotouče mapa → lekce plynulý, bez bliknutí nad fullScreenModal.
+2. Rychlý dvojí tap na Start lesson: jedna lekce, jedna haptika.
+3. První oslava: tečky slétají z místa, kam kotouč dolétl.
+4. Bublina přes celou šířku: tap ji plynule zavře, mapa dojede bez skoku, safe area nahoře drží.
+5. Reduce Motion + VoiceOver: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“.

@@ -922,3 +922,11 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Běhy: `npx tsc --noEmit` OK; `npx eslint .` OK (0 problémů); `npx jest` 71/71 sad, 703/703 testů; `npm run e2e` 105 passed, 2 failed = úmyslná změna w320-{dark,light}/first-run-map.
 - Vědomé baseline: `npm run e2e:update -- --grep "first-run mapa" --project=w320-dark --project=w320-light` → `e2e/__screenshots__/w320-dark/first-run-map.png`, `e2e/__screenshots__/w320-light/first-run-map.png`.
 - Otevřené: bublina průvodce v první lekci (výdrž, nový text) nemá vizuální snímek na w320; k ruční kontrole. Posun mapy o `space.l` je laděný na 568 pt výšky a kotvení scrollu na 40 % výřezu.
+
+### 2026-10-07 qa-agent: elite fáze 1, QA kolo 3 (HEAD 1569e1e)
+- Ověřil: tsc/eslint 0, jest 703/703, e2e 107/107, perf 4/4, log bez nových ERROR; prohlédl w320 a w375 snímky first-run i demo podle nového pravidla (kolize/ořez = ❌).
+- First-run opravy ✅ (mapa, oslava, setup, text výdrže).
+- Verdikt: NESCHVÁLENO. ❌ lekce w320 (výdrž): lišta usekne odpočet „10“ a název cviku není vidět → design-agent, poté přegenerovat baseline w320 `lesson`. ⚠️ demo mapa w320: „Section boss“ prosvítá mezi CTA a tab barem (scroll obsah).
+
+## 2026-10-07 · boss · QA fáze 1 kolo 3 = NESCHVÁLENO → kolo 4 (vědomá výjimka z „max 3 kola“)
+- Kolo 3 schválilo opravy first run, zablokovalo starou vadu z fáze 0 (lekce na w320: lišta usekává odpočet, název cviku mimo výřez), kterou odhalilo až zpřísněné pravidlo „kolize/ořez = ❌“ z dnešního dne. Výjimka: vada není z této fáze a oprava je malá (kompaktní lekce) — boss povoluje 4. kolo QA.
