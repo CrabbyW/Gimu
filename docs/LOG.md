@@ -1046,3 +1046,5 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 - Udělal: `store/db.ts` guardedStorage — když AsyncStorage při čtení vyhodí chybu, `loadFailed` = true a dokud trvá, nic se nezapisuje a `setProfile` je no-op. Kořen (`app/_layout.tsx`) ukáže StateView error + Retry (`useDbLoadFailed().retry` → rehydrate) místo onboardingu. Test `hooks/__tests__/dbLoadFailed.test.ts`.
 - Rozhodl sám: poškozený JSON (parse error) dál = začít načisto (data stejně nejdou přečíst, jinak by uživatel uvízl); blokuje se jen výjimka úložiště.
 - Otevřené: test velkého písma hlídá jen 1.4× (větší iOS velikosti jen iPhone checklist).
+
+- qa-agent (elite fáze 4 kolo 2, HEAD 06102e1): SCHVÁLENO. Gates zelené (tsc, eslint, jest 756, test:node, e2e 159/159). Chyba čtení úložiště na /, /league a /season (w320 dark+light) ukáže Retry, nespustí onboarding, nic nepřepíše a Retry obnoví data. Poškozený JSON = začít načisto. Otevřené (⚠️): settings store nemá ochranu proti přepsání a chybový stav nemá e2e regresní test.

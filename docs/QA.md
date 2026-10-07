@@ -528,3 +528,22 @@ iPhone checklist:
 3. Reduce Motion zapnout: dokončení lekce, liga, onboarding birth a recap jen klidně prolínají, nic neskáče ani nebliká.
 4. Chybový stav / načítání: při studeném startu není vidět blikající skeleton, obrazovky naběhnou rovnou.
 5. Plynulost: scroll mapy a ustupování popisků pod bublinou opičky bez trhání; haptika při dokončení lekce beze změny.
+
+## QA elite fáze 4 – kolo 2 (HEAD 06102e15a37dffff271f3d1e46f1b6a253c2f7f4, oprava rizika ztráty dat z kola 1)
+- ✅ `npx tsc --noEmit`, `npx eslint .` čisté; `npx jest` 82 sad / 756 testů zelených (včetně nového `hooks/__tests__/dbLoadFailed.test.ts`); `npm run test:node` zelený.
+- ✅ `npm run e2e` (8083): 159/159 prošlo, žádný vizuální diff, žádná nová baseline.
+- ✅ Experiment z kola 1 zopakován (dočasný Playwright spec, smazaný): demo profil, pak `localStorage.getItem('opice-db')` vyhazuje chybu, navigace na `/`, `/league` a `/season` ve w320 dark i light. Ve všech 6 případech se ukáže StateView error („Couldn't load your profile.“ + Try again), onboarding se nespustí, URL neobsahuje `onboarding`. Retry, když chyba trvá, nechá chybový stav. Uložený `opice-db` je bajtově stejný jako před chybou. Po obnovení úložiště Retry vrátí appku s původním profilem (jméno se shoduje). Screenshoty w320 dark i light: bez kolizí, bez ořezu.
+- ✅ Zápisy během chyby: všechny zápisy ze services jdou přes `setProfile`, ten je při `loadFailed` no-op; `guardedStorage.setItem/removeItem` jsou navíc zablokované. Reset z dev menu (`setProfile(null)`) za chyby nic nesmaže.
+- ✅ Poškozený JSON (`{broken`) → onboarding, tj. začít načisto. Odpovídá LOG: `readFailed` se nastaví jen při výjimce z getItem, ne při chybě parsování.
+- ✅ Revize: `onRehydrateStorage` zvedá `revision` i při chybě; retry přes `persist.rehydrate()` ji zvedne znovu, takže hooky se znovu načtou.
+- ⚠️ Settings store (`store/settings.ts`) nemá stejnou ochranu: když čtení selže, pokračuje s výchozími hodnotami a první změna nastavení přepíše uložená nastavení (téma, připomínky, posun času). Nejde o herní postup, proto to verdikt neblokuje. Patří bossovi (store).
+- ⚠️ Chybový stav nemá regresní e2e test, pokrývá ho jen jest. Doporučení pro bosse: přidat spec podle experimentu výše.
+- ✅ Nativní log `$TEMP/expogo.log` beze změny (283 ř., poslední ERROR na ř. 225 je historický) → žádný nový ERROR.
+
+**Verdikt: SCHVÁLENO** pro HEAD 06102e1.
+
+iPhone checklist:
+1. Normální start s uloženým profilem: žádný záblesk chybové obrazovky ani onboardingu, rovnou mapa.
+2. Pokud uvidíš chybovou obrazovku: opice a text jsou celé pod notchem/Dynamic Islandem a tlačítko Try again je nad home indikátorem.
+3. VoiceOver na chybové obrazovce přečte nadpis, text a tlačítko „Try again“ jako tlačítko.
+4. Ťuknutí na Try again má haptickou odezvu a nic se nezasekne.
