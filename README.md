@@ -54,7 +54,8 @@ npm run lint          # expo lint
 
 ## Testy a ověřování (elite fáze 0)
 
-- `npm test` — Jest (logika, komponenty, kontrast, ESLint pravidla).
+- `npm test` — Jest (logika, komponenty, kontrast, ESLint pravidla, mapa odezvy).
+- `npm run test:node` — node testy ochranného hooku a generátoru zvuků; `npm run gen:sounds` přegeneruje `assets/sounds/` (syntetizovaná paleta, elite fáze 2).
 - `npm run e2e` — Playwright v `e2e/`: E2E toky (first run, onboarding, lekce, stage-up, liga, reset, tab bar, reakce pozadí mapy) + vizuální regrese 12 obrazovek × 4 šířky × dark/light (baseline `e2e/__screenshots__/`). Běží proti produkčnímu webovému exportu (`dist/` přes `e2e/serve-dist.mjs` na 8083), ~4 min. Chrome ze systému (`CHROME_PATH`), žádné stahování browserů.
 - `npm run e2e:update` — vědomě nová baseline snímků (zapsat do LOG proč).
 - `npm run e2e:perf` — produkční web export (`dist/`, statický server `e2e/serve-dist.mjs` na 8083): Skia plátna ≤ 12 na obrazovce, čas do interakce mapy ≤ 3 s, medián fps mapy a oslavy ≥ 55.

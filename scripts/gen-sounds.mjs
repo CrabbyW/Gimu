@@ -3,6 +3,7 @@
 // Spuštění: `node scripts/gen-sounds.mjs`. Žádné stažené nahrávky; zdroj zvuku je tenhle soubor.
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { Buffer } from 'node:buffer';
 import { fileURLToPath } from 'node:url';
 
 export const SAMPLE_RATE = 44100;

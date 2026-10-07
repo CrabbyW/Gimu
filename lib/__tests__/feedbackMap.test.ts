@@ -2,6 +2,8 @@ import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { FEEDBACK_MAP, NAVIGATION_IDS } from '@/lib/feedbackMap';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- oficiální jest mock
+jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 jest.mock('expo-audio', () => ({ createAudioPlayer: () => ({}), setAudioModeAsync: () => Promise.resolve() }));
 // Registr zvuků z lib/sound (require WAV v jestu vrací modul, jména jsou to podstatné).
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- čtení registru bez vedlejších efektů přehrávačů

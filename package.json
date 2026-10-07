@@ -55,6 +55,8 @@
     "web": "expo start --web",
     "test": "cross-env TZ=Europe/Prague jest",
     "typecheck": "tsc --noEmit",
+    "test:node": "node --test .claude/hooks/guard.test.mjs scripts/__tests__/gen-sounds.test.mjs",
+    "gen:sounds": "node scripts/gen-sounds.mjs",
     "lint": "expo lint",
     "e2e": "expo export --platform web && playwright test -c e2e/playwright.config.ts flows visual",
     "e2e:visual": "expo export --platform web && playwright test -c e2e/playwright.config.ts visual",
