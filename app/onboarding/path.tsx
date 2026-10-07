@@ -4,7 +4,7 @@ import { OnboardingFrame } from '@/components/onboarding/OnboardingFrame';
 import { PathCard } from '@/components/onboarding/PathCard';
 import { Reveal } from '@/components/ui/choreo';
 import { copy } from '@/data/copy';
-import { isDreamPreset, useOnboardingDraft, usePathOptions } from '@/hooks/useOnboardingDraft';
+import { isDreamPreset, useDefaultDraftGoals, useOnboardingDraft, usePathOptions } from '@/hooks/useOnboardingDraft';
 import { haptics } from '@/lib/haptics';
 import { stagger } from '@/lib/motion';
 import { useSfx } from '@/lib/sound';
@@ -19,6 +19,7 @@ export default function PathStep() {
   const dreamBody = useOnboardingDraft((s) => s.dreamBody);
   const set = useOnboardingDraft((s) => s.set);
   const selectSound = useSfx('select');
+  const defaults = useDefaultDraftGoals(path);
 
   const choose = (id: PathId) => {
     haptics.tick();
@@ -34,7 +35,12 @@ export default function PathStep() {
       title={copy.onboarding.path.title}
       lead={copy.onboarding.path.lead}
       canContinue={path !== null}
-      onContinue={() => router.push('/onboarding/dream')}
+      onContinue={() => {
+        // Krátký onboarding (elite fáze 1): vize a milníky dostanou výchozí hodnoty cesty, uživatel je doplní
+        // po první lekci („Finish setup“). Cesta → zrození → mapa.
+        set({ ...defaults, weightKind: 'none' });
+        router.push('/onboarding/birth');
+      }}
     >
       <View accessibilityRole="radiogroup" style={{ gap: space.s }}>
         {paths.map((p, i) => (

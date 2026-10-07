@@ -59,7 +59,11 @@ function BirthScene() {
   const paths = usePathOptions();
   const resetDraft = useOnboardingDraft((s) => s.reset);
   // Koncept se zachytí při vstupu: po uložení se resetuje a obrazovka nesmí během odchodu problikovat.
-  const [input] = useState(() => buildOnboardingInput(useOnboardingDraft.getState()));
+  // Krátký onboarding (elite fáze 1): profil vzniká s výchozími cíli a `setupDone: false` (→ „Finish setup“ a průvodce).
+  const [input] = useState(() => {
+    const built = buildOnboardingInput(useOnboardingDraft.getState());
+    return built ? { ...built, setupDone: false } : null;
+  });
   const [bornOn] = useState(() => { const d = parseISODate(toISODate(now())); return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`; });
   // Sekvence se rozhodne jednou při vstupu; přepnutí omezení pohybu uprostřed ji nerestartuje.
   const [calm] = useState(reduced);

@@ -3,7 +3,7 @@ import { copy } from '@/data/copy';
 import { DREAM_OPTIONS, type DreamGlyphId, type DreamOptionId } from '@/data/dreams';
 import { MILESTONE_PRESETS } from '@/data/milestones';
 import { PATHS } from '@/data/paths';
-import { composeDreamSentence, type OnboardingDraftValues } from '@/logic/onboarding';
+import { composeDreamSentence, defaultDraftGoals, type OnboardingDraftValues } from '@/logic/onboarding';
 import type { Milestone, PathId, PathMeta } from '@/types';
 
 interface DraftValues extends OnboardingDraftValues {
@@ -54,3 +54,10 @@ export const useDreamOptions = (path: PathId | null): readonly DreamChoice[] => 
 /** Je text větou některé předvolby (jakékoli cesty)? Vlastní text se při změně cesty zachová, předvolba ne. */
 export const isDreamPreset = (dreamBody: string): boolean => ALL_DREAM_SENTENCES.has(dreamBody);
 export type { DreamGlyphId } from '@/data/dreams';
+
+/** Krátký onboarding: výchozí vize a milníky zvolené cesty (doplní se později přes „Finish setup“). */
+export function useDefaultDraftGoals(path: PathId | null) {
+  const presets = useMilestonePresets(path).map((m) => ({ ...m, current: 0, custom: false }));
+  const dreams = useDreamOptions(path);
+  return defaultDraftGoals(presets, dreams.map((d) => d.sentence));
+}

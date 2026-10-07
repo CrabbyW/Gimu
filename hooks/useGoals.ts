@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type { GoalsError, GoalsPatch } from '@/logic/goals';
+import { needsSetup } from '@/logic/onboarding';
 import { services } from '@/services';
 import { useProfile } from './useProfile';
 
@@ -16,4 +17,14 @@ export function useGoals() {
     }
   }, []);
   return { profile, save };
+}
+
+/** Krátký onboarding (elite fáze 1): potřebuje profil „Finish setup“, a jeho dokončení. */
+export function useFinishSetup() {
+  const profile = useProfile();
+  const needed = profile.status === 'ready' && !!profile.data && needsSetup(profile.data);
+  const complete = useCallback(async (): Promise<boolean> => {
+    try { await services.user.completeSetup(); return true; } catch { return false; }
+  }, []);
+  return { needed, complete };
 }

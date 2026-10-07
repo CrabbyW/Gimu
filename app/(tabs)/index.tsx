@@ -5,7 +5,9 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotField, DotRing, ScrollIntentProvider, useDotTouch, useScrollIntent } from '@/components/dots';
 import { backgroundPitch } from '@/components/dots/geometry';
+import { FinishSetupTile } from '@/components/map/FinishSetupTile';
 import { LessonMap } from '@/components/map/LessonMap';
+import { GuideBubble } from '@/components/mascot/GuideBubble';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { currentSection, SectionHero } from '@/components/map/SectionHero';
 import { Card } from '@/components/ui/Card';
@@ -18,6 +20,8 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { ease, motion } from '@/lib/motion';
+import { useFinishSetup } from '@/hooks/useGoals';
+import { useGuide } from '@/hooks/useGuide';
 import { useLeague } from '@/hooks/useLeague';
 import { useLessonMinutes } from '@/hooks/useLessonMinutes';
 import { useLessonPath } from '@/hooks/useLessonPath';
@@ -61,6 +65,9 @@ export default function TrainingScreen() {
   const reactions = useMascotReactions(useScreenFocused());
   // Záměr scrollu: mapa (`IntentScrollView`) se rozjede jen při jasně svislém tahu, jinak tah patří tečkám.
   const play = useScrollIntent();
+  // First run (elite fáze 1): průvodce „Tap the plate to start“ a řádek „Finish setup“ v hlavičkovém překryvu.
+  const guide = useGuide('map');
+  const setup = useFinishSetup();
   const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch, play), [field.gesture, reactions.touch, play]);
 
   if (profile.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
@@ -71,6 +78,7 @@ export default function TrainingScreen() {
   const sad = !stats.isNew && stats.mood === 'sad';
   const currentId = viewData.currentLessonId;
   const open = (id: string) => {
+    guide.dismiss();
     reactions.report({ type: 'lessonStart' });
     router.push({ pathname: '/lesson/[id]', params: { id } });
   };
@@ -155,6 +163,14 @@ export default function TrainingScreen() {
               <Text variant="headline">{copy.map.brokenTitle}</Text>
               <Text tone="muted">{copy.map.brokenBody(stats.longestStreak)}</Text>
             </Card>
+          ) : null}
+          {/* Krátký onboarding: jednořádková dlaždice (výška 44), ne karta, aby cesta nepřišla o místo. */}
+          {setup.needed ? <FinishSetupTile /> : null}
+          {/* Průvodce: pod hlavičkou, šipka dolů k aktuálnímu kotouči (ten je hned pod překryvem). Nikdy u CTA dole. */}
+          {guide.id && currentId ? (
+            <View style={{ paddingHorizontal: space.l, marginTop: space.s }}>
+              <GuideBubble id={guide.id} arrow="down" onDismiss={guide.dismiss} delay={motion.screenIn.headerAt} />
+            </View>
           ) : null}
           </View>
           {currentId ? (

@@ -12,6 +12,7 @@ import { DotField, DotPlate, DotRow, SkiaGuard, plateDotRadius, useDotInk, useDo
 import { spiralLerp, type Pt } from '@/components/dots/animate';
 import { plateDots, ringCountForKg, ringDots, spiralOrder } from '@/components/dots/geometry';
 import { Mascot, useMascotReactions } from '@/components/mascot';
+import { GuideBubble } from '@/components/mascot/GuideBubble';
 import { PillButton } from '@/components/ui/PillButton';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -24,6 +25,7 @@ import { ease, lessonDone as L, motion, spring, useMotionSafe } from '@/lib/moti
 import { playSfx, setDucking } from '@/lib/sound';
 import { REACTION_COOLDOWN_MS } from '@/logic/mascotReactions';
 import { nextLessonId } from '@/logic/map';
+import type { GuideId } from '@/logic/guide';
 import type { LessonResult } from '@/services';
 import type { LessonPathView } from '@/services/contracts';
 import { dots, useCompact, useTheme } from '@/theme';
@@ -64,6 +66,10 @@ interface Props {
   lesson: Lesson;
   cosmetics: Partial<Record<CosmeticSlot, string>>;
   onContinue(): void;
+  /** Opička průvodce (first run): „That’s your first plate“ pod kotoučem, nastoupí s CTA. */
+  guide?: { id: GuideId; dismiss(): void };
+  /** Krátký onboarding: sekundární pilulka [SET YOUR GOALS] pod [CONTINUE] (jen dokud `needsSetup`). */
+  onSetGoals?: () => void;
 }
 
 /**
@@ -85,7 +91,7 @@ interface Props {
  * a řadu série. Omezený pohyb: konečný stav jedním prolnutím 200 ms, haptika success zůstává.
  * Odchod appky do pozadí = přeskočení na konec.
  */
-export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: Props) {
+export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, guide, onSetGoals }: Props) {
   const { c, space } = useTheme();
   const ink = useDotInk();
   const insets = useSafeAreaInsets();
@@ -329,6 +335,13 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
                     </Animated.View>
                   ) : null}
                 </View>
+                {/* Průvodce: místo rezervované od začátku (layout se nehne a let teček míří na správný střed kotouče),
+                    viditelný až s CTA. Šipka nahoru ke kotouči. */}
+                {guide ? (
+                  <View style={{ marginTop: -(compact ? space.m : space.l), alignSelf: 'stretch' }}>
+                    <GuideBubble id={guide.id} arrow="up" play={ctaReady} onDismiss={guide.dismiss} />
+                  </View>
+                ) : null}
                 <View style={{ alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.m }}>
                   <Animated.View style={mascotStyle}>
                     <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={compact ? 'S' : 'M'} hop={false} scarfEdge={mood === cheer} decorative reaction={mascotReaction} />
@@ -390,6 +403,10 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue }: P
           style={[{ paddingHorizontal: space.l, paddingTop: space.m, paddingBottom: insets.bottom + space.m }, ctaStyle]}
         >
           <PillButton label={t.cta} onPress={onContinue} disabled={!ctaReady} />
+          {/* Krátký onboarding: doplnění cílů jako sekundární cesta; [CONTINUE] zůstává jediné plné CTA. */}
+          {onSetGoals ? (
+            <PillButton label={copy.setup.setGoals} variant="secondary" onPress={onSetGoals} disabled={!ctaReady} style={{ marginTop: space.s }} />
+          ) : null}
         </Animated.View>
       </View>
     </GestureDetector>

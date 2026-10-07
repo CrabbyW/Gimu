@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { markNavigation } from '@/lib/navGuard';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, BackHandler, Platform, View } from 'react-native';
 import { ExerciseCard } from '@/components/lesson/ExerciseCard';
 import { LessonCompleteScene } from '@/components/lesson/LessonCompleteScene';
@@ -12,6 +12,9 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
+import { GuideBubble } from '@/components/mascot/GuideBubble';
+import { useFinishSetup } from '@/hooks/useGoals';
+import { useGuide } from '@/hooks/useGuide';
 import { useLesson } from '@/hooks/useLesson';
 import { useProfile } from '@/hooks/useProfile';
 import { now } from '@/lib/clock';
@@ -53,6 +56,10 @@ export default function LessonScreen() {
   const cosmetics = profile.status === 'ready' ? profile.data?.equipped ?? NO_COSMETICS : NO_COSMETICS;
   // Demo: přeskočit jde každý cvik a přeskok se počítá jako odcvičený (lekce doběhne do oslavy, žádná slepá ulička).
   const demo = profile.status === 'ready' && profile.data?.demo === true;
+  // First run (elite fáze 1): průvodce na cviku a na oslavě, „Set your goals“ na oslavě.
+  const lessonGuide = useGuide('lesson');
+  const celebrationGuide = useGuide('celebration');
+  const setup = useFinishSetup();
 
   const advance = useCallback(async (didIt: boolean = true) => {
     if (lesson.status !== 'ready' || phase.kind !== 'exercise') return;
@@ -115,7 +122,15 @@ export default function LessonScreen() {
   const { exercises } = lesson.data;
 
   if (phase.kind === 'celebrate' && result) {
-    return <LessonCompleteScene result={result} lesson={lesson.data.lesson} cosmetics={cosmetics} onContinue={() => onContinue(result)} />;
+    return (
+      <LessonCompleteScene
+        result={result} lesson={lesson.data.lesson} cosmetics={cosmetics}
+        onContinue={() => { celebrationGuide.dismiss(); onContinue(result); }}
+        guide={celebrationGuide.id ? { id: celebrationGuide.id, dismiss: celebrationGuide.dismiss } : undefined}
+        // Mapa zůstává pod modalem: „Finish setup“ nahradí oslavu, Zpět/Done z něj vrátí na mapu.
+        onSetGoals={setup.needed ? () => { celebrationGuide.dismiss(); if (leaving.current) return; leaving.current = true; markNavigation(); router.replace('/setup'); } : undefined}
+      />
+    );
   }
 
   const index = phase.kind === 'exercise' ? phase.index : exercises.length - 1;
@@ -133,7 +148,9 @@ export default function LessonScreen() {
           busy={phase.kind !== 'exercise'}
           suspended={quitOpen}
           extra={lesson.data.extras[index] ?? 0}
-          onDone={() => void advance(true)}
+          onDone={() => { lessonGuide.dismiss(); void advance(true); }}
+          guide={lessonGuide.id ? <GuideBubble id={lessonGuide.id} arrow="down" align="end" onDismiss={lessonGuide.dismiss} /> : null}
+          onAct={lessonGuide.dismiss}
           alwaysSkip={demo}
           onSkip={demo ? () => void advance(true) : canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
         />
@@ -155,10 +172,14 @@ interface StepProps {
   onSkip?: () => void;
   /** Demo: přeskočit jde i během odpočtu a běžícího časovače. */
   alwaysSkip?: boolean;
+  /** Opička průvodce (first run): bublina nad lištou, šipka dolů k [DONE]/[START]. Nepřekrývá lištu, sedí nad ní. */
+  guide?: ReactNode;
+  /** Jakákoli akce v liště (start, hotovo, pauza) = průvodce splnil účel a zmizí. */
+  onAct?: () => void;
 }
 
 /** Jeden cvik: karta a spodní lišta. Klíčovaný cvikem, takže odpočet výdrže začíná pro každý cvik znovu. */
-function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, alwaysSkip = false }: StepProps) {
+function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, alwaysSkip = false, guide, onAct }: StepProps) {
   const { space } = useTheme();
   const hold = exercise.type === 'hold';
   const timer = useHoldTimer(hold ? exercise.amount : 0, onDone);
@@ -179,9 +200,10 @@ function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, always
         <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} />
         {extra > 0 ? <Text variant="caption" tone="muted" style={{ marginTop: space.s }}>{copy.lesson.extra(extra, hold)}</Text> : null}
       </IntentScrollView>
+      {guide ? <View style={{ paddingTop: space.s }}>{guide}</View> : null}
       <View style={{ marginHorizontal: -space.l }}>
         <BigActionBar
-          primary={{ ...primary, disabled: busy || timer.status === 'done' }}
+          primary={{ ...primary, onPress: () => { onAct?.(); primary.onPress(); }, disabled: busy || timer.status === 'done' }}
           // Přeskočit jen před startem výdrže nebo u opakování; běžící výdrž se nejdřív pauzne.
           secondary={onSkip && !busy && (alwaysSkip || (timer.status !== 'running' && timer.status !== 'countdown' && timer.status !== 'done'))
             ? { label: copy.lesson.skip, onPress: () => { pause(); onSkip(); } } : undefined}

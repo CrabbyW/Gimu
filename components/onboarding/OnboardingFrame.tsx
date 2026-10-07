@@ -13,10 +13,12 @@ import { copy } from '@/data/copy';
 import { intro, stagger, useMotionSafe } from '@/lib/motion';
 import { useTheme } from '@/theme';
 
-const TOTAL_STEPS = 5;
+// Krátký onboarding (elite fáze 1): Cesta 01 → Zrození 02. Kroky vize/milníky/váha/připomínka už v toku nejsou
+// (soubory zůstaly kvůli deep linkům), proto se krok ořízne na celkový počet.
+const TOTAL_STEPS = 2;
 
 interface Props {
-  /** Číslo kroku 1–5. */
+  /** Číslo kroku 1–2. */
   step: number;
   title: string;
   lead: string;
@@ -27,8 +29,9 @@ interface Props {
 
 /** Rám kroku onboardingu (Nothing Dot): stavový řádek a tečky kroků, Doto titulek vlevo, lead `muted`,
  *  obsah o `space.l` níž a spodní pilulky [ZPĚT] / [POKRAČOVAT] (BigActionBar). */
-export function OnboardingFrame({ step, title, lead, canContinue, onContinue, children }: Props) {
+export function OnboardingFrame({ step: rawStep, title, lead, canContinue, onContinue, children }: Props) {
   const { c, space } = useTheme();
+  const step = Math.min(rawStep, TOTAL_STEPS);
   // Boss oprava: rychlé dvojité/trojité ťuknutí na Pokračovat přeskakovalo krok (např. milníky → váha →
   // zrození bez zastavení na váze). Bez debounce na hodnotu: gate se otevře jen zaostřením/reostřením
   // obrazovky, ne časem, takže na stejném kroku projde vždy nejvýš jedno volání onContinue.
@@ -59,7 +62,7 @@ export function OnboardingFrame({ step, title, lead, canContinue, onContinue, ch
     <ReactiveBackground style={{ backgroundColor: c.base }}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <Screen edges={['top']} scroll transparent>
-        {/* Nothing Dot: stavový řádek „KROK … 01/05“ a pod ním 5 teček (rozsvícené = aktuální a hotové kroky). */}
+        {/* Nothing Dot: stavový řádek „KROK … 01/02“ a pod ním 2 tečky (rozsvícené = aktuální a hotové kroky). */}
         <View style={{ paddingTop: space.l, gap: space.s }}>
           <StatusLine
             left={copy.onboarding.stepKey}

@@ -461,4 +461,26 @@ export const copy = {
     // Reaktivní opička (fáze 3): co s ní jde dělat.
     playHint: 'Tap to make it hop, tap three times fast for a backflip, hold to pet it',
   },
+  // Opička průvodce (elite fáze 1): jedna krátká věta na obrazovku při prvním průchodu.
+  guide: {
+    mapStart: 'Tap the plate to start',
+    lessonHold: 'Hold the timer or tap Done',
+    celebrationFirst: 'That’s your first plate',
+    kicker: 'MONKEY',
+    dismissA11y: 'Dismiss tip',
+  },
+  // Krátký onboarding (elite fáze 1): cíle se doplní až po první lekci.
+  setup: {
+    tile: (n: number) => `Finish setup · ${n} ${plural(n, 'step', 'steps')}`,
+    tileA11y: (n: number) => `Finish setup, ${n} ${plural(n, 'step', 'steps')} left`,
+    setGoals: 'Set your goals',
+    kicker: 'SETUP',
+    steps: (n: number) => `${n} ${plural(n, 'step', 'steps')}`,
+    title: 'Finish setup',
+    lead: 'We picked starter goals for you. Make them yours, or keep them.',
+    rows: { dream: 'Body vision', milestones: 'Milestones', weight: 'Weight goal', reminder: 'Daily reminder' },
+    reminderOff: 'Off · turn it on in Settings',
+    done: 'Done',
+    saveError: 'Couldn’t save. Try again.',
+  },
 } as const;

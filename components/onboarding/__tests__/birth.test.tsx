@@ -56,7 +56,7 @@ test('dvojí tap na „Let’s train“ uloží profil jen jednou a přejde na m
   await act(async () => { button.props.onPress(); button.props.onPress(); });
   expect(mockComplete).toHaveBeenCalledTimes(1);
   expect(mockComplete).toHaveBeenCalledWith({
-    path: 'power', dreamBody: 'Muscle-up do léta', milestones, weightGoal: { kind: 'lose', startKg: 72.5, targetKg: 68 },
+    path: 'power', dreamBody: 'Muscle-up do léta', milestones, weightGoal: { kind: 'lose', startKg: 72.5, targetKg: 68 }, setupDone: false,
   });
   expect(mockReplace).toHaveBeenCalledWith('/(tabs)');
   expect(useOnboardingDraft.getState().path).toBeNull();
