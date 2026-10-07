@@ -864,3 +864,7 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 ## 2026-10-06 · boss · Otevřené po QA kola 2 (fáze 0)
 - Hook: `npx kill-port 8082` a dosazené PID (`kill $(lsof -ti:8082)`) projdou — doplnit v příštím kole (změna kódu by jinak otevřela nové QA; mezera v ochranném nástroji, ne v appce).
 - Šatník: vodorovný ScrollView slotů uvnitř IntentScrollView — ověřit na iPhonu (checklist bod 3), případná oprava motion-agent.
+
+## 2026-10-07 · boss · Oprava: mapa bez interaktivního pozadí
+- Uživatel potvrdil iPhone checklist kola 2 („Ok“) s výjimkou: na mapě přestalo reagovat tečkové pozadí. Příčina: `ScrollIntentProvider` (context) vložený mezi `GestureDetector` a View — GestureDetector potřebuje View jako přímého potomka, gesto se nepřipojilo. Provider přesunut vně. tsc/eslint/jest zelené, e2e 80/80. (Ostatní obrazovky přes ReactiveBackground mají provider uvnitř View — v pořádku.)
+- Do příštího kola: e2e test, který ověří reakci pozadí na tah (vlna) — chyba prošla, protože e2e dotek nekontroluje.

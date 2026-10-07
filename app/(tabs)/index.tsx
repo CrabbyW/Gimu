@@ -78,8 +78,10 @@ export default function TrainingScreen() {
     <MapContent
       unlocked={unlocked ?? null}
       render={(intro) => (
-        <GestureDetector gesture={touch}>
         <ScrollIntentProvider gesture={play}>
+        {/* Provider vně: GestureDetector potřebuje View jako přímého potomka, jinak se gesto nepřipojí
+            (tečky přestaly reagovat). */}
+        <GestureDetector gesture={touch}>
         {/* Obrazovka sahá až pod plovoucí tab bar (záporný okraj ruší rezervu scény): mapa jede přes celou výšku. */}
         <View style={{ flex: 1, backgroundColor: c.base, marginBottom: -clearance }}>
           {/* Reaktivní tečkové pozadí přes celou obrazovku (jako ReactiveBackground jinde): stojí, mapa jede nad ním,
@@ -170,8 +172,8 @@ export default function TrainingScreen() {
             </View>
           ) : null}
         </View>
-        </ScrollIntentProvider>
         </GestureDetector>
+        </ScrollIntentProvider>
       )}
     />
   );
