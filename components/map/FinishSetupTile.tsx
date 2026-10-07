@@ -22,7 +22,7 @@ export function FinishSetupTile() {
       accessibilityRole="button"
       accessibilityLabel={copy.setup.tileA11y(SETUP_STEPS)}
       style={({ pressed }) => ({
-        minHeight: size.hit, marginHorizontal: space.l, marginTop: space.s,
+        minHeight: size.hit, marginHorizontal: space.l, marginTop: short ? 0 : space.s,
         flexDirection: 'row', alignItems: 'center', gap: space.s, paddingHorizontal: space.m,
         backgroundColor: pressed ? c.tilePressed : c.tile,
         borderRadius: radius.full, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,

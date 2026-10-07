@@ -29,6 +29,11 @@ interface Props {
   text?: string;
   /** Nízký displej: bez štítku MONKEY, věta se vejde na jeden řádek. */
   compact?: boolean;
+  /** Plovoucí šipka (nízký displej): nezabírá výšku, visí pod bublinou posunutá o tolik pt od středu, takže
+   *  obejde opičku na kotouči a míří na jeho hranu. Bez hodnoty šipka stojí v toku pod/nad bublinou. */
+  arrowOffset?: number;
+  /** Bublina přes celou šířku: plně zakryje vše, co pod překryvem projíždí (žádný useknutý text vedle ní). */
+  stretch?: boolean;
 }
 
 const NEVER = { reduceMotion: ReduceMotion.Never };
@@ -39,11 +44,13 @@ const NEVER = { reduceMotion: ReduceMotion.Never };
  * umisťuje mimo CTA a tab bar. Tap kamkoli na bublinu = zmizí. Jediná plocha ve stylu `raised` (o tón výš),
  * žádný akcent: důležitost nese poloha, ne barva. Nástup jemný (Reveal); detaily pohybu = motion-agent.
  */
-export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0, play = true, leaving = false, text: override, compact = false }: Props) {
+export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0, play = true, leaving = false, text: override, compact = false, arrowOffset, stretch = false }: Props) {
   const { c, space, radius, size } = useTheme();
   const text = override ?? copy.guide[id];
   const alignSelf = align === 'start' ? 'flex-start' : align === 'end' ? 'flex-end' : 'center';
-  const arrowView = <DotArrow dir={arrow} play={play} delay={delay} style={{ alignSelf, marginHorizontal: size.tilePad }} />;
+  const floating = arrowOffset !== undefined;
+  const arrowW = dots.guide.d * 3 + dots.guide.gap * 2;
+  const arrowView = floating ? null : <DotArrow dir={arrow} play={play} delay={delay} style={{ alignSelf, marginHorizontal: size.tilePad }} />;
   // Odchod: prolnutí `overlayResize.outMs` (výšku pak plynule dorovná volající, mapa neposkočí).
   const out = useSharedValue(1);
   useEffect(() => {
@@ -61,8 +68,8 @@ export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0,
         accessibilityHint={copy.guide.dismissA11y}
         accessibilityLiveRegion="polite"
         style={({ pressed }) => ({
-          minHeight: size.hit, alignSelf,
-          flexDirection: 'row', alignItems: 'center', gap: space.s,
+          minHeight: size.hit, alignSelf: stretch ? 'stretch' : alignSelf,
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.s,
           paddingHorizontal: space.m, paddingVertical: space.s,
           backgroundColor: pressed ? c.tile : c.tilePressed,
           borderRadius: radius.l, borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
@@ -72,6 +79,14 @@ export function GuideBubble({ id, onDismiss, arrow, align = 'center', delay = 0,
         <Text variant="pill" style={{ flexShrink: 1 }}>{text.toUpperCase()}</Text>
       </Pressable>
       {arrow === 'down' ? arrowView : null}
+      {floating ? (
+        <DotArrow
+          dir={arrow}
+          play={play}
+          delay={delay}
+          style={{ position: 'absolute', [arrow === 'down' ? 'top' : 'bottom']: '100%', left: '50%', marginLeft: arrowOffset - arrowW / 2, pointerEvents: 'none' }}
+        />
+      ) : null}
     </Reveal>
     </Animated.View>
   );

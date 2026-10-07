@@ -464,7 +464,7 @@ export const copy = {
   // Opička průvodce (elite fáze 1): jedna krátká věta na obrazovku při prvním průchodu.
   guide: {
     mapStart: 'Tap the plate to start',
-    lessonHold: 'Hold the timer or tap Done',
+    lessonHold: 'Tap Start and hold the position',
     // Cvik na opakování nemá časovač: stejná bublina, jiná věta (výběr podle `exercise.type`).
     lessonReps: 'Do the reps, then tap Done',
     celebrationFirst: 'That’s your first plate',

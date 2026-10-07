@@ -911,3 +911,14 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 ## 2026-10-07 · boss · Rating fáze 1 = 65/85 → opravy
 - Vizuální kvalita 0: kolize na mapě first run w320 (bublina přes „SE…“, „+20 XP“ na CTA, šipka přes opičku), QA je vedla jen jako ⚠️. Opravuje design-agent (+ text u výdrže bez „Done“).
 - Rubrika a zadání QA doplněny o výslovné kritérium: kolize/ořez textu na kterékoli šířce včetně 320 pt = ❌ (rating i QA vykládaly „hierarchii“ různě).
+
+## 2026-10-07 design-agent: elite fáze 1, oprava vizuální kvality first-run mapy na 320 pt (rating 65/85)
+- (1) Useknuté „SE…“ vedle bubliny: na nízkém displeji je bublina průvodce přes celou šířku (`GuideBubble stretch`), nadpis sekce, který pod překryvem projíždí, zakryje celou plochou.
+- (3) Šipka přes hlavu opičky: na nízkém displeji je šipka plovoucí (`GuideBubble arrowOffset`, absolutně pod bublinou, nezabírá výšku), posunutá o nový token `dots.guide.sideOffset` = 36 (polovina opičky S 56 + 8) vlevo od středu: obejde opičku a míří na levou hranu kotouče. Na w375+ beze změny (šipka v toku míří na kotouč, opička je níž).
+- (2) „+20 XP“ na hraně [START LESSON]: na nízkém displeji dlaždice SETUP bez horního odstupu, bublina s `space.xs`, mapa v prvním průchodu o `space.l` níž (opička celá pod bublinou); změna odsazení mapy jde přes stávající plynulý dojezd `insetShift` (nově `useLayoutEffect` nad efektivním odsazením). Změřeno v DOM (w320): bublina dole 190, opička od 189 (viditelná hlava ~197), „+20 XP“ dole 392, CTA nahoře 400 = `space.s` vzduchu.
+- (4) `copy.guide.lessonHold`: „Tap Start and hold the position“ (bez „Done“, u výdrže je [START]/[PAUSE]).
+- Soubory: `app/(tabs)/index.tsx`, `components/mascot/GuideBubble.tsx`, `components/map/FinishSetupTile.tsx`, `theme/tokens.ts`, `data/copy.ts`.
+- Kontrola 320: prohlédnuty w320 first-run-map, first-run-celebration, first-run-setup (bez kolizí a ořezů; /setup: 4. řádek odjíždí pod [DONE] jako scroll, ne kolize). Demo mapa a w375/w390/w430 beze změny (e2e prošlo).
+- Běhy: `npx tsc --noEmit` OK; `npx eslint .` OK (0 problémů); `npx jest` 71/71 sad, 703/703 testů; `npm run e2e` 105 passed, 2 failed = úmyslná změna w320-{dark,light}/first-run-map.
+- Vědomé baseline: `npm run e2e:update -- --grep "first-run mapa" --project=w320-dark --project=w320-light` → `e2e/__screenshots__/w320-dark/first-run-map.png`, `e2e/__screenshots__/w320-light/first-run-map.png`.
+- Otevřené: bublina průvodce v první lekci (výdrž, nový text) nemá vizuální snímek na w320; k ruční kontrole. Posun mapy o `space.l` je laděný na 568 pt výšky a kotvení scrollu na 40 % výřezu.

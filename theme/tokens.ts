@@ -96,7 +96,8 @@ export const dots = {
   /** Tečková linka z RN View (bez Skia, nežere rozpočet pláten): oddělovač zóny ligy, ghost řádky, osa. */
   rule: { d: 2, gap: 4, max: 96 },
   // Opička průvodce: tečková šipka bubliny k cíli (sloupec teček + hrot ze dvou).
-  guide: { d: 4, gap: 3, count: 2 },
+  // sideOffset: plovoucí šipka na nízkém displeji míří vedle opičky (S 56: polovina 28 + 8) na hranu kotouče.
+  guide: { d: 4, gap: 3, count: 2, sideOffset: 36 },
   /** Mřížka aktivity Progresu: 7 sloupců (dny) × 5 řádků (týdny), rozteč 22 (≈ 7 × 22 = 154 pt na šířku dlaždice). */
   activity: { cols: 7, rows: 5, pitch: 22 },
   /** Dny sezóny: tečka a mezera podle spec §6.4 (10 / 6), 14 na řádek (2 týdny), aby 90 dní dalo ≤ 7 řádků. */

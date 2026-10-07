@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -54,17 +54,7 @@ export default function TrainingScreen() {
   // starého a nového odsazení k nule (UI vlákno), takže mapa neposkočí. Při mountu (0) bez animace.
   const { reduced } = useMotionSafe();
   const insetShift = useSharedValue(0);
-  const lastOverlayH = useRef(0);
-  const onOverlayLayout = (h: number) => {
-    const prev = lastOverlayH.current;
-    if (h === prev) return;
-    lastOverlayH.current = h;
-    if (prev > 0 && !reduced) {
-      insetShift.value = insetShift.value + (prev - h);
-      insetShift.value = withTiming(0, { duration: overlayResize.ms, easing: ease.out, reduceMotion: ReduceMotion.Never });
-    }
-    setOverlayH(h);
-  };
+  const onOverlayLayout = (h: number) => { if (h !== overlayH) setOverlayH(h); };
   // Veil (EdgeFade) kreslený pro novou výšku se během dojezdu natáhne shora na starou (scaleY od horní hrany).
   const veilH = overlayH + size.edgeFade;
   const veilStyle = useAnimatedStyle(() => {
@@ -107,6 +97,22 @@ export default function TrainingScreen() {
   const setup = useFinishSetup();
   // Nízký displej (568): kompaktní bublina průvodce (bez štítku, jeden řádek), ať aktuální kotouč zůstane nad CTA.
   const short = useShort();
+  // Nízký displej v prvním průchodu: mapa sjede o `space.l` níž (opička celá pod bublinou, popisek končí `space.s` nad CTA), ať opička nesahá pod bublinu (šipka plave
+  // vedle ní a výšku nezabírá); nadpis sekce pod bublinou zakryje bublina přes celou šířku.
+  const lift = short && (guide.id ?? ghost) && viewData?.currentLessonId ? -space.l : 0;
+  const inset = overlayH - lift;
+  // Změna odsazení mapy (zmizí bublina, dlaždice nebo zdvih): obsah a závoj dojedou timingem z rozdílu
+  // starého a nového odsazení k nule (UI vlákno), takže mapa neposkočí. Při mountu (0) bez animace.
+  const lastInset = useRef(0);
+  useLayoutEffect(() => {
+    const prev = lastInset.current;
+    if (overlayH <= 0 || inset === prev) return;
+    lastInset.current = inset;
+    if (prev > 0 && !reduced) {
+      insetShift.value = insetShift.value + (prev - inset);
+      insetShift.value = withTiming(0, { duration: overlayResize.ms, easing: ease.out, reduceMotion: ReduceMotion.Never });
+    }
+  }, [inset, overlayH, reduced, insetShift]);
   const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch, play), [field.gesture, reactions.touch, play]);
 
   if (profile.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
@@ -159,7 +165,7 @@ export default function TrainingScreen() {
                 onOpenLesson={open}
                 onUnlockSequenceEnd={clearUnlocked}
                 intro={intro}
-                topInset={overlayH}
+                topInset={inset}
                 insetShift={insetShift}
                 // Pod posledním uzlem: tab bar + pilulka CTA, ať jde poslední prvek odscrollovat nad ně.
                 footerSpace={clearance + (currentId ? size.pill + space.m * 2 : space.m)}
@@ -216,8 +222,16 @@ export default function TrainingScreen() {
           {setup.needed ? <FinishSetupTile /> : null}
           {/* Průvodce: pod hlavičkou, šipka dolů k aktuálnímu kotouči (ten je hned pod překryvem). Nikdy u CTA dole. */}
           {bubbleId && currentId ? (
-            <View style={{ paddingHorizontal: space.l, marginTop: space.s }}>
-              <GuideBubble id={bubbleId} arrow="down" compact={short} onDismiss={dismissGuide} leaving={!guide.id} delay={motion.screenIn.headerAt} />
+            <View style={{ paddingHorizontal: space.l, marginTop: short ? space.xs : space.s }}>
+              <GuideBubble
+                id={bubbleId}
+                arrow="down"
+                compact={short}
+                // Nízký displej: bublina přes celou šířku (zakryje nadpis sekce, který pod ní projíždí) a plovoucí
+                // šipka vedle opičky na hranu kotouče: nezabírá výšku, uzel i s popiskem se vejde nad CTA.
+                stretch={short}
+                arrowOffset={short ? -dots.guide.sideOffset : undefined}
+                onDismiss={dismissGuide} leaving={!guide.id} delay={motion.screenIn.headerAt} />
             </View>
           ) : null}
           </View>
