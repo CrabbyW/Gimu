@@ -341,6 +341,10 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
             <View style={{ flex: 1, paddingTop: insets.top, paddingHorizontal: space.l }}>
               <Animated.View style={[{ paddingTop: short ? space.m : compact ? space.l : space.xl }, textStyle]}>
                 <Text variant={short ? 'dotTitleShort' : 'display'} accessibilityRole="header">{title}</Text>
+                {/* Nový rekord série (elite fáze 3): jeden mono řádek pod titulkem, barva textu (žádný akcent). */}
+                {result.streakRecord ? (
+                  <Text variant="telemetry" numberOfLines={1} adjustsFontSizeToFit style={{ marginTop: space.xs }}>{copy.complete.record(result.streak)}</Text>
+                ) : null}
               </Animated.View>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: short ? space.m : compact ? space.l : space.xl }}>
                 <View ref={plateRef} onLayout={measure} style={{ width: P, height: P }}>

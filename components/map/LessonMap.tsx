@@ -4,7 +4,7 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withD
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
-import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, type MascotReactions } from '@/components/mascot';
+import { LineBubble, Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, type MascotReactions } from '@/components/mascot';
 import { IntentScrollView, plateOuterRadius } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -14,7 +14,7 @@ import { playSfx } from '@/lib/sound';
 import { ease, intro as T, motion, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import type { LessonPathView, MapNode } from '@/services/contracts';
-import { useTheme } from '@/theme';
+import { dots, useTheme } from '@/theme';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
 import { AmbientClock } from './ambient';
 import { BarbellBoss } from './BarbellBoss';
@@ -58,6 +58,10 @@ interface Props {
   insetShift?: SharedValue<number>;
   /** Reakce opičky (fáze 3): opička na mapě je hratelná a reaguje na scroll, roztočení kotouče a ztrátu série. */
   reactions?: MascotReactions;
+  /** Replika opičky (elite fáze 3, `useMascotLine`): bublina nad opičkou, null = žádná. */
+  line?: string | null;
+  /** Ťuknutí na hratelnou opičku (volající zavolá `useMascotLine().say`). */
+  onMascotTap?(): void;
 }
 
 /** Programový scroll (dojetí na uzel, popover) není uživatelův pohyb: opička se po tuto dobu nedívá dolů. */
@@ -76,7 +80,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions }: Props) {
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions, line = null, onMascotTap }: Props) {
   const { space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -251,6 +255,21 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sadOnOpen]);
 
+  // --- Replika opičky (elite fáze 3) ---
+  // Bublina má pevnou šířku (≤ `dots.line.maxW`, ≥ `edge` od hran displeje) a posouvá se od kraje; hrot míří na střed opičky.
+  const L = dots.line;
+  const lineW = Math.min(L.maxW, width - L.edge * 2);
+  const lineLeft = spot ? Math.min(Math.max(L.edge, spot.x - lineW / 2), width - L.edge - lineW) : 0;
+  // Bublina nad opičkou nesmí zajet pod překryvnou hlavičku: chybí-li nad opičkou místo `L.room`, mapa o rozdíl sjede.
+  const spotTop = spot ? spot.y - MASCOT / 2 : 0;
+  useEffect(() => {
+    if (!line || !spot) return;
+    const deficit = L.room - (spotTop - scrollY.current);
+    if (deficit > 0) scrollTo(Math.max(0, scrollY.current - deficit), !reduced);
+    // Jen při objevení repliky.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [line]);
+
   // --- Popover a zatřesení ---
   const [selected, setSelected] = useState<{ id: string; above: boolean } | null>(null);
   const [shakes, setShakes] = useState<Record<string, number>>({});
@@ -409,7 +428,15 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
           <ReactiveMascot
             reactions={reactions} seated={seated} spin={plateSpin} scrollLook={scrollLook} idleContext={seated ? 'map' : 'default'}
             stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={!seated}
+            onTap={onMascotTap}
           />
+          {line ? (
+            <LineBubble
+              text={line}
+              arrowX={spot.x - lineLeft}
+              style={{ position: 'absolute', bottom: '100%', left: lineLeft - (spot.x - MASCOT / 2), width: lineW }}
+            />
+          ) : null}
         </Animated.View>
       ) : spot ? (
         <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0 }, mascotStyle]}>

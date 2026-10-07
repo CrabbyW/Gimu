@@ -10,6 +10,7 @@ import { FinishSetupTile } from '@/components/map/FinishSetupTile';
 import { LessonMap } from '@/components/map/LessonMap';
 import { GuideBubble } from '@/components/mascot/GuideBubble';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
+import { useMascotLine } from '@/hooks/useMascotLine';
 import { currentSection, SectionHero } from '@/components/map/SectionHero';
 import { Card } from '@/components/ui/Card';
 import { EdgeFade } from '@/components/ui/EdgeFade';
@@ -94,6 +95,8 @@ export default function TrainingScreen() {
   };
   // Start lekce je zamčený proti dvojímu ťuknutí; návrat na mapu ho odemkne.
   useFocusEffect(useCallback(() => { endStart(); }, []));
+  // Replika opičky (elite fáze 3): ťuknutí na opičku = krátká věta v bublině; při průvodci mlčí.
+  const mascotLine = useMascotLine(stats, Boolean(guide.id ?? ghost));
   const setup = useFinishSetup();
   // Nízký displej (568): kompaktní bublina průvodce (bez štítku, jeden řádek), ať aktuální kotouč zůstane nad CTA.
   const short = useShort();
@@ -170,6 +173,8 @@ export default function TrainingScreen() {
                 // Pod posledním uzlem: tab bar + pilulka CTA, ať jde poslední prvek odscrollovat nad ně.
                 footerSpace={clearance + (currentId ? size.pill + space.m * 2 : space.m)}
                 reactions={reactions}
+                line={mascotLine.line?.text ?? null}
+                onMascotTap={mascotLine.say}
               />
             </View>
           ) : null}

@@ -20,6 +20,8 @@ interface Props extends Omit<MascotProps, 'reaction' | 'gaze' | 'idle'> {
   /** Sedí na kotouči: dvě vrstvy (`MonkeyBack` + `MonkeyFront`), kotouč patří mezi ně (mapa). */
   seated?: boolean;
   onReaction?(id: ReactionId): void;
+  /** Každé ťuknutí na opičku (i přes čtečku), bez ohledu na cooldown reakcí: replika opičky (elite fáze 3). */
+  onTap?(): void;
 }
 
 /**
@@ -29,14 +31,14 @@ interface Props extends Omit<MascotProps, 'reaction' | 'gaze' | 'idle'> {
  * obrazovka připojí na širší plochu (celá mapa, hero profilu) — dotyky na opičce jím projdou také.
  * Pro čtečku je opička tlačítko „pohladit“ (aktivace = poskok).
  */
-export function ReactiveMascot({ reactions, seated = false, onReaction, idleContext = 'default', ...mascot }: Props) {
+export function ReactiveMascot({ reactions, seated = false, onReaction, onTap, idleContext = 'default', ...mascot }: Props) {
   const { report, tap: tapNow } = reactions;
   const gesture = useMemo(() => {
     const emit = (id: ReactionId | null) => { if (id) onReaction?.(id); };
-    const tap = Gesture.Tap().runOnJS(true).onEnd((_e, ok) => { if (ok) emit(tapNow()); });
+    const tap = Gesture.Tap().runOnJS(true).onEnd((_e, ok) => { if (ok) { emit(tapNow()); onTap?.(); } });
     const hold = Gesture.LongPress().minDuration(LONG_PRESS_MS).runOnJS(true).onStart(() => emit(report({ type: 'longPress' })));
     return Gesture.Exclusive(hold, tap);
-  }, [report, tapNow, onReaction]);
+  }, [report, tapNow, onReaction, onTap]);
   const px = resolveMascotSize(mascot.size);
   // Život v klidu: jeden plánovač pro obě vrstvy sedící opičky (stejný klíč = synchronní pohyb).
   const idle = useMascotIdle({ context: idleContext, focused: reactions.focused, reaction: reactions.reaction, sinceInteraction: reactions.sinceInteraction });
@@ -49,11 +51,11 @@ export function ReactiveMascot({ reactions, seated = false, onReaction, idleCont
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityHint={copy.mascot.playHint}
-        onAccessibilityTap={() => { tapNow(); }}
+        onAccessibilityTap={() => { tapNow(); onTap?.(); }}
         accessibilityActions={[{ name: 'activate' }, { name: 'longpress' }]}
         onAccessibilityAction={(e) => {
           if (e.nativeEvent.actionName === 'longpress') report({ type: 'longPress' });
-          else tapNow();
+          else { tapNow(); onTap?.(); }
         }}
         style={{ width: px, height: px }}
       >

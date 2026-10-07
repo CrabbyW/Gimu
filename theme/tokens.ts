@@ -105,6 +105,9 @@ export const dots = {
   // Opička průvodce: tečková šipka bubliny k cíli (sloupec teček + hrot ze dvou).
   // sideOffset: plovoucí šipka na nízkém displeji míří vedle opičky (S 56: polovina 28 + 8) na hranu kotouče.
   guide: { d: 4, gap: 3, count: 2, sideOffset: 36 },
+  /** Replika opičky na mapě (elite fáze 3): hrot bubliny ze tří teček (2 + 1), max. šířka bubliny, okraj od hrany displeje
+   *  a odhad výšky bubliny + hrotu (místo nad opičkou, které mapa při ťuknutí uvolní pod hlavičkou). */
+  line: { d: 3, gap: 2, maxW: 232, edge: 16, room: 72 },
   /** Mřížka aktivity Progresu: 7 sloupců (dny) × 5 řádků (týdny), rozteč 22 (≈ 7 × 22 = 154 pt na šířku dlaždice). */
   activity: { cols: 7, rows: 5, pitch: 22 },
   /** Dny sezóny: tečka a mezera podle spec §6.4 (10 / 6), 14 na řádek (2 týdny), aby 90 dní dalo ≤ 7 řádků. */

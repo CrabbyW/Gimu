@@ -976,3 +976,14 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Udělal: spec + plán fáze 3, `logic/mascotLines.ts` (kontext podle dneška/série/denní doby, výběr bez opakování) + testy, `copy.mascotLines` (7 kontextů, ≤ 32 znaků), `copy.complete.record`, `LessonResult.streakRecord` + testy (vyrovnání ≠ rekord, retry idempotentní), hook `hooks/useMascotLine.ts` + testy.
 - Rozhodl sám: opička mluví jen na ťuknutí (nikdy sama), 2.4 s, průvodce má přednost, ztracená série = věta podle denní doby (bez výčitek), rekord až od 2 dnů.
 - Otevřené: UI bubliny (design), pohyb a reakce `proud` při rekordu (motion).
+
+## 2026-10-07 design-agent — elite fáze 3, Task 2 (replika opičky + řádek rekordu)
+- `components/mascot/LineBubble.tsx` (+ export): menší příbuzná GuideBubble — bez štítku, plocha `tile` (průvodce je o tón výš `tilePressed`: úkol vs. poznámka), `radius.s`, vlasová hrana `edge`, věta `telemetry` mono verzálkami, max. 2 řádky, tečkový hrot 2+1 dolů k opičce. `pointerEvents="none"` (tap jde dál na opičku), `accessible` + `accessibilityRole="text"` + `accessibilityLiveRegion="polite"`. Bez animací (motion-agent).
+- Token `dots.line` (d 3, gap 2, maxW 232, edge 16, room 72) v `theme/tokens.ts`.
+- `ReactiveMascot`: nový prop `onTap` (tap gesto runOnJS, onAccessibilityTap, akce activate) — nic se nezachytává ve workletu.
+- `LessonMap`: props `line`, `onMascotTap`; bublina v obalu opičky (jede s ní), pevná šířka min(232, šířka − 32), posunutá od kraje displeje, hrot vždy na středu opičky → na w320–w430 se neořízne. Když nad opičkou chybí `room` pod hlavičkou, mapa při objevení repliky sjede o rozdíl (stejný vzor jako popover uzlu).
+- Mapa: `useMascotLine(stats, Boolean(guide.id ?? ghost))`, `say` na ťuknutí opičky.
+- `LessonCompleteScene`: při `result.streakRecord` řádek `copy.complete.record(result.streak)` (`telemetry`, barva textu, 1 řádek, adjustsFontSizeToFit) pod titulkem.
+- Testy: `components/mascot/__tests__/LineBubble.test.tsx` (text verzálkami, 2 řádky, live region, dark/light). Test scény na rekord nepsán (scéna bez komponentového harnessu; pokrývá ho e2e baseline oslavy — demo profil má rekord 13 dní).
+- Ověření: tsc OK, eslint OK, jest 78 suites / 736 testů OK, `npm run e2e` 107 passed / 8 failed = jen `oslava (konečný stav)` na všech šířkách (úmyslně nový řádek NEW RECORD · 13 DAYS, w320 zkontrolováno bez kolize) → `npm run e2e:update -- --grep oslava` 16 passed, nové baseline.
+- Otevřené: bublina repliky na mapě nemá e2e snímek (vyžaduje tap na opičku) — k ověření QA / ručně na w320 a u horního okraje.
