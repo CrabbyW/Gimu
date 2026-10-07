@@ -48,13 +48,14 @@ npm run lint          # expo lint
   (`components/dots/useDotTouch.ts`), dlaždice se při stisku naklopí k prstu. Dokončení lekce = tečky se slétnou do kotouče.
 - Pohyb jen z `lib/motion.ts`, haptika a zvuk přes `feedback(id)` v `lib/feedback.ts`. Omezený pohyb: vše jen prolnutí 200 ms.
 - Barevný systém (chladný grafit, OKLCH h 255): `docs/design/color-system.md`, CSS export `docs/design/color-system.css`, publikovaná stránka https://claude.ai/artifact/LpUzrZTXNGQoKCopx8fwzy. Tokeny v `theme/palettes.ts` navíc `borderStrong` (hranice ovládacích prvků ≥ 3:1), `focus`, `disabled`, `stateSuccess/Warning/Info` (jen skutečné stavy a data). Kontrast hlídá `theme/__tests__/contrast.test.ts`.
+- First run (elite fáze 1): krátký onboarding Cesta → Zrození → mapa, „Finish setup“ / „Set your goals“ po první oslavě, opička průvodce (jedna bublina na obrazovku), let kotouče mapa → lekce → oslava.
 - Dev menu má sekci **Tečky** se všemi tečkovými komponentami pro vizuální kontrolu.
 - Nastavení: dva nezávislé přepínače **Haptika** a **Zvuky**; tichý režim iOS = ticho.
 
 ## Testy a ověřování (elite fáze 0)
 
 - `npm test` — Jest (logika, komponenty, kontrast, ESLint pravidla).
-- `npm run e2e` — Playwright v `e2e/`: 6 E2E toků (onboarding, lekce, stage-up, liga, reset, tab bar) + vizuální regrese 9 obrazovek × 4 šířky × dark/light (baseline `e2e/__screenshots__/`). Běží proti webu na portu 8081 (spustí ho sám, nebo použije běžící). Chrome ze systému (`CHROME_PATH`), žádné stahování browserů.
+- `npm run e2e` — Playwright v `e2e/`: E2E toky (first run, onboarding, lekce, stage-up, liga, reset, tab bar, reakce pozadí mapy) + vizuální regrese 12 obrazovek × 4 šířky × dark/light (baseline `e2e/__screenshots__/`). Běží proti produkčnímu webovému exportu (`dist/` přes `e2e/serve-dist.mjs` na 8083), ~4 min. Chrome ze systému (`CHROME_PATH`), žádné stahování browserů.
 - `npm run e2e:update` — vědomě nová baseline snímků (zapsat do LOG proč).
 - `npm run e2e:perf` — produkční web export (`dist/`, statický server `e2e/serve-dist.mjs` na 8083): Skia plátna ≤ 12 na obrazovce, čas do interakce mapy ≤ 3 s, medián fps mapy a oslavy ≥ 55.
 - Porty: 8081 web pro agenty (nikdy v CI režimu), 8082 Expo Go uživatele za tunelem. Ochranný hook `.claude/hooks/guard.mjs` (testy `node --test .claude/hooks/guard.test.mjs`) a ESLint pravidlo `local/no-worklet-object-capture`.

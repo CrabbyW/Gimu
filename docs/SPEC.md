@@ -319,7 +319,16 @@ Konstanta skillu (monochrom, whitespace, typografie nese obsah, ornament nese in
 
 ### 7.1 Onboarding (jen při prvním spuštění)
 
-Stack bez tabů, nahoře tečkový ukazatel kroků 1–5, dole BigActionBar s „Pokračovat“.
+**Elite fáze 1 (2026-10-07, spec `docs/superpowers/specs/2026-10-07-elite-faze1-vlajkova-linka-design.md`):** onboarding je krátký, má 2 kroky: **Cesta → Zrození opice → mapa**.
+- Vize a milníky dostanou výchozí hodnoty cesty (`defaultDraftGoals`) a váha „Neřeším“. Profil má `setupDone: false` a prázdné `guideSeen` (first run).
+- Kroky Vize, Milníky, Váha a Připomínka (popis níže zůstává) se doplňují až po první oslavě: na mapě řádek „Finish setup · 4 steps“ vede na `/setup` a v oslavě je akce „Set your goals“. Done volá `completeSetup`.
+- Opička průvodce (`GuideBubble`, `logic/guide.ts`) ukazuje jednu bublinu na obrazovku jen při first run: na mapě, v lekci (text podle typu cviku) a v oslavě.
+- Kotouč jako pojivo: při startu lekce přeletí z mapy do řady teček lekce (`components/transition/PlateFlight.tsx`) a tečky oslavy se slétají z místa, kde zmizel.
+- Čas od otevření po start lekce v e2e je ~6 s.
+
+Původní popis kroků (dnes dostupné z Finish setup):
+
+Stack bez tabů, nahoře tečkový ukazatel kroků, dole BigActionBar s „Pokračovat“.
 
 1. **Cesta:** 3 velké karty. Každá má vlastní geometrický glyf ze skládaných kruhů:
    - Power: kruh s výsečí

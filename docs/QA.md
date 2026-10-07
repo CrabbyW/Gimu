@@ -314,3 +314,32 @@ iPhone checklist kola (scroll):
 3. První oslava: tečky slétají z místa, kam kotouč dolétl (řada teček nahoře), ne ze středu.
 4. Zavření bubliny průvodce tapem: plynulé prolnutí, mapa dojede nahoru bez skoku, safe area nahoře drží.
 5. Reduce Motion zapnuté: kotouč se jen prolne na místě, lekce se otevře hned, VoiceOver přečte bublinu („Tap the plate to start“).
+
+---
+
+## QA elite fáze 1, kolo 2 (HEAD `cce1093`, opravy design-agenta po kole 1), 2026-10-07
+
+**Verdikt pro HEAD `cce1093`: SCHVÁLENO** (s ⚠️ níže, neblokují).
+
+### Build a testy
+- ✅ tsc 0, eslint 0, jest 703/703.
+- ✅ `npm run e2e` 107/107 (6.7 min), čas do lekce v first-run toku 6.2 s. `npm run e2e:perf` 4/4.
+- ✅ Nativní log: stále 283 řádků, ERROR jen na ř. 30–225 (starší než kolo 1, opraveno v f0173ee). Žádný nový.
+
+### Nálezy kola 1
+1. ✅ Oslava prvního průchodu w320 (dark i light): titulek, kotouč, bublina, XP, série i obě CTA bez překryvu ([SET YOUR GOALS] jako textové tlačítko). Řádek „Tomorrow · …“ je na w320 vynechaný (kompaktní režim), přijatelné.
+2. ✅ Mapa prvního průchodu w320: CTA už nepřekrývá kotouč ani název „Grip“, dlaždice „SETUP · 4“ se nesekne.
+3. ✅ Bublina lekce se řídí typem cviku (`reps` → „Do the reps, then tap Done“).
+- ✅ 14 přegenerovaných baseline (záznam design-agenta v LOG, změna scrollToNode schválená bossem) prošlo kontrolou snímků w320.
+
+### ⚠️ Zbývá (neblokuje)
+- ⚠️ Výdrž: text „Hold the timer or tap Done“ zmiňuje Done, ale u výdrže je primární tlačítko [START]/[PAUSE] a Done tam není. → design-agent (`data/copy.ts`).
+- ⚠️ Mapa w320: tečková šipka bubliny vede přes hlavu opičky a za levým okrajem bubliny prosvítá zbytek popisku „SE…“ (SECTION 01). „+20 XP“ se dotýká horní hrany [START LESSON]. Kosmetické → design-agent.
+- ⚠️ Z kola 1: `lastRect` letu přežije ukončenou lekci (motion-agent, nízká priorita).
+
+### iPhone checklist
+1. Start lesson: kotouč plynule přeletí nad lekcí (fullScreenModal) do řady teček, bez bliknutí.
+2. Rychlý dvojí tap na Start lesson: otevře se jen jedna lekce, haptika jen jednou.
+3. V první oslavě tečky slétají z místa, kam kotouč dolétl.
+4. Zavření bubliny tapem: plynulé prolnutí, mapa dojede bez skoku, horní safe area drží (zkontroluj i na menším iPhonu).
+5. Reduce Motion: kotouč se jen prolne, VoiceOver přečte bublinu i „SETUP · 4“ srozumitelně.

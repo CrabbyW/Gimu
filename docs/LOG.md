@@ -903,3 +903,7 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 ## 2026-10-07 · boss · Rozhodnutí k opravám w320 (fáze 1)
 - Schváleno: skrytí prázdné řady pokroku 0/9 při first run na nízkém displeji; `scrollToNode` odečítá `footerSpace` (aktuální uzel nad pruhem CTA, nová demo baseline mapy na všech šířkách — vědomá změna).
 - Otevřené (nízká priorita, motion): `lastRect` letu přežije zavřenou lekci do dalšího `launch` (projeví se jen u oslavy z deep linku).
+
+### 2026-10-07 qa-agent: elite fáze 1, QA kolo 2 (HEAD cce1093)
+- Ověřil: tsc/eslint 0, jest 703/703, e2e 107/107, perf 4/4, nativní log bez nových ERROR; snímky w320 (dark/light) first-run mapy a oslavy bez překryvů; bublina lekce podle typu cviku.
+- Verdikt: SCHVÁLENO. Otevřené ⚠️: copy výdrže zmiňuje Done, šipka bubliny přes opičku na w320 (design-agent); `lastRect` po quit (motion-agent).
