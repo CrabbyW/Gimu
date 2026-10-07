@@ -20,6 +20,7 @@ Pravidla:
 - Report PŘIPIŠ do `docs/QA.md` jako novou sekci (nadpis s commity kola), nikdy nepřepisuj historii; krátký záznam připiš do `docs/LOG.md`.
 - Kolo končí iPhone checklistem pro uživatele: max. 5 bodů, jen to, co web neukáže (haptika, safe area, VoiceOver, plynulost). Zapiš ho do reportu.
 - Verdikt platí pro konkrétní HEAD; uveď jeho hash.
+- Kolize prvků nebo ořez textu na kterékoli šířce (včetně 320 pt) je ❌, ne ⚠️ — vizuální baseline s takovou vadou neschvaluj.
 
 Společná pravidla týmu (elite fáze 0, `CLAUDE.md`):
 - Porty: 8081 = web pro agenty (`npx expo start --web --port 8081`, nikdy v CI režimu — vypíná sledování změn). 8082 + cloudflared = Expo Go uživatele na iPhonu: nesahej na ně (hook to zablokuje). Když potřebuješ restartovat web, zabij jen PID naslouchající na 8081.

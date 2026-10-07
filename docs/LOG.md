@@ -907,3 +907,7 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 ### 2026-10-07 qa-agent: elite fáze 1, QA kolo 2 (HEAD cce1093)
 - Ověřil: tsc/eslint 0, jest 703/703, e2e 107/107, perf 4/4, nativní log bez nových ERROR; snímky w320 (dark/light) first-run mapy a oslavy bez překryvů; bublina lekce podle typu cviku.
 - Verdikt: SCHVÁLENO. Otevřené ⚠️: copy výdrže zmiňuje Done, šipka bubliny přes opičku na w320 (design-agent); `lastRect` po quit (motion-agent).
+
+## 2026-10-07 · boss · Rating fáze 1 = 65/85 → opravy
+- Vizuální kvalita 0: kolize na mapě first run w320 (bublina přes „SE…“, „+20 XP“ na CTA, šipka přes opičku), QA je vedla jen jako ⚠️. Opravuje design-agent (+ text u výdrže bez „Done“).
+- Rubrika a zadání QA doplněny o výslovné kritérium: kolize/ořez textu na kterékoli šířce včetně 320 pt = ❌ (rating i QA vykládaly „hierarchii“ různě).

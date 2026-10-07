@@ -15,7 +15,7 @@ Brány ano/ne — když kterákoli neplatí, NEHODNOTÍŠ a vrátíš jen seznam
 
 Body (celkem 100). Body za kategorii jen když jsou splněná VŠECHNA kritéria v ní, jinak 0:
 1. Funkčnost (20) — E2E toky v `e2e/flows` projdou; spec kroku je v QA reportu bez ❌.
-2. Vizuální kvalita (20) — vizuální regrese (4 šířky × dark/light) bez neschválených diffů; jasná hierarchie, jeden subjekt na obrazovku, stavy navržené; nic z „Never“ listu skillu aesthetic.
+2. Vizuální kvalita (20) — vizuální regrese (4 šířky × dark/light) bez neschválených diffů; jasná hierarchie, jeden subjekt na obrazovku, stavy navržené; nic z „Never“ listu skillu aesthetic; žádné kolize ani ořezy textu (prvky se nedotýkají, text není useknutý) na žádné šířce včetně 320 pt.
 3. Motion a haptika (15) — jeden orchestrovaný nástup na obrazovku, Reduce Motion varianta, žádný spring/bounce na klikatelném, klíčové momenty s haptikou; medián fps v `e2e:perf` ≥ 55.
 4. Zařízení (15) — uživatel potvrdil iPhone checklist kola („ok“ nebo vyřešené screenshoty).
 5. Přístupnost (10) — role a popisky na interaktivních prvcích, kontrast (test `theme/__tests__/contrast.test.ts`), fontScale 1.4 bez přetečení, dotykové plochy ≥ 44 pt.
