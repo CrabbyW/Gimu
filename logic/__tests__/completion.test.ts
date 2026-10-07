@@ -99,3 +99,31 @@ describe('comeback (Task 22)', () => {
     expect(r.result.streak).toBe(1);
   });
 });
+
+describe('streakRecord (elite fáze 3)', () => {
+  test('první den není rekord, druhý den v řadě ano', () => {
+    const a = run(base(), 'bc-1-1', new Date(2026, 8, 29, 10));
+    expect(a.result.streakRecord).toBe(false);
+    expect(run(a.profile, 'bc-1-2', new Date(2026, 8, 30, 10)).result.streakRecord).toBe(true);
+  });
+  test('druhá lekce týž den rekord neopakuje', () => {
+    const a = run(base(), 'bc-1-1', new Date(2026, 8, 29, 10));
+    const b = run(a.profile, 'bc-1-2', new Date(2026, 8, 30, 10));
+    expect(run(b.profile, 'bc-1-3', new Date(2026, 8, 30, 18)).result.streakRecord).toBe(false);
+  });
+  test('vyrovnání starého rekordu není rekord, překonání ano', () => {
+    let p = base();
+    p = run(p, 'bc-1-1', new Date(2026, 8, 29, 10)).profile;
+    p = run(p, 'bc-1-2', new Date(2026, 8, 30, 10)).profile;
+    p = run(p, 'bc-1-3', new Date(2026, 9, 3, 10)).profile;
+    const tie = run(p, 'bc-1-4', new Date(2026, 9, 4, 10));
+    expect(tie.result.streak).toBe(2); expect(tie.result.streakRecord).toBe(false);
+    const beat = run(tie.profile, 'bc-1-5', new Date(2026, 9, 5, 10));
+    expect(beat.result.streak).toBe(3); expect(beat.result.streakRecord).toBe(true);
+  });
+  test('retry stejného pokusu vrátí stejný rekord', () => {
+    const a = run(base(), 'bc-1-1', new Date(2026, 8, 29, 10));
+    const b = run(a.profile, 'bc-1-2', new Date(2026, 8, 30, 10), 'att');
+    expect(run(b.profile, 'bc-1-2', new Date(2026, 9, 9, 10), 'att').result.streakRecord).toBe(true);
+  });
+});

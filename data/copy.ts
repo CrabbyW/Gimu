@@ -157,6 +157,8 @@ export const copy = {
   complete: {
     title: 'Plate on the bar.', xpLesson: 'lesson', xpBoss: 'boss', xpReplay: 'replay', xpFirst: 'first today',
     xpStreak: 'streak', cta: 'Continue', replayTitle: 'Practice makes perfect.',
+    // Rekord série (elite fáze 3): mono řádek pod titulkem.
+    record: (days: number) => `NEW RECORD · ${days} DAYS`,
   },
   leagueTier: 'LEAGUE',
   league: {
@@ -460,6 +462,16 @@ export const copy = {
     label: { idle: 'Your monkey', happy: 'Your monkey is happy', celebrate: 'Your monkey is celebrating', sad: 'Your monkey is sad' },
     // Reaktivní opička (fáze 3): co s ní jde dělat.
     playHint: 'Tap to make it hop, tap three times fast for a backflip, hold to pet it',
+  },
+  // Repliky opičky (elite fáze 3): ťuknutí na mapě, max 32 znaků, žádné výčitky.
+  mascotLines: {
+    morning: ['Morning. Bar’s cold.', 'Early plates hit different.', 'Coffee first? Then a plate.'],
+    day: ['One plate before lunch?', 'Good time for a short one.', 'Midday reps. Let’s go.'],
+    evening: ['Evening session? I’m in.', 'Still time for today’s plate.', 'Wind down with one lesson.'],
+    night: ['Late, huh. I’m awake too.', 'Short one, then sleep.', 'Night owls lift too.'],
+    streakOn: ['Streak’s alive. Keep it fed.', 'Day by day. Nice.', 'Don’t break the chain.'],
+    streakHot: ['Week-plus streak. Respect.', 'You’re on fire.', 'This streak is getting heavy.'],
+    todayDone: ['Done for today. Rest up.', 'Plate earned. Go relax.', 'Today’s in the bag.', 'Nice work. See you tomorrow.'],
   },
   // Opička průvodce (elite fáze 1): jedna krátká věta na obrazovku při prvním průchodu.
   guide: {

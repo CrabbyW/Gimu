@@ -4,7 +4,7 @@ import { toISODate } from './dates';
 import { nextLessonId } from './map';
 import { repairTarget, type SeasonSpan } from './season';
 import { stageForXp } from './mascot';
-import { activeDays, currentStreak } from './streak';
+import { activeDays, currentStreak, longestStreak } from './streak';
 import { doneRatio, EMPTY_DEBT, lessonCounts, settleDebt } from './adaptive';
 import { lessonXp, totalXp, type XpBreakdown } from './xp';
 
@@ -13,6 +13,8 @@ export interface LessonResult {
   totalXpBefore: number; totalXpAfter: number;
   stageBefore: MascotStage; stageAfter: MascotStage;
   unlockedLessonId: string | null; streak: number; completedPlates: PlateKg[];
+  /** Nová série překonala nejdelší předchozí (a má aspoň 2 dny): opička na to má vlastní reakci (elite fáze 3). */
+  streakRecord: boolean;
 }
 
 interface Args {
@@ -58,6 +60,7 @@ export function applyLessonCompletion(a: Args): { profile: UserProfile; result: 
     stageBefore: stageForXp(totalXpBefore, a.thresholds), stageAfter: stageForXp(totalXpAfter, a.thresholds),
     unlockedLessonId: isReplay ? null : nextLessonId(a.pathLessons, completedAfter),
     streak,
+    streakRecord: streak >= 2 && streak > longestStreak(activeDays(events)),
     completedPlates: [...sectionLessons].sort((x, y) => x.order - y.order)
       .filter((l) => !l.isBoss && completedAfter.has(l.id)).map((l) => l.plateKg),
   };

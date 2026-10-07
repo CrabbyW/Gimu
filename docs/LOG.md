@@ -971,3 +971,8 @@ NESCHVÁLENO: tsc/jest (682)/eslint/guard testy (16)/e2e:perf (4) zelené, hook 
 - Rozhodl sám: syntéza místo nahrávek; hlasitost 0.35 krátké / 0.5 swoosh / 0.6 ostatní; gate 40 ms na stejný zvuk; navigace bez zvuku; `plateSnap` přejmenován na `snap`.
 - Chyba procesu: 65d362f commitnut s 1 padající sadou a 3 lint chybami, opraveno v 9106914.
 - Otevřené: hlasitosti neověřené uchem (iPhone checklist); README Zvuky aktualizováno.
+
+## boss — elite fáze 3, Task 1 (logika opičky 2.0)
+- Udělal: spec + plán fáze 3, `logic/mascotLines.ts` (kontext podle dneška/série/denní doby, výběr bez opakování) + testy, `copy.mascotLines` (7 kontextů, ≤ 32 znaků), `copy.complete.record`, `LessonResult.streakRecord` + testy (vyrovnání ≠ rekord, retry idempotentní), hook `hooks/useMascotLine.ts` + testy.
+- Rozhodl sám: opička mluví jen na ťuknutí (nikdy sama), 2.4 s, průvodce má přednost, ztracená série = věta podle denní doby (bez výčitek), rekord až od 2 dnů.
+- Otevřené: UI bubliny (design), pohyb a reakce `proud` při rekordu (motion).
