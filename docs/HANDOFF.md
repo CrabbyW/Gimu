@@ -18,6 +18,11 @@ K ruční kontrole: stage-up CTA onGold a první snímek staré opičky, plynulo
 Reakce a život opičky, angličtina, Reset app, kompaktní mapa jedoucí pod hlavičkou, reaktivní pozadí všude, tab bar (ťuknutí + přejetí), nová oslava lekce s haptickým podpisem, barevný systém (docs/design/color-system.md), demo skip.
 K ruční kontrole na iPhonu: haptika oslavy, tab bar a VoiceOver, četnost idle opičky, závoj mapy, Doto 24 pt na 320 pt, kontrast, Toggle/TextField hranice.
 
+## Elite fáze 1 (vlajková linka) HOTOVÁ — rating 85/85 „čeká na iPhone“ (2026-10-07)
+Krátký onboarding (cesta → narození → mapa, ~6 s do lekce), Finish setup / Set your goals, opička průvodce, let kotouče mapa → lekce → oslava, kompaktní lekce a mapa na 320 pt. QA 5 kol (výjimka zapsaná v LOG).
+Čeká: uživatelovo „ok“ k iPhone checklistu (docs/QA.md, kolo 5). Otevřené (nízká priorita): `lastRect` letu přežije zavřenou lekci; eslint-disable exhaustive-deps bez důvodu v LessonMap/PlateNode; práh vizuálního diffu 1 % pustil malou změnu na w320 (zvážit snížit); hook neblokuje `npx kill-port 8082`.
+Další podprojekty: 2 zvuk + haptika, 3 opička 2.0, 4 audit a řemeslo.
+
 ## Elite fáze 0 (workflow) HOTOVÁ — rating 85/85 „čeká na iPhone“ (2026-10-06)
 Playwright v `e2e/` proti produkčnímu exportu (80 testů za ~3 min, perf 4/4), ochranný hook, ESLint worklet pravidlo, agenti se shellem, nová rubrika. Scroll jen při svislém tahu (scrollIntent).
 Čeká: uživatelovo „ok“ k iPhone checklistu kola 2 (docs/QA.md) → 100/100. Otevřené: hook neblokuje `npx kill-port 8082` / dosazené PID; šatník vodorovné sloty na iOS.
