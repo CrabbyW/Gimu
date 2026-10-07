@@ -15,7 +15,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PlateFlight } from '@/components/transition/PlateFlight';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { useActiveSeason } from '@/hooks/useActiveSeason';
-import { useHydrated } from '@/hooks/useHydrated';
+import { useDbLoadFailed, useHydrated } from '@/hooks/useHydrated';
+import { StateView } from '@/components/ui/StateView';
+import { copy } from '@/data/copy';
 import { useReminderSync } from '@/hooks/useReminderSync';
 import { ThemeProvider, useTheme } from '@/theme';
 import { preloadSounds } from '@/lib/sound';
@@ -25,6 +27,7 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Doto_700Bold, Inter_300Light, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
   const hydrated = useHydrated();
+  const loadFailed = useDbLoadFailed();
   const season = useActiveSeason();
   useEffect(() => { if (fontError) console.warn('[fonts] načtení selhalo, pokračuji se systémovým písmem', fontError); }, [fontError]);
   // Splash drží, dokud nejsou fonty i uložená data (spec §9). Chyba fontů splash neblokuje.
@@ -36,7 +39,10 @@ export default function RootLayout() {
   // Na nativu brání splash; na webu (bez splashe) je tu místo prázdna DotLoader. Fonty nepotřebuje.
   return (
     <ThemeProvider seasonThemeId={seasonThemeId}>
-      {ready ? <RootStack /> : <DotLoaderScreen />}
+      {!ready ? <DotLoaderScreen /> : loadFailed.failed
+        // Uložená data nejdou přečíst: chyba s Retry, ne onboarding (ten by postup přepsal).
+        ? <StateView kind="error" what={copy.common.loadTarget.profile} onRetry={loadFailed.retry} />
+        : <RootStack />}
     </ThemeProvider>
   );
 }

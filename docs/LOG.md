@@ -1041,3 +1041,8 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 ### qa-agent — elite fáze 4 kolo 1 (2026-10-07), HEAD 3ced780
 **Co:** tsc/eslint/jest (755)/test:node, e2e 159/159, e2e:perf 4/4, native log bez nového ERROR. Mutace ověřily a11y labels i large-text testy (vráceno). Reálná sonda selhání úložiště, prázdné stavy w320 dark/light, skeleton bez záblesku. Verdikt **SCHVÁLENO**.
 **Otevřené:** (1) selhání hydratace → onboarding a možné přepsání profilu místo ErrorState (boss, `store/db.ts`); (2) large-text test hlídá jen 1.4×; (3) „Balance 101“ vs. SPEC „ZÁKLADY …“ — doplnit poznámku do SPEC; (4) VoiceOver pořadí mapy jen na iPhonu.
+
+## boss — elite fáze 4, oprava rizika ztráty dat (nález QA kola 1)
+- Udělal: `store/db.ts` guardedStorage — když AsyncStorage při čtení vyhodí chybu, `loadFailed` = true a dokud trvá, nic se nezapisuje a `setProfile` je no-op. Kořen (`app/_layout.tsx`) ukáže StateView error + Retry (`useDbLoadFailed().retry` → rehydrate) místo onboardingu. Test `hooks/__tests__/dbLoadFailed.test.ts`.
+- Rozhodl sám: poškozený JSON (parse error) dál = začít načisto (data stejně nejdou přečíst, jinak by uživatel uvízl); blokuje se jen výjimka úložiště.
+- Otevřené: test velkého písma hlídá jen 1.4× (větší iOS velikosti jen iPhone checklist).
