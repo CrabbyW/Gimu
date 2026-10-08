@@ -573,3 +573,29 @@ iPhone checklist:
 3. Safe area: lišta Back/Next nad home indikátorem, klávesnice při psaní čísla nepřekryje pole.
 4. Přechody mezi kroky plynulé, napočítání výsledku bez trhání.
 5. Wall handstand lekce: caution poznámka je k nalezení před začátkem cviku.
+
+## QA elite fáze 5 — kolo 2 (HEAD 91df1261febb952d18d70bb7c073069ecac4eba6; commit 91df126, opravy nálezů kola 1)
+
+**Brány:** tsc, eslint, jest 784/784, e2e 162/162 (spustil boss na tomto HEAD) ✅ · `npm run test:node` 25/25 ✅ · `e2e:perf` 4/4 ✅ (čas do START, fps mapy a oslavy ≥ 55, canvasy ≤ 12) · `$TEMP/expogo.log` 116 ř., 0× `ERROR` ✅ (Expo Go 8084/8082 jsem nespouštěl ani nezastavoval).
+
+**Ověření nálezů z kola 1** (dočasný Playwright spec na w320 dark+light, po běhu smazán; screenshoty jsou ve scratchpadu):
+- ✅ Nulový test: 3× Next → výsledek „Lessons scaled: reps ×1, holds ×1“ + 2× „Not entered · default“. Po Save je plank v lekci bc-1-1 30 s (výchozí, už ne 15 s). Logika: `scaleFromTest` 0 → složka 1; nové unit testy (0/0 = NEUTRAL, 0/120 = 1 / max).
+- ✅ CAUTION štítek: bc-1-5 „Pike hold [CAUTION]“ na w320 dark i light nad lištou Skip/Start, bez scrollu, textCollisions = []. Plná věta (s a11y popiskem „Caution. …“) zůstává níž. Štítek je skrytý pro VoiceOver, aby se nečetl dvakrát, takže uživatel VoiceOveru se o caution dozví až z poznámky (→ iPhone checklist).
+- ✅ a11y stepperu: „1 rep more/less“, „5 seconds more/less“ (krok PLANK_STEP).
+- ✅ keepUnits: Nastavení i Setup na w320 zobrazují „Crow 15 s“ na jednom řádku. Řádek „L-sit 10 s · 60 s plank ·“ se láme jen u oddělovače. Regex `(\d) (?=(s|kg|reps|min)\b)` → NBSP (ověřeno bajty C2 A0), používá se jen u řádků s milníky. Se slovy jako „sets“ nebo „second“ se nespáruje, protože chybí `\b`. Ostatní texty to neovlivní.
+- ✅ resultLine: přesný násobek (×1, ×1.5, ×0.75), e2e upraven.
+- ✅ Dokončení lekce beze změny: od 5beb26b se nezměnil žádný soubor oslavy, odemčení ani XP (změny jsou jen v ExerciseCard, tj. v hlavičce cviku). Flows i perf oslavy jsou zelené.
+
+**Nové drobnosti (neblokují):**
+- ⚠️ (boss/copy) Když se uloží nulový test, řádek v Nastavení a Setupu ukazuje „0 push-ups · 0 s plank“, kdežto výsledek ukazuje „Not entered · default“. Je to nekonzistentní. Navrhuji použít `rowValue` s „not entered“ pro 0, případně „Not tested“, když jsou obě hodnoty 0. Repro: Settings → Retake level test → 3× Next → Save → Settings, sekce Training level.
+- ⚠️ (info) Monotonie kliků teď platí od 1 výš: 0 dává ×1, ale 1 dává ×0.5. Je to záměr (0 = nezadáno) a test je upravený.
+
+Kolize ani ořez nejsou na w320 nikde (Settings, Setup, bc-1-5, výsledek; dark i light).
+
+**Verdikt: SCHVÁLENO** pro HEAD 91df126.
+
+**iPhone checklist:**
+1. Lekce bc-1-5 na menším iPhonu: štítek CAUTION vedle „Pike hold“ je vidět bez scrollu a není pod lištou ani home indikátorem.
+2. VoiceOver na stepperu: kliky čtou „1 rep more“, plank „5 seconds more“. V lekci s caution se poznámka „Caution. …“ přečte před tlačítkem Start.
+3. Výsledek bez zadání: obě řádky „Not entered · default“ jsou čitelné. Napočítání a přechod na výsledek jsou plynulé.
+4. Haptika stepperu a stopek je stejná jako v kole 1. Haptika dokončení lekce se nezměnila.

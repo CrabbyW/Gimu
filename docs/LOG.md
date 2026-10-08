@@ -1080,3 +1080,5 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 4. `resultLine`: násobek přesně, max. 2 desetinná bez koncových nul (×0.75, ×1.5, ×1).
 5. Výsledek: složka s 0 (nezadáno) místo „0“ ukáže štítek + „Not entered · default“ (respektuje bossovu logiku 0 = výchozí dávky).
 **Běhy:** tsc OK · eslint 0 · jest 784/784 · `npm run e2e` 161 passed, 1 failed (můj flow čekal starý text „×1.0“) → opraveno na „×1“, `flows/fitness-test` 3/3 passed. Žádná nová baseline (vizuální sada prošla beze změn).
+
+- 2026-10-08 qa-agent: QA fáze 5 kolo 2 (HEAD 91df126) — SCHVÁLENO. Všech 5 nálezů z kola 1 ověřeno (w320 dark+light screenshoty, nulový test → výchozí dávky, CAUTION štítek nad ohybem, NBSP „Crow 15 s“). test:node, e2e:perf, native log čisté. Otevřené: řádek „0 push-ups · 0 s plank“ v Nastavení po nulovém testu (boss/copy).
