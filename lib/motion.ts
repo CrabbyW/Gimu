@@ -467,3 +467,14 @@ export const fitnessTest = { stepMs: dur.enter, stepShift: 24, ringLapS: 60, cou
 export const stepEnterTiming = (reduced: boolean) => (reduced
   ? motion.calmFade
   : { duration: fitnessTest.stepMs, easing: easeSafe.out, reduceMotion: ReduceMotion.Never } satisfies WithTimingConfig);
+
+/**
+ * Intro OPICE (studený start): sloupce teček se rozsvítí zleva doprava (`scanMs`, každý sloupec se rozsvítí
+ * za `colFadeCols` šířky čela, `ease.out`), pak nápis jednou pulzne (scale `pulseScale`, `pulseMs` tam i zpět,
+ * jemná haptika `introPulse`) a celé intro se prolne do mapy (`fadeMs`, `ease.exit`). Celkem ≈ 1.2 s.
+ * Když appka po dohrání ještě není ready, nápis drží a jemně dýchá (opacity `holdLow` ↔ 1, `holdHalfMs`),
+ * prolnutí přijde, až je ready. Omezený pohyb: nápis rozsvícený hned, jen prolnutí `reducedFadeMs` po ready.
+ */
+export const dotIntro = { scanMs: 640, colFadeCols: 2, pulseMs: 130, pulseScale: 1.04, fadeMs: 300, reducedFadeMs: 300, holdLow: 0.7, holdHalfMs: 900 };
+/** Okamžik, kdy je choreografie (sken + pulz) dohraná a intro se smí prolnout pryč. */
+export const dotIntroPlayedMs = (reduced: boolean) => (reduced ? 0 : dotIntro.scanMs + 2 * dotIntro.pulseMs);

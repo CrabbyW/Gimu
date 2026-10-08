@@ -9,7 +9,7 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DotIntro } from '@/components/intro/DotIntro';
@@ -28,20 +28,26 @@ SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 /** e2e vypíná intro init skriptem (`e2e/fixtures.ts`), ať snímky a toky začínají rovnou obrazovkou. */
 const introDisabled = () => (globalThis as { __OPICE_NO_INTRO__?: boolean }).__OPICE_NO_INTRO__ === true;
+/** e2e geometrie/skip: intro drží nápis (jako by appka nebyla ready), dokud se neťukne. */
+const introHeld = () => (globalThis as { __OPICE_HOLD_INTRO__?: boolean }).__OPICE_HOLD_INTRO__ === true;
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Doto_700Bold, Inter_300Light, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
   const hydrated = useHydrated();
+  // Intro jen při studeném startu (takeIntro = poprvé za JS kontext); návrat z pozadí kontext nemění, nehraje se.
+  const [intro, setIntro] = useState(() => !introDisabled() && takeIntro());
   const loadFailed = useDbLoadFailed();
   const season = useActiveSeason();
   useEffect(() => { if (fontError) console.warn('[fonts] načtení selhalo, pokračuji se systémovým písmem', fontError); }, [fontError]);
   // Splash drží, dokud nejsou fonty i uložená data (spec §9). Chyba fontů splash neblokuje.
+  // Při studeném startu s intrem se splash schová hned po prvním layoutu intra (intro fonty nepotřebuje,
+  // podklad = theme base = barva splashe v app.json); RootStack pod ním dál čeká na ready.
   const ready = (fontsLoaded || fontError != null) && hydrated;
-  useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => undefined); }, [ready]);
+  const hideSplash = useCallback(() => { SplashScreen.hideAsync().catch(() => undefined); }, []);
+  useEffect(() => { if (ready) hideSplash(); }, [ready, hideSplash]);
+  const endIntro = useCallback(() => setIntro(false), []);
   // Přehrávače jednou při startu: první zvuk oslavy bez latence dekódování (motion spec §6.2.5).
   useEffect(preloadSounds, []);
-  // Intro jen při studeném startu (takeIntro = poprvé za JS kontext); návrat z pozadí kontext nemění, nehraje se.
-  const [intro, setIntro] = useState(() => !introDisabled() && takeIntro());
   const seasonThemeId = season.status === 'ready' ? season.data?.themeId ?? null : null;
   // Na nativu brání splash; na webu (bez splashe) je tu místo prázdna DotLoader. Fonty nepotřebuje.
   return (
@@ -51,7 +57,7 @@ export default function RootLayout() {
         // Uložená data nejdou přečíst: chyba s Retry, ne onboarding (ten by postup přepsal).
         ? <StateView kind="error" what={copy.common.loadTarget.profile} onRetry={loadFailed.retry} />
         : <RootStack />}
-      {intro ? <DotIntro onDone={() => setIntro(false)} /> : null}
+      {intro ? <DotIntro ready={ready && !introHeld()} onDone={endIntro} onShown={hideSplash} /> : null}
     </ThemeProvider>
   );
 }

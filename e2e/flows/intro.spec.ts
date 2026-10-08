@@ -5,6 +5,8 @@ test.use({ intro: true });
 
 test('intro OPICE: studený start, geometrie na w320, ťuknutí přeskočí na mapu', async ({ page }) => {
   const errors = collectErrors(page);
+  // Intro drží nápis do ťuknutí (jinak by se samo prolnulo dřív, než změříme geometrii).
+  await page.addInitScript('globalThis.__OPICE_HOLD_INTRO__ = true;');
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/dev');
   const intro = page.getByTestId('dot-intro');
@@ -46,6 +48,25 @@ test('intro OPICE: studený start, geometrie na w320, ťuknutí přeskočí na m
   await expect(intro).toBeVisible({ timeout: 30_000 });
   await intro.click();
   await expect(intro).toHaveCount(0);
+  await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
+  expect(errors).toEqual([]);
+});
+
+test('intro OPICE: bez ťuknutí samo dohraje (~1.2 s) a prolne se do appky', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/dev');
+  const intro = page.getByTestId('dot-intro');
+  await expect(intro).toBeVisible({ timeout: 30_000 });
+  // Žádný tap: po dohrání skenu, pulzu a prolnutí intro zmizí samo a pod ním je appka.
+  await expect(intro).toHaveCount(0, { timeout: 10_000 });
+  await visible(page.getByText(/Load demo profile/i)).click();
+  await page.waitForURL((u) => u.pathname === '/', { timeout: 30_000 });
+  await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
+
+  // Studený start nad mapou: intro samo zmizí a ukáže mapu.
+  await page.reload();
+  await expect(intro).toBeVisible({ timeout: 30_000 });
+  await expect(intro).toHaveCount(0, { timeout: 10_000 });
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
   expect(errors).toEqual([]);
 });

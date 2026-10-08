@@ -8,7 +8,7 @@ export type FeedbackId =
   | 'countdown3' | 'countdown2' | 'countdown1' | 'go' | 'holdTick' | 'holdLast5' | 'holdLast4' | 'holdLast3' | 'holdLast2' | 'holdLast1' | 'holdDone'
   | 'impact' | 'xpTick' | 'seriesPlate' | 'wheelStep' | 'formError' | 'mascotTap' | 'mascotJoy'
   | 'flightStart' | 'lessonDone' | 'stageUp' | 'guideShow' | 'setupDone'
-  | 'timerStart' | 'timerStop';
+  | 'timerStart' | 'timerStop' | 'introPulse';
 
 /** Navigace a ovládání: jen haptika, nikdy zvuk (zvuk je pro dění ve hře). */
 export const NAVIGATION_IDS: readonly FeedbackId[] = ['tab', 'cta', 'tapLight', 'wheelStep'];
@@ -49,4 +49,6 @@ export const FEEDBACK_MAP: Record<FeedbackId, readonly [HapticKind | null, SfxNa
   // Elite fáze 5: stopky planku. Start = rozhodný úder s tikem (začíná výkon), stop = tvrdší potvrzení bez zvuku.
   timerStart: ['rigid', 'tick'],
   timerStop: ['medium', null],
+  // Intro OPICE: jemný puls po rozsvícení nápisu, bez zvuku (intro je tiché).
+  introPulse: ['soft', null],
 };

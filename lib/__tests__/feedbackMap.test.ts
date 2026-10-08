@@ -44,3 +44,7 @@ test('stopky vstupního testu: start s úderem a tikem, stop jen haptika', () =>
   expect(FEEDBACK_MAP.timerStart).toEqual(['rigid', 'tick']);
   expect(FEEDBACK_MAP.timerStop).toEqual(['medium', null]);
 });
+
+test('intro: jemný puls bez zvuku', () => {
+  expect(FEEDBACK_MAP.introPulse).toEqual(['soft', null]);
+});
