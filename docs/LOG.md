@@ -1071,3 +1071,4 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 - Testy: hooks/__tests__/useStopwatch.test.ts (zamčení 95 s → 95 s a prstenec 35/60, strop, nové kolo), feedbackMap.test.ts (nová id), feedbackWiring.test.ts (napojení timerStart/Stop, wheelStep, setupDone).
 - Výsledky: tsc OK, eslint OK, jest 86/86 suites (781 testů), test:node 25/25, `npm run e2e` 162 passed, `npm run e2e:perf` 4 passed (fps mapa i oslava ≥ 55).
 - Otevřené: haptika a plynulost prstence ověřit na iPhonu (zamknout telefon při běžících stopkách, po odemčení sedí číslo i prstenec).
+- 2026-10-08 qa-agent: QA elite fáze 5 @5beb26b SCHVÁLENO; brány zelené, log bez ERROR; ⚠️ test 0/0 zpolovičí dávky (spec), VO popisek stepperu planku, caution pod ohybem na w320.

@@ -547,3 +547,29 @@ iPhone checklist:
 2. Pokud uvidíš chybovou obrazovku: opice a text jsou celé pod notchem/Dynamic Islandem a tlačítko Try again je nad home indikátorem.
 3. VoiceOver na chybové obrazovce přečte nadpis, text a tlačítko „Try again“ jako tlačítko.
 4. Ťuknutí na Try again má haptickou odezvu a nic se nezasekne.
+
+## QA elite fáze 5 — vstupní test a bezpečnost (HEAD 5beb26b; commity 2819d79, 4e8efd5, e16e5a9, 5beb26b)
+
+**Brány:** tsc ✅ · eslint ✅ · jest 86/781 ✅ · test:node ✅ · `npm run e2e` 162/162 ✅ (vizuál beze změny baseline, oslava/dokončení lekce beze změny) · e2e:perf 4/4 ✅ · `$TEMP/expogo.log` 0× `ERROR` ✅ (Expo Go 8084 ani 8082 nedotčeno).
+
+**Logika (`logic/fitnessTest.ts`)** ✅ dávka = 0.5 × max vůči ref. 8 kliků / 30 s plank, meze 0.5–1.5×, kolena = polovina, spodní meze 3 op. / 5 s, výdrže po 5 s. Bez testu `NEUTRAL_SCALE`: všechny dávky knihovny (≥4 op., výdrže násobky 5) identické → lekce, minuty na mapě (`useLessonMinutes`), oslava i připomínka (`LocalNotificationService`) stejné. Dluh se počítá ze škálované dávky (test v MockLessonService), opakovaný test přepíše starý (test), sanitizace NaN/záporných/stropů (test).
+
+**Obrazovka `app/fitness-test.tsx`** ✅ skip (křížek / Skip) nic neuloží (e2e), „Ano“ v PAR-Q jen upozorní (alert, liveRegion), disclaimer pod každým krokem, stopky z `Date.now()` značek (po zamčení správný čas), dvojklik na Save hlídá `inFlight`. Screenshoty 4 kroků + Nastavení + lekce na w320/w430 dark+light: textCollisions = [] všude, žádný ořez ✅.
+
+**Bezpečnostní texty** ✅ 7 otázek věcně odpovídá obecné části PAR-Q+ 2024, „consult“ jen doporučuje lékaře, disclaimer neradí nad rámec. Caution („Use a wall or soft floor, warm up your wrists, stop if anything hurts“) je obecná, ne lékařská rada.
+
+**Nálezy (neblokující):**
+- ⚠️ (boss/spec) Uložení s nevyplněnými nulami (Next → Next → Save bez zadání) uloží test 0/0 → násobek 0.5×, dávky se zpolovičí. Repro: Settings → Retake level test → 3× Next → Save → lekce bc-1-1 plank 15 s. Navrhuji: 0 = „nezadáno“ → neutrální osa, nebo Save zakázat bez vstupu. Rozhodnutí spec, neopravuji.
+- ⚠️ (design-agent) VoiceOver stepper planku: „One more s“ / „One less s“, ale krok je 5 s — popisek neodpovídá a jednotka je zkratka. Navrhnout „5 seconds more“.
+- ⚠️ (design-agent) Caution poznámka na w320 až pod ohybem: bezpečnostně slabé — kdo nescrolluje, začne stojku bez ní. Návrh: krátký CAUTION štítek nad/u názvu cviku nad ohybem, plný text může zůstat níž.
+- ⚠️ (design-agent, nesouvisí s fází) Nastavení w320: „Crow 15 / s“ — jednotka se zalomí na další řádek; použít NBSP mezi číslem a jednotkou.
+- ⚠️ `resultLine` zaokrouhluje na 1 desetinné místo (0.75 → ×0.8) — kosmetické.
+
+**Verdikt: SCHVÁLENO** pro HEAD 5beb26b (nulový test je produktové rozhodnutí, ne kolize/ořez).
+
+**iPhone checklist:**
+1. Stopky planku: Start, zamknout telefon na ~20 s, odemknout — čas odpovídá skutečnosti; haptika Start/Stop.
+2. VoiceOver: otázky ano/ne čtou číslo otázky, alert „check with a doctor“ se ohlásí, stepper kliků lze upravit swipem nahoru/dolů.
+3. Safe area: lišta Back/Next nad home indikátorem, klávesnice při psaní čísla nepřekryje pole.
+4. Přechody mezi kroky plynulé, napočítání výsledku bez trhání.
+5. Wall handstand lekce: caution poznámka je k nalezení před začátkem cviku.
