@@ -1,34 +1,31 @@
-# Rating: elite fáze 4 (audit a řemeslo)
+# Rating: elite fáze 5, vstupní test a bezpečnost
 
-Kód: HEAD 06102e1 (QA kolo 2 SCHVÁLENO). Dokumentace: HEAD f8c653f (po verdiktu jen docs: QA.md, LOG.md, README.md).
+Kód HEAD 91df126 (repo HEAD 7feabed, od 91df126 se měnily jen README, docs/LOG.md a docs/QA.md). Hodnoceno 2026-10-08.
 
-**Skóre: 85/85, čeká na iPhone.** Kategorie Zařízení (15) se doplní, až uživatel potvrdí checklist.
+**Skóre: 85/85, čeká na iPhone** (bez kategorie Zařízení, ta se doplní po potvrzení)
 
 ## Brány
-| Brána | Stav | Ověření |
-|---|---|---|
-| 1. QA SCHVÁLENO pro HEAD | ✅ | QA kolo 2 schválilo 06102e1. `git diff 06102e1 HEAD` mění jen docs/QA.md, docs/LOG.md a README.md |
-| 2. tsc, jest, eslint, e2e | ✅ | Spustil jsem: tsc 0 chyb, eslint 0, jest 82 sad / 756 testů, `npm run e2e` 159/159 bez diffů |
-| 3. LOG, QA, README | ✅ | LOG obsahuje design-agent, motion-agent, qa-agent (kola 1 a 2) a boss (oprava db). QA.md má sekce kola 1 a 2. README ř. 53: StateView, DecorCanvas, typeMaxScale, Doto ≥ 28, Reduce Motion `calmFade`, ochrana dat v `store/db.ts`, `e2e/a11y/` (popisky, velké písmo 1.4×) |
-| 4. iPhone checklist + nativní log | ✅ | Checklist je v QA kole 1 (5 bodů) i v kole 2 (4 body). `$TEMP/expogo.log`: 283 řádků, poslední ERROR je na ř. 225 a je historický (SyntaxError v index.tsx z dřívějška). Od kola žádný nový |
+| Brána | Stav |
+|---|---|
+| 1. QA SCHVÁLENO pro aktuální kód | ✅ QA kolo 2 pro 91df126, potom jen dokumentace |
+| 2. tsc / jest / eslint / e2e | ✅ ověřil rating: tsc OK, eslint 0, jest 86/86 sad a 784/784 testů, `npm run e2e` 162/162 |
+| 3. LOG / QA / README | ✅ LOG má design, motion a qa (boss je ve Fázi 2 plánu a commitech), QA má sekce kola 1 a 2, README (ř. 54) popisuje fázi 5 |
+| 4. iPhone checklist + nativní log | ✅ checklist je v QA kola 2, `$TEMP/expogo.log` (09:18) má 0x `ERROR` |
 
 ## Kategorie
 | Kategorie | Body | Poznámka |
 |---|---|---|
-| Funkčnost | 20/20 | e2e/flows prošly. Spec kroku je v QA bez ❌ (jen ⚠️) |
-| Vizuální kvalita | 20/20 | Vizuální regrese 4 šířky × dark/light bez diffů. Prázdné a chybové stavy jsou navržené. Na w320 nejsou kolize (`textCollisions` = []), velké písmo 1.4× prošlo na w320/w390 |
-| Motion a haptika | 15/15 | `calmFade` s Reduce Motion, skeleton se při omezeném pohybu nehýbe. Medián fps ≥ 55 podle `e2e:perf` 4/4 z QA kola 1 (3ced780). Sám jsem `e2e:perf` spustit nemohl, protože příkaz zablokoval klasifikátor oprávnění. Commit 06102e1 mění jen store/db a nic na animacích |
-| Zařízení | čeká | Uživatel zatím nepotvrdil checklist kola |
-| Přístupnost | 10/10 | e2e a11y labels jsou zelené, contrast test je zelený (součást jest), fontScale 1.4 bez přetečení |
-| Výkon | 10/10 | Podle e2e:perf: počet pláten ≤ 12, [START LESSON] do 3 s. V kódu fáze jsem nenašel setState ve smyčce animací |
-| Architektura a kód | 10/10 | Žádné `any`, žádné TODO bez fáze. Výjimky `eslint-disable` se týkají jen react-hooks/exhaustive-deps, nikde se nevypíná worklet pravidlo |
+| Funkčnost | 20/20 | flows (vč. `flows/fitness-test`) zelené, nálezy z QA kola 1 vyřešené, v reportu není žádné ❌ |
+| Vizuální kvalita | 20/20 | vizuální sada 4 šířky x dark/light beze změn (nová baseline jen settings, schválená v kole 1), na w320 nejsou kolize ani ořezy (textCollisions = [] a CAUTION štítek je nad ohybem) |
+| Motion a haptika | 15/15 | StepEnter (timing, bez pružiny, Reduce Motion = calmFade), count-up, haptika stopek, stepperu i uložení. e2e:perf mapa i oslava ≥ 55 fps (spustil rating, 4/4) |
+| Zařízení | – (čeká) | uživatel zatím nepotvrdil iPhone checklist z QA kola 2 |
+| Přístupnost | 10/10 | role a popisky stepperu podle kroku, contrast test je zelený, alert consult běží přes liveRegion |
+| Výkon | 10/10 | canvas ≤ 12 a čas do START ≤ 3000 ms (e2e:perf), stopky překreslují přes interval, ne smyčkou animace |
+| Architektura a kód | 10/10 | logika je v `logic/fitnessTest.ts`, hodnoty z `lib/motion`/theme, chybí `any` i TODO. Jediný `eslint-disable` (`app/fitness-test.tsx:221`, react-hooks) je odůvodněný komentářem a není to výjimka z worklet pravidla |
 
-## Chyby
-Žádná nesplněná kritéria.
+## Nesplněno
+- Zařízení (15): je potřeba potvrzení iPhone checklistu od uživatele (patří **boss**, ten ho má vyžádat).
 
 ## Doporučení (do skóre se nepočítají)
-- Chybový stav úložiště nemá e2e regresní test. Kryje ho jen jest. Patří: boss/qa.
-- `store/settings.ts` nemá ochranu proti přepsání nastavení, když selže čtení. Patří: boss.
-- Test velkého písma škáluje jen 1.4×, takže zvýšení stropu `typeMaxScale` neodhalí. Doporučuju druhý běh s 2×. Patří: qa/design.
-- Popisek uzlu „BOSS“ na w320-dark vykukuje 2 px nad plovoucím CTA (scrollovaný obsah pod překryvem). Patří: design.
-- Rubrika by mohla vyžadovat, aby rating sám spustil `e2e:perf` (teď se opírá o QA běh).
+- Řádek v Nastavení a Setupu ukazuje po nulovém testu „0 push-ups · 0 s plank“, kdežto výsledek ukazuje „Not entered · default“. Je to nekonzistentní copy (boss/design).
+- Obrazovka testu zatím nemá vlastní vizuální baseline. Kolize hlídá jen flow (design).

@@ -1,5 +1,9 @@
 # Kde jsme skončili (aktualizováno 2026-10-07)
 
+## Elite fáze 5 (vstupní test + bezpečnost) HOTOVÁ — rating 85/85 „čeká na iPhone“ (2026-10-08)
+Test úrovně (PAR-Q+ 7 otázek, kliky, plank se stopkami) škáluje dávky ~50 % maxima, 0.5–1.5× (`logic/fitnessTest.ts`), CAUTION u náročných cviků, disclaimer. Rešerše `docs/research/2026-10-08-vstupni-test.md`. QA 2 kola.
+Otevřené: Nastavení/Setup po nulovém testu ukazují „0 push-ups · 0 s plank“ (výsledek říká „Not entered · default“); obrazovka testu nemá vizuální baseline; obsah stále bez kontroly trenérem. Expo Go teď běží na 8084 (starý proces drží 8082).
+
 ## Elite program HOTOVÝ (podprojekty 0–4) — všechny 85/85 „čeká na iPhone“ (2026-10-07)
 - **2 zvuk + haptika** (QA 1 kolo): 9 syntetizovaných zvuků (`scripts/gen-sounds.mjs`), mapa odezvy `lib/feedbackMap.ts`, omezovač 40 ms, nová id napojená (let kotouče, konec lekce, stage-up, průvodce, setup).
 - **3 opička 2.0** (QA 2 kola): repliky na ťuknutí (`logic/mascotLines.ts`, `LineBubble`), popisky pod bublinou se prolnou, rekord série v oslavě (`streakRecord`, `prideBeat`).
