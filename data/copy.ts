@@ -481,7 +481,7 @@ export const copy = {
     startTimer: 'Start', stopTimer: 'Stop',
     seconds: 's', reps: 'reps',
     resultTitle: 'Your starting point',
-    resultLine: (reps: number, hold: number) => `Lessons scaled: reps ×${reps.toFixed(1)}, holds ×${hold.toFixed(1)}`,
+    resultLine: (reps: number, hold: number) => `Lessons scaled: reps ×${Number(reps).toFixed(1)}, holds ×${Number(hold).toFixed(1)}`,
     save: 'Save',
     retest: 'Retake level test',
     retestHint: 'Retake every few weeks as you get stronger.',
