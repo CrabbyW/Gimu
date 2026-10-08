@@ -1,3 +1,4 @@
+import { scaledAmount, scaleFromTest } from '@/logic/fitnessTest';
 import { EXERCISES } from '@/data/exercises';
 import { EMPTY_DEBT, lessonExtras } from '@/logic/adaptive';
 import { LESSONS, LESSONS_BY_PATH } from '@/data/lessons';
@@ -34,10 +35,12 @@ export class MockLessonService implements LessonService {
   async getLesson(id: string) {
     const lesson = LESSONS.find((l) => l.id === id);
     if (!lesson) throw new Error(`Lekce ${id} neexistuje.`);
+    const scale = scaleFromTest(useDb.getState().profile?.fitnessTest);
     const exercises = lesson.exerciseIds.map((eid) => {
       const e: Exercise | undefined = EXERCISES[eid];
       if (!e) throw new Error(`Cvik ${eid} v lekci ${id} neexistuje.`);
-      return e;
+      // Vstupní test (elite fáze 5) škáluje výchozí dávku; dluh se pak počítá z už škálované dávky.
+      return { ...e, amount: scaledAmount(e, scale) };
     });
     // Stav uzlu i tady (QA kolo 1) — deep link na zamčenou lekci ji nesmí ani otevřít, ne až při dokončení.
     const completed = new Set(useDb.getState().profile?.activity.map((e) => e.lessonId) ?? []);

@@ -12,6 +12,8 @@ export interface Exercise {
   amount: number;
   description: string;
   silhouette: SilhouetteId;
+  /** Náročný cvik (rovnováha, váha na rukou/zápěstích): v lekci bezpečnostní poznámka (elite fáze 5). */
+  caution?: boolean;
 }
 
 export interface Lesson {

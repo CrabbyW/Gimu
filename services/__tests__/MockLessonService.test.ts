@@ -83,3 +83,28 @@ test('QA R44-2: boss lekce se skipem — XP základu poměrně z 40', async () =
   const r = await services.lessons.completeLesson('bc-1-boss', 'att-b', new Date(2026, 8, 29, 18), done);
   expect(r.xp.base).toBe(Math.round(40 * ((n - 1) / n)));
 });
+
+describe('vstupní test škáluje dávky (elite fáze 5)', () => {
+  const onboard = () => services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+  test('bez testu výchozí dávky; slabý test poloviční; silný 1.5×', async () => {
+    await onboard();
+    const base = (await services.lessons.getLesson('bc-1-1')).exercises.map((e) => e.amount);
+    expect(base).toEqual([30, 20, 12]);
+    await services.user.saveFitnessTest({ pushups: 2, plankS: 10 }, new Date(2026, 9, 8));
+    expect((await services.lessons.getLesson('bc-1-1')).exercises.map((e) => e.amount)).toEqual([15, 10, 6]);
+    await services.user.saveFitnessTest({ pushups: 40, plankS: 120 }, new Date(2026, 9, 8));
+    expect((await services.lessons.getLesson('bc-1-1')).exercises.map((e) => e.amount)).toEqual([45, 30, 18]);
+  });
+  test('uložení očistí vstupy a zapíše čas a připravenost', async () => {
+    await onboard();
+    await services.user.saveFitnessTest({ pushups: -3, plankS: NaN, readiness: 'consult' }, new Date('2026-10-08T08:00:00Z'));
+    expect(useDb.getState().profile!.fitnessTest).toEqual({ pushups: 0, plankS: 0, kneePushups: false, testedAt: '2026-10-08T08:00:00.000Z', readiness: 'consult' });
+  });
+  test('dluh z přeskočení se počítá ze škálované dávky (lekce se dá dokončit)', async () => {
+    await onboard();
+    await services.user.saveFitnessTest({ pushups: 2, plankS: 10 }, new Date(2026, 9, 8));
+    const r = await services.lessons.completeLesson('bc-1-1', 'a1', new Date(2026, 9, 8, 10), [true, true, false]);
+    expect(r.unlockedLessonId).toBe('bc-1-2');
+    expect(useDb.getState().profile!.trainingDebt?.reps).toBe(6);
+  });
+});

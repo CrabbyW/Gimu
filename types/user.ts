@@ -15,6 +15,17 @@ export interface Volume { holdS: number; reps: number }
 /** Dluh z přeskočených cviků (logic/adaptive.ts). `share` = navýšení na lekci, zafixované při přeskočení. */
 export interface TrainingDebt extends Volume { share: Volume }
 
+/** Vstupní test (elite fáze 5): max kliků v kuse a nejdelší plank. Škáluje dávky cviků (`logic/fitnessTest.ts`). */
+export interface FitnessTest {
+  pushups: number;
+  /** Kliky na kolenou (lehčí varianta): počítají se za polovinu. */
+  kneePushups?: boolean;
+  plankS: number;
+  testedAt: string;
+  /** Výsledek zjednodušené kontroly připravenosti (PAR-Q+). `consult` = doporučeno poradit se s lékařem. */
+  readiness?: 'clear' | 'consult';
+}
+
 export interface UserProfile {
   path: PathId;
   dreamBody: string;
@@ -41,6 +52,8 @@ export interface UserProfile {
   guideSeen?: string[];
   /** Demo profil z dev menu: každý cvik jde přeskočit (přeskočení se počítá jako odcvičené, aby šla vidět oslava). */
   demo?: boolean;
+  /** Elite fáze 5: chybí = dávky bez škálování (výchozí). */
+  fitnessTest?: FitnessTest;
 }
 
 export interface OnboardingInput {

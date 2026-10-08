@@ -29,6 +29,8 @@ export interface UserService {
   markGuideSeen(id: string): Promise<void>;
   /** Elite fáze 1: uživatel dokončil „Finish setup“ (cíle doplněné nebo přeskočené). */
   completeSetup(): Promise<void>;
+  /** Elite fáze 5: uloží vstupní test (vstupy se očistí v `logic/fitnessTest`). Dávky lekcí se od další lekce škálují. */
+  saveFitnessTest(t: { pushups: number; plankS: number; kneePushups?: boolean; readiness?: 'clear' | 'consult' }, now: Date): Promise<void>;
   /** Dev menu: přidá XP jako událost `dev-xp` (ne lekce, ruling 17). */
   grantDevXp(amount: number, now: Date): Promise<void>;
   reset(): Promise<void>;

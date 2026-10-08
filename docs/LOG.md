@@ -1048,3 +1048,8 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 - Otevřené: test velkého písma hlídá jen 1.4× (větší iOS velikosti jen iPhone checklist).
 
 - qa-agent (elite fáze 4 kolo 2, HEAD 06102e1): SCHVÁLENO. Gates zelené (tsc, eslint, jest 756, test:node, e2e 159/159). Chyba čtení úložiště na /, /league a /season (w320 dark+light) ukáže Retry, nespustí onboarding, nic nepřepíše a Retry obnoví data. Poškozený JSON = začít načisto. Otevřené (⚠️): settings store nemá ochranu proti přepsání a chybový stav nemá e2e regresní test.
+
+## boss — elite fáze 5, Task 1 (vstupní test + bezpečnost: logika)
+- Udělal: rešerše `docs/research/2026-10-08-vstupni-test.md` (ACSM kliky, plank normy, submaximální dávkování, PAR-Q+ 2024), spec + plán, `logic/fitnessTest.ts` (+ testy), `FitnessTest` v profilu, `services.user.saveFitnessTest`, škálování v `getLesson`, minutách mapy/oslavy a připomínce, `caution` u 4 náročných cviků, `copy.fitness`.
+- Rozhodl sám: dávka 50 % maxima, násobek 0.5–1.5×, kolena = polovina, PAR-Q jen informuje, test volitelný (bez testu beze změny).
+- Otevřené: UI (design), pohyb (motion). Odborná kontrola obsahu trenérem stále doporučena.

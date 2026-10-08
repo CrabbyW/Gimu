@@ -1,3 +1,4 @@
+import { sanitizeTest } from '@/logic/fitnessTest';
 import { applyGoalsPatch, type GoalsPatch } from '@/logic/goals';
 import { buildInitialProfile } from '@/logic/onboarding';
 import { COSMETICS } from '@/data/cosmetics';
@@ -45,6 +46,11 @@ export class MockUserService implements UserService {
     const p = requireProfile();
     if (!p.guideSeen || p.guideSeen.includes(id)) return;
     useDb.getState().setProfile({ ...p, guideSeen: [...p.guideSeen, id] });
+  }
+  async saveFitnessTest(t: { pushups: number; plankS: number; kneePushups?: boolean; readiness?: 'clear' | 'consult' }, now: Date) {
+    const p = requireProfile();
+    const fitnessTest = { ...sanitizeTest(t), testedAt: now.toISOString(), ...(t.readiness ? { readiness: t.readiness } : {}) };
+    useDb.getState().setProfile({ ...p, fitnessTest });
   }
   async completeSetup() {
     const p = requireProfile();

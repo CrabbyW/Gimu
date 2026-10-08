@@ -467,6 +467,41 @@ export const copy = {
     // Reaktivní opička (fáze 3): co s ní jde dělat.
     playHint: 'Tap to make it hop, tap three times fast for a backflip, hold to pet it',
   },
+  // Vstupní test a bezpečnost (elite fáze 5). Zdroje: ACSM push-up test, PAR-Q+ 2024 (docs/research/2026-10-08-vstupni-test.md).
+  fitness: {
+    kicker: 'QUICK TEST',
+    title: 'Find your level',
+    intro: 'Two short tests set your starting reps and holds. Your lessons use about half of your max, so you always have a few reps left.',
+    skip: 'Skip, use default',
+    pushupsTitle: 'Push-ups',
+    pushupsHow: 'As many as you can in a row with good form. Chest close to the floor, body straight. Stop when form breaks.',
+    kneeToggle: 'I did them on my knees',
+    plankTitle: 'Forearm plank',
+    plankHow: 'Hold as long as you can with hips in line. Stop when your hips sag or your back hurts.',
+    startTimer: 'Start', stopTimer: 'Stop',
+    seconds: 's', reps: 'reps',
+    resultTitle: 'Your starting point',
+    resultLine: (reps: number, hold: number) => `Lessons scaled: reps ×${reps.toFixed(1)}, holds ×${hold.toFixed(1)}`,
+    save: 'Save',
+    retest: 'Retake level test',
+    retestHint: 'Retake every few weeks as you get stronger.',
+    // Zjednodušená kontrola připravenosti podle 7 obecných otázek PAR-Q+ 2024.
+    readinessTitle: 'Before you start',
+    readinessIntro: 'Answer honestly. A yes doesn’t stop you, but talk to a doctor first.',
+    readiness: [
+      'Has a doctor said you have a heart condition or high blood pressure?',
+      'Do you feel chest pain at rest, in daily life or during exercise?',
+      'Have you lost balance from dizziness or passed out in the last 12 months?',
+      'Do you have another chronic medical condition?',
+      'Do you take prescribed medication for a chronic condition?',
+      'Do you have a bone, joint or muscle problem that exercise could make worse?',
+      'Has a doctor said you should only exercise under medical supervision?',
+    ],
+    yes: 'Yes', no: 'No',
+    consult: 'Please check with a doctor before training. You can still look around the app.',
+    disclaimer: 'This app is not medical advice and doesn’t replace a coach or doctor. Stop if you feel pain, dizziness or chest pressure.',
+    caution: 'Advanced move. Use a wall or soft floor, warm up your wrists, and stop if anything hurts.',
+  },
   // Repliky opičky (elite fáze 3): ťuknutí na mapě, max 32 znaků, žádné výčitky.
   mascotLines: {
     morning: ['Morning. Bar’s cold.', 'Early plates hit different.', 'Coffee first? Then a plate.'],

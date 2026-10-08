@@ -1,3 +1,4 @@
+import { scaledAmount, scaleFromTest } from '@/logic/fitnessTest';
 import * as Notifications from 'expo-notifications';
 import { copy } from '@/data/copy';
 import { now } from '@/lib/clock';
@@ -25,7 +26,8 @@ const nextLessonMinutes = (): number | undefined => {
   const id = nextLessonId(lessons, new Set(p.activity.map((e) => e.lessonId)));
   const lesson = lessons.find((l) => l.id === id);
   if (!lesson) return undefined;
-  const exercises = lesson.exerciseIds.flatMap((eid) => (EXERCISES[eid] ? [EXERCISES[eid]] : []));
+  const scale = scaleFromTest(p.fitnessTest);
+  const exercises = lesson.exerciseIds.flatMap((eid) => (EXERCISES[eid] ? [{ ...EXERCISES[eid], amount: scaledAmount(EXERCISES[eid], scale) }] : []));
   const extras = lessonExtras(exercises, p.trainingDebt ?? EMPTY_DEBT);
   return estMinutes(exercises.map((e, i) => ({ type: e.type, amount: e.amount + (extras[i] ?? 0) })));
 };
