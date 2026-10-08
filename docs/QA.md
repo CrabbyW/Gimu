@@ -599,3 +599,39 @@ Kolize ani ořez nejsou na w320 nikde (Settings, Setup, bc-1-5, výsledek; dark 
 2. VoiceOver na stepperu: kliky čtou „1 rep more“, plank „5 seconds more“. V lekci s caution se poznámka „Caution. …“ přečte před tlačítkem Start.
 3. Výsledek bez zadání: obě řádky „Not entered · default“ jsou čitelné. Napočítání a přechod na výsledek jsou plynulé.
 4. Haptika stepperu a stopek je stejná jako v kole 1. Haptika dokončení lekce se nezměnila.
+
+## QA intro OPICE — commity 483a03c (logika), be8668c (design), 7063fb3 (motion) — HEAD 7063fb3091099788239f0ba2176b926b1410642c
+
+**Verdikt: SCHVÁLENO** (pro HEAD 7063fb3)
+
+### Brány
+- ✅ `npm test` (jest, TZ Praha): 88 sad / 799 testů zelených.
+- ✅ `npm run test:node`: 25/25.
+- ✅ tsc, eslint, e2e 164/164 (pustil boss, stejný HEAD).
+- ✅ `npm run e2e:perf`: všech 5 rozpočtových testů zelených (TTI mapy ≤ 3 s, canvas, fps).
+- ✅ Doplňkové měření QA (dočasný spec, smazán; perf-prod, 390×844 dark, intro ZAPNUTÉ): čas od navigace do zmizení intra a ovladatelného [START LESSON] — bez tapu 2205 ms, s tapem hned po zobrazení 2156 ms, Reduce Motion 2003 ms. Všechno ≤ 3 s. Intro start reálně nezdržuje (~50 ms oproti skipu): choreografie (640 + 2×130 ms) doběhne dřív, než je appka ready, a prolnutí 300 ms je pod ready dobou.
+- ✅ Dvojklik + opakované kliky během prolnutí: žádná chyba v konzoli, intro zmizí, mapa ovladatelná.
+- ✅ Nativní log `$TEMP/expogo.log` (117 řádků, poslední zápis 13:19): žádný řádek `ERROR`.
+
+### Kontrolní body
+- ✅ `takeIntro` je modulový flag → jednou za JS kontext; návrat z pozadí kontext nemění, nic jako AppState ho neresetuje. Reload na webu = nový kontext = intro znovu (e2e to ověřuje).
+- ✅ onDone jen jednou: `doneRef` v `finish`; tap i timeout prolnutí jdou přes `finish`; při prolnutí `pointerEvents="none"`, takže tap propadne do appky (záměr).
+- ✅ Tap před layoutem / před ready: intro zmizí, místo něj `DotLoaderScreen` (ne prázdno), po ready RootStack.
+- ✅ Čekání na ready: po dohrání drží nápis s dýcháním, prolne až s `ready`. Chyba načtení: `store/db` nastaví `hydrated: true` i při `loadFailed`, takže `ready` přijde, intro se prolne a odhalí `StateView` s Retry — nezasekne se.
+- ✅ Splash: s intrem `onShown` (první layout intra) → `hideAsync`; bez intra (e2e / skip není relevantní) `useEffect` při `ready`. Dvojí volání `hideAsync` je bezpečné (catch).
+- ⚠️ Barva splashe `#0B0C0E` (app.json) = dark `base`. Ve světlém motivu na iPhonu: tmavý splash → světlé intro = jeden ostrý záblesk tmavá→světlá při startu. Nefunkční vada to není (nic se nerozbije, trvá jeden snímek), ale je to vizuální šev přesně v logo momentu. Návrh: `expo-splash-screen` podporuje `dark: { backgroundColor }` + světlou `backgroundColor` = light `base` (vyžaduje nativní build, v Expo Go se neprojeví). Patří design-agentovi/bossovi. Související drobnost: intro bere `useTheme()` ještě před hydratací nastavení — kdo má ručně zvolený motiv opačný k systému, může vidět přepnutí barvy podkladu uprostřed intra (ověřit na iPhonu).
+- ✅ a11y: jediný prvek `button` „Opice“ + nápověda (`copy.intro`), nápis `accessibilityElementsHidden` / `no-hide-descendants`.
+- ✅ Worklety: `rootStyle`, `wordStyle`, `LitColumn` zachytávají jen sdílené hodnoty a čísla (`col`, `fade`).
+- ✅ Reduce Motion: `front` začíná na plném nápisu, žádný sken/pulz/dýchání, prolnutí 300 ms.
+- ✅ Bez zvuku (jen `feedback('introPulse')` = haptika, feedbackMap test).
+- ✅ Snímky (podrženo `__OPICE_HOLD_INTRO__`) w320 a w430, dark i light: nápis OPICE čitelný, vycentrovaný, bez ořezu a kolizí; zhasnuté tečky v light jemně viditelné. e2e geometrie na w320 (77 teček, ≤ 80 % šířky, bez překryvu) zelená.
+
+### Rozbité
+- Nic funkčního.
+
+### iPhone checklist (uživatel)
+1. Studený start (zabít appku, otevřít): splash → OPICE bez prázdného/bílého snímku; ve světlém motivu posuď, jak moc ruší přechod z tmavého splashe.
+2. Jemná haptika přesně v okamžiku pulzu po doběhnutí skenu, jen jednou.
+3. Návrat z pozadí (přepnout na jinou appku a zpět) intro NEpřehraje.
+4. Ťuknutí kamkoli během intra okamžitě ukáže mapu; s VoiceOverem se ozve „Opice, tlačítko“ s nápovědou.
+5. Sken a prolnutí do mapy plynulé, bez cuknutí; se zapnutým Omezit pohyb jen krátké prolnutí.
