@@ -76,7 +76,7 @@ test('save volá service se zadanými hodnotami (pole, ±, kolena, stopky)', asy
   const root = render();
   press(root, t.next);
   act(() => { input(root, t.pushupsField).props.onChangeText('12'); });
-  press(root, t.plus(t.reps));
+  press(root, t.plus(1, t.repsWord));
   press(root, t.kneeToggle);
   press(root, t.next);
   // Stopky z časových značek: 42 s „venku“ (zamčený telefon) se započítá.
@@ -101,4 +101,19 @@ test('nesmyslný vstup se ořízne (999 → strop, písmena → 0)', () => {
   expect(input(root, t.pushupsField).props.accessibilityValue.text).toBe(`100 ${t.reps}`);
   act(() => { input(root, t.pushupsField).props.onChangeText('ab'); });
   expect(input(root, t.pushupsField).props.accessibilityValue.text).toBe(`0 ${t.reps}`);
+});
+
+test('resultLine ukazuje násobek přesně (max. 2 desetinná, bez nul navíc)', () => {
+  expect(t.resultLine(0.75, 1.5)).toBe('Lessons scaled: reps ×0.75, holds ×1.5');
+  expect(t.resultLine(1, 0.5)).toBe('Lessons scaled: reps ×1, holds ×0.5');
+});
+
+test('nezadaná složka (0) ve výsledku = default, ne „0“; ± planku hlásí krok 5 s', () => {
+  const root = render();
+  press(root, t.next); press(root, t.next);
+  expect(root.findAll((n) => n.props.accessibilityLabel === t.plus(5, t.secondsWord)).length).toBeGreaterThan(0);
+  press(root, t.next);
+  expect(texts(root)).toContain(t.resultDefault);
+  expect(root.findAll((n) => n.props.accessibilityLabel === `${t.plankTitle}, ${t.resultDefault}`).length).toBeGreaterThan(0);
+  expect(texts(root)).toContain(t.resultLine(1, 1));
 });

@@ -12,7 +12,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
-import { copy } from '@/data/copy';
+import { copy, keepUnits } from '@/data/copy';
 import { useFinishSetup } from '@/hooks/useGoals';
 import { useProfile } from '@/hooks/useProfile';
 import { useSettingsPrefs } from '@/hooks/useSettingsPrefs';
@@ -58,7 +58,7 @@ export default function SetupScreen() {
   const w = p.weightGoal;
   const rows: { title: string; value: string; route: Route }[] = [
     { title: t.rows.dream, value: p.dreamBody, route: '/goals/dream' },
-    { title: t.rows.milestones, value: p.milestones.map((m) => m.label).join(' · '), route: '/goals/milestones' },
+    { title: t.rows.milestones, value: keepUnits(p.milestones.map((m) => m.label).join(' · ')), route: '/goals/milestones' },
     { title: t.rows.weight, value: w.kind === 'none' ? copy.goals.weightNone : copy.goals.weightValue(w.kind, w.startKg, w.targetKg), route: '/goals/weight' },
     { title: t.rows.reminder, value: prefs.enabled ? copy.settings.hourValue(prefs.hour) : t.reminderOff, route: '/settings' },
   ];

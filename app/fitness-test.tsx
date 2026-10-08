@@ -136,7 +136,7 @@ export default function FitnessTestScreen() {
               <Tile style={{ gap: space.l }}>
                 <NumberStepper
                   value={pushups} onChange={setPushups} max={FITNESS.maxPushups}
-                  unit={t.reps} label={t.pushupsField} minusLabel={t.minus(t.reps)} plusLabel={t.plus(t.reps)}
+                  unit={t.reps} label={t.pushupsField} minusLabel={t.minus(1, t.repsWord)} plusLabel={t.plus(1, t.repsWord)}
                 />
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule, paddingTop: space.m }}>
                   <Text variant="bodyStrong" style={{ flex: 1 }}>{t.kneeToggle}</Text>
@@ -155,7 +155,7 @@ export default function FitnessTestScreen() {
                 </View>
                 <NumberStepper
                   value={plankShown} onChange={setPlankS} max={FITNESS.maxPlankS} step={PLANK_STEP} readOnly={timer.running}
-                  unit={t.seconds} label={t.plankField} minusLabel={t.minus(t.seconds)} plusLabel={t.plus(t.seconds)}
+                  unit={t.seconds} label={t.plankField} minusLabel={t.minus(PLANK_STEP, t.secondsWord)} plusLabel={t.plus(PLANK_STEP, t.secondsWord)}
                 />
                 <View style={{ gap: space.s }}>
                   <PillButton
@@ -230,8 +230,19 @@ function ResultStats({ pushups, plankS, pushupsLabel }: { pushups: number; plank
   const h = useCountUp(plankS, fitnessTest.countMs, 0, { delayMs: fitnessTest.countGapMs });
   return (
     <>
-      <Stat value={p} a11yValue={pushups} unit={t.reps} label={pushupsLabel} />
-      <Stat value={h} a11yValue={plankS} unit={t.seconds} label={t.plankTitle} />
+      {pushups > 0 ? <Stat value={p} a11yValue={pushups} unit={t.reps} label={pushupsLabel} /> : <NotEntered label={pushupsLabel} />}
+      {plankS > 0 ? <Stat value={h} a11yValue={plankS} unit={t.seconds} label={t.plankTitle} /> : <NotEntered label={t.plankTitle} />}
     </>
+  );
+}
+
+/** Nezadaná složka (0): neškáluje se, místo „0“ věta „Not entered · default“ ve stejném štítku jako Stat. */
+function NotEntered({ label }: { label: string }) {
+  const { space } = useTheme();
+  return (
+    <View style={{ gap: space.xs }} accessible accessibilityLabel={`${label}, ${copy.fitness.resultDefault}`}>
+      <Text variant="label" tone="muted">{label}</Text>
+      <Text variant="bodyStrong" tone="muted">{copy.fitness.resultDefault}</Text>
+    </View>
   );
 }

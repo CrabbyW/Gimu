@@ -15,8 +15,12 @@ describe('scaleFromTest', () => {
     expect(scaleFromTest(t(24, 60)).reps).toBe(1.5);
   });
   test('slabý výsledek má spodní mez 0.5×, silný horní 1.5×', () => {
-    expect(scaleFromTest(t(0, 0))).toEqual({ reps: FITNESS.minScale, hold: FITNESS.minScale });
+    expect(scaleFromTest(t(1, 5))).toEqual({ reps: FITNESS.minScale, hold: FITNESS.minScale });
     expect(scaleFromTest(t(100, 600))).toEqual({ reps: FITNESS.maxScale, hold: FITNESS.maxScale });
+  });
+  test('0 = nezadáno: daná složka zůstane výchozí (uložení bez vstupu nezpoloví dávky)', () => {
+    expect(scaleFromTest(t(0, 0))).toEqual(NEUTRAL_SCALE);
+    expect(scaleFromTest(t(0, 120))).toEqual({ reps: 1, hold: FITNESS.maxScale });
   });
   test('kliky na kolenou se počítají za polovinu', () => {
     expect(scaleFromTest(t(20, 60, true)).reps).toBeLessThan(scaleFromTest(t(20, 60)).reps);
@@ -24,7 +28,7 @@ describe('scaleFromTest', () => {
   });
   test('monotónní: víc kliků nikdy nesníží dávku', () => {
     let prev = 0;
-    for (let n = 0; n <= 60; n++) { const r = scaleFromTest(t(n, 30)).reps; expect(r).toBeGreaterThanOrEqual(prev); prev = r; }
+    for (let n = 1; n <= 60; n++) { const r = scaleFromTest(t(n, 30)).reps; expect(r).toBeGreaterThanOrEqual(prev); prev = r; }
   });
 });
 

@@ -49,7 +49,7 @@ test('vstupní test: Finish setup → připravenost → kliky → plank → výs
   await visible(page.getByLabel('Plank seconds')).fill('90');
   await next(page);
 
-  await expect(visible(page.getByText('Lessons scaled: reps ×1.0, holds ×1.5'))).toBeVisible();
+  await expect(visible(page.getByText('Lessons scaled: reps ×1, holds ×1.5'))).toBeVisible();
   await visible(page.getByRole('button', { name: /^Save$/ })).click();
   await page.waitForURL(/\/setup/);
   await expect(visible(page.getByRole('button', { name: /^Find your level: 16.push-ups · 90.s plank/ }))).toBeVisible();
@@ -96,6 +96,14 @@ test.describe('w320', () => {
     // bc-1-5 začíná pike hold (caution): poznámka je vidět a nekoliduje.
     await page.goto('/lesson/bc-1-5');
     await waitForIdle(page, 600);
+    // Štítek CAUTION u názvu je vidět bez scrollu: celý nad horní hranou akční lišty.
+    const tag = visible(page.getByTestId('exercise-caution-tag'));
+    const tagBox = await tag.boundingBox();
+    const barTop = (await visible(page.getByRole('button', { name: /^Skip$/ })).boundingBox())?.y ?? 0;
+    expect(tagBox, 'štítek CAUTION').not.toBeNull();
+    expect(tagBox!.y).toBeGreaterThanOrEqual(0);
+    expect(tagBox!.y + tagBox!.height).toBeLessThanOrEqual(barTop);
+    await expectNoCollisions(page, 'lekce s caution, bez scrollu');
     const note = visible(page.getByText(/Advanced move/));
     await expect(note).toBeAttached();
     await note.scrollIntoViewIfNeeded();

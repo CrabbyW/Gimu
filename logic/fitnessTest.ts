@@ -31,13 +31,14 @@ export function sanitizeTest(t: { pushups: number; plankS: number; kneePushups?:
   return { pushups: n(t.pushups, FITNESS.maxPushups), plankS: n(t.plankS, FITNESS.maxPlankS), kneePushups: Boolean(t.kneePushups) };
 }
 
-/** Násobek dávek z testu. Kliky na kolenou se počítají za polovinu (lehčí varianta). Bez testu = 1. */
+/** Násobek dávek z testu. Kliky na kolenou se počítají za polovinu (lehčí varianta). Bez testu = 1.
+ *  0 = nezadáno (uložení bez vstupu nesmí dávky zpolovit, QA fáze 5): ta složka zůstane 1. */
 export function scaleFromTest(t: FitnessTest | undefined | null): Scale {
   if (!t) return NEUTRAL_SCALE;
   const s = sanitizeTest(t);
   const strictPushups = s.kneePushups ? s.pushups / 2 : s.pushups;
-  const reps = clamp((strictPushups * FITNESS.workRatio) / FITNESS.refReps, FITNESS.minScale, FITNESS.maxScale);
-  const hold = clamp((s.plankS * FITNESS.workRatio) / FITNESS.refHoldS, FITNESS.minScale, FITNESS.maxScale);
+  const reps = s.pushups === 0 ? 1 : clamp((strictPushups * FITNESS.workRatio) / FITNESS.refReps, FITNESS.minScale, FITNESS.maxScale);
+  const hold = s.plankS === 0 ? 1 : clamp((s.plankS * FITNESS.workRatio) / FITNESS.refHoldS, FITNESS.minScale, FITNESS.maxScale);
   return { reps: round2(reps), hold: round2(hold) };
 }
 

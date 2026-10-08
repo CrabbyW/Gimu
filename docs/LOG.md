@@ -1072,3 +1072,11 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 - Výsledky: tsc OK, eslint OK, jest 86/86 suites (781 testů), test:node 25/25, `npm run e2e` 162 passed, `npm run e2e:perf` 4 passed (fps mapa i oslava ≥ 55).
 - Otevřené: haptika a plynulost prstence ověřit na iPhonu (zamknout telefon při běžících stopkách, po odemčení sedí číslo i prstenec).
 - 2026-10-08 qa-agent: QA elite fáze 5 @5beb26b SCHVÁLENO; brány zelené, log bez ERROR; ⚠️ test 0/0 zpolovičí dávky (spec), VO popisek stepperu planku, caution pod ohybem na w320.
+
+## 2026-10-08 · design-agent · elite fáze 5, opravy UI po QA
+1. Lekce: u názvu cviku s `caution` krátký štítek CAUTION (mono `label` v pilulce s vlasovou hranou `borderStrong`, wrap pod název, pro čtečku skrytý — plnou větu nese poznámka níž, ta už štítek neopakuje). e2e w320 ověřuje, že štítek je v bc-1-5 celý nad akční lištou bez scrollu a bez kolizí.
+2. ± stepperu: popisky podle kroku (`copy.fitness.minus/plus(step, unit)`): „5 seconds more/less“ u planku, „1 reps more/less“ u kliků.
+3. Nezlomitelné jednotky: `keepUnits()` v `data/copy.ts` (NBSP mezi číslicí a s/kg/reps/min), použito na řádek milníků v Nastavení a ve Finish setup („Crow 15 s“).
+4. `resultLine`: násobek přesně, max. 2 desetinná bez koncových nul (×0.75, ×1.5, ×1).
+5. Výsledek: složka s 0 (nezadáno) místo „0“ ukáže štítek + „Not entered · default“ (respektuje bossovu logiku 0 = výchozí dávky).
+**Běhy:** tsc OK · eslint 0 · jest 784/784 · `npm run e2e` 161 passed, 1 failed (můj flow čekal starý text „×1.0“) → opraveno na „×1“, `flows/fitness-test` 3/3 passed. Žádná nová baseline (vizuální sada prošla beze změn).

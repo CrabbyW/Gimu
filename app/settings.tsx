@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { Toggle } from '@/components/ui/Toggle';
 import { ValueWheelSheet } from '@/components/ui/ValueWheelSheet';
-import { copy } from '@/data/copy';
+import { copy, keepUnits } from '@/data/copy';
 import { usePathOptions } from '@/hooks/useOnboardingDraft';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
@@ -221,7 +221,7 @@ function GoalsSection({ profile, play }: { profile: ReturnType<typeof useProfile
       <SectionLabel>{tg.section}</SectionLabel>
       <Tile pad="none">
         <GoalRow play={play} delay={rowAt(0)} loading={loading} title={tg.rows.milestones} route="/goals/milestones" disabled={!p}
-          value={value(p?.milestones.map((m) => (m.custom ? copy.onboarding.milestones.customChip(m.label, m.target, m.unit) : m.label)).join(' · '))} />
+          value={value(p ? keepUnits(p.milestones.map((m) => (m.custom ? copy.onboarding.milestones.customChip(m.label, m.target, m.unit) : m.label)).join(' · ')) : undefined)} />
         <GoalRow play={play} delay={rowAt(1)} loading={loading} title={tg.rows.weight} route="/goals/weight" disabled={!p}
           value={value(w ? (w.kind === 'none' ? tg.weightNone : tg.weightValue(w.kind, w.startKg, w.targetKg)) : undefined)} />
         <GoalRow play={play} delay={rowAt(2)} loading={loading} title={tg.rows.dream} route="/goals/dream" disabled={!p} value={value(p?.dreamBody)} />

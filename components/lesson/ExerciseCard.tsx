@@ -38,7 +38,7 @@ interface Props {
  *  nahoru k horizontu), pod ním JEDNO velké Doto číslo (opakování, u výdrže tečkový odpočet) — to má
  *  cvičenec v hlavě —, pak název a popis techniky. Silueta zůstává beze změny (subjekt, ne ozdoba). */
 export function ExerciseCard({ exercise, timer, guided = false }: Props) {
-  const { c, space, size } = useTheme();
+  const { c, space, size, radius } = useTheme();
   // Nízký displej (320×568): menší panel, menší číslo a těsnější mezery — vše nad lištou bez scrollu.
   const short = useShort();
   const { reduced } = useMotionSafe();
@@ -57,7 +57,18 @@ export function ExerciseCard({ exercise, timer, guided = false }: Props) {
             ? <HoldTimer timer={timer} total={exercise.amount} />
             : <Stat size={short ? 'M' : 'L'} value={exercise.amount} unit={copy.lesson.reps} />}
         </Reveal>
-        <Reveal play delay={step * 3} rise={rise}><Text variant="title" accessibilityRole="header">{exercise.name}</Text></Reveal>
+        <Reveal play delay={step * 3} rise={rise}>
+          {/* Náročný cvik: krátký štítek CAUTION hned u názvu (vidět bez scrollu i na 320 pt), plná věta níž. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.s, rowGap: space.xs }}>
+            <Text variant="title" accessibilityRole="header">{exercise.name}</Text>
+            {exercise.caution ? (
+              <View testID="exercise-caution-tag" accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+                style={{ borderWidth: StyleSheet.hairlineWidth, borderColor: c.borderStrong, borderRadius: radius.full, paddingHorizontal: space.s, paddingVertical: space.xs }}>
+                <Text variant="label" tone="muted">{copy.fitness.cautionLabel}</Text>
+              </View>
+            ) : null}
+          </View>
+        </Reveal>
         <Reveal play delay={step * 4} rise={rise}><Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{exercise.description}</Text></Reveal>
         {/* Náročný cvik (elite fáze 5): krátká bezpečnostní poznámka pod technikou. Mono štítek + caption,
             oddělená jen vlasovou linkou `rule` (žádná barva navíc); na nízkém displeji se odroluje se scrollem. */}
@@ -65,7 +76,6 @@ export function ExerciseCard({ exercise, timer, guided = false }: Props) {
           <Reveal play delay={step * 4} rise={rise}>
             <View accessible accessibilityLabel={`${copy.fitness.cautionLabel}. ${copy.fitness.caution}`} testID="exercise-caution"
               style={{ maxWidth: MEASURE, gap: space.xs, paddingTop: short ? space.xs : space.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule }}>
-              <Text variant="label" tone="muted">{copy.fitness.cautionLabel}</Text>
               <Text variant="caption" tone="muted">{copy.fitness.caution}</Text>
             </View>
           </Reveal>

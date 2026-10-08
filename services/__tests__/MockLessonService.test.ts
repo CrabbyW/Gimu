@@ -92,6 +92,8 @@ describe('vstupní test škáluje dávky (elite fáze 5)', () => {
     expect(base).toEqual([30, 20, 12]);
     await services.user.saveFitnessTest({ pushups: 2, plankS: 10 }, new Date(2026, 9, 8));
     expect((await services.lessons.getLesson('bc-1-1')).exercises.map((e) => e.amount)).toEqual([15, 10, 6]);
+    await services.user.saveFitnessTest({ pushups: 0, plankS: 0 }, new Date(2026, 9, 8));
+    expect((await services.lessons.getLesson('bc-1-1')).exercises.map((e) => e.amount)).toEqual([30, 20, 12]);
     await services.user.saveFitnessTest({ pushups: 40, plankS: 120 }, new Date(2026, 9, 8));
     expect((await services.lessons.getLesson('bc-1-1')).exercises.map((e) => e.amount)).toEqual([45, 30, 18]);
   });

@@ -3,6 +3,10 @@ import type { MilestoneUnit } from '@/types';
 /** Anglická množná čísla: 1 → one, jinak other (stačí pro UI appky). */
 export const plural = (n: number, one: string, other: string): string => (n === 1 ? one : other);
 
+/** Násobek dávky: max. 2 desetinná místa bez koncových nul. */
+const factor = (v: number) => String(Math.round(Number(v) * 100) / 100);
+/** Číslo a jednotka (s, kg, ×, reps) drží na jednom řádku: běžnou mezeru za číslicí nahradí NBSP. */
+export const keepUnits = (s: string) => s.replace(/(\d) (?=(s|kg|reps|min)\b)/g, '$1 ');
 const MILESTONE_UNIT_SHORT = { reps: '×', seconds: 's', kg: 'kg' } as const;
 // Tisíce oddělené nezlomitelnou mezerou („9 999“), aby se číslo nezalomilo.
 const thousands = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
@@ -481,7 +485,9 @@ export const copy = {
     startTimer: 'Start', stopTimer: 'Stop',
     seconds: 's', reps: 'reps',
     resultTitle: 'Your starting point',
-    resultLine: (reps: number, hold: number) => `Lessons scaled: reps ×${Number(reps).toFixed(1)}, holds ×${Number(hold).toFixed(1)}`,
+    // Násobek přesně (max. 2 desetinná, bez koncových nul): ×0.75, ×1.5, ×1.
+    resultLine: (reps: number, hold: number) => `Lessons scaled: reps ×${factor(reps)}, holds ×${factor(hold)}`,
+    resultDefault: 'Not entered · default',
     save: 'Save',
     retest: 'Retake level test',
     retestHint: 'Retake every few weeks as you get stronger.',
@@ -509,7 +515,8 @@ export const copy = {
     stepValue: (n: number, total: number) => `${String(n).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
     questionA11y: (n: number, q: string) => `Question ${n}. ${q}`,
     pushupsField: 'Push-ups in a row', plankField: 'Plank seconds',
-    minus: (what: string) => `One less ${what}`, plus: (what: string) => `One more ${what}`,
+    minus: (step: number, unit: string) => `${step} ${step === 1 ? unit.replace(/s$/, '') : unit} less`, plus: (step: number, unit: string) => `${step} ${step === 1 ? unit.replace(/s$/, '') : unit} more`,
+    repsWord: 'reps', secondsWord: 'seconds',
     timerA11y: (s: number, running: boolean) => `${s} seconds${running ? ', running' : ''}`,
     timerHint: 'Runs on the clock, so it keeps time if your screen locks.',
     saveError: 'Couldn’t save. Try again.',
