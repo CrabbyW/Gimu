@@ -63,6 +63,8 @@ test('každé nové id je v UI skutečně volané', () => {
     stageUp: 'app/stage-up.tsx',
     guideShow: 'components/mascot/GuideBubble.tsx',
     setupDone: 'app/setup.tsx',
+    timerStart: 'app/fitness-test.tsx',
+    timerStop: 'app/fitness-test.tsx',
   };
   for (const [id, file] of Object.entries(where)) {
     expect({ id, wired: readFileSync(join(root, file), 'utf8').includes(`feedback('${id}')`) }).toEqual({ id, wired: true });
@@ -70,4 +72,7 @@ test('každé nové id je v UI skutečně volané', () => {
   // Konec lekce: success haptika už nejde mimo mapu (žádné dvojí přehrání s zvukem success).
   expect(readFileSync(join(root, where.lessonDone!), 'utf8')).not.toMatch(/playSfx\('success'\)/);
   expect(playSfx).toBeDefined();
+  // Vstupní test: ± stepperu = wheelStep, uložení testu = setupDone (stejná odezva jako dokončení nastavení).
+  expect(readFileSync(join(root, 'components/ui/NumberStepper.tsx'), 'utf8')).toContain("feedback('wheelStep')");
+  expect(readFileSync(join(root, 'app/fitness-test.tsx'), 'utf8')).toContain("feedback('setupDone')");
 });

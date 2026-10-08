@@ -1,6 +1,7 @@
 import { Minus, Plus, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { feedback } from '@/lib/feedback';
 import { opacity, tabularNums, typography, useTheme } from '@/theme';
 import { Text } from './Text';
 
@@ -35,7 +36,7 @@ export function NumberStepper({ value, onChange, min = 0, max, step = 1, unit, l
   const set = (v: number) => { setDraft(null); onChange(clamp(v, min, max)); };
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
-      <RoundButton icon={Minus} label={minusLabel} disabled={readOnly || value <= min} onPress={() => set(value - step)} />
+      <RoundButton icon={Minus} label={minusLabel} disabled={readOnly || value <= min} onPress={() => { feedback('wheelStep'); set(value - step); }} />
       <View style={{ flex: 1, alignItems: 'center' }}>
         <TextInput
           value={readOnly ? String(value) : shown}
@@ -59,7 +60,7 @@ export function NumberStepper({ value, onChange, min = 0, max, step = 1, unit, l
         />
         <Text variant="telemetry" tone="muted" accessibilityElementsHidden importantForAccessibility="no">{unit}</Text>
       </View>
-      <RoundButton icon={Plus} label={plusLabel} disabled={readOnly || value >= max} onPress={() => set(value + step)} />
+      <RoundButton icon={Plus} label={plusLabel} disabled={readOnly || value >= max} onPress={() => { feedback('wheelStep'); set(value + step); }} />
     </View>
   );
 }

@@ -455,3 +455,15 @@ export const lineBubble = { inMs: 220, outMs: 150, rise: 6, fromScale: 0.9 };
  * a vrátí se až po odchodu bubliny (`backDelayMs` = `lineBubble.outMs`). Prolnutí platí i s omezeným pohybem.
  */
 export const labelYield = { outMs: 140, inMs: 220, backDelayMs: lineBubble.outMs };
+
+/** Vstupní test (elite fáze 5): přechod kroku (posun po směru navigace), prstenec stopek planku, reveal výsledku.
+ *  `stepShift` pt: vpřed přijede zprava, zpět zleva. `ringLapS`: prstenec stopek se zaplní za minutu (pak další kolo).
+ *  Reveal výsledku: čísla napočítají za `countMs`, druhé o `countGapMs` později. */
+export const fitnessTest = { stepMs: dur.enter, stepShift: 24, ringLapS: 60, countMs: 600, countGapMs: 120 };
+
+/** Nástup kroku testu: fade + posun o `stepShift` ve směru navigace, `ease.out`, bez pružiny (UI vlákno, sdílená
+ *  hodnota; ne layout animace, ta na webu při re-renderu obsahu obal vytrhne do `position: absolute`).
+ *  Omezený pohyb: jen `calmFade` na místě. */
+export const stepEnterTiming = (reduced: boolean) => (reduced
+  ? motion.calmFade
+  : { duration: fitnessTest.stepMs, easing: easeSafe.out, reduceMotion: ReduceMotion.Never } satisfies WithTimingConfig);

@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IntentScrollView } from '@/components/dots';
+import { DotRing, IntentScrollView } from '@/components/dots';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { DotSteps } from '@/components/ui/DotSteps';
@@ -16,7 +17,11 @@ import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { Toggle } from '@/components/ui/Toggle';
 import { copy } from '@/data/copy';
+import { useCountUp } from '@/hooks/useCountUp';
 import { useSaveFitnessTest } from '@/hooks/useFitnessTest';
+import { plankRingProgress, useStopwatch } from '@/hooks/useStopwatch';
+import { feedback } from '@/lib/feedback';
+import { fitnessTest, stepEnterTiming, useMotionSafe } from '@/lib/motion';
 import { FITNESS, READINESS_QUESTIONS, readiness, scaleFromTest } from '@/logic/fitnessTest';
 import { useTheme } from '@/theme';
 
@@ -53,11 +58,14 @@ export default function FitnessTestScreen() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const inFlight = useRef(false);
+  // Směr posledního přechodu (1 vpřed, −1 zpět): nový krok přijede z té strany. Stav se mění hned, pohyb ho jen znázorní.
+  const [dir, setDir] = useState<1 | -1>(1);
 
   const ready = readiness(answers.map((a) => a === 'yes'));
   const plankShown = timer.running ? timer.elapsed : plankS;
 
-  const stopTimer = () => { if (timer.running) setPlankS(timer.stop()); };
+  const stopTimer = () => { if (timer.running) { setPlankS(timer.stop()); feedback('timerStop'); } };
+  const startTimer = () => { timer.start(); feedback('timerStart'); };
 
   const onSave = async () => {
     if (inFlight.current) return;
@@ -66,14 +74,14 @@ export default function FitnessTestScreen() {
     const ok = await save({ pushups, plankS, kneePushups: knee, readiness: ready });
     inFlight.current = false;
     setBusy(false);
-    if (ok) close(); else setFailed(true);
+    if (ok) { feedback('setupDone'); close(); } else { feedback('formError'); setFailed(true); }
   };
 
   const next = () => {
     if (step === 2) stopTimer();
-    if (step < 3) setStep((step + 1) as Step); else void onSave();
+    if (step < 3) { setDir(1); setStep((step + 1) as Step); } else void onSave();
   };
-  const back = () => { if (step === 2) stopTimer(); if (step > 0) setStep((step - 1) as Step); };
+  const back = () => { if (step === 2) stopTimer(); if (step > 0) { setDir(-1); setStep((step - 1) as Step); } };
 
   const scale = scaleFromTest({ pushups, plankS, kneePushups: knee, testedAt: '' });
 
@@ -92,6 +100,9 @@ export default function FitnessTestScreen() {
           showsVerticalScrollIndicator={false}
         >
           <DotSteps total={STEPS} current={step} />
+
+          {/* Klíč = krok: každý krok se namountuje znovu a přijede po směru navigace (Reduce Motion = calmFade). */}
+          <StepEnter key={step} dir={dir}>
 
           {step === 0 ? (
             <StepBody title={t.readinessTitle} lead={t.readinessIntro}>
@@ -138,6 +149,10 @@ export default function FitnessTestScreen() {
           {step === 2 ? (
             <StepBody title={t.plankTitle} lead={t.plankHow}>
               <Tile style={{ gap: space.l }}>
+                {/* Prstenec stopek: kolo za minutu, plní se z času ze značek (číslo i prstenec ukazují totéž). */}
+                <View style={{ alignItems: 'center' }}>
+                  <DotRing progress={plankRingProgress(plankShown)} size={size.holdRingShort} intro={false} />
+                </View>
                 <NumberStepper
                   value={plankShown} onChange={setPlankS} max={FITNESS.maxPlankS} step={PLANK_STEP} readOnly={timer.running}
                   unit={t.seconds} label={t.plankField} minusLabel={t.minus(t.seconds)} plusLabel={t.plus(t.seconds)}
@@ -146,7 +161,7 @@ export default function FitnessTestScreen() {
                   <PillButton
                     label={timer.running ? t.stopTimer : t.startTimer}
                     variant={timer.running ? 'primary' : 'secondary'}
-                    onPress={() => (timer.running ? stopTimer() : timer.start())}
+                    onPress={() => (timer.running ? stopTimer() : startTimer())}
                     accessibilityHint={t.timerA11y(plankShown, timer.running)}
                   />
                   <Text variant="caption" tone="muted">{t.timerHint}</Text>
@@ -160,14 +175,14 @@ export default function FitnessTestScreen() {
               <Tile style={{ gap: space.l }}>
                 <Text variant="headline" accessibilityRole="summary">{t.resultLine(scale.reps, scale.hold)}</Text>
                 <View style={{ flexDirection: 'row', gap: space.l, flexWrap: 'wrap' }}>
-                  <Stat value={pushups} unit={t.reps} label={knee ? t.kneeToggle : t.pushupsTitle} />
-                  <Stat value={plankS} unit={t.seconds} label={t.plankTitle} />
+                  <ResultStats pushups={pushups} plankS={plankS} pushupsLabel={knee ? t.kneeToggle : t.pushupsTitle} />
                 </View>
               </Tile>
               <Text variant="body" tone="muted">{t.intro}</Text>
               {failed ? <Text variant="bodyStrong" accessibilityRole="alert" style={{ color: c.danger }}>{t.saveError}</Text> : null}
             </StepBody>
           ) : null}
+          </StepEnter>
 
           <Text variant="caption" tone="muted">{t.disclaimer}</Text>
         </IntentScrollView>
@@ -194,22 +209,29 @@ function StepBody({ title, lead, children }: { title: string; lead?: string; chi
   );
 }
 
-/** Stopky z časových značek (`Date.now()` při startu), ne ze sčítání tiků: po zamčení telefonu nebo návratu
- *  do appky ukážou skutečně uběhlý čas. Interval jen překresluje, strop `max` sekund. */
-function useStopwatch(max: number) {
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [now, setNow] = useState(0);
-  const running = startedAt != null;
+/** Nástup kroku: po mountu (klíč = krok) fade a posun `dir · stepShift` → 0 na UI vlákně. Worklet čte jen sdílenou
+ *  hodnotu a čísla. Omezený pohyb: shift 0, jen `calmFade`. Obsah je interaktivní hned, pohyb nic neblokuje. */
+function StepEnter({ dir, children }: { dir: 1 | -1; children: ReactNode }) {
+  const { reduced } = useMotionSafe();
+  const p = useSharedValue(0);
+  const shift = reduced ? 0 : dir * fitnessTest.stepShift;
   useEffect(() => {
-    if (!running) return;
-    const id = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(id);
-  }, [running]);
-  const secs = (from: number, to: number) => Math.min(max, Math.max(0, Math.floor((to - from) / 1000)));
-  return {
-    running,
-    elapsed: startedAt != null ? secs(startedAt, now) : 0,
-    start: () => { const t0 = Date.now(); setStartedAt(t0); setNow(t0); },
-    stop: () => { const s = startedAt != null ? secs(startedAt, Date.now()) : 0; setStartedAt(null); return s; },
-  };
+    p.value = withTiming(1, stepEnterTiming(reduced));
+    // Nástup jednou při mountu kroku.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const style = useAnimatedStyle(() => ({ opacity: p.value, transform: [{ translateX: (1 - p.value) * shift }] }));
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+/** Výsledek: čísla krátce napočítají (kliky, plank o `countGapMs` později); čtečka dostane rovnou konečné hodnoty. */
+function ResultStats({ pushups, plankS, pushupsLabel }: { pushups: number; plankS: number; pushupsLabel: string }) {
+  const p = useCountUp(pushups, fitnessTest.countMs);
+  const h = useCountUp(plankS, fitnessTest.countMs, 0, { delayMs: fitnessTest.countGapMs });
+  return (
+    <>
+      <Stat value={p} a11yValue={pushups} unit={t.reps} label={pushupsLabel} />
+      <Stat value={h} a11yValue={plankS} unit={t.seconds} label={t.plankTitle} />
+    </>
+  );
 }

@@ -39,3 +39,8 @@ test('gramatika: pokrok stoupá, chyba klesá', () => {
   expect(FEEDBACK_MAP.locked[1]).toBe('error');
   expect(FEEDBACK_MAP.flightStart[1]).toBe('swoosh');
 });
+
+test('stopky vstupního testu: start s úderem a tikem, stop jen haptika', () => {
+  expect(FEEDBACK_MAP.timerStart).toEqual(['rigid', 'tick']);
+  expect(FEEDBACK_MAP.timerStop).toEqual(['medium', null]);
+});
