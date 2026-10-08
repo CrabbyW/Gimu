@@ -21,7 +21,7 @@ import { useTheme } from '@/theme';
 import { feedback } from '@/lib/feedback';
 
 const t = copy.setup;
-type Route = '/goals/dream' | '/goals/milestones' | '/goals/weight' | '/settings';
+type Route = '/goals/dream' | '/goals/milestones' | '/goals/weight' | '/settings' | '/fitness-test';
 
 /**
  * Finish setup (elite fáze 1): krátký onboarding vynechal cíle, tady je uživatel doplní. Čtyři číslované řádky
@@ -77,6 +77,14 @@ export default function SetupScreen() {
             {rows.map((r, i) => <StepRow key={r.route} n={i + 1} {...r} last={i === rows.length - 1} />)}
           </Tile>
         </Reveal>
+        {/* Vstupní test (elite fáze 5): volitelný, mimo počet kroků (dlaždice na mapě počítá jen cíle). */}
+        <Reveal play delay={M.at + M.step * 2} rise={M.rise} style={{ gap: space.m }}>
+          <Text variant="telemetry" tone="muted" accessibilityRole="header">{copy.fitness.optional}</Text>
+          <Tile pad="none">
+            <StepRow n={0} title={copy.fitness.title} last route="/fitness-test"
+              value={p.fitnessTest ? copy.fitness.rowValue(p.fitnessTest.pushups, p.fitnessTest.plankS) : copy.fitness.rowNone} />
+          </Tile>
+        </Reveal>
         {failed ? <Text variant="bodyStrong" accessibilityRole="alert" style={{ color: c.danger }}>{t.saveError}</Text> : null}
       </IntentScrollView>
       <BigActionBar primary={{ label: t.done, onPress: () => { void done(); }, disabled: busy }} />
@@ -84,7 +92,7 @@ export default function SetupScreen() {
   );
 }
 
-/** Číslovaný krok: celá šířka je dotyková (min. `hitLarge`), stisk = `tilePressed`. */
+/** Číslovaný krok (`n` 0 = bez čísla, volitelný řádek): celá šířka je dotyková (min. `hitLarge`), stisk = `tilePressed`. */
 function StepRow({ n, title, value, route, last }: { n: number; title: string; value: string; route: Route; last: boolean }) {
   const { c, space, size, stroke } = useTheme();
   return (
@@ -99,7 +107,7 @@ function StepRow({ n, title, value, route, last }: { n: number; title: string; v
         borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth, borderBottomColor: c.rule,
       })}
     >
-      <Text variant="label" tone="muted">{String(n).padStart(2, '0')}</Text>
+      {n > 0 ? <Text variant="label" tone="muted">{String(n).padStart(2, '0')}</Text> : null}
       <View style={{ flex: 1, gap: space.xs }}>
         <Text variant="bodyStrong">{title}</Text>
         <Text variant="caption" tone="muted" numberOfLines={2}>{value}</Text>

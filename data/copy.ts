@@ -501,6 +501,23 @@ export const copy = {
     consult: 'Please check with a doctor before training. You can still look around the app.',
     disclaimer: 'This app is not medical advice and doesn’t replace a coach or doctor. Stop if you feel pain, dizziness or chest pressure.',
     caution: 'Advanced move. Use a wall or soft floor, warm up your wrists, and stop if anything hurts.',
+    // UI vstupního testu (design-agent, elite fáze 5).
+    // Doto titulek hlavičky: krátký, aby se na 320 pt vešel vedle křížku (celé „Find your level“ nese nadpis kroku).
+    headerTitle: 'Level',
+    cautionLabel: 'CAUTION',
+    next: 'Next', back: 'Back', skipShort: 'Skip',
+    stepValue: (n: number, total: number) => `${String(n).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
+    questionA11y: (n: number, q: string) => `Question ${n}. ${q}`,
+    pushupsField: 'Push-ups in a row', plankField: 'Plank seconds',
+    minus: (what: string) => `One less ${what}`, plus: (what: string) => `One more ${what}`,
+    timerA11y: (s: number, running: boolean) => `${s} seconds${running ? ', running' : ''}`,
+    timerHint: 'Runs on the clock, so it keeps time if your screen locks.',
+    saveError: 'Couldn’t save. Try again.',
+    // Řádek ve Finish setup a v Nastavení.
+    optional: 'OPTIONAL',
+    rowNone: 'Not tested · default reps',
+    rowValue: (pushups: number, plankS: number) => `${pushups} push-ups · ${plankS} s plank`,
+    safetySection: 'Training level',
   },
   // Repliky opičky (elite fáze 3): ťuknutí na mapě, max 32 znaků, žádné výčitky.
   mascotLines: {

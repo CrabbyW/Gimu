@@ -7,7 +7,11 @@ import { Text } from './Text';
 
 export interface SegmentOption<T extends string> { value: T; label: string }
 
-interface Props<T extends string> { options: readonly SegmentOption<T>[]; value: T | null; onChange(value: T): void }
+interface Props<T extends string> {
+  options: readonly SegmentOption<T>[]; value: T | null; onChange(value: T): void;
+  /** Hlasitý název skupiny (otázka ano/ne): čtečka ho přečte před volbami. */
+  label?: string;
+}
 
 /** Hrana pilulky: vlasová, jako dlaždice. */
 const BORDER = StyleSheet.hairlineWidth;
@@ -19,7 +23,7 @@ const BORDER = StyleSheet.hairlineWidth;
  * Výběr se k nové volbě posune v UI timingu. Pozadí nese vlastní kopii popisků posunutou proti němu:
  * během posunu je každé písmeno ostré a kontrastní, ať leží na výběru, nebo mimo něj.
  */
-export function SegmentedControl<T extends string>({ options, value, onChange }: Props<T>) {
+export function SegmentedControl<T extends string>({ options, value, onChange, label }: Props<T>) {
   const { c, radius, space, size } = useTheme();
   const { reduced } = useMotionSafe();
   const inset = space.xs;
@@ -46,6 +50,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange }:
   return (
     <View
       accessibilityRole="radiogroup"
+      accessibilityLabel={label}
       onLayout={(e) => setWidth(e.nativeEvent.layout.width - (BORDER + inset) * 2)}
       style={{ flexDirection: 'row', padding: inset, backgroundColor: c.tile, borderWidth: BORDER, borderColor: c.edge, borderRadius: radius.full }}
     >

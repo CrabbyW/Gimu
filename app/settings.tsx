@@ -79,7 +79,28 @@ export default function SettingsScreen() {
           <GoalsSection profile={profile} play={first} />
         </Section>
 
-        <Section i={1} play={first} label={copy.settings.appearance}>
+        {/* Úroveň (elite fáze 5): opakovaný vstupní test a disclaimer. Patří k tréninku, proto hned pod Cíle. */}
+        <Section i={1} play={first} label={copy.fitness.safetySection}>
+          <Tile pad="none">
+            <PressRow onPress={() => router.push('/fitness-test')} accessibilityLabel={copy.fitness.retest}>
+              <View style={{ flex: 1, gap: space.xs }}>
+                <Text variant="bodyStrong">{copy.fitness.retest}</Text>
+                <Text variant="caption" tone="muted">
+                  {profile.status === 'ready' && profile.data?.fitnessTest
+                    ? copy.fitness.rowValue(profile.data.fitnessTest.pushups, profile.data.fitnessTest.plankS)
+                    : copy.fitness.rowNone}
+                </Text>
+                <Text variant="caption" tone="muted">{copy.fitness.retestHint}</Text>
+              </View>
+              <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
+            </PressRow>
+            <TileRow last>
+              <Text variant="caption" tone="muted">{copy.fitness.disclaimer}</Text>
+            </TileRow>
+          </Tile>
+        </Section>
+
+        <Section i={2} play={first} label={copy.settings.appearance}>
           <SegmentedControl
             options={THEMES.map((t) => ({ value: t, label: copy.settings.themeOptions[t] }))}
             value={prefs.theme}
@@ -87,7 +108,7 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        <Section i={2} play={first} label={copy.settings.reminderSection}>
+        <Section i={3} play={first} label={copy.settings.reminderSection}>
           <Tile pad="none">
             <TileRow>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
@@ -131,7 +152,7 @@ export default function SettingsScreen() {
         </Section>
 
         {/* Motion spec §6.2: haptika a zvuk jsou dva nezávislé přepínače. */}
-        <Section i={3} play={first} label={copy.settings.feedback}>
+        <Section i={4} play={first} label={copy.settings.feedback}>
           <Tile pad="none">
             <TileRow>
               <SwitchRow title={copy.settings.haptics} line={copy.settings.hapticsLine} value={hapticsEnabled} onChange={setHapticsEnabled} />
@@ -143,7 +164,7 @@ export default function SettingsScreen() {
         </Section>
 
         {/* Reset: smaže profil, pokrok a historii; appka začne znovu onboardingem (téma zůstane). */}
-        <Section i={4} play={first} label={copy.settings.dataSection}>
+        <Section i={5} play={first} label={copy.settings.dataSection}>
           <Tile pad="none">
             <PressRow last onPress={confirmReset} accessibilityLabel={copy.settings.reset}>
               <View style={{ flex: 1, gap: space.xs }}>
@@ -155,7 +176,7 @@ export default function SettingsScreen() {
         </Section>
 
         {__DEV__ ? (
-          <Section i={5} play={first}>
+          <Section i={6} play={first}>
             <Tile pad="none">
               <PressRow last onPress={() => router.push('/dev')} accessibilityLabel={copy.settings.dev} role="link">
                 <Text variant="bodyStrong" style={{ flex: 1 }}>{copy.settings.dev}</Text>

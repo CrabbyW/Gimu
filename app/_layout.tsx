@@ -78,6 +78,7 @@ function RootStack() {
             <Stack.Screen name="wardrobe" options={{ presentation: 'modal' }} />
             <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
             <Stack.Screen name="setup" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="fitness-test" options={{ presentation: 'modal' }} />
             {/* Editory cílů z Nastavení: další modal nad Nastavením, po uložení `router.back()` vrátí na seznam. */}
             <Stack.Screen name="goals/milestones" options={{ presentation: 'modal' }} />
             <Stack.Screen name="goals/weight" options={{ presentation: 'modal' }} />
