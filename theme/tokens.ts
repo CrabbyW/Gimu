@@ -120,6 +120,9 @@ export const dots = {
   /** Stage-up: průměr prstence stage 240 (Doto `displayXL` číslice uvnitř vnitřního prstence 0.46 R ≈ 110)
    *  a o kolik opička (podíl své velikosti) přesahuje pod spodní hranu prstence, na které sedí. */
   stageUp: { ring: 240, mascotDrop: 0.45 },
+  /** Intro OPICE (tečkové písmo 5×7): nápis nejvýš `widthFrac` šířky displeje, buňka nejvýš `maxCell`
+   *  (29 sloupců × 12 = 348 pt na w430; na w320 fitCell dá 8), průměr tečky = `dotFrac` × buňka. */
+  intro: { widthFrac: 0.8, maxCell: 12, dotFrac: 0.62 },
 } as const;
 // Šířka pod `narrow` nebo fontScale nad `fontScale` skládá dvousloupcové hlavičky pod sebe (spec §2.5).
 // `statMaxScale` = strop zvětšení tokenu `stat` (1.4): pevné sloupce čísel (XP v lize) rostou jen do něj.

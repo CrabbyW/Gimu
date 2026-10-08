@@ -13,6 +13,8 @@ const thousands = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '
 const days = (n: number) => `${n} ${plural(n, 'day', 'days')}`;
 
 export const copy = {
+  // Intro při studeném startu (logo moment): celé jako jeden a11y prvek, ťuknutí přeskočí.
+  intro: { label: 'Opice', hint: 'Tap to skip the intro' },
   common: {
     continue: 'Continue', back: 'Back', done: 'Done', start: 'Start', pause: 'Pause',
     resume: 'Resume', retry: 'Try again', loading: 'Loading',

@@ -9,9 +9,11 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { DotIntro } from '@/components/intro/DotIntro';
+import { takeIntro } from '@/logic/dotGlyphs';
 import { PlateFlight } from '@/components/transition/PlateFlight';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { useActiveSeason } from '@/hooks/useActiveSeason';
@@ -24,6 +26,9 @@ import { preloadSounds } from '@/lib/sound';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
+/** e2e vypíná intro init skriptem (`e2e/fixtures.ts`), ať snímky a toky začínají rovnou obrazovkou. */
+const introDisabled = () => (globalThis as { __OPICE_NO_INTRO__?: boolean }).__OPICE_NO_INTRO__ === true;
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ Doto_700Bold, Inter_300Light, Inter_400Regular, Inter_600SemiBold, JetBrainsMono_500Medium });
   const hydrated = useHydrated();
@@ -35,14 +40,18 @@ export default function RootLayout() {
   useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => undefined); }, [ready]);
   // Přehrávače jednou při startu: první zvuk oslavy bez latence dekódování (motion spec §6.2.5).
   useEffect(preloadSounds, []);
+  // Intro jen při studeném startu (takeIntro = poprvé za JS kontext); návrat z pozadí kontext nemění, nehraje se.
+  const [intro, setIntro] = useState(() => !introDisabled() && takeIntro());
   const seasonThemeId = season.status === 'ready' ? season.data?.themeId ?? null : null;
   // Na nativu brání splash; na webu (bez splashe) je tu místo prázdna DotLoader. Fonty nepotřebuje.
   return (
     <ThemeProvider seasonThemeId={seasonThemeId}>
-      {!ready ? <DotLoaderScreen /> : loadFailed.failed
+      {/* Během intra místo DotLoaderu jen podklad (intro je „načítání“); skip před načtením vrátí DotLoader. */}
+      {!ready ? (intro ? null : <DotLoaderScreen />) : loadFailed.failed
         // Uložená data nejdou přečíst: chyba s Retry, ne onboarding (ten by postup přepsal).
         ? <StateView kind="error" what={copy.common.loadTarget.profile} onRetry={loadFailed.retry} />
         : <RootStack />}
+      {intro ? <DotIntro onDone={() => setIntro(false)} /> : null}
     </ThemeProvider>
   );
 }

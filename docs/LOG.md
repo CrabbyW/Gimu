@@ -1086,3 +1086,12 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 ## boss — intro animace (Task 1: logika)
 - Uživatel vybral směr „tečkové logo“ a schválil návrh: OPICE z teček (Doto styl) po sloupcích zleva, pulz + jemná haptika, prolnutí do mapy, ~1.2 s, jen studený start, tap = skip, Reduce Motion = prolnutí 300 ms, souběžně s načítáním, bez zvuku.
 - Udělal: `logic/dotGlyphs.ts` (5×7 písmo, `textDots`, `fitCell`, `takeIntro` jednou za start) + testy.
+
+## 2026-10-08 design-agent: intro OPICE (statický stav + napojení)
+- Nové: `components/intro/DotIntro.tsx` (mřížka 29×7 teček, rozsvícené `c.text`, zhasnuté `c.dotOff`, podklad `c.base`, centrovaný logo moment), token `dots.intro` (widthFrac 0.8, maxCell 12, dotFrac 0.62), copy `copy.intro` (label „Opice“, hint „Tap to skip the intro“).
+- Rozhodnutí: RN View, ne Skia. Intro je první snímek studeného startu; na webu tou dobou ještě není CanvasKit (8 MB wasm), Skia by ukázala prázdno. View nezabírá rozpočet ≤ 12 pláten. Tečky seskupené po sloupcích (29 View, `testID intro-col-<n>`) → motion animuje 29 stylů, ne 203.
+- Rozhraní pro motion: `progress` 0–1 (sloupec svítí, když col < progress × cols; výchozí 1), `onDone` (komponenta ho volá jen při ťuknutí; dohrání a čekání na data řídí motion/rodič).
+- `app/_layout.tsx`: `useState(() => !introDisabled() && takeIntro())`; overlay nad RootStack i nad stavem načítání (během intra se DotLoader nekreslí, jen podklad; skip před načtením vrátí DotLoader).
+- e2e: fixture `intro` (výchozí false → init skript `globalThis.__OPICE_NO_INTRO__ = true`), `e2e/flows/intro.spec.ts` s `test.use({ intro: true })`: a11y, geometrie na w320 (≤ 80 % šířky, střed ±1, 77 teček celé na displeji, bez překryvu), skip → demo → mapa, reload = studený start → intro → skip → mapa.
+- Výsledky: tsc 0 chyb, eslint 0, jest 88/88 sad (793 testů, nové 4 v `components/intro/__tests__`), `npm run e2e` 162/163 (pád jen nový intro test na špatném odhadu počtu teček > 80, opraveno na 77, znovu ✓), `npm run e2e:perf` 4/4 (perf běží s vypnutým intrem). Vizuální baseline beze změny (intro je v e2e vypnuté).
+- Otevřené: na nativu drží splash do `ready`, takže intro je pod splashem, dokud se nenačtou fonty+data — motion by měl rozhodnout, zda splash schovat dřív (intro nepotřebuje fonty). Haptika, pulz, Reduce Motion prolnutí a „počkat na data po dohrání“ = motion-agent.
