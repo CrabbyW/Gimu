@@ -1082,3 +1082,7 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 **Běhy:** tsc OK · eslint 0 · jest 784/784 · `npm run e2e` 161 passed, 1 failed (můj flow čekal starý text „×1.0“) → opraveno na „×1“, `flows/fitness-test` 3/3 passed. Žádná nová baseline (vizuální sada prošla beze změn).
 
 - 2026-10-08 qa-agent: QA fáze 5 kolo 2 (HEAD 91df126) — SCHVÁLENO. Všech 5 nálezů z kola 1 ověřeno (w320 dark+light screenshoty, nulový test → výchozí dávky, CAUTION štítek nad ohybem, NBSP „Crow 15 s“). test:node, e2e:perf, native log čisté. Otevřené: řádek „0 push-ups · 0 s plank“ v Nastavení po nulovém testu (boss/copy).
+
+## boss — intro animace (Task 1: logika)
+- Uživatel vybral směr „tečkové logo“ a schválil návrh: OPICE z teček (Doto styl) po sloupcích zleva, pulz + jemná haptika, prolnutí do mapy, ~1.2 s, jen studený start, tap = skip, Reduce Motion = prolnutí 300 ms, souběžně s načítáním, bez zvuku.
+- Udělal: `logic/dotGlyphs.ts` (5×7 písmo, `textDots`, `fitCell`, `takeIntro` jednou za start) + testy.
