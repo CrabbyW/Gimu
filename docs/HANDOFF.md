@@ -1,5 +1,9 @@
 # Kde jsme skončili (aktualizováno 2026-10-07)
 
+## Intro animace HOTOVÁ — rating 85/85 „čeká na iPhone“ (2026-10-08)
+OPICE z teček, sken zleva, pulz + haptika, prolnutí (~1.2 s, jen studený start, tap = skip). Start s intrem ≤ 2.2 s.
+Otevřené: tmavý splash ve světlém motivu (nativní build, řešení `dark` varianta expo-splash-screen); možné přepnutí barvy podkladu během intra při motivu opačném k systému (ověřit na iPhonu).
+
 ## Elite fáze 5 (vstupní test + bezpečnost) HOTOVÁ — rating 85/85 „čeká na iPhone“ (2026-10-08)
 Test úrovně (PAR-Q+ 7 otázek, kliky, plank se stopkami) škáluje dávky ~50 % maxima, 0.5–1.5× (`logic/fitnessTest.ts`), CAUTION u náročných cviků, disclaimer. Rešerše `docs/research/2026-10-08-vstupni-test.md`. QA 2 kola.
 Otevřené: Nastavení/Setup po nulovém testu ukazují „0 push-ups · 0 s plank“ (výsledek říká „Not entered · default“); obrazovka testu nemá vizuální baseline; obsah stále bez kontroly trenérem. Expo Go teď běží na 8084 (starý proces drží 8082).
