@@ -22,6 +22,8 @@ export const size = {
   celebratePlateShort: 128,
   // Doznění závoje pod překryvnou hlavičkou a nad plovoucí CTA (EdgeFade): mapa pod nimi mizí plynule, ne hranou.
   edgeFade: 40,
+  // UX pass U1: velké [DONE] lekce 64 (zpocené prsty, celá šířka), volba pocitu po lekci 48.
+  pillLarge: 64, feelChoice: 48,
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
   // Karta volby v onboardingu (vize těla, R36) a její glyf; glyf cesty je `glyph`.
   choiceCard: 80, choiceGlyph: 40, glyph: 48,

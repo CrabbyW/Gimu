@@ -120,6 +120,9 @@ test.describe('first run', () => {
       const done = pill(page, 'Done');
       if (await skip.isVisible()) await skip.click({ timeout: 2_000 }).catch(() => undefined);
       else if (await done.isVisible()) await done.click({ timeout: 2_000 }).catch(() => undefined);
+      // Pauza mezi cviky (UX pass U1): po [DONE] přijde odpočet, přeskočí se.
+      const rest = pill(page, 'Skip rest');
+      if (await rest.isVisible()) await rest.click({ timeout: 2_000 }).catch(() => undefined);
       await page.waitForTimeout(400);
     }
     await expect(cont).toBeVisible();

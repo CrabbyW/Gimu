@@ -31,7 +31,8 @@ import type { GuideId } from '@/logic/guide';
 import type { LessonResult } from '@/services';
 import type { LessonPathView } from '@/services/contracts';
 import { dots, useCompact, useShort, useTheme, tabularNums } from '@/theme';
-import type { CosmeticSlot, Lesson, Mood } from '@/types';
+import type { CosmeticSlot, Feel, Lesson, Mood } from '@/types';
+import { FeelPicker } from './FeelPicker';
 import { celebrationHaptics, celebrationTimeline, fieldGrid, gatherSources, once, prideBeat, stepOf, xpBreakdownLabel, xpTickStep } from './celebration';
 
 const t = copy.complete;
@@ -72,6 +73,8 @@ interface Props {
   guide?: { id: GuideId; dismiss(): void };
   /** Krátký onboarding: sekundární pilulka [SET YOUR GOALS] pod [CONTINUE] (jen dokud `needsSetup`). */
   onSetGoals?: () => void;
+  /** UX pass U2: „How did it feel?“ nad [CONTINUE] (přeskočitelné). Bez něj se otázka neukáže. */
+  onRate?: (feel: Feel) => Promise<void>;
 }
 
 /**
@@ -93,7 +96,7 @@ interface Props {
  * a řadu série. Omezený pohyb: konečný stav jedním prolnutím 200 ms, haptika success zůstává.
  * Odchod appky do pozadí = přeskočení na konec.
  */
-export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, guide, onSetGoals }: Props) {
+export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, guide, onSetGoals, onRate }: Props) {
   const { c, space, size } = useTheme();
   const ink = useDotInk();
   const insets = useSafeAreaInsets();
@@ -166,6 +169,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   const minutes = useLessonMinutes(view, profile.status === 'ready' ? profile.data?.fitnessTest : undefined, profile.status === 'ready' ? profile.data?.progression : undefined);
   const tomorrow = useMemo(() => tomorrowOf(view, minutes), [view, minutes]);
   const title = result.xp.baseKind === 'replay' ? t.replayTitle : t.title;
+  const feelAsk = !!onRate && !guide && !onSetGoals;
 
   // --- Sdílené hodnoty (UI vlákno) ---
   const sceneIn = useSharedValue(calm ? 0 : 1);
@@ -432,6 +436,11 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
           pointerEvents={ctaReady ? 'auto' : 'none'}
           style={[{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.m, paddingBottom: insets.bottom + (short ? space.s : space.m) }, ctaStyle]}
         >
+          {/* Pocit po lekci (U2): až v CTA bloku, tedy po celé oslavě; [CONTINUE] funguje i bez výběru.
+              První oslava (průvodce, [SET YOUR GOALS]) už má dvě výzvy: třetí by rozbila hierarchii, otázka tam není. */}
+          {feelAsk ? (
+            <View style={{ marginBottom: short ? space.s : space.m }}><FeelPicker onRate={onRate} disabled={!ctaReady} /></View>
+          ) : null}
           <PillButton label={t.cta} onPress={onContinue} disabled={!ctaReady} />
           {/* Krátký onboarding: doplnění cílů jako sekundární cesta; [CONTINUE] zůstává jediné plné CTA. */}
           {onSetGoals && short ? (

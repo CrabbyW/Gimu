@@ -1,12 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { markNavigation } from '@/lib/navGuard';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Alert, BackHandler, Platform, View } from 'react-native';
-import { ExerciseCard } from '@/components/lesson/ExerciseCard';
+import { Alert, BackHandler, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ExerciseCard, ExerciseTitle } from '@/components/lesson/ExerciseCard';
 import { LessonCompleteScene } from '@/components/lesson/LessonCompleteScene';
 import { LessonProgress } from '@/components/lesson/LessonProgress';
 import { useHoldTimer } from '@/components/lesson/useHoldTimer';
-import { BigActionBar } from '@/components/ui/BigActionBar';
+import { PillButton, pillText } from '@/components/ui/PillButton';
+import { RestStep } from '@/components/lesson/RestStep';
+import { splitTip } from '@/components/lesson/tip';
+import { useRateLesson } from '@/hooks/useRateLesson';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { Screen } from '@/components/ui/Screen';
@@ -19,7 +23,7 @@ import { useLesson } from '@/hooks/useLesson';
 import { useProfile } from '@/hooks/useProfile';
 import { now } from '@/lib/clock';
 import { canSkip } from '@/logic/adaptive';
-import { nextPhase, type LessonPhase } from '@/logic/lessonFlow';
+import { nextFlowPhase, type FlowPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
 import { useShort, useTheme, tabularNums } from '@/theme';
 import type { CosmeticSlot, Exercise } from '@/types';
@@ -46,7 +50,7 @@ export default function LessonScreen() {
   const { c } = useTheme();
   // Nízký displej: kompaktní bublina průvodce (bez štítku) přes celou šířku, ať zabere co nejméně výšky.
   const short = useShort();
-  const [phase, setPhase] = useState<LessonPhase>({ kind: 'exercise', index: 0 });
+  const [phase, setPhase] = useState<FlowPhase>({ kind: 'exercise', index: 0 });
   const [result, setResult] = useState<LessonResult | null>(null);
   const [quitOpen, setQuitOpen] = useState(false);
   const [attemptId] = useState(() => `${id}-${now().getTime()}`); // jeden pokus = jedno id (idempotence)
@@ -63,11 +67,13 @@ export default function LessonScreen() {
   const celebrationGuide = useGuide('celebration');
   const setup = useFinishSetup();
 
-  const advance = useCallback(async (didIt: boolean = true) => {
+  const rate = useRateLesson(attemptId);
+  // Pauza mezi cviky (UX pass U1) jen po odcvičeném cviku: přeskok (demo i canSkip) jde rovnou na další cvik.
+  const advance = useCallback(async (didIt: boolean = true, skipped = false) => {
     if (lesson.status !== 'ready' || phase.kind !== 'exercise') return;
     const outcome = [...done.slice(0, phase.index), didIt];
     setDone(outcome);
-    const next = nextPhase(phase, lesson.data.exercises.length);
+    const next = nextFlowPhase(phase, lesson.data.exercises.length, !skipped);
     if (next.kind !== 'completing') { setPhase(next); return; }
     if (completing.current) return; // dvojí tap na „Hotovo“ (Review Focus 3)
     completing.current = true;
@@ -109,7 +115,7 @@ export default function LessonScreen() {
   // Hardwarové Zpět na Androidu během cviků otevře stejný dialog; při ukládání a oslavě se ignoruje.
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (phase.kind === 'exercise') askQuit();
+      if (phase.kind === 'exercise' || phase.kind === 'rest') askQuit();
       return true;
     });
     return () => sub.remove();
@@ -123,11 +129,14 @@ export default function LessonScreen() {
   }
   const { exercises } = lesson.data;
 
+  const endRest = () => setPhase((p) => (p.kind === 'rest' ? nextFlowPhase(p, exercises.length) : p));
+
   if (phase.kind === 'celebrate' && result) {
     return (
       <LessonCompleteScene
         result={result} lesson={lesson.data.lesson} cosmetics={cosmetics}
         onContinue={() => { celebrationGuide.dismiss(); onContinue(result); }}
+        onRate={rate}
         guide={celebrationGuide.id ? { id: celebrationGuide.id, dismiss: celebrationGuide.dismiss } : undefined}
         // Mapa zůstává pod modalem: „Finish setup“ nahradí oslavu, Zpět/Done z něj vrátí na mapu.
         onSetGoals={setup.needed ? () => { celebrationGuide.dismiss(); if (leaving.current) return; leaving.current = true; markNavigation(); router.replace('/setup'); } : undefined}
@@ -135,9 +144,23 @@ export default function LessonScreen() {
     );
   }
 
+  if (phase.kind === 'rest') {
+    const upcoming = exercises[phase.next];
+    if (!upcoming) return <ErrorState what={copy.common.loadTarget.lesson} onRetry={lesson.refresh} />;
+    return (
+      <ReactiveBackground style={{ backgroundColor: c.base }}>
+        <Screen edges={[]} transparent>
+          <LessonProgress total={exercises.length} current={phase.next} onClose={askQuit} />
+          <RestStep key={`rest-${phase.next}`} next={upcoming} onContinue={endRest} />
+        </Screen>
+      </ReactiveBackground>
+    );
+  }
+
   const index = phase.kind === 'exercise' ? phase.index : exercises.length - 1;
   const exercise = exercises[index];
   if (!exercise) return <ErrorState what={copy.common.loadTarget.lesson} onRetry={lesson.refresh} />;
+  const following = exercises[index + 1];
 
   return (
     <ReactiveBackground style={{ backgroundColor: c.base }}>
@@ -150,11 +173,12 @@ export default function LessonScreen() {
           busy={phase.kind !== 'exercise'}
           suspended={quitOpen}
           extra={lesson.data.extras[index] ?? 0}
+          next={following}
           onDone={() => { lessonGuide.dismiss(); void advance(true); }}
           guide={lessonGuide.id ? <GuideBubble id={lessonGuide.id} text={exercise.type === 'reps' ? copy.guide.lessonReps : copy.guide.lessonHold} arrow="down" align="end" compact={short} stretch={short} onDismiss={lessonGuide.dismiss} /> : null}
           onAct={lessonGuide.dismiss}
           alwaysSkip={demo}
-          onSkip={demo ? () => void advance(true) : canSkip(done, index, exercises.length) ? () => void advance(false) : undefined}
+          onSkip={demo ? () => void advance(true, true) : canSkip(done, index, exercises.length) ? () => void advance(false, true) : undefined}
         />
       </Screen>
     </ReactiveBackground>
@@ -163,31 +187,40 @@ export default function LessonScreen() {
 
 interface StepProps {
   exercise: Exercise;
-  /** Výsledek se ukládá: lišta je neaktivní (ve fázi 2 zde přibude loading). */
+  /** Výsledek se ukládá: lišta je neaktivní. */
   busy: boolean;
   /** Otevřený dialog ukončení: běžící výdrž se pauzne. */
   suspended: boolean;
   /** O kolik je cvik navýšený z dluhu přeskočených cviků (0 = beze změny). */
   extra: number;
+  /** Další cvik lekce (řádek „Next up“); chybí u posledního = „Last one“. */
+  next?: Exercise;
   onDone(): void;
   /** Přeskočení cviku; chybí, když by se lekce už nezapočítala (logic/adaptive canSkip). */
   onSkip?: () => void;
   /** Demo: přeskočit jde i během odpočtu a běžícího časovače. */
   alwaysSkip?: boolean;
-  /** Opička průvodce (first run): bublina nad lištou, šipka dolů k [DONE]/[START]. Nepřekrývá lištu, sedí nad ní. */
+  /** Opička průvodce (first run): bublina v obsahu nad patičkou, šipka dolů k [DONE]/[START]. */
   guide?: ReactNode;
   /** Jakákoli akce v liště (start, hotovo, pauza) = průvodce splnil účel a zmizí. */
   onAct?: () => void;
 }
 
-/** Jeden cvik: karta a spodní lišta. Klíčovaný cvikem, takže odpočet výdrže začíná pro každý cvik znovu. */
-function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, alwaysSkip = false, guide, onAct }: StepProps) {
-  const { space } = useTheme();
+/**
+ * Jeden cvik (UX pass U1). Nahoře se scrolluje karta (silueta, číslo, název, zbytek popisu, caution). Dole pevná
+ * patička, která se nikdy neodroluje: 0) název (+ CAUTION), 1) tip techniky (první věta popisu) — to si cvičenec čte uprostřed série,
+ * 2) řádek „Next up: … · …“ / „Last one“ s tichou textovou akcí [SKIP] vpravo (mimo hlavní palec),
+ * 3) velké [DONE] / [START] přes celou šířku, 64 pt. Klíčovaný cvikem, odpočet výdrže začíná pro každý cvik znovu.
+ */
+function ExerciseStep({ exercise, busy, suspended, extra, next, onDone, onSkip, alwaysSkip = false, guide, onAct }: StepProps) {
+  const { c, space, size } = useTheme();
   const short = useShort();
+  const insets = useSafeAreaInsets();
   const hold = exercise.type === 'hold';
   const timer = useHoldTimer(hold ? exercise.amount : 0, onDone);
   const { pause } = timer;
   useEffect(() => { if (suspended) pause(); }, [suspended, pause]);
+  const { tip } = splitTip(exercise.description);
 
   const primary = !hold
     ? { label: copy.common.done, onPress: onDone }
@@ -196,21 +229,47 @@ function ExerciseStep({ exercise, busy, suspended, extra, onDone, onSkip, always
       : timer.status === 'paused'
         ? { label: copy.common.resume, onPress: timer.start }
         : { label: copy.common.start, onPress: timer.start };
+  // Přeskočit jen před startem výdrže nebo u opakování; běžící výdrž se nejdřív pauzne.
+  const skip = onSkip && !busy && (alwaysSkip || (timer.status !== 'running' && timer.status !== 'countdown' && timer.status !== 'done'))
+    ? () => { pause(); onSkip(); } : undefined;
+  const nextLine = next ? copy.lesson.nextUp(next.name, copy.lesson.dose(next.amount, next.type === 'hold')) : copy.lesson.lastOne;
 
   return (
     <>
-      <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.m : space.xl }}>
-        <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} />
+      <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.s : space.l }}>
+        <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} tipOutside />
         {extra > 0 ? <Text variant="caption" tone="muted" style={[tabularNums, { marginTop: space.s }]}>{copy.lesson.extra(extra, hold)}</Text> : null}
-        {/* Bublina průvodce je součástí obsahu: nezmenšuje výšku scrollu a nikdy nekryje text cviku. */}
+        {/* Bublina průvodce je součástí obsahu: nezmenšuje patičku a nikdy nekryje tip ani [DONE]. */}
         {guide ? <View style={{ marginTop: short ? space.s : space.m }}>{guide}</View> : null}
       </IntentScrollView>
-      <View style={{ marginHorizontal: -space.l }}>
-        <BigActionBar
-          primary={{ ...primary, onPress: () => { onAct?.(); primary.onPress(); }, disabled: busy || timer.status === 'done' }}
-          // Přeskočit jen před startem výdrže nebo u opakování; běžící výdrž se nejdřív pauzne.
-          secondary={onSkip && !busy && (alwaysSkip || (timer.status !== 'running' && timer.status !== 'countdown' && timer.status !== 'done'))
-            ? { label: copy.lesson.skip, onPress: () => { pause(); onSkip(); } } : undefined}
+      <View
+        testID="exercise-footer"
+        style={{
+          marginHorizontal: -space.l, paddingHorizontal: space.l, paddingTop: short ? space.s : space.m,
+          paddingBottom: insets.bottom + (short ? space.s : space.m), gap: short ? space.xs : space.s,
+          backgroundColor: c.base, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.rule,
+        }}
+      >
+        <ExerciseTitle exercise={exercise} />
+        <Text testID="exercise-tip" variant={short ? 'caption' : 'body'} accessibilityLabel={copy.lesson.tipA11y(tip)}>{tip}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s, minHeight: size.hit }}>
+          <Text testID="exercise-next" variant="caption" tone="muted" numberOfLines={1} style={[tabularNums, { flex: 1 }]}>{nextLine}</Text>
+          {skip ? (
+            <Pressable
+              onPress={skip}
+              accessibilityRole="button"
+              accessibilityLabel={copy.lesson.skip}
+              style={{ minHeight: size.hit, minWidth: size.hit, alignItems: 'flex-end', justifyContent: 'center' }}
+            >
+              {({ pressed }) => <Text variant="pill" tone={pressed ? 'text' : 'muted'}>{pillText(copy.lesson.skip)}</Text>}
+            </Pressable>
+          ) : null}
+        </View>
+        <PillButton
+          large
+          label={primary.label}
+          onPress={() => { onAct?.(); primary.onPress(); }}
+          disabled={busy || timer.status === 'done'}
         />
       </View>
     </>

@@ -32,19 +32,29 @@ interface Props {
   exercise: Exercise; /** Jen u výdrže. */ timer?: HoldTimerState;
   /** Pod popisem je bublina průvodce (v obsahu scrollu): menší panel siluety, aby se bublina vešla nad lištu bez scrollu. */
   guided?: boolean;
+  /** Tip (první věta popisu) stojí mimo kartu nad [DONE]: karta ukáže jen zbytek popisu. */
+  tipOutside?: boolean;
 }
 
 /** Karta cviku (Nothing Dot §6): panel = dlaždice se siluetou stojící na „podlaze“ z teček (pole doznívá
  *  nahoru k horizontu), pod ním JEDNO velké Doto číslo (opakování, u výdrže tečkový odpočet) — to má
  *  cvičenec v hlavě —, pak název a popis techniky. Silueta zůstává beze změny (subjekt, ne ozdoba). */
-export function ExerciseCard({ exercise, timer, guided = false }: Props) {
-  const { c, space, size, radius } = useTheme();
+export function ExerciseCard({ exercise, timer, guided = false, tipOutside = false }: Props) {
+  const { c, space, size } = useTheme();
   // Nízký displej (320×568): menší panel, menší číslo a těsnější mezery — vše nad lištou bez scrollu.
   const short = useShort();
   const { reduced } = useMotionSafe();
+  // S patičkou nese techniku jediný tip (první věta popisu) nad [DONE]; druhá věta nad názvem by se četla
+  // v obráceném pořadí a soupeřila s tipem — jeden pokyn uprostřed série, ne odstavec.
+  const lead = tipOutside ? '' : exercise.description;
+  // S pevnou patičkou (název, tip, [DONE]) musí nad ní zůstat celé číslo / prstenec výdrže: u výdrže a na nízkém
+  // displeji menší panel siluety (číslo je důležitější než ilustrace).
+  const panelHeight = guided || (tipOutside && short) ? (short ? size.silhouettePanelGuide : size.silhouettePanelShort)
+    : tipOutside && exercise.type === 'hold' ? size.silhouettePanelShort
+      : short ? size.silhouettePanelShort : size.silhouettePanel;
   return (
     <Animated.View entering={reduced ? calmEnter : enter} exiting={reduced ? calmExit : exit} style={{ gap: short ? space.m : space.l }}>
-      <Tile pad="none" style={{ height: guided ? (short ? size.silhouettePanelGuide : size.silhouettePanelShort) : (short ? size.silhouettePanelShort : size.silhouettePanel) }}>
+      <Tile pad="none" style={{ height: panelHeight }}>
         {/* Podlaha se prolne první (zem dřív než postava), pak silueta. */}
         <Reveal play delay={intro.floor.at} rise={intro.floor.rise} config={motion.reveal} style={StyleSheet.absoluteFill}><Floor /></Reveal>
         {/* Vnitřní sled karty (motion): panel přijede s kartou, silueta v něm se zvedne o úder později,
@@ -57,19 +67,9 @@ export function ExerciseCard({ exercise, timer, guided = false }: Props) {
             ? <HoldTimer timer={timer} total={exercise.amount} />
             : <Stat size={short ? 'M' : 'L'} value={exercise.amount} unit={copy.lesson.reps} />}
         </Reveal>
-        <Reveal play delay={step * 3} rise={rise}>
-          {/* Náročný cvik: krátký štítek CAUTION hned u názvu (vidět bez scrollu i na 320 pt), plná věta níž. */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.s, rowGap: space.xs }}>
-            <Text variant="title" accessibilityRole="header">{exercise.name}</Text>
-            {exercise.caution ? (
-              <View testID="exercise-caution-tag" accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-                style={{ borderWidth: StyleSheet.hairlineWidth, borderColor: c.borderStrong, borderRadius: radius.full, paddingHorizontal: space.s, paddingVertical: space.xs }}>
-                <Text variant="label" tone="muted">{copy.fitness.cautionLabel}</Text>
-              </View>
-            ) : null}
-          </View>
-        </Reveal>
-        <Reveal play delay={step * 4} rise={rise}><Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{exercise.description}</Text></Reveal>
+        {/* S patičkou (tipOutside) stojí název a CAUTION v patičce nad tipem, aby byly vidět bez scrollu. */}
+        {tipOutside ? null : <Reveal play delay={step * 3} rise={rise}><ExerciseTitle exercise={exercise} /></Reveal>}
+        {lead ? <Reveal play delay={step * 4} rise={rise}><Text variant="body" tone="muted" style={{ maxWidth: MEASURE }}>{lead}</Text></Reveal> : null}
         {/* Náročný cvik (elite fáze 5): krátká bezpečnostní poznámka pod technikou. Mono štítek + caption,
             oddělená jen vlasovou linkou `rule` (žádná barva navíc); na nízkém displeji se odroluje se scrollem. */}
         {exercise.caution ? (
@@ -82,6 +82,22 @@ export function ExerciseCard({ exercise, timer, guided = false }: Props) {
         ) : null}
       </View>
     </Animated.View>
+  );
+}
+
+/** Název cviku s krátkým štítkem CAUTION u náročného cviku (vidět bez scrollu i na 320 pt, plná věta je v kartě). */
+export function ExerciseTitle({ exercise }: { exercise: Exercise }) {
+  const { c, space, radius } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.s, rowGap: space.xs }}>
+      <Text variant="title" accessibilityRole="header">{exercise.name}</Text>
+      {exercise.caution ? (
+        <View testID="exercise-caution-tag" accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+          style={{ borderWidth: StyleSheet.hairlineWidth, borderColor: c.borderStrong, borderRadius: radius.full, paddingHorizontal: space.s, paddingVertical: space.xs }}>
+          <Text variant="label" tone="muted">{copy.fitness.cautionLabel}</Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 

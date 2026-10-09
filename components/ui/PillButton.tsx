@@ -28,6 +28,8 @@ export interface PillButtonProps {
   /** Jen umístění v layoutu (šířka, okraje), ne vzhled. */
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
+  /** Velká varianta 64 (`size.pillLarge`): hlavní akce během cvičení (zpocené prsty, celá šířka). */
+  large?: boolean;
 }
 
 /** Text pilulky: mono verzálky v hranatých závorkách (obr. 1). */
@@ -39,7 +41,7 @@ export const pillText = (label: string) => `[${label.toUpperCase()}]`;
  * Stisk mění výplň (`accentPressed` / `tilePressed`); scale a haptiku drží motion vrstva a `feedback`.
  */
 export function PillButton({
-  label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, onGold = false, motionStyle, onPressIn, onPressOut, style, accessibilityHint,
+  label, onPress, variant = 'primary', disabled = false, loading = false, onAccent = false, onGold = false, motionStyle, onPressIn, onPressOut, style, accessibilityHint, large = false,
 }: PillButtonProps) {
   const { c, radius, size, space } = useTheme();
   // Stisk (motion): scale 0.97 za `motion.press`, návrat `motion.release`, bez pružiny (spec §3).
@@ -68,7 +70,7 @@ export function PillButton({
         accessibilityHint={accessibilityHint}
         accessibilityState={{ disabled: inactive, busy: loading }}
         style={({ pressed }) => ({
-          minHeight: size.pill,
+          minHeight: large ? size.pillLarge : size.pill,
           borderRadius: radius.full,
           paddingHorizontal: space.l,
           paddingVertical: space.s,

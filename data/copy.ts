@@ -163,12 +163,27 @@ export const copy = {
     progressValue: (n: number, total: number) => `${String(n).padStart(2, '0')}/${String(total).padStart(2, '0')}`,
     progressA11y: (n: number, total: number) => `Exercise ${n} of ${total}`,
     locked: 'Finish the previous lesson first.', backToMap: 'Back to map',
+    // UX pass U1: řádek dalšího cviku, pauza mezi cviky. Věty sentence case, štítky verzálkami přes `label`.
+    dose: (amount: number, hold: boolean) => keepUnits(hold ? `${amount} s` : `${amount} reps`),
+    nextUp: (name: string, dose: string) => `Next up: ${name} · ${dose}`,
+    lastOne: 'Last one',
+    tipA11y: (tip: string) => `Tip: ${tip}`,
+    restLabel: 'REST',
+    restNextLabel: 'NEXT UP',
+    restSkip: 'Skip rest',
+    restExtend: '+15 s',
+    restA11y: (s: number) => `Rest, ${s} seconds left`,
   },
   complete: {
     title: 'Plate on the bar.', xpLesson: 'lesson', xpBoss: 'boss', xpReplay: 'replay', xpFirst: 'first today',
     xpStreak: 'streak', cta: 'Continue', replayTitle: 'Practice makes perfect.',
     // Rekord série (elite fáze 3): mono řádek pod titulkem.
     record: (days: number) => `NEW RECORD · ${days} DAYS`,
+    // UX pass U2: jedno ťuknutí po oslavě (přeskočitelné), krátké potvrzení po výběru.
+    feelQuestion: 'How did it feel?',
+    feel: { easy: 'Easy', right: 'Right', hard: 'Hard' },
+    feelDone: { easy: 'Next lessons a bit harder', right: 'Keeping it as is', hard: 'Next lessons a bit easier' },
+    feelError: 'Couldn’t save that. Your lesson still counts.',
   },
   leagueTier: 'LEAGUE',
   league: {
