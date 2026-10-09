@@ -635,3 +635,45 @@ Kolize ani ořez nejsou na w320 nikde (Settings, Setup, bc-1-5, výsledek; dark 
 3. Návrat z pozadí (přepnout na jinou appku a zpět) intro NEpřehraje.
 4. Ťuknutí kamkoli během intra okamžitě ukáže mapu; s VoiceOverem se ozve „Opice, tlačítko“ s nápovědou.
 5. Sken a prolnutí do mapy plynulé, bez cuknutí; se zapnutým Omezit pohyb jen krátké prolnutí.
+
+## QA UX pass U1/U2/U4 — HEAD 050a784 (ef4ec54, 5e2ad04, acb535d, 050a784) — 2026-10-09
+
+**Verdikt: SCHVÁLENO** pro HEAD `050a784`.
+
+### Brány
+- `npx tsc --noEmit` ✅ 0 chyb · `npx eslint .` ✅ 0 · `npx jest` ✅ 96 sad / 847 testů · `npm run test:node` ✅ 0 fail.
+- `npm run e2e` ✅ 169/169 (flows + visual 4 šířky × dark/light + a11y), žádný neschválený diff; nové baseline (mapa, lekce, oslava, first-run lekce) jsou zapsané v LOG design-agentem.
+- `npm run e2e:perf` ✅ 4/4 (plátna ≤ 12, mapa do START ≤ 3000 ms, fps mapa i oslava ≥ 55).
+- Nativní log `$TEMP/expogo.log`: 0 řádků `ERROR` ✅ (jen varování Reanimated strict).
+
+### U1 lekce + pauza
+- ✅ Odpočet se počítá z časové značky (`useRestTimer`: `startAt + total − now`), po návratu z pozadí (`AppState active`) se přepočítá; zámek čas neztratí.
+- ✅ Konec pauzy právě jednou (`ended` ref); `+15 s` se stropem `REST.maxS` (`canExtend`), po konci nejde prodloužit; Skip rest přes `endRest` je strážený `p.kind === 'rest'` (dvojí klik nic neudělá).
+- ✅ Tik jen posledních 3 s, každá sekunda nejvýš jednou, zmeškané po zámku se nedohánějí (`restCue`, testy `restCues.test.tsx`).
+- ✅ Patička (název, tip, Next up, DONE 64 pt) ve viewportu bez scrollu w320–w430 dark/light — visual baseline + `lesson-rest.spec` (kolize textů) zelené.
+- ✅ Dokončení lekce: pořadí, 11 úderů, snap a oslava beze změny — oslavové testy a baseline `celebration` zelené na všech 8 projektech; FeelPicker přibyl až pod oslavu a je `disabled` do `ctaReady`.
+
+### U2 pocit po lekci
+- ✅ Easy/Right/Hard až po oslavě (`disabled={!ctaReady}`), Continue bez hodnocení nic neukládá (rate jen z FeelPickeru).
+- ✅ Idempotence: `applyFeel` ignoruje stejný `attemptId`, + `busy` ref proti rychlému klikání.
+- ✅ Meze: korekce 0.7–1.3, násobí se se škálou vstupního testu (`combineScale`); dávky další lekce/minuty na mapě se mění (testy).
+- ⚠️ Chyba uložení: FeelPicker ukáže chybu, ale nenabídne znovu zkusit (hodnocení se ztratí). Nízká závažnost — design-agent/boss.
+- ✅ První oslava se neptá (`feelAsk` vypnuto při guide/setup): souhlasím — v první oslavě je už GuideBubble a CTA Finish setup, třetí prvek by zahltil 320 pt; progrese o jedno hodnocení nic neztratí.
+
+### U4 odhalení, řádek Next/série, verzálky
+- ✅ Nový profil: liga/sezóna/šatník zamčené; odemčení po 2/3/5 lekcích; legacy (bez `guideSeen`) a demo vše otevřené (`disclosure.spec`, `useDisclosure.test`). Do načtení profilu nic nebliká zámkem (`ready:false` = otevřeno).
+- ⚠️ `lessonsDone` počítá i opakování téže lekce (3× L1 odemkne ligu). Spec „po 3 lekcích“ je nejednoznačná — rozhodne boss.
+- ⚠️ `/wardrobe` route zámek nemá; dostupná jen deep linkem/dev, z UI ne. Neškodné (kosmetika), ale pro konzistenci doporučuji `FeatureLocked` i na route — boss.
+- ✅ Řádek Next/streak: atRisk/done/none, den podle `today` (přelom půlnoci testy `disclosure`), na 320 pt max 2 řádky bez kolize.
+- ✅ Verzálky jen štítky (věty sentence case, LineBubble test upraven).
+- ✅ Změna `e2e/textGeometry.ts` (dočasné `pointer-events:auto` při hit-testu) kontroly nezeslabila: **ověřeno dočasným rozbitím** — `ReturnLine` posunut `marginTop:-14` → `large-text` w320-dark spadl s `kolize: „7 / 9“ × „Next: Balance · 3 min“`; vráceno, strom čistý. Závoj mapy je gradient (průhledné pozadí), takže nově hit-testovatelné překryvy text neschovají.
+
+### Screenshoty
+Klíčové stavy (mapa s řádkem Next, lekce s patičkou, oslava, first-run) w320 a w430 dark+light: `e2e/__screenshots__/w{320,430}-{dark,light}/` — všechny prošly porovnáním, bez kolizí/ořezu.
+
+### iPhone checklist (uživatel)
+1. Pauza mezi cviky: zamkni telefon na 20 s a odemkni — odpočet sedí, konec pauzy cvakne jen jednou; tiky jen v posledních 3 s.
+2. Lekce na nejmenším iPhonu: DONE, tip a Next up vidět bez scrollu a nad home indikátorem (safe area).
+3. Oslava: 11 úderů haptiky a snap beze změny, Easy/Right/Hard až po doběhnutí, výběr jemně cvakne.
+4. VoiceOver na zamčeném tabu Liga/Sezóna: přečte „zamčeno, ještě N lekcí“.
+5. Mapa: řádek „Streak ends tonight / Next…“ plynule při scrollu, bez škubání pod hlavičkou.
