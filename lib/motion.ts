@@ -478,3 +478,18 @@ export const stepEnterTiming = (reduced: boolean) => (reduced
 export const dotIntro = { scanMs: 640, colFadeCols: 2, pulseMs: 130, pulseScale: 1.04, fadeMs: 300, reducedFadeMs: 300, holdLow: 0.7, holdHalfMs: 900 };
 /** Okamžik, kdy je choreografie (sken + pulz) dohraná a intro se smí prolnout pryč. */
 export const dotIntroPlayedMs = (reduced: boolean) => (reduced ? 0 : dotIntro.scanMs + 2 * dotIntro.pulseMs);
+
+/**
+ * Pauza mezi cviky (UX pass U1). Přechod cvik → pauza → cvik: obsah nad patičkou přijede zprava o `shift` pt
+ * (směr vpřed) a prolne se za `enterMs`, `easeSafe.out`, bez pružiny; patička s tlačítky stojí. Omezený pohyb:
+ * jen `calmFade` na místě. Prstenec ubývá plynule (podíl z ms, ne z celých sekund). Posledních `cueFromS`
+ * sekund jemný tik (`restTick`) nejvýš jednou za sekundu; v nule jednou `restEnd`.
+ */
+export const restFlow = { shift: 16, enterMs: dur.enter, cueFromS: 3 };
+export const restEnterTiming = (reduced: boolean) => (reduced
+  ? motion.calmFade
+  : { duration: restFlow.enterMs, easing: easeSafe.out, reduceMotion: ReduceMotion.Never } satisfies WithTimingConfig);
+
+/** Pocit po lekci (U2): po výběru se řádek otázky vymění za potvrzení ve stejné výšce — nový text se prolne
+ *  za `swapInMs` (jen opacity, platí i s omezeným pohybem). */
+export const feelSwap = { swapInMs: lineBubble.inMs };

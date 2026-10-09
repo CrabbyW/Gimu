@@ -6,6 +6,7 @@ import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { typography, useShort, useTheme } from '@/theme';
 import type { Exercise } from '@/types';
+import { LessonStepEnter } from './LessonStepEnter';
 import { splitTip } from './tip';
 import { useRestTimer } from './useRestTimer';
 
@@ -30,7 +31,7 @@ export function RestStep({ next, onContinue }: Props) {
   const ring = short ? size.holdRingShort : size.holdRing;
   return (
     <>
-      <View style={{ flex: 1, justifyContent: 'center', gap: short ? space.m : space.xl, paddingVertical: short ? space.s : space.l }}>
+      <LessonStepEnter style={{ flex: 1, justifyContent: 'center', gap: short ? space.m : space.xl, paddingVertical: short ? space.s : space.l }}>
         <View
           accessible
           accessibilityRole="timer"
@@ -39,7 +40,7 @@ export function RestStep({ next, onContinue }: Props) {
           style={{ alignSelf: 'center', alignItems: 'center', gap: short ? space.xs : space.s }}
         >
           <Text variant="label" tone="muted">{copy.lesson.restLabel}</Text>
-          <DotRing progress={timer.total > 0 ? timer.secondsLeft / timer.total : 0} size={ring}>
+          <DotRing progress={timer.progress} size={ring}>
             <Text variant={short ? 'heroShort' : 'hero'} maxFontSizeMultiplier={1}>{timer.secondsLeft}</Text>
           </DotRing>
           <View style={{ minHeight: typography.label.lineHeight }}>
@@ -56,7 +57,7 @@ export function RestStep({ next, onContinue }: Props) {
             <Text variant={short ? 'caption' : 'body'} tone="muted">{tip}</Text>
           </View>
         </Tile>
-      </View>
+      </LessonStepEnter>
       <View style={{ marginHorizontal: -space.l }}>
         <BigActionBar
           primary={{ label: copy.lesson.restSkip, onPress: onContinue }}

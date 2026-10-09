@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { pillText } from '@/components/ui/PillButton';
+import { feedback } from '@/lib/feedback';
+import { easeSafe, feelSwap } from '@/lib/motion';
 import { useTheme } from '@/theme';
 import type { Feel } from '@/types';
 
@@ -26,18 +29,28 @@ export function FeelPicker({ onRate, disabled = false }: Props) {
   const [picked, setPicked] = useState<Feel | null>(null);
   const [failed, setFailed] = useState(false);
   const busy = useRef(false);
+  // Výměna otázky za potvrzení: stejný řádek (výška stojí), nový text se prolne. Jen opacity → i s omezeným pohybem.
+  const lineIn = useSharedValue(1);
+  const lineStyle = useAnimatedStyle(() => ({ opacity: lineIn.value }));
   const pick = (feel: Feel) => {
     if (busy.current || picked) return;
     busy.current = true;
+    feedback('feelSelect');
+    lineIn.set(withSequence(
+      withTiming(0, { duration: 0, reduceMotion: ReduceMotion.Never }),
+      withTiming(1, { duration: feelSwap.swapInMs, easing: easeSafe.out, reduceMotion: ReduceMotion.Never }),
+    ));
     setPicked(feel);
     onRate(feel).catch(() => setFailed(true));
   };
   const line = picked ? (failed ? t.feelError : t.feelDone[picked]) : t.feelQuestion;
   return (
     <View testID="feel-picker" style={{ gap: space.s }}>
+      <Animated.View style={lineStyle}>
       <Text testID="feel-line" variant="caption" tone={picked ? 'text' : 'muted'} accessibilityLiveRegion="polite" numberOfLines={1} adjustsFontSizeToFit>
         {line}
       </Text>
+      </Animated.View>
       <View accessibilityRole="radiogroup" accessibilityLabel={t.feelQuestion} style={{ flexDirection: 'row', gap: space.s }}>
         {FEELS.map((f) => {
           const on = picked === f;

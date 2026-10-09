@@ -8,7 +8,8 @@ export type FeedbackId =
   | 'countdown3' | 'countdown2' | 'countdown1' | 'go' | 'holdTick' | 'holdLast5' | 'holdLast4' | 'holdLast3' | 'holdLast2' | 'holdLast1' | 'holdDone'
   | 'impact' | 'xpTick' | 'seriesPlate' | 'wheelStep' | 'formError' | 'mascotTap' | 'mascotJoy'
   | 'flightStart' | 'lessonDone' | 'stageUp' | 'guideShow' | 'setupDone'
-  | 'timerStart' | 'timerStop' | 'introPulse';
+  | 'timerStart' | 'timerStop' | 'introPulse'
+  | 'restTick' | 'restEnd' | 'restExtend' | 'feelSelect';
 
 /** Navigace a ovládání: jen haptika, nikdy zvuk (zvuk je pro dění ve hře). */
 export const NAVIGATION_IDS: readonly FeedbackId[] = ['tab', 'cta', 'tapLight', 'wheelStep'];
@@ -51,4 +52,11 @@ export const FEEDBACK_MAP: Record<FeedbackId, readonly [HapticKind | null, SfxNa
   timerStop: ['medium', null],
   // Intro OPICE: jemný puls po rozsvícení nápisu, bez zvuku (intro je tiché).
   introPulse: ['soft', null],
+  // UX pass U1: pauza mezi cviky. Poslední 3 s jemný tik (haptika jako holdLast3, zvuk tick přes sfxGate), konec
+  // pauzy = výraznější úder se snapem (stejná gramatika jako konec výdrže, žádný nový WAV). +15 s = lehké potvrzení bez zvuku.
+  restTick: ['soft', 'tick'],
+  restEnd: ['heavy', 'snap'],
+  restExtend: ['light', null],
+  // UX pass U2: výběr pocitu po lekci = výběr volby (selection + select).
+  feelSelect: ['selection', 'select'],
 };

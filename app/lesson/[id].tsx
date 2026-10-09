@@ -8,6 +8,7 @@ import { LessonCompleteScene } from '@/components/lesson/LessonCompleteScene';
 import { LessonProgress } from '@/components/lesson/LessonProgress';
 import { useHoldTimer } from '@/components/lesson/useHoldTimer';
 import { PillButton, pillText } from '@/components/ui/PillButton';
+import { LessonStepEnter } from '@/components/lesson/LessonStepEnter';
 import { RestStep } from '@/components/lesson/RestStep';
 import { splitTip } from '@/components/lesson/tip';
 import { useRateLesson } from '@/hooks/useRateLesson';
@@ -169,6 +170,7 @@ export default function LessonScreen() {
         <LessonProgress total={exercises.length} current={index} onClose={askQuit} />
         <ExerciseStep
           key={exercise.id + index}
+          enter={index > 0}
           exercise={exercise}
           busy={phase.kind !== 'exercise'}
           suspended={quitOpen}
@@ -187,6 +189,8 @@ export default function LessonScreen() {
 
 interface StepProps {
   exercise: Exercise;
+  /** Krok přichází po pauze / předchozím cviku: obsah nastoupí (motion U1). */
+  enter?: boolean;
   /** Výsledek se ukládá: lišta je neaktivní. */
   busy: boolean;
   /** Otevřený dialog ukončení: běžící výdrž se pauzne. */
@@ -212,7 +216,7 @@ interface StepProps {
  * 2) řádek „Next up: … · …“ / „Last one“ s tichou textovou akcí [SKIP] vpravo (mimo hlavní palec),
  * 3) velké [DONE] / [START] přes celou šířku, 64 pt. Klíčovaný cvikem, odpočet výdrže začíná pro každý cvik znovu.
  */
-function ExerciseStep({ exercise, busy, suspended, extra, next, onDone, onSkip, alwaysSkip = false, guide, onAct }: StepProps) {
+function ExerciseStep({ exercise, enter = false, busy, suspended, extra, next, onDone, onSkip, alwaysSkip = false, guide, onAct }: StepProps) {
   const { c, space, size } = useTheme();
   const short = useShort();
   const insets = useSafeAreaInsets();
@@ -236,12 +240,15 @@ function ExerciseStep({ exercise, busy, suspended, extra, next, onDone, onSkip, 
 
   return (
     <>
-      <IntentScrollView style={{ flex: 1, marginHorizontal: -space.l }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.s : space.l }}>
+      {/* Nástup po pauze (U1): obsah přijede zprava, patička s [DONE] stojí. První cvik stojí hned. */}
+      <LessonStepEnter play={enter} style={{ flex: 1, marginHorizontal: -space.l }}>
+      <IntentScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.s : space.l }}>
         <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} tipOutside />
         {extra > 0 ? <Text variant="caption" tone="muted" style={[tabularNums, { marginTop: space.s }]}>{copy.lesson.extra(extra, hold)}</Text> : null}
         {/* Bublina průvodce je součástí obsahu: nezmenšuje patičku a nikdy nekryje tip ani [DONE]. */}
         {guide ? <View style={{ marginTop: short ? space.s : space.m }}>{guide}</View> : null}
       </IntentScrollView>
+      </LessonStepEnter>
       <View
         testID="exercise-footer"
         style={{
