@@ -677,3 +677,7 @@ Klíčové stavy (mapa s řádkem Next, lekce s patičkou, oslava, first-run) w3
 3. Oslava: 11 úderů haptiky a snap beze změny, Easy/Right/Hard až po doběhnutí, výběr jemně cvakne.
 4. VoiceOver na zamčeném tabu Liga/Sezóna: přečte „zamčeno, ještě N lekcí“.
 5. Mapa: řádek „Streak ends tonight / Next…“ plynule při scrollu, bez škubání pod hlavičkou.
+
+### Doplněk boss — nativní build U1/U2/U4 (HEAD eff047f, kód 050a784), 2026-10-09 19:05
+- Expo Go server (8084) sestavil iOS bundle z aktuálního HEAD: `iOS Bundled 21318ms` (16.3 MB, obsahuje RestStep/FeelPicker/FeatureLocked). `$TEMP/expogo.log` zapsán 2026-10-09 19:05:27, 0 řádků `ERROR`.
+- Běhové chování na zařízení ověří iPhone checklist výše.
