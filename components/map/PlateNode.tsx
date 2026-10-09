@@ -196,7 +196,7 @@ function DrawnCheck({ size, reduced }: { size: number; reduced: boolean }) {
   return (
     <Svg aria-hidden width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }} pointerEvents="none">
       <AnimatedPath
-        d={CHECK_PATH} stroke={c.text} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
+        d={CHECK_PATH} stroke={c.onText} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
         strokeDasharray={`${CHECK_LENGTH} ${CHECK_LENGTH}`} animatedProps={props}
       />
     </Svg>

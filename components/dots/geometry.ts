@@ -7,7 +7,7 @@ export interface PlateDot extends Dot { ring: number }
 const KG_RINGS: readonly (readonly [number, number])[] = [[25, 7], [20, 6], [15, 5], [10, 4], [5, 3], [2.5, 2]];
 const MIN_RINGS = 2;
 // Vnitřní prstenec leží na náboji R/φ² (stejná proporce jako dřívější litinový kotouč, SPEC §6.5).
-const HUB_RATIO = 1 / 2.618;
+export const HUB_RATIO = 1 / 2.618;
 // Vnější prstenec má 48 teček; ostatní dostanou počet podle obvodu, aby rozteč zůstala stejná.
 const OUTER_DOTS = 48;
 const MIN_RING_DOTS = 8;

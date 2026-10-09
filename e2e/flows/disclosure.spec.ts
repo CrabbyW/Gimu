@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { copy } from '../../data/copy';
 import { expect, test } from '../fixtures';
 import { collectErrors, gotoTab, loadDemo, pill, resetApp, visible, waitForIdle } from '../helpers';
-import { textsUnder } from '../textGeometry';
+import { textCollisions, textsUnder } from '../textGeometry';
 
 /** UX pass U4: progresivní odhalení (liga po 3 lekcích, sezóna po 5, šatník po 2) a řádek „důvod se vrátit“. */
 
@@ -108,5 +108,33 @@ test('řádek série: atRisk (včera ano, dnes ne) a done; bez kolize na w320', 
 
   await seedLessons(page, 1, iso(new Date()));
   await expect(visible(page.getByTestId('return-line'))).toContainText(copy.returnLine.done);
+  expect(errors).toEqual([]);
+});
+
+test('QA U4/U5: přímá cesta /wardrobe je zamčená; FeatureLocked s větší opičkou bez kolize na w320 (dark i light)', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = collectErrors(page);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await newProfile(page);
+  await page.goto('/wardrobe');
+  await expect(visible(page.getByTestId('feature-locked'))).toBeVisible({ timeout: 30_000 });
+  await expect(visible(page.getByText(copy.disclosure.what.wardrobe))).toBeVisible();
+  await waitForIdle(page, 900);
+  expect(await textCollisions(page)).toEqual([]);
+  // [ZPĚT NA MAPU] nad ohybem i na 320 × 568.
+  const cta = (await visible(page.getByRole('button', { name: copy.disclosure.cta })).boundingBox())!;
+  expect(cta.y + cta.height).toBeLessThanOrEqual(568);
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await waitForIdle(page, 300);
+    expect(await textCollisions(page)).toEqual([]);
+  }
+  // Šatník je modal bez tab baru: zpět na mapu, pak liga (stejná FeatureLocked na tabu).
+  await page.goto('/');
+  await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
+  await gotoTab(page, 'league');
+  await expect(visible(page.getByTestId('feature-locked'))).toBeVisible();
+  await waitForIdle(page, 900);
+  expect(await textCollisions(page)).toEqual([]);
   expect(errors).toEqual([]);
 });

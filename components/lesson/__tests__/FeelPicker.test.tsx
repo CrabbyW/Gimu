@@ -55,3 +55,18 @@ test('bez ťuknutí se nic neuloží', () => {
   act(() => r.unmount());
   expect(onRate).not.toHaveBeenCalled();
 });
+
+test('chyba uložení nabídne [TRY AGAIN]; nový pokus uloží stejnou volbu a chybu schová', async () => {
+  const onRate = jest.fn().mockRejectedValueOnce(new Error('x')).mockResolvedValueOnce(undefined);
+  const r = render(onRate);
+  expect(r.root.findAll((n) => n.props.testID === 'feel-retry')).toHaveLength(0);
+  await act(async () => { radio(r.root, t.feel.hard).props.onPress(); });
+  const btn = r.root.findAll((n) => n.props.testID === 'feel-retry' && typeof n.props.onPress === 'function')[0]!;
+  expect(btn.props.accessibilityLabel).toBe(t.feelRetryA11y);
+  expect(texts(r.root)).toContain(`[${copy.common.retry.toUpperCase()}]`);
+  await act(async () => { btn.props.onPress(); });
+  expect(onRate).toHaveBeenNthCalledWith(2, 'hard');
+  expect(texts(r.root)).toContain(t.feelDone.hard);
+  expect(r.root.findAll((n) => n.props.testID === 'feel-retry')).toHaveLength(0);
+  act(() => r.unmount());
+});

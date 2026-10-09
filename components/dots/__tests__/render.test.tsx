@@ -80,3 +80,20 @@ test('DotRow s nástupem začíná zhasnutý, bez nástupu rovnou rozsvícený',
   expect(lit(render(<DotRow total={4} fraction={0.5} />, 'light'))).toEqual([4, 0, 0]);
   expect(lit(render(<DotRow total={4} fraction={0.5} intro={false} />, 'light'))).toEqual([2, 2, 0]);
 });
+
+// UX pass U5: stavy uzlu rozlišené tvarem a výplní (ne jen jasem) a čitelné pro čtečku.
+describe('DotPlate stavy (U5)', () => {
+  const states = ['done', 'current', 'locked'] as const;
+  test.each(states)('%s: odlišný tvar (náboj / obrys / nic)', (s) => {
+    const root = render(<DotPlate kg={10} size={72} state={s} />);
+    expect(byTestId(root, 'dotplate-hub').length > 0).toBe(s === 'done');
+    expect(byTestId(root, 'dotplate-outline').length > 0).toBe(s === 'current');
+  });
+  test('a11y popisky stavů jsou slovní a navzájem různé', () => {
+    const labels = states.map((s) => {
+      const root = render(<DotPlate kg={10} size={72} state={s} />);
+      return root.findAll((n) => typeof n.props.accessibilityLabel === 'string')[0]!.props.accessibilityLabel as string;
+    });
+    expect(labels.map((l) => l.replace(/\s/g, ' '))).toEqual(['Plate 10 kg, completed', 'Plate 10 kg, up next', 'Plate 10 kg, locked']);
+  });
+});

@@ -9,11 +9,13 @@ import { Reveal } from '@/components/ui/choreo';
 import { Mascot } from '@/components/mascot';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { FeatureLocked } from '@/components/ui/FeatureLocked';
 import { Screen } from '@/components/ui/Screen';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
+import { useDisclosure } from '@/hooks/useDisclosure';
 import { useDisplayStage } from '@/hooks/useDisplayStage';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
@@ -40,10 +42,20 @@ function confirmBuy(message: string, onYes: () => void) {
 
 export default function WardrobeScreen() {
   const wardrobe = useWardrobe();
+  // QA (U4): přímá cesta /wardrobe musí respektovat progresivní odhalení — zamčený šatník = pozvánka, ne obsah.
+  const gate = useDisclosure().gate('wardrobe');
+  const profile = useProfile();
+  const stats = useProfileStats(profile.status === 'ready' ? profile.data : null);
+  const locked = !gate.open && profile.status === 'ready' && profile.data !== null;
   return (
     <Screen edges={['top', 'bottom']} background="base">
       <Header />
-      {wardrobe.status === 'loading' ? <DotLoaderScreen />
+      {locked && profile.status === 'ready' && profile.data ? (
+        <FeatureLocked
+          what={copy.disclosure.what.wardrobe} left={gate.left} done={gate.done} need={gate.need}
+          stage={stats?.stage ?? 1} cosmetics={profile.data.equipped} onCta={() => router.navigate('/(tabs)')}
+        />
+      ) : wardrobe.status === 'loading' ? <DotLoaderScreen />
         : wardrobe.status === 'error' ? <ErrorState what={copy.wardrobe.errorWhat} onRetry={wardrobe.retry} />
           : <WardrobeBody items={wardrobe.data.items} bananas={wardrobe.data.bananas} equipped={wardrobe.data.equipped} />}
     </Screen>

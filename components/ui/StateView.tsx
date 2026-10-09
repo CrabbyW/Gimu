@@ -42,12 +42,12 @@ export function StateView(props: Props) {
 }
 
 function ErrorBody({ what, message, actionLabel, onRetry, edges }: Extract<Props, { kind: 'error' }>) {
-  const { space } = useTheme();
+  const { space, size } = useTheme();
   const title = message ?? copy.common.loadError(what ?? '');
   return (
     <Screen edges={edges}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: space.l }}>
-        <Mascot stage={1} mood="sad" size="M" cosmetics={NO_COSMETICS} decorative breathe={false} hop={false} />
+        <Mascot stage={1} mood="sad" size={size.stateMascot} cosmetics={NO_COSMETICS} decorative breathe={false} hop={false} />
         <View style={{ gap: space.s }}>
           <Text variant="title" accessibilityRole="alert">{title}</Text>
           {message ? null : <Text tone="muted">{copy.common.loadErrorHint}</Text>}
@@ -59,11 +59,13 @@ function ErrorBody({ what, message, actionLabel, onRetry, edges }: Extract<Props
 }
 
 function EmptyBody({ message, title, actionLabel, onAction, inline, edges }: Extract<Props, { kind: 'empty' }>) {
-  const { space } = useTheme();
+  const { space, size } = useTheme();
   if (inline) return <Text variant="caption" tone="muted">{message}</Text>;
   return (
     <Screen edges={edges}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: space.m }}>
+        {/* UX pass U5: prázdná obrazovka = pozvánka s opičkou (klidná, ne smutná), pak titulek a věta. */}
+        <Mascot stage={1} mood="idle" size={size.stateMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
         {title ? <Text variant="title">{title}</Text> : null}
         <Text tone="muted">{message}</Text>
         {actionLabel && onAction ? <Button label={actionLabel} onPress={onAction} variant="secondary" /> : null}

@@ -154,7 +154,7 @@ function SeasonBody({ status }: { status: SeasonStatus }) {
             </Reveal>
             {!progress.data.reachable || progress.data.repairWindow.length > 0 ? (
               <Reveal play={first} delay={tileAt(2)} rise={intro.tab.rise}>
-                <ComebackCard repairWindow={progress.data.repairWindow} reachable={progress.data.reachable} />
+                <ComebackCard repairWindow={progress.data.repairWindow} reachable={progress.data.reachable} stage={stage} cosmetics={profile.status === 'ready' && profile.data ? profile.data.equipped : undefined} />
               </Reveal>
             ) : null}
             <Reveal play={first} delay={tileAt(3)} rise={intro.tab.rise}>

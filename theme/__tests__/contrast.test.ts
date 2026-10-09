@@ -93,3 +93,10 @@ describe.each([['dark', dark as Colors], ['light', light]] as const)('barevný s
     expect(contrast(c[t], c.tile)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+// UX pass U5: značky stavů uzlu mapy (fajfka v plném náboji, obrys aktuálního, zámek zamčeného) ≥ 3:1 (WCAG 1.4.11).
+describe.each([['dark', dark as Colors], ['light', light]] as const)('stavy uzlu %s', (_name, c) => {
+  it('fajfka onText na plném náboji text ≥ 4.5:1', () => { expect(contrast(c.onText, c.text)).toBeGreaterThanOrEqual(4.5); });
+  it('náboj i obrys text na base ≥ 3:1', () => { expect(contrast(c.text, c.base)).toBeGreaterThanOrEqual(3); });
+  it('zámek muted na base ≥ 3:1', () => { expect(contrast(c.muted, c.base)).toBeGreaterThanOrEqual(3); });
+});

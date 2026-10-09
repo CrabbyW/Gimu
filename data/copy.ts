@@ -103,7 +103,7 @@ export const copy = {
     // Řádek v popoveru uzlu: „10 KG · 4 EXERCISES · +20 XP“ (velká písmena dělá mono štítek).
     nodeMeta: (kg: number, exercises: string, xp: number) => `${kg} kg · ${exercises} · +${xp} XP`,
     boss: 'BOSS', closePopover: 'Close lesson details',
-    nodeState: { locked: 'locked', current: 'current', done: 'done' },
+    nodeState: { locked: 'locked', current: 'up next', done: 'completed' },
     // Elite fáze 4: VoiceOver ohlásí název, stav a minuty (spec §2.3).
     nodeA11y: (order: number, title: string, kg: number, state: string, minutes: number) => `Lesson ${order}, ${title}, ${state}, about ${minutes} min, ${kg} kilograms`,
     league: (tier: string) => `LEAGUE · ${tier}`,
@@ -183,7 +183,9 @@ export const copy = {
     feelQuestion: 'How did it feel?',
     feel: { easy: 'Easy', right: 'Right', hard: 'Hard' },
     feelDone: { easy: 'Next lessons a bit harder', right: 'Keeping it as is', hard: 'Next lessons a bit easier' },
-    feelError: 'Couldn’t save that. Your lesson still counts.',
+    // Krátká, ať se vedle [TRY AGAIN] vejde do jednoho řádku i na 320 pt.
+    feelError: 'Not saved. Lesson still counts.',
+    feelRetryA11y: 'Try saving how it felt again',
   },
   leagueTier: 'LEAGUE',
   league: {

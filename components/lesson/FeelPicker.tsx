@@ -29,6 +29,7 @@ export function FeelPicker({ onRate, disabled = false }: Props) {
   const [picked, setPicked] = useState<Feel | null>(null);
   const [failed, setFailed] = useState(false);
   const busy = useRef(false);
+  const retrying = useRef(false);
   // Výměna otázky za potvrzení: stejný řádek (výška stojí), nový text se prolne. Jen opacity → i s omezeným pohybem.
   const lineIn = useSharedValue(1);
   const lineStyle = useAnimatedStyle(() => ({ opacity: lineIn.value }));
@@ -43,14 +44,38 @@ export function FeelPicker({ onRate, disabled = false }: Props) {
     setPicked(feel);
     onRate(feel).catch(() => setFailed(true));
   };
+  // QA: chyba uložení nabídne [TRY AGAIN] (stejná volba, idempotentní služba). Během pokusu se neopakuje.
+  const retry = () => {
+    if (!picked || retrying.current) return;
+    retrying.current = true;
+    feedback('tapLight');
+    setFailed(false);
+    onRate(picked).catch(() => setFailed(true)).finally(() => { retrying.current = false; });
+  };
   const line = picked ? (failed ? t.feelError : t.feelDone[picked]) : t.feelQuestion;
   return (
     <View testID="feel-picker" style={{ gap: space.s }}>
-      <Animated.View style={lineStyle}>
+      {/* Řádek otázky/potvrzení; při chybě vpravo [TRY AGAIN] (mono štítek, dotyková plocha 44 přes hitSlop),
+          výška řádku se nemění, [CONTINUE] neposkočí. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
+      <Animated.View style={[{ flex: 1 }, lineStyle]}>
       <Text testID="feel-line" variant="caption" tone={picked ? 'text' : 'muted'} accessibilityLiveRegion="polite" numberOfLines={1} adjustsFontSizeToFit>
         {line}
       </Text>
       </Animated.View>
+      {failed ? (
+        <Pressable
+          testID="feel-retry"
+          onPress={retry}
+          accessibilityRole="button"
+          accessibilityLabel={t.feelRetryA11y}
+          hitSlop={{ top: space.m, bottom: space.m, left: space.s, right: space.s }}
+          style={{ minWidth: size.hit, alignItems: 'flex-end' }}
+        >
+          <Text variant="label">{pillText(copy.common.retry)}</Text>
+        </Pressable>
+      ) : null}
+      </View>
       <View accessibilityRole="radiogroup" accessibilityLabel={t.feelQuestion} style={{ flexDirection: 'row', gap: space.s }}>
         {FEELS.map((f) => {
           const on = picked === f;

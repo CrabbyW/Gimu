@@ -9,7 +9,7 @@ import { copy } from '@/data/copy';
 import { motion, useMotionSafe } from '@/lib/motion';
 import { dots, stroke, useTheme } from '@/theme';
 import { ripplePoints, rotateAround, scanCount, type Pt } from './animate';
-import { plateDots, spiralOrder } from './geometry';
+import { HUB_RATIO, plateDots, spiralOrder } from './geometry';
 import { glowPad, toPoints, useDotInk, type DotTouch } from './ink';
 import { SkiaGuard } from './SkiaGuard';
 
@@ -137,13 +137,15 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
     return { a: -k * step, r: dotR * (dots.plate.cometScale - (dots.plate.cometScale - 1) * t), o: 1 - t };
   });
 
+  const hub = Math.round(2 * (size / 2 - dotR) * HUB_RATIO * dots.plate.hubFill);
+  const ringBox = size + 2 * (tokens.nodeRingGap + stroke.nodeRing);
   const a11y = decorative
     ? { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const }
     : { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel: copy.dots.plateA11y(kg, copy.map.nodeState[state]) };
   const center = locked
     ? <Lock size={tokens.badgeIcon} color={c.muted} strokeWidth={stroke.icon} />
     : state === 'done' && check
-      ? <Check size={tokens.lockIcon} color={c.text} strokeWidth={stroke.check} />
+      ? <Check size={tokens.lockIcon} color={c.onText} strokeWidth={stroke.check} />
       : showKg
         ? <Text variant={size >= dots.plate.dotoMin ? 'dotStat' : 'label'} maxFontSizeMultiplier={1}>{kg}</Text>
         : null;
@@ -175,6 +177,10 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
           </Group>
         </DecorCanvas>
       </SkiaGuard>
+      {/* UX pass U5: stav čitelný tvarem a výplní, ne jasem — dokončený = plný náboj, aktuální = plný obrys vně
+          teček (místo pro pulz motion-agenta), zamčený = jen tlumený vnější prstenec se zámkem. */}
+      {state === 'done' ? <View testID="dotplate-hub" pointerEvents="none" style={{ position: 'absolute', width: hub, height: hub, borderRadius: hub / 2, backgroundColor: c.text }} /> : null}
+      {state === 'current' ? <View testID="dotplate-outline" pointerEvents="none" style={{ position: 'absolute', width: ringBox, height: ringBox, borderRadius: ringBox / 2, borderWidth: stroke.nodeRing, borderColor: c.text }} /> : null}
       {center}
     </View>
   );

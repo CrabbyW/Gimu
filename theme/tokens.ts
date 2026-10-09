@@ -38,7 +38,10 @@ export const size = {
   // Toggle 52×32 s knoflíkem 24 (Task 29), segment slotu Šatníku min. 104 (5 slotů se scrolluje).
   toggleWidth: 52, toggleHeight: 32, toggleKnob: 24, slotSegment: 104,
   // Šatník a profil: náhled opice v Šatníku 160, mini opice na dlaždici 64, šířka kotoučového rámu 14.
-  wardrobePreview: 160, tileMascot: 64, frameRing: 14, badgeIcon: 12,
+  wardrobePreview: 160, tileMascot: 64,
+  // UX pass U5: opička v klíčových momentech — `heroMascot` v dlaždici (zamčená funkce, comeback),
+  // `stateMascot` na celé obrazovce stavu (chyba, prázdno); obojí se vejde nad ohyb na 320 × 568.
+  heroMascot: 96, stateMascot: 160, frameRing: 14, badgeIcon: 12,
   // Sezóna (§7.7): tečka DotGrid 10 a mezera 6 (spec), odznak sezóny v kartě odměny a v recapu,
   // úlomek prasknutí kruhu ve stage-up (r = 6). ProgressBar sdílí stopu `meter`.
   dot: 10, dotGap: 6, seasonBadge: 56, seasonBadgeLarge: 88, shard: 12,
@@ -90,7 +93,9 @@ export const dots = {
   matrix: { pitch: 10, r: 1.6, rLit: 2.2, todayGap: 2.4 },
   /** DotPlate: poloměr tečky = rFrac × R (min rMin); kometa = počet teček ohonu a zvětšení hlavy;
    *  od průměru `dotoMin` nese kotouč kg v Doto (≥ 28 pt), menší uzly mono štítek (Doto pod 28 pt zakázané). */
-  plate: { rFrac: 0.036, rMin: 1, cometDots: 7, cometScale: 1.9, dotoMin: 144 },
+  plate: { rFrac: 0.036, rMin: 1, cometDots: 7, cometScale: 1.9, dotoMin: 144,
+    // UX pass U5: dokončený = plný náboj (poloměr × vnitřní prstenec), fajfka v něm inverzně (`onText`).
+    hubFill: 0.72 },
   /** DotRing (obr. 3): vnitřní prstenec (počet teček, poloměr ×R, tečka ×R) a vnější rozptýlený disk (od ×R, rozteč ×R, tečka ×R). */
   ring: { count: 32, inner: 0.46, innerDot: 0.042, outerFrom: 0.62, outerPitch: 0.074, outerDot: 0.013 },
   /** Tečkovaná cesta mapy: rozteč teček po křivce a poloměr. */

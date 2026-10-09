@@ -33,13 +33,12 @@ export function FeatureLocked({ what, left, done, need, stage, cosmetics, onCta 
   return (
     <IntentScrollView testID="feature-locked" contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
       <Tile style={{ gap: space.m }}>
-        {/* Opička vedle štítku (dlaždicová velikost 64), ať se pilulka vejde nad ohyb i na 320 × 568. */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
-            <Lock size={size.lockIcon} color={c.muted} strokeWidth={stroke.icon} />
-            <Text variant="label" tone="muted">{copy.disclosure.kicker}</Text>
-          </View>
-          <Mascot stage={stage} mood="idle" size={size.tileMascot} cosmetics={cosmetics} decorative hop={false} />
+        {/* UX pass U5: opička nahoře jako hrdina dlaždice (`heroMascot` 96, jediná barva), pod ní štítek se zámkem.
+            Vše zarovnané vlevo do jedné osy; pilulka se stále vejde nad ohyb i na 320 × 568. */}
+        <Mascot stage={stage} mood="idle" size={size.heroMascot} cosmetics={cosmetics} decorative hop={false} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
+          <Lock size={size.lockIcon} color={c.muted} strokeWidth={stroke.icon} />
+          <Text variant="label" tone="muted">{copy.disclosure.kicker}</Text>
         </View>
         <View style={{ gap: space.xs }}>
           <Text variant="headline" accessibilityRole="header">{copy.disclosure.unlocksIn(left)}</Text>
