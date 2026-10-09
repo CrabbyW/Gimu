@@ -8,6 +8,7 @@ import { DotField, DotRing, ScrollIntentProvider, useDotTouch, useScrollIntent }
 import { backgroundPitch } from '@/components/dots/geometry';
 import { FinishSetupTile } from '@/components/map/FinishSetupTile';
 import { LessonMap } from '@/components/map/LessonMap';
+import { ReturnLine } from '@/components/map/ReturnLine';
 import { GuideBubble } from '@/components/mascot/GuideBubble';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { useMascotLine } from '@/hooks/useMascotLine';
@@ -31,6 +32,7 @@ import { useLessonMinutes } from '@/hooks/useLessonMinutes';
 import { useLessonPath } from '@/hooks/useLessonPath';
 import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
+import { useReturnLine } from '@/hooks/useReturnLine';
 import { dots, opacity, useShort, useTheme } from '@/theme';
 
 /** Nástup hlavičky (motion.screenIn): shared value, ne layout animace (ta na webu nechá prvek `absolute`). */
@@ -69,6 +71,8 @@ export default function TrainingScreen() {
   const viewData = view.status === 'ready' ? view.data : null;
   const minutesOf = useLessonMinutes(viewData, data?.fitnessTest, data?.progression);
   const stats = useProfileStats(data);
+  // UX pass U4: „Next: <lekce> · N min“ a stav série pod pokrokem sekce.
+  const returnLine = useReturnLine(data, viewData, minutesOf);
   // Liga při načtení vyhodnotí uplynulý týden (postup/sestup), i když mapa úroveň už neukazuje.
   useLeague();
   // Po sekvenci se parametr smaže, aby se při návratu na tab nepřehrála znovu.
@@ -202,6 +206,10 @@ export default function TrainingScreen() {
             onLayout={(e) => onOverlayLayout(Math.round(e.nativeEvent.layout.height))}
             style={{ position: 'absolute', left: 0, right: 0, top: 0 }}
           >
+          {/* Plné `base` pod textem hlavičky, pokroku a řádku Next: závoj tu je stejně neprůhledný (stopa 1 až do
+              `overlayH − space.s`), ale popisky uzlů odjeté pod hlavičku tak spolehlivě zmizí i při velkém písmu,
+              kdy hlavička naroste dřív, než mapa dostane nové odsazení. */}
+          <View pointerEvents="box-none" style={{ backgroundColor: c.base }}>
           {/* Nástup obrazovky (motion.screenIn): hlavička 0 → hero 80 (vnitřní sled SectionHero) → kotouče mapy. */}
           <Reveal play={intro} delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={HEADER_IN}>
           <ScreenHeader
@@ -219,6 +227,13 @@ export default function TrainingScreen() {
           {/* Nízký displej v prvním průchodu (svítí bublina): prázdná řada pokroku 0/9 ustoupí, aby aktuální kotouč
               i s opičkou a popiskem zůstal mezi překryvem a CTA. Po startu lekce se vrátí. */}
           {short && bubbleId && currentId ? null : <SectionHero view={viewData} intro={intro} />}
+          {/* Důvod se vrátit (U4). Při bublině průvodce mlčí: ta už říká, co udělat, a first run má být řídký. */}
+          {returnLine && !bubbleId ? (
+            <Reveal play={intro} delay={motion.screenIn.heroAt} rise={motion.screenIn.rise}>
+              <ReturnLine line={returnLine} />
+            </Reveal>
+          ) : null}
+          </View>
           {/* Karta „První lekce“ zrušena: minuty a XP nese popisek aktuálního uzlu, mapě zůstane výška. */}
           {sad ? (
             <Card style={{ marginHorizontal: space.l, marginTop: space.s, gap: space.xs }}>

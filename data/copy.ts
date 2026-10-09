@@ -228,7 +228,7 @@ export const copy = {
     tierKicker: 'TIER',
     tierInitial: (tier: string) => String(tier).slice(0, 1).toUpperCase(),
     tierA11y: (tier: string, level: number, total: number) => `${tier} league, tier ${level} of ${total}`,
-    podiumKicker: 'TOP 3 THIS WEEK',
+    podiumKicker: 'TOP 3 · WEEK',
     climbCta: 'Do a lesson',
   },
   progress: {
@@ -417,7 +417,7 @@ export const copy = {
     // Cíl už nejde stihnout. Nikdy „prohráno“ (spec §7.7): recap počítá každou lekci.
     unreachable: 'You can’t hit the full goal this season anymore. Every lesson still counts toward your recap.',
     rewardTitle: 'Reward', rewardItem: (season: string) => `${season} scarf and badge`, rewardNever: 'Never coming back',
-    recapCta: 'Your recap', claimedNote: 'Reward claimed.',
+    recapCta: 'Your recap', claimedNote: 'Reward claimed',
     // Modal cíle.
     goalTitle: 'Season goal', goalLead: 'One goal for the whole season. You can change it until the season ends.',
     goalValue: { activeDays: 'Number of days', lessons: 'Number of lessons', weight: 'Weight change' },
@@ -562,6 +562,27 @@ export const copy = {
     celebrationFirst: 'That’s your first plate',
     kicker: 'MONKEY',
     dismissA11y: 'Dismiss tip',
+  },
+  // UX pass U4: progresivní odhalení. Zamčené funkce zůstanou vidět s klidnou pozvánkou (ne skryté).
+  disclosure: {
+    kicker: 'LOCKED',
+    unlocksIn: (n: number) => `Unlocks after ${n} more ${plural(n, 'lesson', 'lessons')}`,
+    tally: (done: number, need: number) => `${done} / ${need}`,
+    tallyA11y: (done: number, need: number) => `${done} of ${need} lessons done`,
+    what: {
+      league: 'A weekly table with people at your level. Lessons earn XP and move you up.',
+      season: 'One goal for the whole season, with a reward you keep. Every lesson counts.',
+      wardrobe: 'Outfits, accessories and frames for your monkey, bought with bananas from XP.',
+    },
+    cta: 'Do a lesson',
+    tabA11y: (title: string, n: number) => `${title}, locked, unlocks after ${n} more ${plural(n, 'lesson', 'lessons')}`,
+    tileA11y: (title: string, n: number) => `${title}, locked, unlocks after ${n} more ${plural(n, 'lesson', 'lessons')}`,
+  },
+  // UX pass U4: řádek „důvod se vrátit“ pod pokrokem sekce na mapě. Věty sentence case, bez výčitky.
+  returnLine: {
+    next: (title: string, minutes: number) => keepUnits(`Next: ${title} · ${minutes} min`),
+    atRisk: 'Streak ends tonight.',
+    done: 'Done today · see you tomorrow.',
   },
   // Krátký onboarding (elite fáze 1): cíle se doplní až po první lekci.
   setup: {

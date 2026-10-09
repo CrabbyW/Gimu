@@ -36,7 +36,7 @@ export function LineBubble({ text, arrowX, style }: Props) {
           borderWidth: StyleSheet.hairlineWidth, borderColor: c.edge,
         }}
       >
-        <Text variant="telemetry" numberOfLines={2} style={{ textAlign: 'center' }}>{text.toUpperCase()}</Text>
+        <Text variant="caption" numberOfLines={2} style={{ textAlign: 'center' }}>{text}</Text>
       </View>
       <View
         importantForAccessibility="no-hide-descendants"

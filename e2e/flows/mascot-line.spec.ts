@@ -41,7 +41,7 @@ test('mapa: ťuknutí na opičku ukáže repliku a po 2.4 s + odchodu zmizí', a
   const t0 = Date.now();
   const label = await bubble.locator('[aria-label]').first().getAttribute('aria-label');
   expect(LINES.has(label ?? '')).toBe(true);
-  await expect(bubble).toContainText((label ?? '').toUpperCase());
+  await expect(bubble).toContainText(label ?? '');
   await expectGeometry(page);
   // Visí ještě těsně před koncem, pak odejde (nejpozději po odchodu + rezerva).
   await page.waitForTimeout(Math.max(0, SHOW_MS - 1200 - (Date.now() - t0)));

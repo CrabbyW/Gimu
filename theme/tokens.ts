@@ -59,6 +59,8 @@ export const size = {
   nodeLabel: 200, previewPlate: 48, badgeTile: 64, ghostRow: 12, wheelVisible: 5,
   // Zámek vedle titulku zamčené karty 16, v náboji zamčeného uzlu a u zamčeného odznaku 12 (`badgeIcon`).
   lockIcon: 16, sheetGripH: 4,
+  // UX pass U4: malý zámek v rohu ikony zamčeného tabu (Liga, Sezóna před odemčením).
+  tabLock: 10,
   // Progres: sloupec data týdne vlevo od mřížky aktivity („29. 12.“ v caption).
   weekCol: 48,
   // Mřížka aktivity (§3.3): odcvičený dnešek = plná tečka + prstenec `accentGraphic` s touto mezerou.

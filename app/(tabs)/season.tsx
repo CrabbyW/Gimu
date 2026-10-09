@@ -10,11 +10,13 @@ import { SeasonHeader } from '@/components/season/SeasonHeader';
 import { Reveal, tileAt, useFirstShow } from '@/components/ui/choreo';
 import { DotLoader, DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { FeatureLocked } from '@/components/ui/FeatureLocked';
 import { PillButton } from '@/components/ui/PillButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
+import { useDisclosure } from '@/hooks/useDisclosure';
 import { useDisplayStage } from '@/hooks/useDisplayStage';
 import { useNow } from '@/hooks/useNow';
 import { useProfile } from '@/hooks/useProfile';
@@ -39,7 +41,12 @@ export default function SeasonScreen() {
   const headerIn = useFirstShow('hdr:season');
   const { c } = useTheme();
   const status = useSeasonStatus();
-  const season = status.status === 'ready' && status.data ? status.data.season : null;
+  // UX pass U4: nováček vidí sezónu až po 5 lekcích; do té doby klidná pozvánka (bez názvu a termínu sezóny).
+  const gate = useDisclosure().gate('season');
+  const profile = useProfile();
+  const stats = useProfileStats(profile.status === 'ready' ? profile.data : null);
+  const gated = !gate.open && profile.status === 'ready' && profile.data !== null;
+  const season = status.status === 'ready' && status.data && !gated ? status.data.season : null;
   return (
     <ReactiveBackground style={{ backgroundColor: c.base }}>
       <ScreenHeader
@@ -50,7 +57,12 @@ export default function SeasonScreen() {
           right: copy.season.range(shortDate(season.startDate), shortDate(season.endDate)),
         } : undefined}
       />
-      {status.status === 'loading' ? <DotLoaderScreen edges={[]} />
+      {gated && profile.data ? (
+        <FeatureLocked
+          what={copy.disclosure.what.season} left={gate.left} done={gate.done} need={gate.need}
+          stage={stats?.stage ?? 1} cosmetics={profile.data.equipped} onCta={() => router.navigate('/(tabs)')}
+        />
+      ) : status.status === 'loading' ? <DotLoaderScreen edges={[]} />
         : status.status === 'error' ? <ErrorState edges={[]} what={copy.season.errorWhat} onRetry={status.retry} />
           : status.data === null ? <NoSeason />
             : <SeasonBody status={status.data} />}

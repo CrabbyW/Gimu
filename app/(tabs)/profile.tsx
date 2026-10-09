@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ChevronRight, Settings, Shirt } from 'lucide-react-native';
+import { ChevronRight, Lock, Settings, Shirt } from 'lucide-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -19,6 +19,7 @@ import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { useBadgeProgress } from '@/hooks/useBadgeProgress';
 import { useCountUp } from '@/hooks/useCountUp';
+import { disclosureOf } from '@/hooks/useDisclosure';
 import { useDisplayStage } from '@/hooks/useDisplayStage';
 import { usePathOptions } from '@/hooks/useOnboardingDraft';
 import { useProfile } from '@/hooks/useProfile';
@@ -73,6 +74,7 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
   const cols = tileColumns(width, fontScale);
   const stats = useProfileStats(profile);
   const stage = useDisplayStage(stats?.stage ?? 1);
+  const wardrobe = disclosureOf(profile).gate('wardrobe');
   // Motion: úvodní sled jen při prvním zobrazení tabu. Rám se rozevře, opice v něm dosedne pružinou,
   // XP napočítá (700 ms expo.out), pak dlaždice, odznaky a Šatník po 70 ms.
   const first = useFirstShow('tab:profile');
@@ -147,16 +149,37 @@ function ProfileBody({ profile }: { profile: UserProfile }) {
       </Reveal>
 
       <Reveal play={first} delay={P.xpAt + T.step * 2} rise={T.rise}>
-        <Tile onPress={() => router.push('/wardrobe')} accessibilityLabel={copy.profile.wardrobe} accessibilityHint={copy.profile.wardrobeLine}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
-            <Shirt size={size.icon} color={c.text} strokeWidth={stroke.icon} />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text variant="headline">{copy.profile.wardrobe}</Text>
-              <Text variant="caption" tone="muted">{copy.profile.wardrobeLine}</Text>
+        {/* UX pass U4: Šatník po 2 lekcích. Zamčená dlaždice zůstane na místě, bez šipky a bez ťuknutí:
+            zámek místo šipky, místo popisu „Unlocks after N more lessons“ (co to je, řekne čtečka v hintu). */}
+        {wardrobe.open ? (
+          <Tile onPress={() => router.push('/wardrobe')} accessibilityLabel={copy.profile.wardrobe} accessibilityHint={copy.profile.wardrobeLine}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}>
+              <Shirt size={size.icon} color={c.text} strokeWidth={stroke.icon} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text variant="headline">{copy.profile.wardrobe}</Text>
+                <Text variant="caption" tone="muted">{copy.profile.wardrobeLine}</Text>
+              </View>
+              <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
             </View>
-            <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
-          </View>
-        </Tile>
+          </Tile>
+        ) : (
+          <Tile>
+            <View
+              testID="wardrobe-locked"
+              accessible
+              accessibilityLabel={copy.disclosure.tileA11y(copy.profile.wardrobe, wardrobe.left)}
+              accessibilityHint={copy.disclosure.what.wardrobe}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: space.m }}
+            >
+              <Shirt size={size.icon} color={c.faint} strokeWidth={stroke.icon} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text variant="headline" tone="muted">{copy.profile.wardrobe}</Text>
+                <Text variant="caption" tone="muted">{copy.disclosure.unlocksIn(wardrobe.left)}</Text>
+              </View>
+              <Lock size={size.lockIcon} color={c.faint} strokeWidth={stroke.icon} />
+            </View>
+          </Tile>
+        )}
       </Reveal>
     </IntentScrollView>
   );

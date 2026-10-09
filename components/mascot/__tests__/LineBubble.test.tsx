@@ -22,10 +22,10 @@ const render = (text: string, scheme: Scheme = 'dark') => {
 };
 
 describe('LineBubble', () => {
-  it.each<Scheme>(['dark', 'light'])('ukáže repliku verzálkami mono, max. 2 řádky (%s)', (scheme) => {
+  it.each<Scheme>(['dark', 'light'])('ukáže repliku větou (sentence case, UX pass U4), max. 2 řádky (%s)', (scheme) => {
     const r = render('Day by day. Nice.', scheme);
     const t = r.root.findByType(Text);
-    expect(t.props.children).toBe('DAY BY DAY. NICE.');
+    expect(t.props.children).toBe('Day by day. Nice.');
     expect(t.props.numberOfLines).toBe(2);
     act(() => r.unmount());
   });

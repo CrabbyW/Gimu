@@ -95,7 +95,7 @@ export default function DevScreen() {
             <Text variant="bodyStrong" style={{ color: c.danger }}>{copy.dev.reset}</Text>
           </Pressable>
         </Group>
-        {note ? <Text variant="label" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
+        {note ? <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
         <DotGallery />
       </ScrollView>
     </Screen>

@@ -89,6 +89,11 @@ export async function textCollisions(page: Page, tol = 1) {
       }
       return true;
     };
+    // `elementsFromPoint` přeskakuje prvky s `pointer-events: none` (RN `pointerEvents="box-none"` překryvy, např.
+    // hlavička mapy): vizuálně ale kryjí. Po dobu měření se proto hit-test zapne všem prvkům (U4).
+    const hit = document.createElement('style');
+    hit.textContent = '*:not(#__hit_test__) { pointer-events: auto !important; }';
+    document.head.appendChild(hit);
     (window as unknown as { __textCount: number }).__textCount = 0;
     const items: { text: string; el: Element; r: { left: number; right: number; top: number; bottom: number } }[] = [];
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -115,6 +120,7 @@ export async function textCollisions(page: Page, tol = 1) {
       const oy = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
       if (ox > t && oy > t) out.push(`kolize: „${a.text}“ × „${b.text}“`);
     }
+    hit.remove();
     return out;
   }, tol);
 }

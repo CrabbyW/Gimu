@@ -10,15 +10,18 @@ import { useMascotReactions, type MascotReaction } from '@/components/mascot';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { FeatureLocked } from '@/components/ui/FeatureLocked';
 import { LockedPreview } from '@/components/ui/LockedPreview';
 import { PillButton } from '@/components/ui/PillButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
+import { useDisclosure } from '@/hooks/useDisclosure';
 import { useLeague } from '@/hooks/useLeague';
 import { useNow } from '@/hooks/useNow';
 import { useProfile } from '@/hooks/useProfile';
+import { useProfileStats } from '@/hooks/useProfileStats';
 import { tierName } from '@/hooks/useTierName';
 import { formatCountdown, isLeagueLocked } from '@/logic/league';
 import { intro, motion, stagger } from '@/lib/motion';
@@ -67,12 +70,16 @@ export default function LeagueScreen() {
   const loading = league.status === 'loading' || profile.status === 'loading';
   const view = league.status === 'ready' ? league.data : null;
   const left = view ? formatCountdown(view.endsAt.getTime() - now.getTime()) : null;
+  // UX pass U4: nováček vidí ligu až po 3 lekcích; do té doby klidná pozvánka bez úrovně a odpočtu.
+  const gate = useDisclosure().gate('league');
+  const stats = useProfileStats(profile.status === 'ready' ? profile.data : null);
+  const gated = !gate.open && profile.status === 'ready' && profile.data !== null;
   return (
     <ReactiveBackground style={{ backgroundColor: c.base }}>
       <ScreenHeader
         intro={headerIn}
         title={copy.tabs.league}
-        status={view && left ? {
+        status={view && left && !gated ? {
           left: copy.league.statusTier(tierName(view.tier)),
           right: copy.league.statusEnds(left.d, left.h),
           live: true,
@@ -81,7 +88,12 @@ export default function LeagueScreen() {
       />
       {loading ? <DotLoaderScreen edges={[]} />
         : league.status === 'error' ? <ErrorState edges={[]} what={copy.league.errorWhat} onRetry={league.retry} />
-          : locked ? <LockedLeague view={league.data} />
+          : gated && profile.data ? (
+            <FeatureLocked
+              what={copy.disclosure.what.league} left={gate.left} done={gate.done} need={gate.need}
+              stage={stats?.stage ?? 1} cosmetics={profile.data.equipped} onCta={toMap}
+            />
+          ) : locked ? <LockedLeague view={league.data} />
             : <Standings view={league.data} />}
     </ReactiveBackground>
   );

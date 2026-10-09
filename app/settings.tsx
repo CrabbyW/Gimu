@@ -136,7 +136,7 @@ export default function SettingsScreen() {
             <PressRow last onPress={() => void sendTest()} disabled={testDisabled} accessibilityLabel={copy.settings.sendTest}>
               <View style={{ flex: 1, gap: space.xs }}>
                 <Text variant="body">{copy.settings.sendTest}</Text>
-                {note ? <Text variant="telemetry" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
+                {note ? <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
               </View>
               <ChevronRight size={size.icon} color={c.muted} strokeWidth={stroke.icon} />
             </PressRow>
