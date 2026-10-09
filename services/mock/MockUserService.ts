@@ -1,3 +1,4 @@
+import { applyFeel } from '@/logic/progression';
 import { sanitizeTest } from '@/logic/fitnessTest';
 import { applyGoalsPatch, type GoalsPatch } from '@/logic/goals';
 import { buildInitialProfile } from '@/logic/onboarding';
@@ -51,6 +52,11 @@ export class MockUserService implements UserService {
     const p = requireProfile();
     const fitnessTest = { ...sanitizeTest(t), testedAt: now.toISOString(), ...(t.readiness ? { readiness: t.readiness } : {}) };
     useDb.getState().setProfile({ ...p, fitnessTest });
+  }
+  async rateLesson(attemptId: string, feel: 'easy' | 'right' | 'hard') {
+    const p = requireProfile();
+    const progression = applyFeel(p.progression, attemptId, feel);
+    if (progression !== p.progression) useDb.getState().setProfile({ ...p, progression });
   }
   async completeSetup() {
     const p = requireProfile();

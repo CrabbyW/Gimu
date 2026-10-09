@@ -67,7 +67,7 @@ export default function TrainingScreen() {
   const data = profile.status === 'ready' ? profile.data : null;
   const view = useLessonPath(data?.path);
   const viewData = view.status === 'ready' ? view.data : null;
-  const minutesOf = useLessonMinutes(viewData, data?.fitnessTest);
+  const minutesOf = useLessonMinutes(viewData, data?.fitnessTest, data?.progression);
   const stats = useProfileStats(data);
   // Liga při načtení vyhodnotí uplynulý týden (postup/sestup), i když mapa úroveň už neukazuje.
   useLeague();

@@ -1107,3 +1107,8 @@ Otevřené: na iPhonu ověřit dech skeletonu a prolnutí popisků se zapnutým 
 - Otevřené: světlý motiv (#F1F3F5) nebo motiv nastavený v appce proti systému: splash je vždy tmavý, takže při předání bude skok (chce to `dark`/light variantu splashe s vlastní ikonou, rozhodne design). iPhone: ověřit, že mezi splashem a intrem nic nebliká, a jemnou haptiku pulzu.
 
 - qa-agent (intro OPICE, HEAD 7063fb3): SCHVÁLENO. jest 799/799, test:node 25/25, e2e:perf zelené; TTI mapy s intrem 2.2 s (tap 2.16 s, Reduce Motion 2.0 s) — intro start nezdržuje. loadFailed se pod intrem nezasekne, onDone jednou, takeIntro jednou za kontext, log bez ERROR. Otevřené (⚠️): tmavý splash ve světlém motivu = záblesk při startu (design/boss, řešení `dark` varianta splashe v nativním buildu).
+
+## boss — UX pass, logika (U1, U2, U4)
+- Zadání uživatele „do it all“ k 10 bodům UX kritiky. Spec `docs/superpowers/specs/2026-10-09-ux-pass-design.md` (podprojekty U1–U6).
+- Udělal: `nextFlowPhase` + `REST` (pauza 30 s, +15 s, strop 90) v `logic/lessonFlow.ts`; `logic/progression.ts` (easy/right/hard ±10 %, 0.7–1.3, idempotentní, × vstupní test) + `rateLesson` služba, škálování v lekci/minutách/připomínce; `logic/disclosure.ts` (Šatník 2, Liga 3, Sezóna 5 lekcí, staré profily vše otevřené; `streakRisk`). Testy ke všemu.
+- Rozhodl sám: hodnoty v závorkách výše; zamčené taby zůstanou vidět s vysvětlením (stabilní tab bar).

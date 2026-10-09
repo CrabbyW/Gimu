@@ -110,3 +110,14 @@ describe('vstupní test škáluje dávky (elite fáze 5)', () => {
     expect(useDb.getState().profile!.trainingDebt?.reps).toBe(6);
   });
 });
+
+describe('hodnocení lekce upraví dávky (UX pass U2)', () => {
+  test('2× easy → +20 %; stejný pokus podruhé nic', async () => {
+    await services.user.completeOnboarding({ path: 'bodyControl', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' } });
+    await services.user.rateLesson('a1', 'easy');
+    await services.user.rateLesson('a1', 'easy');
+    await services.user.rateLesson('a2', 'easy');
+    expect(useDb.getState().profile!.progression?.factor).toBe(1.2);
+    expect((await services.lessons.getLesson('bc-1-1')).exercises.map((e) => e.amount)).toEqual([35, 25, 14]);
+  });
+});

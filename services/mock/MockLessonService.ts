@@ -1,3 +1,4 @@
+import { combineScale } from '@/logic/progression';
 import { scaledAmount, scaleFromTest } from '@/logic/fitnessTest';
 import { EXERCISES } from '@/data/exercises';
 import { EMPTY_DEBT, lessonExtras } from '@/logic/adaptive';
@@ -35,7 +36,9 @@ export class MockLessonService implements LessonService {
   async getLesson(id: string) {
     const lesson = LESSONS.find((l) => l.id === id);
     if (!lesson) throw new Error(`Lekce ${id} neexistuje.`);
-    const scale = scaleFromTest(useDb.getState().profile?.fitnessTest);
+    const prof = useDb.getState().profile;
+    // Vstupní test × osobní korekce z hodnocení lekcí (UX pass U2).
+    const scale = combineScale(scaleFromTest(prof?.fitnessTest), prof?.progression);
     const exercises = lesson.exerciseIds.map((eid) => {
       const e: Exercise | undefined = EXERCISES[eid];
       if (!e) throw new Error(`Cvik ${eid} v lekci ${id} neexistuje.`);

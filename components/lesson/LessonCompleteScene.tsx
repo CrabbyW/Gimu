@@ -163,7 +163,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   const pathId = profile.status === 'ready' ? profile.data?.path : undefined;
   const path = useLessonPath(pathId);
   const view = path.status === 'ready' ? path.data : null;
-  const minutes = useLessonMinutes(view, profile.status === 'ready' ? profile.data?.fitnessTest : undefined);
+  const minutes = useLessonMinutes(view, profile.status === 'ready' ? profile.data?.fitnessTest : undefined, profile.status === 'ready' ? profile.data?.progression : undefined);
   const tomorrow = useMemo(() => tomorrowOf(view, minutes), [view, minutes]);
   const title = result.xp.baseKind === 'replay' ? t.replayTitle : t.title;
 

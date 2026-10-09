@@ -26,6 +26,10 @@ export interface FitnessTest {
   readiness?: 'clear' | 'consult';
 }
 
+/** UX pass U2: hodnocení lekce a osobní korekce dávek (`logic/progression.ts`). */
+export type Feel = 'easy' | 'right' | 'hard';
+export interface Progression { factor: number; rated: string[] }
+
 export interface UserProfile {
   path: PathId;
   dreamBody: string;
@@ -54,6 +58,8 @@ export interface UserProfile {
   demo?: boolean;
   /** Elite fáze 5: chybí = dávky bez škálování (výchozí). */
   fitnessTest?: FitnessTest;
+  /** UX pass U2: chybí = korekce 1. */
+  progression?: Progression;
 }
 
 export interface OnboardingInput {
