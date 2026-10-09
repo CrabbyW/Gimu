@@ -95,6 +95,21 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
     const b = motion.breath;
     return b.low + (1 - b.low) * (0.5 + 0.5 * Math.cos(clock.value * TAU * TURNS_BREATH));
   });
+  // Dech obrysu aktuálního uzlu (U5): stejná hodina a fáze jako záře, amplituda `outlinePulse`. Po zobrazení
+  // (mount nebo konec odemčení) začne na vrcholu a do dechu se prolne za `blendMs`: plný obrys hned, bez skoku.
+  const pulseOn = state === 'current' && !unlocking && !reduced && clock !== null;
+  const blend = useSharedValue(0);
+  useEffect(() => {
+    if (!pulseOn) return;
+    blend.value = 0;
+    blend.value = withTiming(1, { duration: motion.outlinePulse.blendMs, easing: ease.sine, reduceMotion: ReduceMotion.Never });
+  }, [pulseOn, blend]);
+  const OUT_LOW = motion.outlinePulse.low;
+  const outline = useDerivedValue(() => {
+    if (!clock) return 1;
+    const k = OUT_LOW + (1 - OUT_LOW) * (0.5 + 0.5 * Math.cos(clock.value * TAU * TURNS_BREATH));
+    return 1 - blend.value * (1 - k);
+  });
   const shake = useShake(shakeKey, reduced);
   const feedback = usePressFeedback(0.94);
   const slop = Math.max(0, (size.hitLarge - nodeSize) / 2);
@@ -121,7 +136,7 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
           // `rotation`/`comet` napojí motion-agent (ambientní rotace, roztočení).
           <DotPlate
             kg={kg} size={nodeSize} state={state} check={!(justCompleted || checkHidden)} decorative
-            rotation={rotation ?? ownRotation} comet={comet ?? ownComet} breath={state === 'current' ? breath : undefined}
+            rotation={rotation ?? ownRotation} comet={comet ?? ownComet} breath={state === 'current' ? breath : undefined} outline={pulseOn ? outline : undefined}
             touch={spinnable ? spin.touch : undefined} intro={intro ?? false}
           />
         )}
@@ -172,7 +187,7 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked, rotation }: { kg: Plate
       </Animated.View>
       <Animated.View style={[{ position: 'absolute' }, solid]}>
         {/* Stejné natočení jako ambient po odemčení: výměna za běžný kotouč nedá skok. */}
-        <DotPlate kg={kg} size={size} state="current" decorative rotation={rotation} />
+        <DotPlate kg={kg} size={size} state="current" decorative rotation={rotation} outline={trim} />
       </Animated.View>
       <View pointerEvents="none" style={{ position: 'absolute', left: inset, top: inset, width: ring, height: ring, transform: [{ rotate: '-90deg' }] }}>
         <Svg aria-hidden width={ring} height={ring}>

@@ -1,8 +1,10 @@
 import { Lock } from 'lucide-react-native';
 import { View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { DotRow, IntentScrollView } from '@/components/dots';
 import { Mascot } from '@/components/mascot';
 import { copy } from '@/data/copy';
+import { enterSafe, motion, useMotionSafe } from '@/lib/motion';
 import type { CosmeticSlot, MascotStage } from '@/types';
 import { dots, useTheme } from '@/theme';
 import { PillButton } from './PillButton';
@@ -30,12 +32,16 @@ interface Props {
  */
 export function FeatureLocked({ what, left, done, need, stage, cosmetics, onCta }: Props) {
   const { c, space, size, stroke } = useTheme();
+  const { reduced } = useMotionSafe();
   return (
     <IntentScrollView testID="feature-locked" contentContainerStyle={{ paddingHorizontal: space.l, paddingBottom: space.xxxl, gap: space.m }}>
       <Tile style={{ gap: space.m }}>
         {/* UX pass U5: opička nahoře jako hrdina dlaždice (`heroMascot` 96, jediná barva), pod ní štítek se zámkem.
             Vše zarovnané vlevo do jedné osy; pilulka se stále vejde nad ohyb i na 320 × 568. */}
-        <Mascot stage={stage} mood="idle" size={size.heroMascot} cosmetics={cosmetics} decorative hop={false} />
+        {/* Nástup opičky (U5): krátký zdvih s prolnutím; omezený pohyb = `calmFade`. */}
+        <Animated.View entering={enterSafe(reduced, 0, motion.mascotReveal.rise)}>
+          <Mascot stage={stage} mood="idle" size={size.heroMascot} cosmetics={cosmetics} decorative hop={false} />
+        </Animated.View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
           <Lock size={size.lockIcon} color={c.muted} strokeWidth={stroke.icon} />
           <Text variant="label" tone="muted">{copy.disclosure.kicker}</Text>

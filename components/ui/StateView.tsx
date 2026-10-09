@@ -4,7 +4,7 @@ import Animated, { Easing, ReduceMotion, cancelAnimation, useAnimatedStyle, useS
 import type { Edge } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/mascot';
 import { copy } from '@/data/copy';
-import { ease, motion, useMotionSafe } from '@/lib/motion';
+import { ease, enterSafe, motion, useMotionSafe } from '@/lib/motion';
 import { opacity, useTheme } from '@/theme';
 import { Button } from './Button';
 import { Screen } from './Screen';
@@ -60,12 +60,16 @@ function ErrorBody({ what, message, actionLabel, onRetry, edges }: Extract<Props
 
 function EmptyBody({ message, title, actionLabel, onAction, inline, edges }: Extract<Props, { kind: 'empty' }>) {
   const { space, size } = useTheme();
+  const { reduced } = useMotionSafe();
   if (inline) return <Text variant="caption" tone="muted">{message}</Text>;
   return (
     <Screen edges={edges}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: space.m }}>
         {/* UX pass U5: prázdná obrazovka = pozvánka s opičkou (klidná, ne smutná), pak titulek a věta. */}
-        <Mascot stage={1} mood="idle" size={size.stateMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
+        {/* Nástup opičky (U5): krátký zdvih s prolnutím; omezený pohyb = `calmFade`. */}
+        <Animated.View entering={enterSafe(reduced, 0, motion.mascotReveal.rise)}>
+          <Mascot stage={1} mood="idle" size={size.stateMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
+        </Animated.View>
         {title ? <Text variant="title">{title}</Text> : null}
         <Text tone="muted">{message}</Text>
         {actionLabel && onAction ? <Button label={actionLabel} onPress={onAction} variant="secondary" /> : null}

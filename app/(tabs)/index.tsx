@@ -177,6 +177,7 @@ export default function TrainingScreen() {
                 // Pod posledním uzlem: tab bar + pilulka CTA, ať jde poslední prvek odscrollovat nad ně.
                 footerSpace={clearance + (currentId ? size.pill + space.m * 2 : space.m)}
                 reactions={reactions}
+                greet={stats.isNew}
                 line={mascotLine.line?.text ?? null}
                 onMascotTap={mascotLine.say}
               />

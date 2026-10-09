@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { DotField, DotMatrix, DotPlate, DotRing, DotRow, SkiaGuard } from '@/components/dots';
+import type { SharedValue } from 'react-native-reanimated';
+import { motion } from '@/lib/motion';
 import { skiaState } from '@/lib/skiaReady';
 import { buildTheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
@@ -18,6 +20,7 @@ const render = (ui: ReactElement, scheme: 'dark' | 'light' = 'dark') => {
 /** Skia props mohou být sdílené hodnoty (pohyb na UI vlákně): test čte aktuální hodnotu. */
 const val = (p: unknown): unknown => (p !== null && typeof p === 'object' && 'value' in p ? (p as { value: unknown }).value : p);
 const byTestId = (root: TestRenderer.ReactTestInstance, id: string) => root.findAll((n) => n.props.testID === id);
+const hostByTestId = (root: TestRenderer.ReactTestInstance, id: string) => byTestId(root, id).filter((n) => typeof n.type === 'string');
 
 afterEach(() => { skiaState.ready = true; });
 beforeEach(() => { skiaState.ready = true; });
@@ -88,6 +91,18 @@ describe('DotPlate stavy (U5)', () => {
     const root = render(<DotPlate kg={10} size={72} state={s} />);
     expect(byTestId(root, 'dotplate-hub').length > 0).toBe(s === 'done');
     expect(byTestId(root, 'dotplate-outline').length > 0).toBe(s === 'current');
+  });
+  test('obrys aktuálního: bez dechu statický plný, s dechem opacita a scale z hodnoty (U5 motion)', () => {
+    const flat = (n: TestRenderer.ReactTestInstance) => Object.assign({}, ...[n.props.style].flat(3).filter(Boolean)) as { opacity?: number; transform?: { scale: number }[] };
+    const still = flat(hostByTestId(render(<DotPlate kg={10} size={72} state="current" />), 'dotplate-outline')[0]!);
+    expect(still.opacity).toBe(1);
+    expect(still.transform?.[0]?.scale).toBe(1);
+    const lowSv = { value: motion.outlinePulse.low } as SharedValue<number>;
+    const low = flat(hostByTestId(render(<DotPlate kg={10} size={72} state="current" outline={lowSv} />), 'dotplate-outline')[0]!);
+    expect(low.opacity).toBeCloseTo(motion.outlinePulse.low);
+    expect(low.transform?.[0]?.scale).toBeCloseTo(1);
+    const peak = flat(hostByTestId(render(<DotPlate kg={10} size={72} state="current" outline={{ value: 1 } as SharedValue<number>} />), 'dotplate-outline')[0]!);
+    expect(peak.transform?.[0]?.scale).toBeCloseTo(motion.outlinePulse.scale);
   });
   test('a11y popisky stavů jsou slovní a navzájem různé', () => {
     const labels = states.map((s) => {

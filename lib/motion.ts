@@ -160,6 +160,17 @@ export const motion = {
   /** Dech prstence aktuálního uzlu a bosse (motion spec §3.1): perioda 2.4 s ease.sine, opacita 1 ↔ `low`,
    *  scale 1 → `scale`; s omezeným pohybem statická opacita `still`. Jediný zdroj pro PlateNode i BarbellBoss. */
   breath: { low: 0.6, scale: 1.03, still: 0.8, periodMs: 2400 },
+  /** UX pass U5: obrys aktuálního uzlu (`dotplate-outline`) dýchá s hodinou `breath` (stejná fáze jako záře):
+   *  opacita 1 ↔ `low`, scale 1 ↔ `scale`. Po mountu začne na vrcholu (plný obrys = „tady“ hned) a do dechu
+   *  se prolne za `blendMs`, takže předání z odemčení (obrys roste s trimem prstence) neskočí.
+   *  Omezený pohyb: statický plný obrys. */
+  outlinePulse: { low: 0.45, scale: 1.04, blendMs: 500 },
+  /** UX pass U5: první mapa nového uživatele: opička po dosednutí na kotouč jednou zamává („pojď“, reakce
+   *  `wave` přes `screenOpen`) po `afterLandMs` od příchodu. Jednou za běh appky. Omezený pohyb: `degrade` → pohled. */
+  firstRunGreet: { afterLandMs: 420 },
+  /** UX pass U5: nástup opičky v zamčené funkci a prázdném stavu: zdvih `rise` pt + prolnutí (`enterSafe`).
+   *  Omezený pohyb: `calmFade`. */
+  mascotReveal: { rise: 10 },
   /** Rozpad DotRing na tečky (`DotBurst`, zrození): výlet vnitřních teček `inner` × poloměr, vnějšího
    *  rastru `outer` ×, rozptyl ±`jitter`; délka `ms` ease.punch, tečky dohasnou. */
   dotBurst: { inner: 0.7, outer: 0.45, jitter: 0.3, ms: 560 },

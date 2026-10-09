@@ -33,6 +33,8 @@ const MASCOT_VIEWBOX = 200;
  *  oblouk po dobu `motion.fall` (vodorovně rovnoměrně, svisle parabola = gravitace), dopad: propad o `dip`
  *  a dosednutí `motion.settle`, soft (`monkeyHop`). */
 const HOP = motion.mapHop;
+// První mapa: opička zamává jen jednou za běh appky (ne při každém návratu na tab).
+let greetedThisRun = false;
 const POPOVER_ROOM = 220; // odhad výšky popoveru (i se zavírací ikonou) pro volbu strany
 const TEXTURE_STEP = 24;
 
@@ -57,6 +59,8 @@ interface Props {
   topInset?: number;
   /** Dojezd změny `topInset` (pt, → 0): obsah se posune o tolik dolů, takže změna výšky hlavičky neskočí. */
   insetShift?: SharedValue<number>;
+  /** První mapa nového uživatele (bez dokončené lekce): opička po dosednutí jednou zamává („pojď“). */
+  greet?: boolean;
   /** Reakce opičky (fáze 3): opička na mapě je hratelná a reaguje na scroll, roztočení kotouče a ztrátu série. */
   reactions?: MascotReactions;
   /** Replika opičky (elite fáze 3, `useMascotLine`): bublina nad opičkou, null = žádná. */
@@ -81,7 +85,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
   return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
 };
 
-export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions, line = null, onMascotTap }: Props) {
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions, line = null, onMascotTap, greet = false }: Props) {
   const { space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -255,6 +259,20 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     // Jednou při otevření mapy se ztracenou sérií.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sadOnOpen]);
+
+  // First run (UX pass U5): opička na prvním kotouči po dosednutí jednou zamává („pojď“). Větší opička by na
+  // w320 × 568 narazila do bubliny průvodce a CTA, proto výraznější reakce místo velikosti. Jednou za běh appky;
+  // s omezeným pohybem `degrade` z mávnutí udělá pohled. Stav appky se nemění, jen reakce.
+  useEffect(() => {
+    if (!greet || greetedThisRun || !report || pair) return;
+    const id = setTimeout(() => {
+      greetedThisRun = true;
+      report({ type: 'screenOpen' });
+    }, (plan && !reduced ? plan.mascotAt : 0) + motion.firstRunGreet.afterLandMs);
+    return () => clearTimeout(id);
+    // Jednou při otevření první mapy.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [greet]);
 
   // --- Replika opičky (elite fáze 3) ---
   // Bublina má pevnou šířku (≤ `dots.line.maxW`, ≥ `edge` od hran displeje) a posouvá se od kraje; hrot míří na střed opičky.

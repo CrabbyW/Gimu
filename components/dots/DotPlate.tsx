@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { Check, Lock } from 'lucide-react-native';
 import { BlurMask, Circle, Group, Points, vec } from '@shopify/react-native-skia';
-import { Easing, ReduceMotion, useDerivedValue, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { Easing, ReduceMotion, useAnimatedStyle, useDerivedValue, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { motion, useMotionSafe } from '@/lib/motion';
@@ -34,6 +34,9 @@ interface Props {
   breath?: SharedValue<number>;
   /** Nástup spirálou (`motion.dotScanMs`): tečky se rozsvítí od 12 hodin zvenku dovnitř. Číslo = zpoždění v ms. */
   intro?: boolean | number;
+  /** Opacita obrysu aktuálního kotouče 0–1 (motion `outlinePulse`, dech s hodinou mapy); scale z ní odvozený.
+   *  Bez ní statický plný obrys (Reduce Motion, mimo mapu). */
+  outline?: SharedValue<number>;
   /** Kotouč je uvnitř ovládacího prvku s vlastním popiskem (uzel mapy): pro čtečku skrytý. */
   decorative?: boolean;
 }
@@ -54,7 +57,7 @@ const COMET_HOME = -Math.PI / 2;
  * Číslo kg stojí rovně (netočí se s tečkami): od průměru `dots.plate.dotoMin` Doto, menší uzly mono štítek
  * (Doto je povolené až od 28 pt a do náboje uzlu 72–88 by se nevešlo).
  */
-export function DotPlate({ kg, size, state, showKg = true, check = true, rotation, comet, touch, breath, intro = false, decorative = false }: Props) {
+export function DotPlate({ kg, size, state, showKg = true, check = true, rotation, comet, touch, breath, intro = false, decorative = false, outline }: Props) {
   const { c, size: tokens } = useTheme();
   const ink = useDotInk();
   const dotR = plateDotRadius(size);
@@ -128,6 +131,15 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
   const glowOpacity = useDerivedValue(() => (breath ? breath.value : 1));
   const cometOpacity = useDerivedValue(() => (spiral ? Math.max(0, reveal.value * 4 - 3) : 1));
 
+  // Dech obrysu: opacita přímo, scale roste od `low` k vrcholu (pod `low` = 1, např. během trimu odemčení).
+  const OL = motion.outlinePulse.low;
+  const OS = motion.outlinePulse.scale - 1;
+  const outlineStyle = useAnimatedStyle(() => {
+    if (!outline) return { opacity: 1, transform: [{ scale: 1 }] };
+    const o = outline.value;
+    return { opacity: o, transform: [{ scale: 1 + OS * Math.max(0, (o - OL) / (1 - OL)) }] };
+  });
+
   const locked = state === 'locked';
   const lit = locked ? ink.dim : ink.on;
   const glow = state === 'current' ? ink.glow : null;
@@ -180,7 +192,7 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
       {/* UX pass U5: stav čitelný tvarem a výplní, ne jasem — dokončený = plný náboj, aktuální = plný obrys vně
           teček (místo pro pulz motion-agenta), zamčený = jen tlumený vnější prstenec se zámkem. */}
       {state === 'done' ? <View testID="dotplate-hub" pointerEvents="none" style={{ position: 'absolute', width: hub, height: hub, borderRadius: hub / 2, backgroundColor: c.text }} /> : null}
-      {state === 'current' ? <View testID="dotplate-outline" pointerEvents="none" style={{ position: 'absolute', width: ringBox, height: ringBox, borderRadius: ringBox / 2, borderWidth: stroke.nodeRing, borderColor: c.text }} /> : null}
+      {state === 'current' ? <Animated.View testID="dotplate-outline" pointerEvents="none" style={[outlineStyle, { position: 'absolute', width: ringBox, height: ringBox, borderRadius: ringBox / 2, borderWidth: stroke.nodeRing, borderColor: c.text }]} /> : null}
       {center}
     </View>
   );
