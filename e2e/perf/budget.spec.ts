@@ -64,6 +64,16 @@ test.describe('perf', () => {
     expect(fps).toBeGreaterThanOrEqual(MIN_FPS);
   });
 
+  test(`lekce (smyčka siluety): medián fps ≥ ${MIN_FPS}`, async ({ page }) => {
+    await pill(page, 'Start lesson').click();
+    await page.waitForURL(/\/lesson\//);
+    await expect(page.locator('[data-testid^="silhouette-"]').first()).toBeVisible();
+    await waitForIdle(page, 800);
+    const fps = await sampleFps(page);
+    test.info().annotations.push({ type: 'fps-lesson', description: fps.toFixed(1) });
+    expect(fps).toBeGreaterThanOrEqual(MIN_FPS);
+  });
+
   test(`oslava: medián fps ≥ ${MIN_FPS}`, async ({ page }) => {
     await pill(page, 'Start lesson').click();
     await page.waitForURL(/\/lesson\//);

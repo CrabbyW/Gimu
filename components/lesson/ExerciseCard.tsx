@@ -34,12 +34,14 @@ interface Props {
   guided?: boolean;
   /** Tip (první věta popisu) stojí mimo kartu nad [DONE]: karta ukáže jen zbytek popisu. */
   tipOutside?: boolean;
+  /** Smyčka siluety stojí (pauza výdrže, otevřený dialog). */
+  still?: boolean;
 }
 
 /** Karta cviku (Nothing Dot §6): panel = dlaždice se siluetou stojící na „podlaze“ z teček (pole doznívá
  *  nahoru k horizontu), pod ním JEDNO velké Doto číslo (opakování, u výdrže tečkový odpočet) — to má
  *  cvičenec v hlavě —, pak název a popis techniky. Silueta zůstává beze změny (subjekt, ne ozdoba). */
-export function ExerciseCard({ exercise, timer, guided = false, tipOutside = false }: Props) {
+export function ExerciseCard({ exercise, timer, guided = false, tipOutside = false, still = false }: Props) {
   const { c, space, size } = useTheme();
   // Nízký displej (320×568): menší panel, menší číslo a těsnější mezery — vše nad lištou bez scrollu.
   const short = useShort();
@@ -59,7 +61,7 @@ export function ExerciseCard({ exercise, timer, guided = false, tipOutside = fal
         <Reveal play delay={intro.floor.at} rise={intro.floor.rise} config={motion.reveal} style={StyleSheet.absoluteFill}><Floor /></Reveal>
         {/* Vnitřní sled karty (motion): panel přijede s kartou, silueta v něm se zvedne o úder později,
             pak číslo, název a popis po 50 ms. Celý sled ≤ 260 + 200 ms. */}
-        <Reveal play delay={step} rise={rise} style={{ flex: 1, padding: short ? space.s : space.m }}><ExerciseSilhouette id={exercise.silhouette} /></Reveal>
+        <Reveal play delay={step} rise={rise} style={{ flex: 1, padding: short ? space.s : space.m }}><ExerciseSilhouette id={exercise.silhouette} playing={!still} /></Reveal>
       </Tile>
       <View style={{ gap: short ? space.xs : space.s }}>
         <Reveal play delay={step * 2} rise={rise}>

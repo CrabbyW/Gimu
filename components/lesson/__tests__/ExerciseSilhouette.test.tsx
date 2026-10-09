@@ -22,7 +22,9 @@ it('renders figure dots in text color for given phase', () => {
   expect(r.root.findAllByType(Circle).some((n) => n.props.fill === theme.c.faint)).toBe(true);
 });
 
-it('defaults to first key pose (Reduce Motion static)', () => {
-  const fig = render().root.findAllByType(Circle).filter((n) => n.props.fill === theme.c.text);
+it('bez phase startuje v první klíčové póze (smyčka z 0)', () => {
+  const r = render();
+  const fig = r.root.findAllByType(Circle).filter((n) => n.props.fill === theme.c.text);
   expect(fig[0]!.props.cy).toBeCloseTo(silhouetteDots('pushup', 0)[0]![1]);
+  act(() => r.unmount());
 });

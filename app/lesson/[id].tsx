@@ -243,7 +243,7 @@ function ExerciseStep({ exercise, enter = false, busy, suspended, extra, next, o
       {/* Nástup po pauze (U1): obsah přijede zprava, patička s [DONE] stojí. První cvik stojí hned. */}
       <LessonStepEnter play={enter} style={{ flex: 1, marginHorizontal: -space.l }}>
       <IntentScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.s : space.l }}>
-        <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} tipOutside />
+        <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} tipOutside still={!!suspended || timer.status === 'paused'} />
         {extra > 0 ? <Text variant="caption" tone="muted" style={[tabularNums, { marginTop: space.s }]}>{copy.lesson.extra(extra, hold)}</Text> : null}
         {/* Bublina průvodce je součástí obsahu: nezmenšuje patičku a nikdy nekryje tip ani [DONE]. */}
         {guide ? <View style={{ marginTop: short ? space.s : space.m }}>{guide}</View> : null}

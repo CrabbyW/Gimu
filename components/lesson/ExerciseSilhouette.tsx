@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { DOT, GROUND_Y } from '@/logic/silhouettePoses';
+import { DOT, GROUND_Y, SILHOUETTES } from '@/logic/silhouettePoses';
+import { useSilhouettePhase } from './useSilhouettePhase';
 import { poseFrame, silhouetteDots } from '@/logic/silhouette';
 import { useTheme } from '@/theme';
 import type { SilhouetteId } from '@/types';
@@ -11,14 +12,18 @@ interface Props {
   /** Fáze pohybu 0–1 (0 = první klíčová póza, 1 = poslední). Statické; smyčku dodává motion.
    *  Při Reduce Motion zůstává 0 = výchozí póza (u výdrže správná poloha, u opakování start). */
   phase?: number;
+  /** Bez `phase`: smyčka běží, když `playing` (pauza výdrže / dialog = false). */
+  playing?: boolean;
 }
 
 /** Tečková postava cviku (Nothing Dot): kosti i hlava z teček v barvě textu, zem jako tečkovaná linka
  *  ve `faint`. Jedno Svg, žádné Skia plátno (rozpočet pláten beze změny). */
-export function ExerciseSilhouette({ id, phase = 0 }: Props) {
+export function ExerciseSilhouette({ id, phase, playing = true }: Props) {
   const { c } = useTheme();
+  const loop = useSilhouettePhase(SILHOUETTES[id].kind, phase === undefined && playing);
+  const t = phase ?? loop;
   const vb = poseFrame(id);
-  const dots = silhouetteDots(id, phase);
+  const dots = silhouetteDots(id, t);
   const ground = useMemo(() => {
     const xs: number[] = [];
     for (let x = Math.ceil((vb.x - 200) / DOT.groundPitch) * DOT.groundPitch; x <= vb.x + vb.w + 200; x += DOT.groundPitch) xs.push(x);

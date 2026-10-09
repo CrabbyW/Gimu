@@ -77,6 +77,9 @@ export const motion = {
   liveBlinkMs: 1200,
   /** Stisk dlaždice: zmenšení, 3D naklopení k bodu dotyku, perspektiva, návrat. */
   tilePress: { scale: 0.97, tiltMaxDeg: 6, perspective: 600, releaseMs: 200 },
+  /** Smyčka tečkové siluety cviku (U3): tam a zpět přes `phase`, sine (½ − ½·cos). Perioda = celé opakování
+   *  (tam i zpět). Opakování svižně, výdrž pomalý dech. Překreslení omezeno na `fps` (JS vlákno, ~40 teček). */
+  silhouette: { repsMs: 1800, holdMs: 3600, fps: 30 },
   /** Rozsvícení teček při nástupu (sken zleva / spirála). */
   dotScanMs: 600,
   /** Dotyková vlna teček: poloměr vlivu, max odsunutí, doznění po puštění, opacita rozjasněných teček (`text`). */
@@ -493,3 +496,8 @@ export const restEnterTiming = (reduced: boolean) => (reduced
 /** Pocit po lekci (U2): po výběru se řádek otázky vymění za potvrzení ve stejné výšce — nový text se prolne
  *  za `swapInMs` (jen opacity, platí i s omezeným pohybem). */
 export const feelSwap = { swapInMs: lineBubble.inMs };
+
+/** Fáze siluety v čase: sine tam a zpět, 0 → 1 → 0 za `periodMs` (začíná a končí ve výchozí póze). */
+export function silhouettePhase(elapsedMs: number, periodMs: number): number {
+  return 0.5 - 0.5 * Math.cos((2 * Math.PI * elapsedMs) / periodMs);
+}
