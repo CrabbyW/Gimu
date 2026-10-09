@@ -681,3 +681,45 @@ Klíčové stavy (mapa s řádkem Next, lekce s patičkou, oslava, first-run) w3
 ### Doplněk boss — nativní build U1/U2/U4 (HEAD eff047f, kód 050a784), 2026-10-09 19:05
 - Expo Go server (8084) sestavil iOS bundle z aktuálního HEAD: `iOS Bundled 21318ms` (16.3 MB, obsahuje RestStep/FeelPicker/FeatureLocked). `$TEMP/expogo.log` zapsán 2026-10-09 19:05:27, 0 řádků `ERROR`.
 - Běhové chování na zařízení ověří iPhone checklist výše.
+
+## QA UX pass U3 + U5 (a3c1bed, 8904536, 7dfe0ec, 3d2849d, acb6ce9) — HEAD acb6ce9a5e998f35b05da6e419da6f3b8888f019, 2026-10-09
+
+### Brány
+- ✅ `npx tsc --noEmit` 0 chyb, `npx eslint .` 0 chyb (včetně `local/no-worklet-object-capture`).
+- ✅ `npm test` 100 sad / 905 testů OK. ⚠️ Jest hlásí „A worker process has failed to exit gracefully“ (únik časovače v některém testu; doporučeno `--detectOpenHandles`, boss).
+- ✅ `npm run test:node` 25/25.
+- ✅ `npm run e2e` 170/170 (9.6 min), `npm run e2e:perf` 5/5 včetně nového „lekce (smyčka siluety): medián fps ≥ 55“.
+- ⚠️ Baseline `map.png`/`lesson.png` jsou starší než U3/U5 (17:15 a 18:01) a prošly jen díky toleranci `maxDiffPixelRatio 0.01`: nové siluety a plný náboj se do 1 % vejdou. Vizuální regrese tak tuhle změnu nezachytila a baseline nebyla vědomě schválená. Doporučuju `e2e:update` pro map/lesson se záznamem v LOG (boss).
+- ✅ Nativní build: GET iOS bundle na 8084 → HTTP 200, `iOS Bundled 19566ms`. `$TEMP/expogo.log` naposledy zapsán 2026-10-09 20:16:54, **0 řádků `ERROR`**. Je tam 28× `WARN [Reanimated] Writing to value during component render` (strict mode). Vznikly už dřív při běhu na iPhonu, takže je nejde přiřadit konkrétnímu commitu. Nejsou to chyby, ale patří do úklidu (motion-agent).
+
+### U3 tečkové siluety
+- ✅ Všech 15 siluet jsem vyrenderoval z `logic/` v phase 0 / 0.5 / 1 (scratchpad QA `sil.png`). Opakování ukazují techniku: klik (paže propnuté → hrudník u země, tělo rovné), dřep, výpad, most, shyb, superman a výskok.
+- ✅ Výdrže (plank, side plank, hollow, wall handstand, L-sit, hang, crow) se mění o ≤ 3 jednotky viewBoxu. Je to jen dech, ne falešný pohyb.
+- ⚠️ Dip: dole se chodidla dotknou země (y 108) a bradla nejsou nakreslená. Zepředu to působí jako stoj s pokrčením paží, ne jako dip. Návrh: dole držet nohy nad zemí (pokrčená kolena). Crow je na w320 malá (~30 pt) a hůř čitelná. Squat: komentář říká „pod paralelu“, ale kyčel (y 78) zůstává nad kolenem (y 86). Patří design-agentovi.
+- ✅ Tempo 1.8 s / 3.6 s (`motion.silhouette`), sine tam a zpět, 30 fps; tempo pokrývají testy `useSilhouettePhase`.
+- ✅ Smyčka se zastaví při pauze výdrže, v dialogu Quit (`suspended`), při ztrátě fokusu (blur) i na pozadí (AppState). Po návratu naváže bez skoku a časovač se uklidí v cleanup (testy pauzy a pozadí). Reduce Motion vrací fázi 0 bez časovače (test).
+- ✅ E2E na w320: tečky se hýbou (cy se mezi snímky po 450 ms liší) a perf lekce ≥ 55 fps.
+- ⚠️ Čitelnost na w320: box siluety je 254×62 pt. Ležící pózy jsou čitelné, kompaktní (crow, L-sit) jen málo. Hraniční, ale ne ořez.
+- (známé, dřív ⚠️) Caution věta na w320 pokračuje pod spodní lištou (scroll), štítek CAUTION je nad ohybem. Beze změny.
+
+### U5 stavy uzlů, opička, zámky
+- ✅ Done / current / locked jsou rozlišené tvarem: plný náboj / plný obrys / tlumený prstenec se zámkem. Ověřeno na w320 a w430 v dark i light a také se simulací slunce (`contrast .55 brightness 1.35`): rozdíl zůstává čitelný.
+- ❌ **Inverzní fajfka na dokončeném uzlu na webu není vidět.** Postup: demo profil, mapa (jakákoli šířka), odscrollovat k dokončeným uzlům. Ukáže se jen plný disk. DOM fajfku obsahuje (`svg stroke #0B0C0E`, 16 px nad 19 px nábojem), ale `dotplate-hub` má `position:absolute` a statické `svg` lucide se v CSS kreslí pod pozicovaný prvek. Při dokončení lekce je to dobře vidět: kreslená fajfka (absolutní) je viditelná a po ~3 s zmizí, jakmile ji nahradí statická (snímky `u5/unlock-2000` vs `unlock-5000`). Na nativu je pořadí podle stromu, takže tam fajfka nejspíš vidět bude (iPhone checklist bod 1). Oprava je v `DotPlate`: `center` zabalit do absolutního View nebo mu dát zIndex. Patří design-agentovi.
+- ❌ **Po dokončení lekce na w320 je opička u bosse useknutá levým krajem displeje.** Postup: w320 × 568, demo, dokončit lekci Balance, [CONTINUE] → mapa. Po odemčení stojí opička vedle bosse na x ≈ 0 a levé ucho je uříznuté. Boss je navíc z větší části pod [START LESSON]. Mapa na nový aktuální uzel nedoscrolluje (snímky `u5/unlock-2000`, `unlock-5000`). Nejspíš to existovalo už před U5 (spot „beside“ v `mascotSpot`), ale podle pravidla jde o ořez = ❌. Patří design-agentovi (mascotSpot clamp na okraj + `edge`), scroll k aktuálnímu uzlu bossovi.
+- ⚠️ Přechod při odemčení: v 600 ms opička během skoku krátce překryje popisek „Upside down“. Je to přechodné (motion-agent, nízká priorita).
+- ✅ Dech obrysu: `outline={trim}` během odemčení a potom blend od vrcholu. Na snímcích 100–5000 ms nic neskáče a let kotouče i kreslení fajfky proběhnou. Flow `lesson.spec` (série +1) je zelený.
+- ✅ a11y: uzly čtou „…, completed, …“, „up next“ a „locked“ (`copy.map.nodeState`). Kontrastní test pro tokeny prošel.
+- ✅ Mávnutí jen při `stats.isNew` a jen jednou za běh (`greetedThisRun`). Při odemykací sekvenci (`pair`) se nespustí. Reduce Motion `degrade`.
+- ✅ `/wardrobe` přímou cestou ukáže `FeatureLocked`, bez kolize na w320 v dark i light, CTA nad ohybem (`disclosure.spec`).
+- ⚠️ StateView a ComebackCard s větší opičkou nemají vlastní e2e kontrolu kolizí na w320 (FeatureLocked ji má). Doporučený test patří design-agentovi.
+- ✅ FeelPicker [TRY AGAIN] uloží stejnou volbu. Proti dvojímu ťuknutí ho chrání `retrying` ref, chyba se při novém pokusu schová (unit test). Řeší tím ⚠️ z minulého kola.
+
+### Verdikt: NESCHVÁLENO (HEAD acb6ce9)
+Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičky u bosse na w320 po dokončení lekce. Obojí patří design-agentovi. Po opravě stačí přetočit `e2e` a baseline map/lesson.
+
+### iPhone checklist (uživatel)
+1. Mapa: na dokončených kotoučích je v plném středu vidět tmavá (inverzní) fajfka.
+2. Dokončení lekce → návrat na mapu: odemčení, let kotouče a dech obrysu nového uzlu proběhnou plynule bez cuknutí. Opička u bosse není useknutá okrajem a je mimo výřez/safe area.
+3. Lekce: siluety se hýbou plynule (30 fps), při pauze výdrže a v dialogu Quit stojí, s Reduce Motion jsou statické.
+4. Nový profil: opička na první mapě po dosednutí jednou zamává (při návratu na tab už ne).
+5. VoiceOver na mapě: uzly čtou „completed / up next / locked“.

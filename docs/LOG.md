@@ -1184,3 +1184,6 @@ Rozhodl sám:
 - Žádná nová reakce v `logic/` (mimo moji zónu): použita existující `screenOpen` → `wave`.
 Výsledky: tsc OK, eslint OK, jest 100 sad / 905 testů OK (nový test dechu obrysu v components/dots/__tests__/render.test.tsx), `npm run e2e` 170/170 OK (žádný snímek nepřekročil toleranci), `npm run e2e:perf` 5/5 OK (mapa fps ≥ 55). `npm run e2e:update -- --grep mapa` (mapa + first-run mapa, 16 snímků): Playwright soubory nepřepsal — e2e běží s reduced motion + animations disabled, obrys je tam statický a pixelově shodný s baseline, takže baseline je už přesná.
 Otevřené: iPhone — plynulost dechu obrysu vedle komety a mávnutí na první mapě (načasování po dosednutí).
+
+### qa-agent — QA U3+U5 (HEAD acb6ce9), 2026-10-09
+Brány zelené (tsc, eslint, jest 905, test:node 25, e2e 170/170, perf 5/5). Nativní bundle 200, expogo.log 20:16:54, 0 ERROR (28 starších WARN Reanimated). Verdikt NESCHVÁLENO. ❌ fajfka dokončeného uzlu na webu je pod absolutním nábojem (DotPlate z-order). ❌ opička u bosse na w320 je po dokončení lekce uříznutá levým krajem. Obojí patří design-agentovi. ⚠️ dip/crow póza, baseline map/lesson pod tolerancí (neschválené), únik časovače v Jestu. Nic jsem neopravoval: žádná chyba nespadala do logiky ani testů.
