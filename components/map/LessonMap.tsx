@@ -100,6 +100,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const scroll = useRef<ScrollView>(null);
   const [viewportH, setViewportH] = useState(0);
   const scrollY = useRef(0);
+  // Scroll pro UI vlákno: nadpis sekce pod překryvnou hlavičkou zhasne (nečte se přes ni ani čtečkou testů geometrie).
+  const scrollSV = useSharedValue(0);
 
   const flat = useMemo(() => view.sections.flatMap((s) => s.nodes.map((n) => ({ ...n, section: s }))), [view]);
   const layout = useMemo(
@@ -143,8 +145,18 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const scrollToNode = useCallback((id: string, animated: boolean) => {
     const p = posOf(id);
     // Uzel na 40 % viditelného výřezu (pod překryvnou hlavičkou, nad pruhem CTA `footerSpace`) (vnitřní souřadnice: horní hrana výřezu = scrollY).
-    if (p && viewportH > 0) scrollTo(Math.max(0, p.y - Math.max(0, viewportH - topInset - footerSpace) * 0.4), animated);
-  }, [posOf, viewportH, topInset, footerSpace, scrollTo]);
+    if (!p || viewportH === 0) return;
+    const visible = Math.max(0, viewportH - topInset - footerSpace);
+    // Uzel na 40 % výřezu. Kurogane: když se uzel i s popiskem vejde i při scrollu jen k nadpisu jeho sekce,
+    // mapa nesjede dál — nadpis sekce nezajede pod překryvnou hlavičku (vyšší karta startu zmenšila výřez).
+    const target = Math.max(0, p.y - visible * 0.4);
+    const n = flat.find((f) => f.lesson.id === id);
+    const first = n?.section.nodes[0] ? posOf(n.section.nodes[0].lesson.id) : undefined;
+    const secTop = first ? Math.max(0, first.top - SECTION_LABEL_OFFSET) : target;
+    const bottom = p.y + p.size / 2 + LABEL_GAP + labelHeight('current', false);
+    const keep = Math.min(target, secTop);
+    scrollTo(bottom - keep <= visible ? keep : target, animated);
+  }, [flat, posOf, viewportH, topInset, footerSpace, scrollTo]);
   /** Boss (QA U5): aktuální uzel celý (opička nad ním, kotouč, popisek) mezi hlavičkou a CTA. Když už je, nic. */
   const revealNode = useCallback((id: string, animated: boolean) => {
     const n = flat.find((f) => f.lesson.id === id);
@@ -368,6 +380,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       onScroll={(e) => {
         const y = e.nativeEvent.contentOffset.y;
         scrollY.current = y;
+        scrollSV.value = y;
         const now = Date.now();
         const prev = lastScroll.current;
         lastScroll.current = { y, at: now };
@@ -410,6 +423,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         return (
           <SectionLabel
             key={s.index}
+            scroll={scrollSV}
             top={p.top - SECTION_LABEL_OFFSET}
             inset={space.l}
             hidden={underLine(space.l, width - space.l, p.top - SECTION_LABEL_OFFSET, p.top - SECTION_LABEL_OFFSET + typography.label.lineHeight)}
@@ -574,13 +588,18 @@ function NodeLabel({ node, state, bossAfter, hidden = false }: {
 }
 
 /** Nadpis sekce na mapě; pod bublinou repliky ustoupí prolnutím jako popisky uzlů. */
-function SectionLabel({ top, inset, hidden, label }: { top: number; inset: number; hidden: boolean; label: string }) {
+function SectionLabel({ top, inset, hidden, label, scroll }: { top: number; inset: number; hidden: boolean; label: string; scroll: SharedValue<number> }) {
   const fade = useLabelYield(hidden);
+  // Pod hlavičkou (vnitřní horní hrana výřezu = scroll) je nadpis skrytý: hlavička je neprůhledná a text pod ní
+  // by jen kolidoval s jejím řádkem série.
+  const under = useAnimatedStyle(() => ({ opacity: scroll.value > top ? 0 : 1 }));
   return (
-    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: inset, right: inset, top }, fade]}>
+    <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: inset, right: inset, top }, under]}>
+    <Animated.View style={fade}>
       <Text variant="label" tone="muted" accessibilityRole="header" accessibilityElementsHidden={hidden} importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}>
         {label}
       </Text>
+    </Animated.View>
     </Animated.View>
   );
 }
