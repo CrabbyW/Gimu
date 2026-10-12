@@ -24,6 +24,7 @@ import { useLesson } from '@/hooks/useLesson';
 import { useProfile } from '@/hooks/useProfile';
 import { now } from '@/lib/clock';
 import { canSkip } from '@/logic/adaptive';
+import { DEMO_BUILD } from '@/lib/demo';
 import { nextFlowPhase, type FlowPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
 import { useShort, useTheme, tabularNums } from '@/theme';
@@ -62,7 +63,7 @@ export default function LessonScreen() {
   const profile = useProfile();
   const cosmetics = profile.status === 'ready' ? profile.data?.equipped ?? NO_COSMETICS : NO_COSMETICS;
   // Demo: přeskočit jde každý cvik a přeskok se počítá jako odcvičený (lekce doběhne do oslavy, žádná slepá ulička).
-  const demo = profile.status === 'ready' && profile.data?.demo === true;
+  const demo = DEMO_BUILD || (profile.status === 'ready' && profile.data?.demo === true);
   // First run (elite fáze 1): průvodce na cviku a na oslavě, „Set your goals“ na oslavě.
   const lessonGuide = useGuide('lesson');
   const celebrationGuide = useGuide('celebration');
