@@ -79,7 +79,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
   // Kotva (spec §2.7, z-order): spodní hrana trupu leží na středu horní hrany kotouče; nohy a konec šálu
   // (MonkeyFront) visí přes čelo kotouče.
   // Nothing Dot: hrana = vnější hrana teček `DotPlate` (`plateOuterRadius`), opička sedí na horní tečce.
-  if (!isBoss && !beside) return { x: p.x, y: p.y - plateOuterRadius(p.size) - (mascotSeatY(stage) / MASCOT_VIEWBOX - 0.5) * MASCOT };
+  if (!isBoss && !beside) return { x: p.x, y: p.y - p.size * (dots.node.ringR + dots.node.ringDot / 2) - (mascotSeatY(stage) / MASCOT_VIEWBOX - 0.5) * MASCOT };
   const half = isBoss ? BOSS_SIZE.w / 2 : p.size / 2;
   const side = p.x < cx ? 1 : -1;
   const x = p.x + side * (half + MASCOT_GAP + MASCOT / 2);
@@ -524,58 +524,42 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
 }
 
 const center = { textAlign: 'center' as const };
-/** Oddělovač položek popisku uzlu (shodný s `copy.map.nodeInfo`) a nezlomitelná mezera uvnitř položky. */
-const SEP = ' · ';
-const JOIN = ' · ';
+/** Nezlomitelná mezera uvnitř mono položky (telemetrie se nesmí zalomit). */
 const nbsp = (s: string) => s.replace(/ /g, ' ');
 
-/** Popisek pod uzlem (tabulka stavů). Metadata z dat: počet cviků, `estMinutes`, XP.
- *  current = název `headline` + metadata + „+N XP“ (akci nese plovoucí pilulka obrazovky a tap na kotouč);
- *  locked = název a metadata `caption muted`; done = jen název `caption muted`; boss = „Boss sekce“ + podmínka. */
-function NodeLabel({ node, state, minutes, bossAfter, hidden = false }: {
+/** Popisek pod uzlem (Kurogane): název v Inter, pod ním mono řádek s váhou kotouče (`DONE · 5 KG` / `10 KG`).
+ *  Hierarchie jasem: aktuální = `headline` v `text`, hotový = `caption muted`, zamčený = `caption faint`.
+ *  Boss beze změny (podmínka odemčení). Počet cviků a XP nese spodní karta startu, ne uzel. */
+function NodeLabel({ node, state, bossAfter, hidden = false }: {
   node: MapNode; state: NodeState; minutes: number; bossAfter: number;
   /** Pod bublinou repliky opičky: popisek ustoupí (místo v layoutu zůstává, nic neposkočí). */
   hidden?: boolean;
 }) {
   const fade = useLabelYield(hidden);
-  // Nezlomitelné mezery uvnitř položek (jako `xpBreakdownLabel`): mono je širší a na 390 pt se popisek zalomí,
-  // tak ať se zalomí jen mezi položkami („4 CVIKY · 3 MIN“ / „+20 XP“), nikdy „+20“ a „XP“ zvlášť.
-  const items = [...copy.map.nodeInfo(node.exerciseCount, minutes).split(SEP), copy.map.xpGain(node.xp)].map(nbsp);
-  const info = items.slice(0, -1).join(JOIN);
-  // XP na vlastním řádku: mono je široká a „… · +20 XP“ se na telefonu zalamovalo náhodně (QA, uživatel).
-  const xp = items[items.length - 1];
-  const meta = (
-    <>
-      <Text variant="telemetry" tone="muted" numberOfLines={1} style={center}>{info}</Text>
-      <Text variant="telemetry" tone="muted" numberOfLines={1} style={center}>{xp}</Text>
-    </>
-  );
   const current = state === 'current';
   const isBoss = node.lesson.isBoss;
+  const meta = nbsp(copy.map.nodeWeight(state === 'done', node.lesson.plateKg));
   let lines: ReactNode;
   if (isBoss && state !== 'done') {
     lines = (
       <>
         <Text variant="headline" style={center}>{copy.map.bossTitle}</Text>
-        {state === 'locked' ? <Text variant="telemetry" tone="muted" style={center}>{copy.map.bossUnlock(bossAfter)}</Text> : meta}
+        {state === 'locked'
+          ? <Text variant="telemetry" tone="faint" style={center}>{copy.map.bossUnlock(bossAfter)}</Text>
+          : <Text variant="telemetry" tone="muted" numberOfLines={1} style={center}>{nbsp(copy.map.xpGain(node.xp))}</Text>}
       </>
     );
-  } else if (current) {
-    lines = (
-      <>
-        <Text variant="headline" numberOfLines={2} style={center}>{node.lesson.title}</Text>
-        {meta}
-      </>
-    );
-  } else if (state === 'locked') {
-    lines = (
-      <>
-        <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{node.lesson.title}</Text>
-        <Text variant="telemetry" tone="muted" numberOfLines={1} style={center}>{info}</Text>
-      </>
-    );
+  } else if (isBoss) {
+    lines = <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{copy.map.bossTitle}</Text>;
   } else {
-    lines = <Text variant="caption" tone="muted" numberOfLines={1} style={center}>{isBoss ? copy.map.bossTitle : node.lesson.title}</Text>;
+    lines = (
+      <>
+        <Text variant={current ? 'headline' : 'caption'} tone={current ? 'text' : state === 'done' ? 'muted' : 'faint'} numberOfLines={current ? 2 : 1} style={center}>
+          {node.lesson.title}
+        </Text>
+        <Text variant="telemetry" tone={current ? 'muted' : 'faint'} numberOfLines={1} style={center}>{meta}</Text>
+      </>
+    );
   }
   return (
     <Animated.View

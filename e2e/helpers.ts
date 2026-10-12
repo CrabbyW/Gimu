@@ -7,7 +7,10 @@ export const visible = (l: Locator) => l.filter({ visible: true }).first();
 
 /** Pill CTA appky (`[START LESSON]`, `[SKIP]`, `[CONTINUE]`). */
 export const pill = (page: Page, label: string) =>
-  visible(page.getByText(`[${label.toUpperCase()}]`, { exact: true }));
+  // Kurogane (2026-10-12): start lekce na mapě je karta „Start <lekce>“ (`StartCard`), ne pilulka.
+  label === 'Start lesson'
+    ? visible(page.getByTestId('start-card'))
+    : visible(page.getByText(`[${label.toUpperCase()}]`, { exact: true }));
 
 /** Klidový stav pro snímek/assert: fonty, CanvasKit (Skia na webu), doběhlé animace.
  *  Reduce Motion emuluj před `goto` přes `useReducedMotion(page)`, tady jen čekáme. */

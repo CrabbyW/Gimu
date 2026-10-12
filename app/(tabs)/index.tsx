@@ -18,7 +18,7 @@ import { EdgeFade } from '@/components/ui/EdgeFade';
 import { tabBarClearance } from '@/components/ui/FloatingTabBar';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { PillButton } from '@/components/ui/PillButton';
+import { StartCard } from '@/components/ui/StartCard';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -129,6 +129,7 @@ export default function TrainingScreen() {
   const section = currentSection(viewData);
   const sad = !stats.isNew && stats.mood === 'sad';
   const currentId = viewData.currentLessonId;
+  const currentNode = viewData.sections.flatMap((s) => s.nodes).find((n) => n.lesson.id === currentId);
   // Start lekce (CTA i popover uzlu): dvojí ťuknutí = jedna navigace. Kotouč se změří a vzlétne (overlay
   // `PlateFlight`), navigace jde hned po měření (max `plateFlight.measureMaxMs`); selhání měření = bez letu.
   const open = (id: string) => {
@@ -175,7 +176,7 @@ export default function TrainingScreen() {
                 topInset={inset}
                 insetShift={insetShift}
                 // Pod posledním uzlem: tab bar + pilulka CTA, ať jde poslední prvek odscrollovat nad ně.
-                footerSpace={clearance + (currentId ? size.pill + space.m * 2 : space.m)}
+                footerSpace={clearance + (currentId ? size.startCard + space.m * 2 : space.m)}
                 reactions={reactions}
                 greet={stats.isNew}
                 line={mascotLine.line?.text ?? null}
@@ -266,14 +267,20 @@ export default function TrainingScreen() {
               <EdgeFade
                 direction="up"
                 width={width}
-                height={size.edgeFade + size.pill + space.m * 2}
+                height={size.edgeFade + size.startCard + space.m * 2}
                 stops={[{ at: 0, opacity: opacity.veilEdge }, { at: 1, opacity: 0 }]}
                 style={{ position: 'absolute', left: 0, bottom: 0 }}
               />
               {/* Nízký displej (QA f1 k3 ⚠️): mezi pilulkou a tab barem prosvítal scrollovaný text mapy.
                   Plný závoj `base` od spodní hrany pilulky až ke dnu obrazovky (pod tab barem). */}
               {short ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: -clearance, height: clearance + space.m, backgroundColor: c.base }} /> : null}
-              <PillButton label={copy.map.startLesson} onPress={() => open(currentId)} />
+              {currentNode ? (
+                <StartCard
+                  title={copy.map.startNamed(currentNode.lesson.title)}
+                  meta={copy.map.startMeta(currentNode.exerciseCount, currentNode.xp)}
+                  onPress={() => open(currentId)}
+                />
+              ) : null}
             </View>
           ) : null}
         </View>

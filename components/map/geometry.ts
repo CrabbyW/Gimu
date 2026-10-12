@@ -29,14 +29,12 @@ export interface LayoutInput { id: string; isBoss: boolean; state: LayoutState; 
 /** `top` = nejvyšší bod uzlu včetně opičky (pro nadpis sekce). */
 export interface NodePosition { id: string; x: number; y: number; size: number; top: number }
 
-/** Výška popisku pod uzlem při 1.0× písmu: current = název (až 2 řádky headline) + metadata
- *  (Nothing Dot: akci nese plovoucí pilulka obrazovky, ne tlačítko u uzlu), locked = název + metadata,
- *  done = jen název, boss = headline + podmínka. */
+/** Výška popisku pod uzlem při 1.0× písmu (Kurogane): current = název (až 2 řádky headline) + mono váha,
+ *  hotový i zamčený = název + mono váha, boss = headline + podmínka / XP, hotový boss = jen název. */
 export function labelHeight(state: LayoutState, isBoss: boolean): number {
-  if (state === 'current') return t.headline.lineHeight * 2 + t.caption.lineHeight;
-  if (isBoss) return t.headline.lineHeight + t.caption.lineHeight;
-  if (state === 'locked') return t.caption.lineHeight * 2;
-  return t.caption.lineHeight;
+  if (isBoss) return state === 'done' ? t.caption.lineHeight : t.headline.lineHeight + t.telemetry.lineHeight;
+  if (state === 'current') return t.headline.lineHeight * 2 + t.telemetry.lineHeight;
+  return t.caption.lineHeight + t.telemetry.lineHeight;
 }
 
 const extents = (n: LayoutInput) => {

@@ -39,6 +39,8 @@ interface Props {
   outline?: SharedValue<number>;
   /** Kotouč je uvnitř ovládacího prvku s vlastním popiskem (uzel mapy): pro čtečku skrytý. */
   decorative?: boolean;
+  /** `node` = Kurogane uzel mapy (plný disk / prstenec s živým středem / slabý obrys), `plate` = tečkový kotouč. */
+  variant?: 'plate' | 'node';
 }
 
 /** Poloměr tečky kotouče průměru `size`. */
@@ -57,7 +59,68 @@ const COMET_HOME = -Math.PI / 2;
  * Číslo kg stojí rovně (netočí se s tečkami): od průměru `dots.plate.dotoMin` Doto, menší uzly mono štítek
  * (Doto je povolené až od 28 pt a do náboje uzlu 72–88 by se nevešlo).
  */
-export function DotPlate({ kg, size, state, showKg = true, check = true, rotation, comet, touch, breath, intro = false, decorative = false, outline }: Props) {
+export function DotPlate(props: Props) {
+  return props.variant === 'node' ? <NodeDisc {...props} /> : <PlateDots {...props} />;
+}
+
+const nodeRing = (count: number, r: number, mid: number) =>
+  Array.from({ length: count }, (_, i) => {
+    const a = (i / count) * 2 * Math.PI - Math.PI / 2;
+    return { x: mid + Math.cos(a) * r, y: mid + Math.sin(a) * r };
+  });
+
+/**
+ * Kurogane uzel mapy (2026-10-12, maketa `kurogane.html`): stav čitelný tvarem, ne jasem.
+ * - done: plný světlý disk (`text`) s tmavým otvorem (`base`) — kotouč, který už je „naložený“,
+ * - current: prstenec 24 teček (`text`) kolem plného středu v jediném akcentu `live`,
+ * - locked: slabý obrys 14 teček (`dotDim`), nic uvnitř.
+ * Z obyčejných View (žádné Skia plátno): na mapě je uzlů hodně a web drží omezený počet WebGL kontextů.
+ * `rotation` točí prstenec aktuálního uzlu, `outline` (dech) ho škáluje — obojí napojuje motion.
+ */
+function NodeDisc({ kg, size, state, rotation, outline, decorative = false }: Props) {
+  const { c } = useTheme();
+  const N = dots.node;
+  const mid = size / 2;
+  const a11y = decorative
+    ? { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const }
+    : { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel: copy.dots.plateA11y(kg, copy.map.nodeState[state]) };
+  const OL = motion.outlinePulse.low;
+  const OS = motion.outlinePulse.scale - 1;
+  const ringStyle = useAnimatedStyle(() => {
+    const o = outline ? outline.value : 1;
+    const k = outline ? 1 + OS * Math.max(0, (o - OL) / (1 - OL)) : 1;
+    return { transform: [{ rotate: `${rotation ? rotation.value : 0}rad` }, { scale: k }] };
+  });
+  const dot = (p: { x: number; y: number }, d: number, color: string, key: number) => (
+    <View key={key} style={{ position: 'absolute', left: p.x - d / 2, top: p.y - d / 2, width: d, height: d, borderRadius: d / 2, backgroundColor: color }} />
+  );
+  const disc = (d: number, color: string, testID?: string) => (
+    <View testID={testID} pointerEvents="none" style={{ position: 'absolute', left: mid - d / 2, top: mid - d / 2, width: d, height: d, borderRadius: d / 2, backgroundColor: color }} />
+  );
+  return (
+    <View {...a11y} testID={`node-${state}`} style={{ width: size, height: size }}>
+      {state === 'done' ? (
+        <>
+          {disc(size * N.doneDisc, c.text, 'dotplate-hub')}
+          {disc(size * N.doneDisc * N.hole, c.base)}
+        </>
+      ) : null}
+      {state === 'current' ? (
+        <>
+          <Animated.View testID="dotplate-outline" pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size }, ringStyle]}>
+            {nodeRing(N.ringDots, size * N.ringR, mid).map((p, i) => dot(p, size * N.ringDot, c.text, i))}
+          </Animated.View>
+          {disc(size * N.liveCore, c.live, 'dotplate-live')}
+        </>
+      ) : null}
+      {state === 'locked'
+        ? nodeRing(N.lockedDots, size * N.lockedR, mid).map((p, i) => dot(p, size * N.lockedDot, c.dotDim, i))
+        : null}
+    </View>
+  );
+}
+
+function PlateDots({ kg, size, state, showKg = true, check = true, rotation, comet, touch, breath, intro = false, decorative = false, outline }: Props) {
   const { c, size: tokens } = useTheme();
   const ink = useDotInk();
   const dotR = plateDotRadius(size);

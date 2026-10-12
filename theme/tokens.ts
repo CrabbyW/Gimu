@@ -11,7 +11,9 @@ export const radius = { s: 8, l: 14, tile: 28, full: 999 } as const;
 // minima 44 pt (dřív duplikované natvrdo ve třech komponentách).
 export const size = {
   // Nothing Dot §2.3: pilulkové CTA 56, plovoucí tab bar 64, kulaté ikonové tlačítko 44, vnitřní okraj dlaždice 20.
-  pill: 56, tabPill: 64, iconButton: 44, tilePad: 20,
+  pill: 56, tabPill: 64,
+  // Kurogane spodní karta startu lekce: výška (2 řádky + odsazení) a kulatá klávesa se šipkou.
+  startCard: 72, startKey: 40, iconButton: 44, tilePad: 20,
   // Živá tečka stavového řádku 6, tečkový prstenec výdrže 260 (Doto 64 + jednotka se vejde do vnitřního prstence),
   // minimální výška hero dlaždice mapy (číslo nahoře, název dole jako obr. 2).
   liveDot: 6, holdRing: 260, heroTile: 148,
@@ -100,6 +102,9 @@ export const dots = {
   ring: { count: 32, inner: 0.46, innerDot: 0.042, outerFrom: 0.62, outerPitch: 0.074, outerDot: 0.013 },
   /** Tečkovaná cesta mapy: rozteč teček po křivce a poloměr. */
   path: { pitch: 10, r: 1.5 },
+  /** Kurogane uzel mapy (2026-10-12), zlomky průměru uzlu: done = plný disk s otvorem, current = prstenec
+   *  `ringDots` teček + živý (`live`) střed, locked = slabý obrys `lockedDots` teček. */
+  node: { doneDisc: 0.6, hole: 0.22, ringR: 0.4, ringDots: 24, ringDot: 0.05, liveCore: 0.2, lockedR: 0.28, lockedDots: 14, lockedDot: 0.042 },
   /** Tečková činka bosse: rozteč 6 = dva sloupce teček na kotouč šíře 12 (tečka `path.r`). */
   boss: { pitch: 6 },
   /** Tečkový glyf cesty a vize (onboarding, SVG ve viewBoxu 48): rozteč mřížky výplně i obrysu a poloměr tečky.
@@ -141,7 +146,7 @@ export const layout = { narrow: 360, fontScale: 1.3, statMaxScale: 1.4 } as cons
 // `future` = budoucí dny v DotGridu sezóny (`faint` na 40 %, Teplá litina §3.4).
 // `grain` = celá vrstva zrna litiny přes obrazovku (2026-10-03, „hloubka a materiál“): 5 %, na hranici vnímání.
 // `floor` = mřížka podlahy pod siluetou cviku (linky `rule` na `surface`, ať nepřebije postavu).
-export const opacity = { locked: 0.32, disabled: 0.4, future: 0.4, grain: 0.05, floor: 0.7, glint: 0.24,
+export const opacity = { locked: 0.32, cardMeta: 0.62, disabled: 0.4, future: 0.4, grain: 0.05, floor: 0.7, glint: 0.24,
   // Nothing Dot §3: rozjasněná hrana stisknuté dlaždice (vrstva `text` přes `edge`).
   edgeLit: 0.16,
   // Závoj pod překryvnou hlavičkou mapy (EdgeFade): `base` krytí na spodní hraně hlavičky; nahoře 1, pod ní doznívá do 0.

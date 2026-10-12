@@ -135,7 +135,7 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
           // Nothing Dot: kotouč z teček, bez stínu. Aktuální uzel nese záře a kometa (místo plného prstence),
           // `rotation`/`comet` napojí motion-agent (ambientní rotace, roztočení).
           <DotPlate
-            kg={kg} size={nodeSize} state={state} check={!(justCompleted || checkHidden)} decorative
+            variant="node" kg={kg} size={nodeSize} state={state} check={!(justCompleted || checkHidden)} decorative
             rotation={rotation ?? ownRotation} comet={comet ?? ownComet} breath={state === 'current' ? breath : undefined} outline={pulseOn ? outline : undefined}
             touch={spinnable ? spin.touch : undefined} intro={intro ?? false}
           />
@@ -183,11 +183,11 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked, rotation }: { kg: Plate
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       {/* Vrstvy: zamčený (vnější prstenec + zámek) → plný tečkový kotouč → vlasový prstenec „nabíjení“ (zmizí s koncem sekvence). */}
       <Animated.View style={[{ position: 'absolute' }, outline]}>
-        <DotPlate kg={kg} size={size} state="locked" decorative />
+        <DotPlate variant="node" kg={kg} size={size} state="locked" decorative />
       </Animated.View>
       <Animated.View style={[{ position: 'absolute' }, solid]}>
         {/* Stejné natočení jako ambient po odemčení: výměna za běžný kotouč nedá skok. */}
-        <DotPlate kg={kg} size={size} state="current" decorative rotation={rotation} outline={trim} />
+        <DotPlate variant="node" kg={kg} size={size} state="current" decorative rotation={rotation} outline={trim} />
       </Animated.View>
       <View pointerEvents="none" style={{ position: 'absolute', left: inset, top: inset, width: ring, height: ring, transform: [{ rotate: '-90deg' }] }}>
         <Svg aria-hidden width={ring} height={ring}>

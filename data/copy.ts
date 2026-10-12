@@ -117,6 +117,10 @@ export const copy = {
     startLesson: 'Start lesson', replayLesson: 'Replay lesson',
     nodeInfo: (exercises: number, minutes: number) => `${exercises} ${plural(exercises, 'exercise', 'exercises')} · ${minutes} min`,
     xpGain: (xp: number) => `+${xp} XP`,
+    // Kurogane: mono řádek pod názvem uzlu (verzálky dělá typografie `telemetry`) a spodní karta startu.
+    nodeWeight: (done: boolean, kg: number) => (done ? `Done · ${kg} kg` : `${kg} kg`),
+    startNamed: (title: string) => `Start ${title}`,
+    startMeta: (exercises: number, xp: number) => `${exercises} ${plural(exercises, 'exercise', 'exercises')} · ${xp} XP`,
     xpTotal: (xp: number) => `${xp} XP`,
     bossTitle: 'Section boss',
     bossUnlock: (n: number) => `Unlocks after ${n} ${plural(n, 'lesson', 'lessons')}`,
@@ -379,7 +383,7 @@ export const copy = {
   },
   dev: {
     title: 'Dev menu', demo: 'Load demo profile',
-    dots: 'Dots', dotState: { locked: 'Locked', current: 'Current', done: 'Done' }, reset: 'Reset app', resetConfirm: 'Delete all data? The theme stays.', xp: '+500 XP',
+    dots: 'Dots', poses: 'Monkey poses', dotState: { locked: 'Locked', current: 'Current', done: 'Done' }, reset: 'Reset app', resetConfirm: 'Delete all data? The theme stays.', xp: '+500 XP',
     stage: (s: number | null) => `Monkey stage: ${s ?? 'auto'}`, seasonEnd: 'Jump to season end',
     streakLoss: 'Simulate streak loss', resetTime: 'Reset time offset', now: 'NOW', offset: 'OFFSET',
     offsetValue: (d: number, h: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)} D ${h} H`, // nezlomitelné mezery: telemetrie se nesmí zalomit

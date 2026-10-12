@@ -28,8 +28,8 @@ interface Props {
   ends?: number[];
 }
 
-/** Tečkovaná cesta mezi uzly (Nothing Dot): prošlé úseky až k aktuálnímu uzlu rozsvícené v `text`,
- *  cesta k zamčeným tlumená `dotDim`. Stejné tečky jako zbytek jazyka, ne přerušovaná čára. */
+/** Tečkovaná cesta mezi uzly (Kurogane): prošlé úseky až k aktuálnímu uzlu světlejší `dotDim`,
+ *  cesta k zamčeným skoro zhasnutá `dotOff` — cesta je struktura, ne hrdina (hrdina = aktuální uzel). Stejné tečky jako zbytek jazyka, ne přerušovaná čára. */
 export function PathLine({ width, height, positions, reached, drawing = null, labelBottoms, ends }: Props) {
   const { c } = useTheme();
   // Úsek vede od spodní hrany popisku uzlu (bez popisku od hrany kotouče) k horní hraně dalšího:
@@ -47,7 +47,7 @@ export function PathLine({ width, height, positions, reached, drawing = null, la
   return (
     <Svg aria-hidden width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
       {segments.map(({ i, a, b }) => (
-        <Path key={i} d={segmentPath(a, b)} stroke={reached[i] && drawing !== i ? c.text : c.dotDim} {...DOTS} />
+        <Path key={i} d={segmentPath(a, b)} stroke={reached[i] && drawing !== i ? c.dotDim : c.dotOff} {...DOTS} />
       ))}
       {drawing !== null && segments[drawing] ? <DrawingSegment a={segments[drawing].a} b={segments[drawing].b} /> : null}
     </Svg>
@@ -74,7 +74,7 @@ function DrawingSegment({ a, b }: { a: Point; b: Point }) {
           <AnimatedPath d={d} stroke="white" strokeWidth={8} fill="none" strokeDasharray={`${len} ${len}`} animatedProps={props} />
         </Mask>
       </Defs>
-      <Path d={d} stroke={c.text} mask={`url(#${mask})`} {...DOTS} />
+      <Path d={d} stroke={c.dotDim} mask={`url(#${mask})`} {...DOTS} />
     </>
   );
 }
