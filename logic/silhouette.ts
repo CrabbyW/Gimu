@@ -57,6 +57,9 @@ export function poseDots(pose: Pose, counts: readonly number[]): Pt[] {
   return out;
 }
 
+/** Index středové tečky hlavy („oko“, kreslí se v akcentu `live`) v poli ze `silhouetteDots`: hlava je za kostmi, za ní prstenec. */
+export const headDotIndex = (dotCount: number): number => dotCount - 1 - HEAD_RING;
+
 /** Tečky statické opory (bradla…) s roztečí DOT.pitch. */
 export function propDots(id: SilhouetteId): Pt[] {
   return (SILHOUETTES[id].props ?? []).flatMap(([a, b]) => {

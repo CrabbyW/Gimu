@@ -1,5 +1,5 @@
 import { BONES, BOUNDS, DOT, GROUND_Y, JOINTS, SILHOUETTES, type Pose } from '@/logic/silhouettePoses';
-import { boneDotCounts, propDots, lerpPose, poseAt, poseFrame, silhouetteDots } from '@/logic/silhouette';
+import { boneDotCounts, headDotIndex, propDots, lerpPose, poseAt, poseFrame, silhouetteDots } from '@/logic/silhouette';
 import type { SilhouetteId } from '@/types';
 
 const IDS = Object.keys(SILHOUETTES) as SilhouetteId[];
@@ -94,5 +94,14 @@ describe('technique fixes (QA U3)', () => {
     const f = poseFrame(id);
     const top = Math.min(...SILHOUETTES[id].keys.map((p) => p.head[1] - 7));
     expect((GROUND_Y - top) / f.h).toBeGreaterThanOrEqual(0.7);
+  });
+});
+
+describe('headDotIndex', () => {
+  it('ukazuje na střed hlavy (oko) pro každou siluetu', () => {
+    for (const id of IDS) {
+      const dots = silhouetteDots(id, 0);
+      expect(dots[headDotIndex(dots.length)]).toEqual(poseAt(SILHOUETTES[id].keys, 0).head);
+    }
   });
 });

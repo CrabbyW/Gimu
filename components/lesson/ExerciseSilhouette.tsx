@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { DOT, GROUND_Y, SILHOUETTES } from '@/logic/silhouettePoses';
 import { useSilhouettePhase } from './useSilhouettePhase';
-import { poseFrame, silhouetteDots } from '@/logic/silhouette';
+import { headDotIndex, poseFrame, silhouetteDots } from '@/logic/silhouette';
 import { useTheme } from '@/theme';
 import type { SilhouetteId } from '@/types';
 
@@ -24,6 +24,7 @@ export function ExerciseSilhouette({ id, phase, playing = true }: Props) {
   const t = phase ?? loop;
   const vb = poseFrame(id);
   const dots = silhouetteDots(id, t);
+  const eye = headDotIndex(dots.length);
   const ground = useMemo(() => {
     const xs: number[] = [];
     for (let x = Math.ceil((vb.x - 200) / DOT.groundPitch) * DOT.groundPitch; x <= vb.x + vb.w + 200; x += DOT.groundPitch) xs.push(x);
@@ -34,7 +35,7 @@ export function ExerciseSilhouette({ id, phase, playing = true }: Props) {
     <View testID={`silhouette-${id}`} style={{ flex: 1, alignSelf: 'stretch' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Svg aria-hidden width="100%" height="100%" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMax meet">
         {ground.map((x) => <Circle key={`g${x}`} cx={x} cy={GROUND_Y + DOT.r} r={DOT.groundR} fill={c.faint} />)}
-        {dots.map(([x, y], i) => <Circle key={i} cx={x} cy={y} r={DOT.r} fill={c.text} />)}
+        {dots.map(([x, y], i) => <Circle key={i} cx={x} cy={y} r={DOT.r} fill={i === eye ? c.live : c.text} />)}
       </Svg>
     </View>
   );

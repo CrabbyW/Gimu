@@ -17,7 +17,9 @@ const render = (phase?: number): ReactTestRenderer => { let r!: ReactTestRendere
 it('renders figure dots in text color for given phase', () => {
   const r = render(1);
   const fig = r.root.findAllByType(Circle).filter((n) => n.props.fill === theme.c.text);
-  expect(fig).toHaveLength(silhouetteDots('pushup', 1).length);
+  // Jedna tečka (střed hlavy = oko) je v akcentu `live`, ostatní v barvě textu.
+  expect(fig).toHaveLength(silhouetteDots('pushup', 1).length - 1);
+  expect(r.root.findAllByType(Circle).filter((n) => n.props.fill === theme.c.live)).toHaveLength(1);
   expect(fig[0]!.props.cy).toBeCloseTo(silhouetteDots('pushup', 1)[0]![1]);
   expect(r.root.findAllByType(Circle).some((n) => n.props.fill === theme.c.faint)).toBe(true);
 });
