@@ -57,18 +57,27 @@ export function poseDots(pose: Pose, counts: readonly number[]): Pt[] {
   return out;
 }
 
-/** Tečky siluety v čase t (0 = první klíčová póza, 1 = poslední). */
+/** Tečky statické opory (bradla…) s roztečí DOT.pitch. */
+export function propDots(id: SilhouetteId): Pt[] {
+  return (SILHOUETTES[id].props ?? []).flatMap(([a, b]) => {
+    const n = Math.max(2, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / DOT.pitch) + 1);
+    return Array.from({ length: n }, (_, i) => lerpPt(a, b, i / (n - 1)));
+  });
+}
+
+/** Tečky siluety v čase t (0 = první klíčová póza, 1 = poslední): opora + postava. */
 export function silhouetteDots(id: SilhouetteId, t: number): Pt[] {
-  return poseDots(poseAt(SILHOUETTES[id].keys, t), boneDotCounts(id));
+  return [...propDots(id), ...poseDots(poseAt(SILHOUETTES[id].keys, t), boneDotCounts(id))];
 }
 
 /** Výřez siluety: obal všech klíčových póz (s hlavou) + zem; minimální rozměr drží velikost teček
  *  u ležících póz v rozumných mezích. */
-const MIN_FRAME = { w: 140, h: 72 } as const;
+// Minimum výšky 44 (dřív 72): kompaktní pózy (crow, L-sit) se jinak v nízkém panelu (w320: 254×62 pt) scvrkly na ~30 pt.
+const MIN_FRAME = { w: 140, h: 44 } as const;
 export function poseFrame(id: SilhouetteId, pad = 8): { x: number; y: number; w: number; h: number } {
   const pts = SILHOUETTES[id].keys.flatMap((p) => [
     [p.head[0] - HEAD_R, p.head[1] - HEAD_R] as Pt, [p.head[0] + HEAD_R, p.head[1] + HEAD_R] as Pt, ...Object.values(p.joints),
-  ]);
+  ]).concat((SILHOUETTES[id].props ?? []).flat());
   const xs = pts.map((q) => q[0]);
   const ys = pts.map((q) => q[1]);
   const cx = (Math.min(...xs) + Math.max(...xs)) / 2;

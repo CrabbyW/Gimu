@@ -1,5 +1,5 @@
-import { BONES, BOUNDS, JOINTS, SILHOUETTES, type Pose } from '@/logic/silhouettePoses';
-import { boneDotCounts, lerpPose, poseAt, poseFrame, silhouetteDots } from '@/logic/silhouette';
+import { BONES, BOUNDS, DOT, GROUND_Y, JOINTS, SILHOUETTES, type Pose } from '@/logic/silhouettePoses';
+import { boneDotCounts, propDots, lerpPose, poseAt, poseFrame, silhouetteDots } from '@/logic/silhouette';
 import type { SilhouetteId } from '@/types';
 
 const IDS = Object.keys(SILHOUETTES) as SilhouetteId[];
@@ -72,5 +72,27 @@ describe('interpolation', () => {
     expect(poseAt([a, b, c], 0.25)).toEqual(lerpPose(a, b, 0.5));
     expect(poseAt([a, b, c], 0.75)).toEqual(lerpPose(b, c, 0.5));
     expect(poseAt([a], 0.6)).toBe(a);
+  });
+});
+
+describe('technique fixes (QA U3)', () => {
+  it('dip: feet stay off the ground in every key pose and bars are drawn', () => {
+    for (const p of SILHOUETTES.dip.keys) {
+      expect(p.joints.footL[1] + DOT.r).toBeLessThan(GROUND_Y);
+      expect(p.joints.footR[1] + DOT.r).toBeLessThan(GROUND_Y);
+    }
+    expect(propDots('dip').length).toBeGreaterThan(10);
+    expect(silhouetteDots('dip', 0).length).toBe(silhouetteDots('dip', 1).length);
+  });
+  it('squat: hip below knees at the bottom (below parallel)', () => {
+    const { keys } = SILHOUETTES.squat;
+    const bottom = keys[keys.length - 1] as Pose;
+    expect(bottom.joints.hip[1]).toBeGreaterThan(bottom.joints.kneeL[1]);
+    expect(bottom.joints.hip[1]).toBeGreaterThan(bottom.joints.kneeR[1]);
+  });
+  it.each(['crow', 'lsit'] as SilhouetteId[])('%s (compact) fills >= 70 %% of frame height', (id) => {
+    const f = poseFrame(id);
+    const top = Math.min(...SILHOUETTES[id].keys.map((p) => p.head[1] - 7));
+    expect((GROUND_Y - top) / f.h).toBeGreaterThanOrEqual(0.7);
   });
 });

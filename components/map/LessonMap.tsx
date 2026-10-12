@@ -75,14 +75,20 @@ const SCROLL_GAP_MS = 200;
 
 /** Teplá litina §2.7: opička SEDÍ na horní hraně kotouče (sourozenec kotouče, ne dítě: kotouč smí pulzovat,
  *  opička ne). Smutná a u bosse sedí vedle uzlu na opačné straně vlny. */
-const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolean, stage: MascotStage) => {
+const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolean, stage: MascotStage, width: number, edge: number) => {
   // Kotva (spec §2.7, z-order): spodní hrana trupu leží na středu horní hrany kotouče; nohy a konec šálu
   // (MonkeyFront) visí přes čelo kotouče.
   // Nothing Dot: hrana = vnější hrana teček `DotPlate` (`plateOuterRadius`), opička sedí na horní tečce.
   if (!isBoss && !beside) return { x: p.x, y: p.y - plateOuterRadius(p.size) - (mascotSeatY(stage) / MASCOT_VIEWBOX - 0.5) * MASCOT };
   const half = isBoss ? BOSS_SIZE.w / 2 : p.size / 2;
   const side = p.x < cx ? 1 : -1;
-  return { x: p.x + side * (half + MASCOT_GAP + MASCOT / 2), y: p.y };
+  const x = p.x + side * (half + MASCOT_GAP + MASCOT / 2);
+  // QA U5: vedle uzlu jen když se opička vejde do displeje (≥ `edge` od kraje). Jinak (boss 220 pt na w320)
+  // sedí nad uzlem: nad činkou (boss), nad kotoučem (smutná) — nikdy useknutá okrajem.
+  const lo = edge + MASCOT / 2, hi = width - edge - MASCOT / 2;
+  if (x >= lo && x <= hi) return { x, y: p.y };
+  const top = isBoss ? BOSS_SIZE.h / 2 : plateOuterRadius(p.size);
+  return { x: Math.min(hi, Math.max(lo, p.x)), y: p.y - top - MASCOT / 2 };
 };
 
 export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions, line = null, onMascotTap, greet = false }: Props) {
@@ -139,6 +145,19 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
     // Uzel na 40 % viditelného výřezu (pod překryvnou hlavičkou, nad pruhem CTA `footerSpace`) (vnitřní souřadnice: horní hrana výřezu = scrollY).
     if (p && viewportH > 0) scrollTo(Math.max(0, p.y - Math.max(0, viewportH - topInset - footerSpace) * 0.4), animated);
   }, [posOf, viewportH, topInset, footerSpace, scrollTo]);
+  /** Boss (QA U5): aktuální uzel celý (opička nad ním, kotouč, popisek) mezi hlavičkou a CTA. Když už je, nic. */
+  const revealNode = useCallback((id: string, animated: boolean) => {
+    const n = flat.find((f) => f.lesson.id === id);
+    const p = posOf(id);
+    if (!n || !p || viewportH === 0) return;
+    const top = p.y - p.size / 2 - MASCOT - space.m;
+    const bottom = p.y + p.size / 2 + LABEL_GAP + labelHeight('current', n.lesson.isBoss) + space.m;
+    const winTop = scrollY.current + topInset;
+    const winBottom = scrollY.current + viewportH - footerSpace;
+    if (top >= winTop && bottom <= winBottom) return;
+    const y = bottom > winBottom ? scrollY.current + (bottom - winBottom) : scrollY.current - (winTop - top);
+    scrollTo(Math.max(0, Math.min(y, top - topInset)), animated);
+  }, [flat, posOf, viewportH, topInset, footerSpace, scrollTo, space.m]);
 
   // Omezený pohyb: opička se na nový uzel jen prolne (200 ms), bez oblouku.
   const crossfade = useSharedValue(1);
@@ -161,6 +180,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       playSfx('unlock');
       crossfade.value = 0;
       crossfade.value = withTiming(1, { ...motion.calmFade, reduceMotion: ReduceMotion.Never });
+      if (pair) revealNode(pair.nextId, false);
       endRef.current?.();
       return;
     }
@@ -189,7 +209,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const hopping = pair !== null && !reduced && phase === 5;
   // Fáze 5 trvá HAPPY_MS: po celou dobu skoku a doskoku má opice radost.
   const mood: Mood = hopping ? 'happy' : stats.mood;
-  const spot = mascotPos && mascotNode ? mascotSpot(mascotPos, cx, mascotNode.lesson.isBoss, mood === 'sad', stats.stage) : null;
+  const spot = mascotPos && mascotNode ? mascotSpot(mascotPos, cx, mascotNode.lesson.isBoss, mood === 'sad', stats.stage, width, space.m) : null;
   const seated = mascotNode !== undefined && !mascotNode.lesson.isBoss && mood !== 'sad';
   const mx = useSharedValue(spot?.x ?? 0);
   const my = useSharedValue(spot?.y ?? 0);
@@ -215,6 +235,8 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
       scheduleOnRN(feedback, 'monkeyHop');
     }));
     const t = setTimeout(() => {
+      // Konec sekvence (po doskoku, nic dalšího neběží): nový aktuální uzel celý nad CTA (boss, QA U5).
+      if (pair) revealNode(pair.nextId, true);
       advance(6);
       endRef.current?.();
     }, HAPPY_MS);

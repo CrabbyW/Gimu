@@ -193,7 +193,8 @@ export function DotPlate({ kg, size, state, showKg = true, check = true, rotatio
           teček (místo pro pulz motion-agenta), zamčený = jen tlumený vnější prstenec se zámkem. */}
       {state === 'done' ? <View testID="dotplate-hub" pointerEvents="none" style={{ position: 'absolute', width: hub, height: hub, borderRadius: hub / 2, backgroundColor: c.text }} /> : null}
       {state === 'current' ? <Animated.View testID="dotplate-outline" pointerEvents="none" style={[outlineStyle, { position: 'absolute', width: ringBox, height: ringBox, borderRadius: ringBox / 2, borderWidth: stroke.nodeRing, borderColor: c.text }]} /> : null}
-      {center}
+      {/* Střed v absolutní vrstvě nad nábojem: na webu by se statický obsah kreslil pod pozicovaný `dotplate-hub` (QA U5). */}
+      {center ? <View testID="dotplate-center" pointerEvents="none" style={{ position: 'absolute', inset: 0, alignItems: 'center', justifyContent: 'center' }}>{center}</View> : null}
     </View>
   );
 }

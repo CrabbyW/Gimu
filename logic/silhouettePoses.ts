@@ -7,7 +7,12 @@ export type Joint = 'neck' | 'hip' | 'handL' | 'handR' | 'elbowL' | 'elbowR' | '
 /** Jedna klíčová póza: střed hlavy + 10 kloubů. */
 export interface Pose { head: Pt; joints: Readonly<Record<Joint, Pt>> }
 /** Pohyb cviku: 2–3 klíčové pózy. t = 0 první, t = 1 poslední (viz logic/silhouette.ts). */
-export interface PoseLoop { kind: 'reps' | 'hold'; keys: readonly Pose[] }
+export interface PoseLoop {
+  kind: 'reps' | 'hold';
+  keys: readonly Pose[];
+  /** Statická opora (bradla, hrazda…) jako úsečky z teček; s pózou se nehýbe. */
+  props?: readonly (readonly [Pt, Pt])[];
+}
 
 export const JOINTS: readonly Joint[] = ['neck', 'hip', 'elbowL', 'handL', 'elbowR', 'handR', 'kneeL', 'footL', 'kneeR', 'footR'];
 /** Kostra: trup neck→hip, paže neck→elbow→hand, nohy hip→knee→foot. */
@@ -48,7 +53,8 @@ export const SILHOUETTES: Readonly<Record<SilhouetteId, PoseLoop>> = {
   squat: { kind: 'reps', keys: [
     pose([60,18],[60,28],[60,62],[52,44],[50,60],[68,44],[70,60],[56,84],[54,108],[64,84],[66,108]),
     pose([58,28],[59,38],[63,70],[50,50],[42,58],[56,50],[44,58],[52,86],[54,108],[58,86],[64,108]),
-    pose([56,40],[58,50],[66,78],[46,54],[34,52],[50,56],[36,54],[46,86],[54,108],[50,88],[62,108])] },
+    // Dole: kyčel pod úrovní kolen (pod paralelu), paže vpřed na rovnováhu.
+    pose([52,52],[56,61],[68,90],[44,64],[32,62],[48,66],[34,64],[48,86],[54,108],[52,87],[62,108])] },
   // Výpad: stoj v rozkroku → zadní koleno těsně nad zem, trup kolmo.
   lunge: { kind: 'reps', keys: [
     pose([60,18],[60,28],[60,62],[54,44],[54,62],[66,44],[66,62],[46,84],[40,108],[74,84],[80,108]),
@@ -69,10 +75,10 @@ export const SILHOUETTES: Readonly<Record<SilhouetteId, PoseLoop>> = {
   lsit: { kind: 'hold', keys: [
     pose([58,39],[58,49],[58,83],[48,67],[46,86],[68,67],[70,86],[76,83],[96,82],[76,84],[96,83]),
     pose([58,37],[58,47],[58,81],[48,66],[46,86],[68,66],[70,86],[76,81],[96,80],[76,82],[96,81])] },
-  // Dip: propnuté paže na bradlech → lokty 90°.
-  dip: { kind: 'reps', keys: [
-    pose([60,20],[60,30],[60,62],[48,46],[44,62],[72,46],[76,62],[56,84],[56,104],[64,84],[64,104]),
-    pose([60,34],[60,44],[60,76],[44,48],[44,62],[76,48],[76,62],[56,96],[52,108],[64,96],[68,108])] },
+  // Dip: propnuté paže na bradlech → lokty 90°; nohy celou dobu ve vzduchu (pokrčená kolena), bradla jako opora.
+  dip: { kind: 'reps', props: [[[30,63],[90,63]], [[34,63],[34,108]], [[86,63],[86,108]]], keys: [
+    pose([60,20],[60,30],[60,62],[48,46],[44,62],[72,46],[76,62],[57,82],[64,96],[63,82],[70,96]),
+    pose([60,34],[60,44],[60,76],[44,48],[44,62],[76,48],[76,62],[57,92],[70,100],[63,92],[76,100])] },
   // Shyb: vis → půl cesty → brada nad hrazdou.
   pullup: { kind: 'reps', keys: [
     pose([60,40],[60,50],[60,82],[44,30],[46,12],[76,30],[74,12],[56,96],[56,108],[64,96],[64,108]),
