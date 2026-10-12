@@ -57,6 +57,7 @@
     "typecheck": "tsc --noEmit",
     "test:node": "node --test .claude/hooks/guard.test.mjs scripts/__tests__/gen-sounds.test.mjs",
     "gen:sounds": "node scripts/gen-sounds.mjs",
+    "gen:splash": "node scripts/gen-splash.mjs",
     "lint": "expo lint",
     "e2e": "expo export --platform web && playwright test -c e2e/playwright.config.ts flows visual a11y",
     "e2e:visual": "expo export --platform web && playwright test -c e2e/playwright.config.ts visual",

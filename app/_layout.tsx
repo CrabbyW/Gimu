@@ -12,7 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { DotIntro } from '@/components/intro/DotIntro';
+import { AnimatedSplash } from '@/components/splash/AnimatedSplash';
 import { takeIntro } from '@/logic/dotGlyphs';
 import { PlateFlight } from '@/components/transition/PlateFlight';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
@@ -40,8 +40,8 @@ export default function RootLayout() {
   const season = useActiveSeason();
   useEffect(() => { if (fontError) console.warn('[fonts] načtení selhalo, pokračuji se systémovým písmem', fontError); }, [fontError]);
   // Splash drží, dokud nejsou fonty i uložená data (spec §9). Chyba fontů splash neblokuje.
-  // Při studeném startu s intrem se splash schová hned po prvním layoutu intra (intro fonty nepotřebuje,
-  // podklad = theme base = barva splashe v app.json); RootStack pod ním dál čeká na ready.
+  // Při studeném startu převezme nativní splash animovaný splash (stejná hlava na stejném místě, dark base
+  // = barva splashe v app.json): nativní se schová po jeho prvním layoutu, RootStack pod ním dál čeká na ready.
   const ready = (fontsLoaded || fontError != null) && hydrated;
   const hideSplash = useCallback(() => { SplashScreen.hideAsync().catch(() => undefined); }, []);
   useEffect(() => { if (ready) hideSplash(); }, [ready, hideSplash]);
@@ -57,7 +57,7 @@ export default function RootLayout() {
         // Uložená data nejdou přečíst: chyba s Retry, ne onboarding (ten by postup přepsal).
         ? <StateView kind="error" what={copy.common.loadTarget.profile} onRetry={loadFailed.retry} />
         : <RootStack />}
-      {intro ? <DotIntro ready={ready && !introHeld()} onDone={endIntro} onShown={hideSplash} /> : null}
+      {intro ? <AnimatedSplash ready={ready && !introHeld()} onDone={endIntro} onShown={hideSplash} /> : null}
     </ThemeProvider>
   );
 }

@@ -105,6 +105,10 @@ export const dots = {
   /** Kurogane uzel mapy (2026-10-12), zlomky průměru uzlu: done = plný disk s otvorem, current = prstenec
    *  `ringDots` teček + živý (`live`) střed, locked = slabý obrys `lockedDots` teček. */
   node: { doneDisc: 0.6, hole: 0.22, ringR: 0.4, ringDots: 24, ringDot: 0.05, liveCore: 0.2, lockedR: 0.28, lockedDots: 14, lockedDot: 0.042 },
+  /** Splash (motion, plán krok 3): hlava opice `head` pt (= `imageWidth` nativního splashe v app.json),
+   *  výřez viewBoxu opice `view` (x, y, strana; stejný jako `assets/splash-icon.png` ze `scripts/gen-splash.mjs`),
+   *  kruh `count` teček kolem středu hlavy o poloměru `ringR` a tečce `dotR` (jednotky viewBoxu 200). */
+  splash: { head: 140, view: [34, 0, 132] as const, ringR: 72, dotR: 4.2, count: 12 },
   /** Tečková činka bosse: rozteč 6 = dva sloupce teček na kotouč šíře 12 (tečka `path.r`). */
   boss: { pitch: 6 },
   /** Tečkový glyf cesty a vize (onboarding, SVG ve viewBoxu 48): rozteč mřížky výplně i obrysu a poloměr tečky.
