@@ -29,7 +29,9 @@ export const dark = {
   borderStrong: '#67696C', focus: '#E9EBEE', disabled: '#535559',
   stateSuccess: '#7CCD8E', stateWarning: '#EEC05B', stateInfo: '#7BB9E5',
   // Kurogane (2026-10-12): jediný akcent mapy = signální červená, jen pro „živé“ (aktuální uzel, tečka radosti opice), < 5 % plochy.
-  live: '#E01B22',
+  // Color typography 2026-10-12 (docs/design/color-typography.md): dark `live` zvednut z #E01B22 (4.07:1 na base,
+  // 3.79:1 na tile) na #F0333A — „gain“ akcentu: jas ↑, sytost drží, ≥ 4.5:1 na base i tile, takže smí nést i malý text.
+  live: '#F0333A',
   // Opice v2 (plná silueta): v dark negativ — světlá srst `text`, tmavý obličej, světlé oči (čte se jako tisk na černé).
   // `mascotProp` = tečkové doplňky (Zz, záblesk, hrazda), tlumené jako sekundární grafika.
   mascotFur: '#E9EBEE', mascotFace: '#3A3C40', mascotEye: '#E9EBEE', mascotProp: '#84868A',
@@ -51,7 +53,7 @@ export const light: Record<keyof typeof dark, string> = {
   goldDotOff: '#A88A4E', goldDotDim: '#8C7241',
   onGoldPill: '#F2F2EF',
   borderStrong: '#84868A', focus: '#15171A', disabled: '#A8ABAF',
-  stateSuccess: '#21763C', stateWarning: '#A46400', stateInfo: '#006AA0',
+  stateSuccess: '#145A2B', stateWarning: '#A46400', stateInfo: '#006AA0',
   live: '#D0161D',
   // Opice v2 v light = originál z reference: černá silueta, světle šedý obličej, tmavé oči.
   mascotFur: '#15171A', mascotFace: '#D5D8DB', mascotEye: '#15171A', mascotProp: '#67696C',

@@ -100,3 +100,32 @@ describe.each([['dark', dark as Colors], ['light', light]] as const)('stavy uzlu
   it('náboj i obrys text na base ≥ 3:1', () => { expect(contrast(c.text, c.base)).toBeGreaterThanOrEqual(3); });
   it('zámek muted na base ≥ 3:1', () => { expect(contrast(c.muted, c.base)).toBeGreaterThanOrEqual(3); });
 });
+
+// Color typography 2026-10-12 (docs/design/color-typography.md): hlavní text AAA, akcent `live` jako text i grafika,
+// vnitřní kontrast opice (silueta čitelná jako tvar) a stavové barvy odlišitelné hodnotou, ne jen odstínem.
+describe.each([['dark', dark as Colors], ['light', light]] as const)('color typography %s', (_name, c) => {
+  it.each(['base', 'tile', 'tilePressed'] as const)('hlavní text na %s ≥ 7:1 (AAA)', (bg) => {
+    expect(contrast(c.text, c[bg])).toBeGreaterThanOrEqual(7);
+  });
+  it.each(['base', 'tile'] as const)('sekundární text (muted) na %s ≥ 4.5:1', (bg) => {
+    expect(contrast(c.muted, c[bg])).toBeGreaterThanOrEqual(4.5);
+  });
+  it.each(['base', 'tile'] as const)('akcent live na %s ≥ 4.5:1 (smí nést i malý text)', (bg) => {
+    expect(contrast(c.live, c[bg])).toBeGreaterThanOrEqual(4.5);
+  });
+  it('akcent live na stisknuté dlaždici ≥ 3:1 (jen grafika)', () => expect(contrast(c.live, c.tilePressed)).toBeGreaterThanOrEqual(3));
+  it('živý střed proti prstenci teček text ≥ 3:1 (1.4.11)', () => expect(contrast(c.live, c.text)).toBeGreaterThanOrEqual(3));
+  it('silueta opice na base ≥ 3:1, obličej na srsti ≥ 3:1, oko na obličeji ≥ 3:1', () => {
+    expect(contrast(c.mascotFur, c.base)).toBeGreaterThanOrEqual(3);
+    expect(contrast(c.mascotFace, c.mascotFur)).toBeGreaterThanOrEqual(3);
+    expect(contrast(c.mascotEye, c.mascotFace)).toBeGreaterThanOrEqual(3);
+  });
+  it('doplňky opice (mascotProp) na base ≥ 3:1', () => expect(contrast(c.mascotProp, c.base)).toBeGreaterThanOrEqual(3));
+  it('hierarchie hodnotou: text > muted > faint (poměr na base klesá)', () => {
+    expect(contrast(c.text, c.base)).toBeGreaterThan(contrast(c.muted, c.base));
+    expect(contrast(c.muted, c.base)).toBeGreaterThan(contrast(c.faint, c.base));
+  });
+  // Červená/zelená: úspěch a chyba se liší i jasem (pro protan/deutan zůstane rozdíl hodnoty), ne jen odstínem.
+  it('stateSuccess a danger se liší jasem ≥ 1.2:1', () => expect(contrast(c.stateSuccess, c.danger)).toBeGreaterThanOrEqual(1.2));
+  it('akcent live je jediná sytá barva UI: liší se od danger', () => expect(c.live).not.toBe(c.danger));
+});
