@@ -2,34 +2,26 @@ import { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  ReduceMotion, cancelAnimation, useAnimatedProps, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withSequence, withSpring, withTiming,
+  ReduceMotion, cancelAnimation, useAnimatedReaction, useAnimatedStyle, useDerivedValue, useSharedValue, withSequence, withSpring, withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle, Path } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 import { DotPlate } from '@/components/dots';
 import { usePressFeedback } from '@/components/ui/usePressFeedback';
 import { feedback as fb } from '@/lib/feedback';
 import { haptics } from '@/lib/haptics';
-import { ease, motion, spring, useMotionSafe } from '@/lib/motion';
+import { ease, motion, useMotionSafe } from '@/lib/motion';
 import { registerPlate } from '@/lib/plateFlight';
 import { playSfx } from '@/lib/sound';
 import type { NodeState } from '@/logic/map';
-import { useTheme } from '@/theme';
+import { dots, useTheme } from '@/theme';
 import { turnsPerClock, useAmbientClock } from './ambient';
 import { usePlateSpin } from './usePlateSpin';
 import type { PlateKg } from '@/types';
 
-/** Fajfka dokončeného uzlu přes středový otvor kotouče, ve viewBoxu 100×100. Délka tahu ≈ 18. */
-const CHECK_PATH = 'M44 50 l4 4 l8 -9';
-const CHECK_LENGTH = 18;
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 /** Půlperioda dechu prstence (perioda 2.4 s, motion spec §3.1). */
 export const PULSE_MS = motion.breath.periodMs / 2;
-const CHECK_MS = motion.checkMs;
 const SHAKE = motion.lockedShake;
 const UNLOCK = { ...motion.nodeUnlock, fade: { duration: motion.nodeUnlock.fadeMs, easing: ease.out } };
 
@@ -67,6 +59,8 @@ const TURNS_IDLE = turnsPerClock(motion.plateSpin.idleMs);
 const TURNS_CURRENT = turnsPerClock(motion.plateSpin.currentMs);
 const TURNS_COMET = turnsPerClock(motion.ambient.cometMs);
 const TURNS_BREATH = turnsPerClock(motion.breath.periodMs);
+// Dech prstence aktuálního uzlu (Kurogane): pomalejší než záře, ~3.6 s (celé otáčky hodiny → bez skoku při přetočení).
+const TURNS_RING = turnsPerClock(motion.outlinePulse.periodMs);
 // Kometa startuje ve 12 hodin (stejně jako statický `DotPlate`).
 const COMET_HOME = -Math.PI / 2;
 
@@ -107,7 +101,7 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
   const OUT_LOW = motion.outlinePulse.low;
   const outline = useDerivedValue(() => {
     if (!clock) return 1;
-    const k = OUT_LOW + (1 - OUT_LOW) * (0.5 + 0.5 * Math.cos(clock.value * TAU * TURNS_BREATH));
+    const k = OUT_LOW + (1 - OUT_LOW) * (0.5 + 0.5 * Math.cos(clock.value * TAU * TURNS_RING));
     return 1 - blend.value * (1 - k);
   });
   const shake = useShake(shakeKey, reduced);
@@ -131,6 +125,12 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
       >
         {unlocking ? (
           <UnlockingPlate kg={kg} size={nodeSize} reduced={reduced} onUnlocked={onUnlocked} rotation={rotation ?? ownRotation} />
+        ) : state === 'done' && justCompleted ? (
+          // Nacvaknutí: prstenec aktuálního uzlu se stáhne a střed se rozvine do plného disku s otvorem.
+          <SnapToDone kg={kg} size={nodeSize} reduced={reduced} rotation={rotation ?? ownRotation} />
+        ) : state === 'done' && checkHidden ? (
+          // Výchozí snímek sekvence: právě dokončený uzel ještě vypadá jako aktuální (prstenec + živý střed, bez dechu).
+          <DotPlate variant="node" kg={kg} size={nodeSize} state="current" decorative rotation={rotation ?? ownRotation} />
         ) : (
           // Nothing Dot: kotouč z teček, bez stínu. Aktuální uzel nese záře a kometa (místo plného prstence),
           // `rotation`/`comet` napojí motion-agent (ambientní rotace, roztočení).
@@ -140,7 +140,6 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
             touch={spinnable ? spin.touch : undefined} intro={intro ?? false}
           />
         )}
-        {state === 'done' && justCompleted ? <DrawnCheck size={nodeSize} reduced={reduced} /> : null}
       </Pressable>
       </Animated.View>
       </GestureDetector>
@@ -148,16 +147,14 @@ export function PlateNode({ kg, size: nodeSize, state, accessibilityLabel, onPre
   );
 }
 
-/** Odemčení locked → current (motion spec §3.1), vše na UI vlákně od jednoho startu:
- *  zamčený kotouč (jen vnější prstenec `dotDim` se zámkem) fade-out 200 ms, plný tečkový kotouč fade-in 200 ms,
- *  scale 0.92 → 1 `spring.kotouc`, trim prstence v `text` 400 ms ease.out. Konec trimu = vzor `unlock` + zvuk
- *  a `onUnlocked`. Omezený pohyb: jen prolnutí 200 ms, prstenec rovnou celý, haptika zůstává.
- *  Nothing Dot: vizuál vrstev vyměněn za `DotPlate`, časování beze změny (motion-agent ho může přeladit). */
+/** Odemčení locked → current (Kurogane, motion-agent): prstenec „se přesune“ na nový uzel. Slabý obrys
+ *  zamčeného uzlu (14 teček) se prolne pryč (`fadeMs`), prstenec 24 teček s živým středem vyroste z poloměru
+ *  obrysu (`lockedR / ringR`) na plný za `trimMs` (`ease.punch`, timing bez pružiny: uzel je klikatelný).
+ *  Konec = vzor `unlock` (haptika + zvuk) a `onUnlocked`. Omezený pohyb: jen prolnutí 200 ms, haptika zůstává.
+ *  Na UI vlákně od jednoho startu. */
 function UnlockingPlate({ kg, size, reduced, onUnlocked, rotation }: { kg: PlateKg; size: number; reduced: boolean; onUnlocked?(): void; rotation?: SharedValue<number> }) {
-  const { c, size: tokens, stroke } = useTheme();
   const fade = useSharedValue(0);
-  const scale = useSharedValue(reduced ? 1 : UNLOCK.from);
-  const trim = useSharedValue(reduced ? 1 : 0);
+  const grow = useSharedValue(reduced ? 1 : 0);
   const land = () => { haptics.unlock(); playSfx('unlock'); onUnlocked?.(); };
   useEffect(() => {
     const never = { reduceMotion: ReduceMotion.Never };
@@ -165,58 +162,68 @@ function UnlockingPlate({ kg, size, reduced, onUnlocked, rotation }: { kg: Plate
       if (done && reduced) scheduleOnRN(land);
     });
     if (!reduced) {
-      scale.value = withSpring(1, spring.kotouc);
-      trim.value = withTiming(1, { duration: UNLOCK.trimMs, easing: ease.out }, (done) => { if (done) scheduleOnRN(land); });
+      grow.value = withTiming(1, { duration: UNLOCK.trimMs, easing: ease.punch }, (done) => { if (done) scheduleOnRN(land); });
     }
-    return () => { cancelAnimation(fade); cancelAnimation(scale); cancelAnimation(trim); };
+    return () => { cancelAnimation(fade); cancelAnimation(grow); };
     // Odemčení se přehraje jednou při mountu.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const outline = useAnimatedStyle(() => ({ opacity: 1 - fade.value }));
-  const solid = useAnimatedStyle(() => ({ opacity: fade.value, transform: [{ scale: scale.value }] }));
-  const ring = size + 2 * (tokens.nodeRingGap + stroke.hairline);
-  const r = (ring - stroke.hairline) / 2;
-  const circumference = 2 * Math.PI * r;
-  const ringProps = useAnimatedProps(() => ({ strokeDashoffset: circumference * (1 - trim.value) }));
-  const inset = (size - ring) / 2;
+  const FROM = UNLOCK_FROM;
+  const outline = useAnimatedStyle(() => ({ opacity: 1 - fade.value, transform: [{ scale: 1 + (1 / FROM - 1) * grow.value }] }));
+  const solid = useAnimatedStyle(() => ({ opacity: fade.value, transform: [{ scale: FROM + (1 - FROM) * grow.value }] }));
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      {/* Vrstvy: zamčený (vnější prstenec + zámek) → plný tečkový kotouč → vlasový prstenec „nabíjení“ (zmizí s koncem sekvence). */}
+      {/* Obrys zamčeného uzlu roste s prstencem (stejný poloměr v každém snímku) a mizí. */}
       <Animated.View style={[{ position: 'absolute' }, outline]}>
         <DotPlate variant="node" kg={kg} size={size} state="locked" decorative />
       </Animated.View>
       <Animated.View style={[{ position: 'absolute' }, solid]}>
         {/* Stejné natočení jako ambient po odemčení: výměna za běžný kotouč nedá skok. */}
-        <DotPlate variant="node" kg={kg} size={size} state="current" decorative rotation={rotation} outline={trim} />
+        <DotPlate variant="node" kg={kg} size={size} state="current" decorative rotation={rotation} />
       </Animated.View>
-      <View pointerEvents="none" style={{ position: 'absolute', left: inset, top: inset, width: ring, height: ring, transform: [{ rotate: '-90deg' }] }}>
-        <Svg aria-hidden width={ring} height={ring}>
-          <AnimatedCircle
-            cx={ring / 2} cy={ring / 2} r={r} fill="none" stroke={c.text} strokeWidth={stroke.hairline}
-            strokeDasharray={`${circumference} ${circumference}`} animatedProps={ringProps}
-          />
-        </Svg>
-      </View>
     </View>
   );
 }
 
-function DrawnCheck({ size, reduced }: { size: number; reduced: boolean }) {
-  const { c } = useTheme();
-  const offset = useSharedValue(reduced ? 0 : CHECK_LENGTH);
+/** Prstenec roste z poloměru zamčeného obrysu. */
+const UNLOCK_FROM = dots.node.lockedR / dots.node.ringR;
+
+/** Nacvaknutí dokončeného uzlu (Kurogane, motion-agent): prstenec aktuálního uzlu se stáhne k disku a zhasne
+ *  (`snapMs` × 0.8, `ease.exit`), plný disk s otvorem vyroste ze živého středu (`liveCore / doneDisc` → 1,
+ *  `snapMs`, `ease.punch`, bez pružiny). Dosednutí = `seriesPlate` (rigid + tick). Omezený pohyb: prolnutí. */
+function SnapToDone({ kg, size, reduced, rotation }: { kg: PlateKg; size: number; reduced: boolean; rotation?: SharedValue<number> }) {
+  const p = useSharedValue(0);
   useEffect(() => {
-    if (!reduced) offset.value = withTiming(0, { duration: CHECK_MS, easing: ease.out });
-  }, [offset, reduced]);
-  const props = useAnimatedProps(() => ({ strokeDashoffset: offset.value }));
+    const cfg = reduced
+      ? { ...motion.calmFade, reduceMotion: ReduceMotion.Never }
+      : { duration: SNAP.ms, easing: ease.punch };
+    p.value = withTiming(1, cfg, (done) => { if (done) scheduleOnRN(fb, 'seriesPlate'); });
+    return () => cancelAnimation(p);
+    // Nacvaknutí se přehraje jednou při mountu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const FROM = SNAP.from, SHRINK = SNAP.shrink, still = reduced ? 1 : 0;
+  const ring = useAnimatedStyle(() => ({
+    opacity: Math.max(0, 1 - p.value * 1.25),
+    transform: [{ scale: 1 - (1 - SHRINK) * p.value * (1 - still) }],
+  }));
+  const disc = useAnimatedStyle(() => ({
+    opacity: Math.min(1, p.value * 2),
+    transform: [{ scale: FROM + (1 - FROM) * (still ? 1 : p.value) }],
+  }));
   return (
-    <Svg aria-hidden width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }} pointerEvents="none">
-      <AnimatedPath
-        d={CHECK_PATH} stroke={c.onText} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round"
-        strokeDasharray={`${CHECK_LENGTH} ${CHECK_LENGTH}`} animatedProps={props}
-      />
-    </Svg>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={[{ position: 'absolute' }, ring]}>
+        <DotPlate variant="node" kg={kg} size={size} state="current" decorative rotation={rotation} />
+      </Animated.View>
+      <Animated.View style={[{ position: 'absolute' }, disc]}>
+        <DotPlate variant="node" kg={kg} size={size} state="done" decorative />
+      </Animated.View>
+    </View>
   );
 }
+
+const SNAP = { ms: motion.checkMs, from: dots.node.liveCore / dots.node.doneDisc, shrink: dots.node.doneDisc / (2 * dots.node.ringR) };
 
 /** Průběh odemčení 0 → 1: pružina `motion.unlock` (s omezeným pohybem 200ms fade).
  *  Dopad = první dosažení cíle (pružina pak ještě doznívá): haptika a `onUnlocked`. */
