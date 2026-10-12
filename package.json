@@ -73,10 +73,12 @@
       "/node_modules/",
       "/docs/",
       "/video/",
-      "/e2e/"
+      "/e2e/",
+      "/old files and designs/"
     ],
     "modulePathIgnorePatterns": [
-      "<rootDir>/video/"
+      "<rootDir>/video/",
+      "<rootDir>/old files and designs/"
     ]
   },
   "private": true,

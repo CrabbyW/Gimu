@@ -20,7 +20,7 @@ const logicBoundaries = {
 
 module.exports = defineConfig([
   expoConfig,
-  { ignores: ['dist/*', 'docs/*', 'video/**', 'e2e/report/**', 'e2e/test-results/**', '.agents/**', '.superpowers/**', '.expo/**'] },
+  { ignores: ['dist/*', 'docs/*', 'video/**', 'e2e/report/**', 'e2e/test-results/**', '.agents/**', '.superpowers/**', '.expo/**', 'old files and designs/**'] },
   { files: ['app/**', 'components/**'], ignores: ['**/__tests__/**'], rules: { 'no-restricted-imports': ['error', uiBoundaries] } },
   {
     files: ['app/**', 'components/**', 'hooks/**', 'lib/**'],

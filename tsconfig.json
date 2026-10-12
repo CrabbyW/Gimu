@@ -7,6 +7,6 @@
     "paths": { "@/*": ["./*"] },
     "types": ["jest", "node"]
   },
-  "exclude": ["video", "node_modules"],
+  "exclude": ["video", "node_modules", "old files and designs"],
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
 }
