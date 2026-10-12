@@ -1,19 +1,32 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import Animated, {
   cancelAnimation, Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
 import { copy } from '@/data/copy';
-import { ease, motion, spring, useMotionSafe } from '@/lib/motion';
-import { MASCOT_POSES, resolvePose, type MascotPose } from '@/logic/mascotPoses';
+import { ease, mascotPose as MP, motion, spring, useMotionSafe } from '@/lib/motion';
+import { groupMatrix, LIFE_CLOCK_MS, limbD, swayDeg, zzFrame } from '@/lib/poseMotion';
+import { MASCOT_POSES, poseForIdle, resolvePose, type MascotPose, type MascotPoseId } from '@/logic/mascotPoses';
 import { useTheme, type Colors } from '@/theme';
 import type { Mood } from '@/types';
 import { armPath, EYE_DROP, EYE_RY, handWorld, legPath, V2 } from './monkeyGeometry';
 import { useReactionMotion } from './reactionMotion';
+import { usePoseMotion } from './usePoseMotion';
 import { resolveMascotSize, type MascotProps } from './types';
 
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedG = Animated.createAnimatedComponent(G);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const IS_WEB = Platform.OS === 'web';
+/** Hrazda visu (osa houpání) ve viewBoxu: nad rukama pózy `hang`, stejně jako ji kreslí `PoseExtras`. */
+const HANG_BAR_Y = Math.min(handWorld(MASCOT_POSES.hang, -1).y, handWorld(MASCOT_POSES.hang, 1).y) - 6;
+const ARM_L = { x: V2.hip.x - V2.shoulder.dx, y: V2.shoulder.y };
+const ARM_R = { x: V2.hip.x + V2.shoulder.dx, y: V2.shoulder.y };
+const LEG_L = { x: V2.hip.x - V2.hipJoint.dx, y: V2.hipJoint.y };
+const LEG_R = { x: V2.hip.x + V2.hipJoint.dx, y: V2.hipJoint.y };
 
 const EYE_RY_OPEN = 6;
 const EYE_RY_CLOSED = 0.6;
@@ -75,8 +88,12 @@ function MascotSvg({
   const breathe = breatheProp || sleeping;
   const hopEnabled = hopProp && !ov?.mood;
   const moodPose = MOOD_POSE[mood];
-  const poseId = resolvePose({ pose: poseProp, mood, reaction: ov && reaction ? reaction.id : null });
+  // Idle akce s pózou (protažení = vis, radostný poskok = oslava) drží pózu `idlePoseMs`, pak zpět na náladu.
+  // Jen celá opice: sedící na kotouči (dvě vrstvy) pózu nemění, jen hraje pohyb akce.
+  const idlePose = useIdlePose(layer === 'all' && !reduced ? idle : null);
+  const poseId = resolvePose({ pose: poseProp ?? idlePose, mood, reaction: ov && reaction ? reaction.id : null });
   const pose: MascotPose = MASCOT_POSES[poseId];
+  const { live, clock, toCode, extrasIn, on: lifeOn } = usePoseMotion(poseId, reduced);
   const breathScale = sleeping ? motion.reactions.sleep.breathScale : moodPose.face === 'sad' ? BREATH_SCALE_SAD : BREATH_SCALE;
   const breathHalfMs = sleeping ? motion.reactions.sleep.breathHalfMs : moodPose.breathHalfMs;
 
@@ -171,31 +188,72 @@ function MascotSvg({
   const eyeCy = V2.eyes.cy + EYE_DROP[pose.eyes];
   const PX = P.pupilX, PY = P.pupilY;
   const cxL = V2.head.cx - V2.eyes.dx, cxR = V2.head.cx + V2.eyes.dx;
+  // Výška a pokles očí jdou z živé pózy (přechod otevřené → přivřené je plynulý).
+  const EY = V2.eyes.cy;
   const eyeL = useAnimatedProps(() => {
     const close = Math.min(1, Math.max(0, eyeClose.value));
     const blink = Math.max(0, Math.min(1, eyeRy.value / EYE_RY_OPEN));
+    const v = live.value;
     return {
-      ry: Math.max(EYE_RY_MIN, baseRy * blink * (1 - close) + EYE_RY_MIN * close),
-      cx: cxL + pupilX.value * PX,
-      cy: eyeCy + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY,
+      ry: Math.max(EYE_RY_MIN, (v[15] ?? 0) * (v[20] ?? 1) * blink * (1 - close) + EYE_RY_MIN * close),
+      cx: cxL + (v[19] ?? 0) + pupilX.value * PX,
+      cy: EY + (v[16] ?? 0) + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY,
     };
   });
   const eyeR = useAnimatedProps(() => {
     const close = Math.min(1, Math.max(0, eyeClose.value));
     const blink = Math.max(0, Math.min(1, eyeRy.value / EYE_RY_OPEN));
+    const v = live.value;
     return {
-      ry: Math.max(EYE_RY_MIN, baseRy * blink * (1 - close) + EYE_RY_MIN * close),
-      cx: cxR + pupilX.value * PX,
-      cy: eyeCy + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY,
+      ry: Math.max(EYE_RY_MIN, (v[15] ?? 0) * (v[20] ?? 1) * blink * (1 - close) + EYE_RY_MIN * close),
+      cx: cxR + (v[19] ?? 0) + pupilX.value * PX,
+      cy: EY + (v[16] ?? 0) + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY,
     };
   });
   const headProps = useAnimatedProps(() => headMatrix.value);
 
-  const bodyT = `translate(${pose.dx} ${pose.dy}) rotate(${pose.body} ${V2.hip.x} ${V2.hip.y})`;
-  const headT = `translate(${pose.head.dx} ${pose.head.dy}) rotate(${pose.head.tilt} ${V2.neck.x} ${V2.neck.y})`;
+  // Kostra pózy na UI vlákně: tělo (kolem kyčlí), houpání ve visu (kolem hrazdy), hlava (kolem krku), končetiny.
+  const HX = V2.hip.x, HY = V2.hip.y, NX = V2.neck.x, NY = V2.neck.y, BAR = HANG_BAR_Y;
+  const AU = V2.arm.upper, AL = V2.arm.lower, LU = V2.leg.upper, LL = V2.leg.lower;
+  const bodyProps = useAnimatedProps(() => {
+    const v = live.value;
+    return groupMatrix(v[8] ?? 0, HX, HY, v[9] ?? 0, v[10] ?? 0, IS_WEB);
+  });
+  const swayProps = useAnimatedProps(() => groupMatrix(swayDeg(toCode.value, clock.value, lifeOn), 100, BAR, 0, 0, IS_WEB));
+  // Uši: dokmitání za hlavou = malé natočení kolem středu hlavy (každé ucho zvlášť).
+  const HCX = V2.head.cx, HCY = V2.head.cy;
+  const earLProps = useAnimatedProps(() => groupMatrix(live.value[17] ?? 0, HCX, HCY, 0, 0, IS_WEB));
+  const earRProps = useAnimatedProps(() => groupMatrix(live.value[18] ?? 0, HCX, HCY, 0, 0, IS_WEB));
+  const poseHeadProps = useAnimatedProps(() => {
+    const v = live.value;
+    return groupMatrix(v[13] ?? 0, NX, NY, v[11] ?? 0, v[12] ?? 0, IS_WEB);
+  });
+  const armLX = ARM_L.x, armRX = ARM_R.x, armY = ARM_L.y, legLX = LEG_L.x, legRX = LEG_R.x, legY = LEG_L.y;
+  const armLProps = useAnimatedProps(() => {
+    const v = live.value; const r = v[14] ?? 1;
+    return { d: limbD(armLX, armY, AU * r, AL * r, v[0] ?? 0, v[1] ?? 0, -1) };
+  });
+  const armRProps = useAnimatedProps(() => {
+    const v = live.value; const r = v[14] ?? 1;
+    return { d: limbD(armRX, armY, AU * r, AL * r, v[2] ?? 0, v[3] ?? 0, 1) };
+  });
+  const legLProps = useAnimatedProps(() => {
+    const v = live.value;
+    return { d: limbD(legLX, legY, LU, LL, v[4] ?? 0, v[5] ?? 0, -1) };
+  });
+  const legRProps = useAnimatedProps(() => {
+    const v = live.value;
+    return { d: limbD(legRX, legY, LU, LL, v[6] ?? 0, v[7] ?? 0, 1) };
+  });
+
+  // Výchozí (statické) hodnoty = cílová póza; za běhu je přepisují animované props výše.
+  const bodyT = groupMatrix(pose.body, HX, HY, pose.dx, pose.dy, IS_WEB);
+  const headT = groupMatrix(pose.head.tilt, NX, NY, pose.head.dx, pose.head.dy, IS_WEB);
+  const swayT = groupMatrix(0, 100, BAR, 0, 0, IS_WEB);
+  const earT = groupMatrix(0, HCX, HCY, 0, 0, IS_WEB);
   const { head, ears, torso, eyes } = V2;
-  const limb = (d: string, w: number, key: string) => (
-    <Path key={key} d={d} stroke={ink.fur} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  const limb = (d: string, w: number, key: string, animatedProps: Partial<{ d: string }>) => (
+    <AnimatedPath key={key} d={d} stroke={ink.fur} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" fill="none" animatedProps={animatedProps} />
   );
 
   return (
@@ -207,13 +265,14 @@ function MascotSvg({
       style={[{ width: px, height: px }, bodyStyle]}
     >
       <Svg width={px} height={px} viewBox="0 0 200 200">
-        {drawBack ? <PoseExtras pose={pose} ink={ink} /> : null}
-        <G transform={bodyT}>
+        {drawBack ? <PoseExtras pose={pose} ink={ink} extrasIn={extrasIn} clock={clock} zzMoving={poseId === 'sleep' && !reduced} /> : null}
+        <AnimatedG {...swayT} animatedProps={swayProps}>
+        <AnimatedG {...bodyT} animatedProps={bodyProps}>
           {/* Nohy: vlastní vrstva s pivotem v kyčli (sedící opice je kreslí vpředu přes hranu kotouče). */}
           {drawLegs ? (
             <G testID="mascot-legs">
-              {limb(legPath(pose, -1), V2.leg.w, 'legL')}
-              {limb(legPath(pose, 1), V2.leg.w, 'legR')}
+              {limb(legPath(pose, -1), V2.leg.w, 'legL', legLProps)}
+              {limb(legPath(pose, 1), V2.leg.w, 'legR', legRProps)}
             </G>
           ) : null}
           {drawBack ? (
@@ -221,41 +280,86 @@ function MascotSvg({
               <Rect x={torso.x} y={torso.y} width={torso.w} height={torso.h} rx={torso.rx} fill={ink.fur} />
               {/* Paže: pivot v rameni, loket = druhý bod tahu. */}
               <G testID="mascot-arms">
-                {limb(armPath(pose, -1), V2.arm.w, 'armL')}
-                {limb(armPath(pose, 1), V2.arm.w, 'armR')}
+                {limb(armPath(pose, -1), V2.arm.w, 'armL', armLProps)}
+                {limb(armPath(pose, 1), V2.arm.w, 'armR', armRProps)}
               </G>
               {/* Hlava: náklon pózy kolem krku, nad ním matice reakcí (natočení, kývnutí). */}
-              <G transform={headT}>
+              <AnimatedG {...headT} animatedProps={poseHeadProps}>
                 <AnimatedG animatedProps={headProps}>
-                  <Circle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} />
-                  <Circle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} />
+                  <AnimatedG {...earT} animatedProps={earLProps}><Circle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} /></AnimatedG>
+                  <AnimatedG {...earT} animatedProps={earRProps}><Circle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} /></AnimatedG>
                   <Circle cx={head.cx} cy={head.cy} r={head.r} fill={ink.fur} />
                   <Path d={V2.face} fill={ink.face} />
                   <AnimatedEllipse cx={head.cx - eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeL} />
                   <AnimatedEllipse cx={head.cx + eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeR} />
                 </AnimatedG>
-              </G>
+              </AnimatedG>
             </>
           ) : null}
-        </G>
+        </AnimatedG>
+        </AnimatedG>
       </Svg>
     </Animated.View>
   );
 }
 
+/** Idle akce s pózou: drží ji `mascotPose.idlePoseMs` od nového klíče, pak `null` (zpět na náladu). */
+function useIdlePose(idle: MascotProps['idle']): MascotPoseId | null {
+  // Klíč akce, jejíž póza už vypršela (setState jen z časovače, ne v těle efektu).
+  const [expired, setExpired] = useState<number | null>(null);
+  const key = idle?.key ?? null;
+  const pose = idle ? poseForIdle(idle.id) : null;
+  useEffect(() => {
+    if (key === null || !pose) return;
+    const t = setTimeout(() => setExpired(key), MP.idlePoseMs);
+    return () => clearTimeout(t);
+  }, [key, pose]);
+  return pose && key !== expired ? pose : null;
+}
+
+interface ExtrasProps {
+  pose: MascotPose;
+  ink: ReturnType<typeof monkeyInk>;
+  /** Náběh doplňků 0 → 1 při vstupu do pózy (rozsvícení teček). */
+  extrasIn: SharedValue<number>;
+  /** Hodina živé smyčky (`usePoseMotion`), Zz z ní stoupají s periodou `zzPeriodMs`. */
+  clock: SharedValue<number>;
+  /** Zz stoupají (bez omezeného pohybu); jinak stojí rozsvícené. */
+  zzMoving: boolean;
+}
+
 /** Tečkové doplňky pózy ve světových souřadnicích: červená tečka radosti, záblesk, Zz, hrazda. */
-function PoseExtras({ pose, ink }: { pose: MascotPose; ink: ReturnType<typeof monkeyInk> }) {
+function PoseExtras({ pose, ink, extrasIn, clock, zzMoving }: ExtrasProps) {
   const top = V2.head.cy - V2.head.r + pose.dy + pose.head.dy;
+  const LAG = MP.extrasLag;
+  const RISE = MP.zzRise;
+  const ZK = LIFE_CLOCK_MS / MP.zzPeriodMs;
+  const moving = zzMoving ? 1 : 0;
+  // Oslava: červená tečka naroste (bez zákmitu), vnitřní paprsky se rozsvítí, vnější o `extrasLag` později.
+  const joyProps = useAnimatedProps(() => ({ r: 5 * Math.min(1, extrasIn.value / (1 - LAG)), opacity: Math.min(1, extrasIn.value * 2) }));
+  const innerProps = useAnimatedProps(() => ({ opacity: Math.min(1, extrasIn.value / (1 - LAG)) }));
+  const outerProps = useAnimatedProps(() => ({ opacity: Math.max(0, (extrasIn.value - LAG) / (1 - LAG)) }));
+  // Zz: dvě „Z“ stoupají a mizí v protifázi; s omezeným pohybem stojí rozsvícené.
+  const zA = useAnimatedProps(() => {
+    const f = zzFrame(clock.value * ZK, RISE);
+    return moving ? { opacity: f.opacity, ...groupMatrix(0, 0, 0, 0, f.ty, IS_WEB) } : { opacity: 1 };
+  });
+  const zB = useAnimatedProps(() => {
+    const f = zzFrame(clock.value * ZK + 0.5, RISE);
+    return moving ? { opacity: f.opacity, ...groupMatrix(0, 0, 0, 0, f.ty, IS_WEB) } : { opacity: 1 };
+  });
   const nodes = [];
-  if (pose.joyDot) nodes.push(<Circle key="joy" testID="mascot-joy" cx={100} cy={top - 16} r={5} fill={ink.live} />);
+  if (pose.joyDot) nodes.push(<AnimatedCircle key="joy" testID="mascot-joy" cx={100} cy={top - 16} r={5} fill={ink.live} animatedProps={joyProps} />);
   if (pose.extra === 'burst') {
-    // Pět krátkých paprsků z teček nad hlavou (oslava), vějíř −60…60°.
-    [-60, -30, 0, 30, 60].forEach((deg) => {
-      const a = ((deg - 90) * Math.PI) / 180;
-      [26, 33].forEach((r, k) => {
+    // Pět krátkých paprsků z teček nad hlavou (oslava), vějíř −60…60°, dva prstence.
+    [26, 33].forEach((r, k) => {
+      const ring: React.ReactElement[] = [];
+      [-60, -30, 0, 30, 60].forEach((deg) => {
         if (deg === 0 && k === 0) return;
-        nodes.push(<Circle key={`b${deg}${k}`} cx={100 + Math.cos(a) * r} cy={top - 16 + 16 + Math.sin(a) * r} r={2} fill={ink.prop} />);
+        const a = ((deg - 90) * Math.PI) / 180;
+        ring.push(<Circle key={`b${deg}${k}`} cx={100 + Math.cos(a) * r} cy={top + Math.sin(a) * r} r={2} fill={ink.prop} />);
       });
+      nodes.push(<AnimatedG key={`ring${k}`} animatedProps={k === 0 ? innerProps : outerProps}>{ring}</AnimatedG>);
     });
   }
   if (pose.extra === 'zz') {
@@ -264,7 +368,8 @@ function PoseExtras({ pose, ink }: { pose: MascotPose; ink: ReturnType<typeof mo
       const pts = [[0, 0], [1, 0], [2, 0], [1.5, 0.75], [1, 1.5], [0.5, 2.25], [0, 3], [1, 3], [2, 3]] as const;
       return pts.map(([u, v], i) => <Circle key={`${key}${i}`} cx={x + u * s} cy={y + (v * s * 2) / 3} r={s * 0.32} fill={ink.prop} />);
     };
-    nodes.push(...z(140, 96, 5, 'za'), ...z(158, 66, 7, 'zb'));
+    nodes.push(<AnimatedG key="za" animatedProps={zA}>{z(140, 96, 5, 'za')}</AnimatedG>);
+    nodes.push(<AnimatedG key="zb" animatedProps={zB}>{z(158, 66, 7, 'zb')}</AnimatedG>);
   }
   if (pose.extra === 'bar') {
     const l = handWorld(pose, -1), r = handWorld(pose, 1);

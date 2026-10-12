@@ -164,7 +164,7 @@ export const motion = {
    *  opacita 1 ↔ `low`, scale 1 ↔ `scale`. Po mountu začne na vrcholu (plný obrys = „tady“ hned) a do dechu
    *  se prolne za `blendMs`, takže předání z odemčení (obrys roste s trimem prstence) neskočí.
    *  Omezený pohyb: statický plný obrys. */
-  outlinePulse: { low: 0.45, scale: 1.04, blendMs: 500 },
+  outlinePulse: { low: 0.45, scale: 1.04, blendMs: 500, periodMs: 3600 },
   /** UX pass U5: první mapa nového uživatele: opička po dosednutí na kotouč jednou zamává („pojď“, reakce
    *  `wave` přes `screenOpen`) po `afterLandMs` od příchodu. Jednou za běh appky. Omezený pohyb: `degrade` → pohled. */
   firstRunGreet: { afterLandMs: 420 },
@@ -512,3 +512,28 @@ export const feelSwap = { swapInMs: lineBubble.inMs };
 export function silhouettePhase(elapsedMs: number, periodMs: number): number {
   return 0.5 - 0.5 * Math.cos((2 * Math.PI * elapsedMs) / periodMs);
 }
+
+/**
+ * Opice v2 v pohybu (plán vast-snuggling-sunbeam, krok 1). Přechod mezi pózami = prolnutí úhlů končetin
+ * za `transitionMs` (`ease.out` = cubic-bezier(0.22,1,0.36,1)), žádná pružina. Živé smyčky všech póz (periody
+ * a amplitudy v `lib/poseMotion` `LIFE_MS`/`LIFE_AMP`); mávnutí předloktím `waveCycles` kmitů. Doplňky z teček
+ * (záblesk oslavy, červená tečka radosti) se rozsvítí za `extrasInMs`, vnější prstenec o `extrasLag` později.
+ * Zz ve spánku stoupají a mizí za `zzPeriodMs`, o `zzRise` pt viewBoxu. Idle akce s pózou ji drží `idlePoseMs`.
+ * Omezený pohyb: póza se vymění hned, smyčky a Zz stojí.
+ */
+export const mascotPose = {
+  transitionMs: 480, cycleInMs: 240, cycleOutMs: 320, waveCycles: 3,
+  extrasInMs: 480, extrasLag: 0.35, zzPeriodMs: 3000, zzRise: 14, idlePoseMs: 1600,
+};
+
+/**
+ * Animovaný splash (plán krok 3): převezme nativní splash (hlava opice uprostřed, `imageWidth` z app.json),
+ * pak se kolem hlavy po jedné rozsvítí 12 teček (`dotStepMs`, každá za `dotInMs`, jedna v akcentu `live`),
+ * opice mrkne (`blinkAt`, zavření/otevření `blinkCloseMs`/`blinkOpenMs`) a celé se prolne pryč (`fadeMs`,
+ * `ease.exit`) s mírným zvětšením hlavy (`exitScale`). Celkem `totalMs` ≤ 1.2 s. Omezený pohyb: jen
+ * prolnutí `reducedFadeMs`. Když appka ještě není ready, drží rozsvícený kruh, dokud nebude.
+ */
+export const splash = {
+  dotStepMs: 45, dotInMs: 140, blinkAt: 640, blinkCloseMs: 70, blinkOpenMs: 110, fadeAt: 880, fadeMs: 300,
+  exitScale: 1.06, reducedFadeMs: 200, totalMs: 1180,
+};
