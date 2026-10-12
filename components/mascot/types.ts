@@ -1,5 +1,6 @@
 import type { SharedValue } from 'react-native-reanimated';
 import type { IdleActionId } from '@/logic/mascotIdle';
+import type { MascotPoseId } from '@/logic/mascotPoses';
 import type { ReactionId } from '@/logic/mascotReactions';
 import type { CosmeticSlot, MascotStage, Mood } from '@/types';
 
@@ -39,6 +40,8 @@ export interface MascotProps {
   idle?: MascotIdle | null;
   /** Směr scrollu mapy −1 (nahoru) … 1 (dolů): pupily a hlava se natočí za ním. */
   scrollLook?: SharedValue<number>;
+  /** Opice v2: explicitní statická póza (`logic/mascotPoses`); bez ní póza z reakce / nálady. */
+  pose?: MascotPoseId;
 }
 
 export const MASCOT_SIZES = { S: 56, M: 120, L: 200, XL: 280 } as const;

@@ -5,14 +5,14 @@
 // Starší klíče (`surface`, `raised`, `accent*`, `plate*`…) zůstávají kvůli stávajícím komponentám, mají monochromní hodnoty:
 // `accent*` = `text`, `onAccent` = `onText`, `surface` = `tile`, `faint` = grafika ≥ 3:1, `dotDim` = čistě dekorativní tlumená tečka.
 export const dark = {
-  base: '#0B0C0E', surface: '#131518', raised: '#1B1D20', raisedPressed: '#232528', rule: '#202225',
+  base: '#0B0B0C', surface: '#131518', raised: '#1B1D20', raisedPressed: '#232528', rule: '#202225',
   // Dlaždice (obr. 2): pozadí `tile`, jediné oddělení = vlasová hrana `edge`.
   tile: '#131518', tilePressed: '#1B1D20', edge: '#2E3033',
   text: '#E9EBEE', muted: '#A2A5A8', faint: '#84868A',
-  onText: '#0B0C0E',
+  onText: '#0B0B0C',
   // Tečky: zhasnutá, tlumená (zamčené, ghost), záře aktivní (jen dark; v light se nekreslí).
   dotOff: '#292B2E', dotDim: '#4E5053', glow: 'rgba(233,235,238,0.55)',
-  accent: '#E9EBEE', accentPressed: '#C9C9CD', accentGraphic: '#E9EBEE', onAccent: '#0B0C0E', accentText: '#E9EBEE',
+  accent: '#E9EBEE', accentPressed: '#C9C9CD', accentGraphic: '#E9EBEE', onAccent: '#0B0B0C', accentText: '#E9EBEE',
   plate5: '#8A8A90', plate10: '#646469', plate15: '#4E4E54', plate20: '#333338', plate25: '#1E1E21',
   plateRim: '#3A3A3F', plateHighlight: 'rgba(237,237,239,0.10)', plateShade: 'rgba(0,0,0,0.30)',
   scrimSoft: 'rgba(11,11,12,0.48)', scrim: 'rgba(11,11,12,0.76)', scrimDeep: 'rgba(11,11,12,0.92)',
@@ -28,6 +28,11 @@ export const dark = {
   // segment), fokus, zakázaný stav a stavové barvy (success/warning/info jen pro stavy a data, ne jako akcent UI).
   borderStrong: '#67696C', focus: '#E9EBEE', disabled: '#535559',
   stateSuccess: '#7CCD8E', stateWarning: '#EEC05B', stateInfo: '#7BB9E5',
+  // Kurogane (2026-10-12): jediný akcent mapy = signální červená, jen pro „živé“ (aktuální uzel, tečka radosti opice), < 5 % plochy.
+  live: '#E01B22',
+  // Opice v2 (plná silueta): v dark negativ — světlá srst `text`, tmavý obličej, světlé oči (čte se jako tisk na černé).
+  // `mascotProp` = tečkové doplňky (Zz, záblesk, hrazda), tlumené jako sekundární grafika.
+  mascotFur: '#E9EBEE', mascotFace: '#3A3C40', mascotEye: '#E9EBEE', mascotProp: '#84868A',
 } as const;
 // Light (obr. 3): papírově bílá, černé tečky. Bez záře: aktivní = plná `text`.
 export const light: Record<keyof typeof dark, string> = {
@@ -47,5 +52,8 @@ export const light: Record<keyof typeof dark, string> = {
   onGoldPill: '#F2F2EF',
   borderStrong: '#84868A', focus: '#15171A', disabled: '#A8ABAF',
   stateSuccess: '#21763C', stateWarning: '#A46400', stateInfo: '#006AA0',
+  live: '#D0161D',
+  // Opice v2 v light = originál z reference: černá silueta, světle šedý obličej, tmavé oči.
+  mascotFur: '#15171A', mascotFace: '#D5D8DB', mascotEye: '#15171A', mascotProp: '#67696C',
 };
 export type Colors = Record<keyof typeof dark, string>;

@@ -1,52 +1,34 @@
 import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
-import { Circle, Ellipse, Path, Svg } from 'react-native-svg';
+import { Circle, Ellipse, G, Path, Svg } from 'react-native-svg';
 import { buildTheme, type Scheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
-import type { Mood, SeasonThemeId } from '@/types';
-import { SeasonScarf } from '../cosmetics';
-import { OutfitScarf } from '../cosmetics/OutfitScarf';
-import { OutfitTank } from '../cosmetics/OutfitTank';
-import { AccWristbands } from '../cosmetics/AccWristbands';
-import { Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront } from '..';
+import { MASCOT_POSE_IDS, type MascotPoseId } from '@/logic/mascotPoses';
+import type { Mood } from '@/types';
+import { Mascot, MASCOT_SIZES, mascotSeatY, MonkeyBack, MonkeyFront } from '..';
 import { MOOD_POSE } from '../SvgMascot';
-import { STAGE_GEOMETRY } from '../geometry';
+import { SEAT_Y, V2 } from '../monkeyGeometry';
 import type { MascotProps } from '../types';
 
 /* eslint-disable @typescript-eslint/no-require-imports -- oficiální jest mocky knihoven */
-// ThemeProvider → settings store → AsyncStorage.
 jest.mock('@react-native-async-storage/async-storage', () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
-// Reanimated 4 v Jestu: worklety bez nativního runtime.
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-const IDLE_MOUTH = 'M88 108 Q100 112 112 108';
-const HAPPY_MOUTH = 'M86 104 Q100 122 114 104 Z';
-const SAD_MOUTH = 'M88 112 Q100 104 112 112';
-
 const base: MascotProps = { stage: 1, mood: 'idle', size: 'M', cosmetics: {} };
-const tree = (props: Partial<MascotProps>, scheme: Scheme = 'dark', season: SeasonThemeId | null = null) => (
-  <ThemeContext.Provider value={buildTheme(scheme, season)}>
-    <Mascot {...base} {...props} />
-  </ThemeContext.Provider>
-);
-
 let renderer: TestRenderer.ReactTestRenderer | null = null;
-const unmount = () => {
-  act(() => { renderer?.unmount(); });
-  renderer = null;
-};
-const render = (props: Partial<MascotProps>, scheme?: Scheme, season: SeasonThemeId | null = null) => {
+const unmount = () => { act(() => { renderer?.unmount(); }); renderer = null; };
+const renderWith = (el: React.ReactElement, scheme: Scheme = 'dark') => {
   unmount();
-  act(() => { renderer = TestRenderer.create(tree(props, scheme, season)); });
+  act(() => { renderer = TestRenderer.create(<ThemeContext.Provider value={buildTheme(scheme, null)}>{el}</ThemeContext.Provider>); });
   return renderer!.root;
 };
-afterEach(() => {
-  unmount();
-  jest.restoreAllMocks();
-});
+const render = (props: Partial<MascotProps>, scheme: Scheme = 'dark') => renderWith(<Mascot {...base} {...props} />, scheme);
+afterEach(() => { unmount(); jest.restoreAllMocks(); });
 
 const labelOf = (root: ReactTestInstance) => root.findAll((n) => n.props.accessibilityRole === 'image')[0]?.props.accessibilityLabel;
-const mouthOpacity = (root: ReactTestInstance, d: string) => root.findAllByType(Path).find((p) => p.props.d === d)?.props.opacity;
+const eyes = (root: ReactTestInstance) => root.findAllByType(Ellipse).filter((e) => e.props.rx === V2.eyes.rx);
+const head = (root: ReactTestInstance) => root.findAllByType(Circle).filter((n) => n.props.r === V2.head.r);
+const byTestID = (root: ReactTestInstance, id: string) => root.findAll((n) => n.props.testID === id && n.type === G);
 
 test('výchozí popisek pro čtečku podle nálady, vlastní popisek má přednost', () => {
   expect(labelOf(render({ mood: 'idle' }))).toBe('Your monkey');
@@ -59,128 +41,67 @@ test('pojmenovaná velikost se převede na pt, číselná zůstane', () => {
   expect(render({ size: 90 }).findByType(Svg).props.height).toBe(90);
 });
 
-test('celebrate: ruce nahoru, opakované poskoky, veselý obličej', () => {
-  expect(MOOD_POSE.celebrate).toEqual({ face: 'happy', armsUp: true, earsDown: false, breathHalfMs: 1200, hopRepeat: true });
-});
-test('sad: svěšené uši, smutný obličej, pomalejší dech', () => {
-  expect(MOOD_POSE.sad).toEqual({ face: 'sad', armsUp: false, earsDown: true, breathHalfMs: 1800, hopRepeat: false });
-});
-test('idle a happy beze změny proti plánu A', () => {
-  expect(MOOD_POSE.idle).toMatchObject({ face: 'idle', armsUp: false, hopRepeat: false, breathHalfMs: 1200 });
-  expect(MOOD_POSE.happy).toMatchObject({ face: 'happy', armsUp: false, hopRepeat: false });
+test('pohybový charakter nálad (dech, poskoky) zůstává', () => {
+  expect(MOOD_POSE.celebrate).toMatchObject({ hopRepeat: true, breathHalfMs: 1200 });
+  expect(MOOD_POSE.sad).toMatchObject({ breathHalfMs: 1800, hopRepeat: false });
 });
 
-test.each<[Mood, 'idle' | 'happy' | 'sad']>([
-  ['idle', 'idle'],
-  ['happy', 'happy'],
-  ['celebrate', 'happy'],
-  ['sad', 'sad'],
-])('nálada %s ukáže pusu %s', (mood, face) => {
-  const root = render({ mood });
-  expect(mouthOpacity(root, IDLE_MOUTH)).toBe(face === 'idle' ? 1 : 0);
-  expect(mouthOpacity(root, HAPPY_MOUTH)).toBe(face === 'happy' ? 1 : 0);
-  expect(mouthOpacity(root, SAD_MOUTH)).toBe(face === 'sad' ? 1 : 0);
+test.each<Scheme>(['dark', 'light'])('barvy jen z theme (%s): silueta, obličej a oči z tokenů `mascot*`', (scheme) => {
+  const { c } = buildTheme(scheme, null);
+  const root = render({}, scheme);
+  expect(head(root)[0]?.props.fill).toBe(c.mascotFur);
+  expect(root.findAllByType(Path).find((p) => p.props.d === V2.face)?.props.fill).toBe(c.mascotFace);
+  expect(eyes(root)).toHaveLength(2);
+  eyes(root).forEach((e) => expect(e.props.fill).toBe(c.mascotEye));
 });
 
-test.each<Scheme>(['light', 'dark'])('detaily obličeje jsou tmavé i v režimu %s (leží na světlém obličeji)', (scheme) => {
-  const eyes = render({}, scheme).findAllByType(Ellipse).filter((e) => e.props.rx === 5);
-  expect(eyes).toHaveLength(2);
-  eyes.forEach((e) => expect(e.props.fill).toBe('#1E1813'));
+test('dark = negativ (světlá silueta), light = originál (tmavá silueta)', () => {
+  expect(buildTheme('dark', null).c.mascotFur).toBe(buildTheme('dark', null).c.text);
+  expect(buildTheme('light', null).c.mascotFur).toBe(buildTheme('light', null).c.text);
 });
 
-test('stage 2 a 3 kreslí vlastní geometrii bez varování, hlava se zmenšuje', () => {
-  const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
-  const headR = (stage: MascotProps['stage']) => {
-    const { head } = STAGE_GEOMETRY[stage];
-    const circles = render({ stage }).findAllByType(Circle).filter((n) => n.props.cx === head.cx && n.props.cy === head.cy);
-    return circles[0]?.props.r;
-  };
-  expect(headR(1)).toBe(54);
-  expect(headR(2)).toBe(STAGE_GEOMETRY[2].head.r);
-  expect(headR(3)).toBe(STAGE_GEOMETRY[3].head.r);
-  expect(new Set([headR(1), headR(2), headR(3)]).size).toBe(3);
-  expect(warn).not.toHaveBeenCalled();
+test.each(MASCOT_POSE_IDS)('póza %s se vykreslí: hlava, obě oči, končetiny jako samostatné vrstvy', (pose: MascotPoseId) => {
+  const root = render({ pose });
+  expect(head(root)).toHaveLength(1);
+  expect(eyes(root)).toHaveLength(2);
+  expect(byTestID(root, 'mascot-arms')).toHaveLength(1);
+  expect(byTestID(root, 'mascot-legs')).toHaveLength(1);
 });
 
-// R44: maskot se dělí na MonkeyBack/MonkeyFront (sezení na kotouči) a nově kreslí vlastní šál.
-// `<Mascot>` musí dál kreslit celou opici v jednom Svg (obě vrstvy).
-describe('šál a vrstvy pro sezení na kotouči', () => {
-  const SCARF = '#6F7C86';
-  const SCARF_SHADE = '#56626B';
-  const AMBER_DARK = buildTheme('dark', null).c.accentGraphic;
-  const renderLayer = (Comp: typeof MonkeyBack, props: Partial<MascotProps> = {}) => {
-    unmount();
-    act(() => {
-      renderer = TestRenderer.create(
-        <ThemeContext.Provider value={buildTheme('dark', null)}><Comp {...base} {...props} /></ThemeContext.Provider>,
-      );
-    });
-    return renderer!.root;
-  };
-  const fills = (root: ReactTestInstance) => root.findAll((n) => typeof n.props.fill === 'string').map((n) => n.props.fill as string);
-  const legCircles = (root: ReactTestInstance) => {
-    const { legs } = STAGE_GEOMETRY[1];
-    return root.findAllByType(Circle).filter((n) => n.props.cy === legs.y && n.props.r === legs.r);
-  };
+test('doplňky z teček: tečka radosti jen v oslavě, Zz ve spánku, hrazda ve visu', () => {
+  const { c } = buildTheme('dark', null);
+  const red = (root: ReactTestInstance) => root.findAllByType(Circle).filter((n) => n.props.fill === c.live);
+  expect(red(render({ pose: 'celebrate' }))).toHaveLength(1);
+  expect(red(render({ mood: 'celebrate' }))).toHaveLength(1);
+  expect(red(render({ pose: 'idle' }))).toHaveLength(0);
+  const props = (pose: MascotPoseId) => render({ pose }).findAllByType(Circle).filter((n) => n.props.fill === c.mascotProp).length;
+  expect(props('sleep')).toBeGreaterThan(0);
+  expect(props('hang')).toBeGreaterThan(0);
+  expect(props('idle')).toBe(0);
+});
 
-  test.each<Mood>(['idle', 'happy', 'celebrate', 'sad'])('šál se kreslí v náladě %s', (mood) => {
-    const f = fills(render({ mood }));
-    expect(f).toContain(SCARF);
-    expect(f).toContain(SCARF_SHADE);
-  });
+test.each<[Mood, number]>([['idle', V2.eyes.ry], ['sad', 3.2]])('nálada %s: výška očí z pózy', (mood, ry) => {
+  eyes(render({ mood })).forEach((e) => expect(e.props.ry).toBe(ry));
+});
 
-  test('jantarová hrana šálu jen se `scarfEdge`', () => {
-    const edge = (root: ReactTestInstance) => root.findAllByType(Path).filter((p) => p.props.stroke === AMBER_DARK);
-    expect(edge(render({ mood: 'celebrate' }))).toHaveLength(0);
-    expect(edge(render({ mood: 'celebrate', scarfEdge: true }))).toHaveLength(1);
-  });
+test('cosmetics se přijmou a ignorují (šatník dočasně bez vizuálu)', () => {
+  expect(() => render({ cosmetics: { outfit: 'outfit-tank-ember', accessory: 'acc-wristbands' } })).not.toThrow();
+});
 
-  test('sezónní šála nahradí vlastní šál (žádné dvě šály)', () => {
-    expect(fills(render({}, 'dark', 'winterArc'))).not.toContain(SCARF);
-  });
-
-  test('celá opice má nohy, zadní vrstva ne, přední jen nohy a konec šálu a je dekorativní', () => {
-    expect(legCircles(render({}))).toHaveLength(2);
-    const back = renderLayer(MonkeyBack);
-    expect(legCircles(back)).toHaveLength(0);
+describe('vrstvy pro sezení na kotouči', () => {
+  test('celá opice má nohy i hlavu; zadní vrstva bez nohou, přední jen nohy a je dekorativní', () => {
+    expect(byTestID(render({}), 'mascot-legs')).toHaveLength(1);
+    const back = renderWith(<MonkeyBack {...base} />);
+    expect(byTestID(back, 'mascot-legs')).toHaveLength(0);
     expect(labelOf(back)).toBe('Your monkey');
-    const front = renderLayer(MonkeyFront);
-    expect(legCircles(front)).toHaveLength(2);
+    const front = renderWith(<MonkeyFront {...base} />);
+    expect(byTestID(front, 'mascot-legs')).toHaveLength(1);
+    expect(eyes(front)).toHaveLength(0);
     expect(front.findAll((n) => n.props.accessibilityRole === 'image')).toHaveLength(0);
-    expect(front.findAllByType(Ellipse).filter((e) => e.props.rx === 5)).toHaveLength(0);
-    expect(fills(front)).toContain(SCARF);
   });
 
-  test('obě vrstvy mají stejné plátno jako celá opice', () => {
-    const vb = (root: ReactTestInstance) => root.findByType(Svg).props.viewBox;
-    expect(vb(renderLayer(MonkeyBack))).toBe(vb(render({})));
-    expect(vb(renderLayer(MonkeyFront))).toBe(vb(render({})));
-  });
-});
-
-describe('kosmetické vrstvy', () => {
-  const count = (root: ReactTestInstance, type: Parameters<ReactTestInstance['findAllByType']>[0]) => root.findAllByType(type).length;
-
-  test('nasazený outfit a accessory se vykreslí, neznámé id se tiše přeskočí', () => {
-    const root = render({ cosmetics: { outfit: 'outfit-tank-ember', accessory: 'acc-wristbands' } });
-    expect(count(root, OutfitTank)).toBe(1);
-    expect(count(root, AccWristbands)).toBe(1);
-    expect(() => render({ cosmetics: { outfit: 'outfit-neexistuje', accessory: 'x' } })).not.toThrow();
-  });
-
-  test('sezónní šála: jen během Winter Arc a nekreslí se dvakrát, když je šála nasazená jako outfit', () => {
-    expect(count(render({}, 'dark', null), SeasonScarf)).toBe(0);
-    expect(count(render({}, 'dark', 'summerBody'), SeasonScarf)).toBe(0);
-    expect(count(render({ cosmetics: { outfit: 'outfit-tank-ember' } }, 'dark', 'winterArc'), SeasonScarf)).toBe(1);
-    const worn = render({ cosmetics: { outfit: 'outfit-winter-arc-scarf' } }, 'light', 'winterArc');
-    expect(count(worn, SeasonScarf)).toBe(0);
-    expect(count(worn, OutfitScarf)).toBe(1);
-  });
-
-  test.each([1, 2, 3] as const)('stage %s: potítka sedí na konci paže i při celebrate', (stage) => {
-    const root = render({ stage, mood: 'celebrate', cosmetics: { accessory: 'acc-wristbands' } });
-    const limb = STAGE_GEOMETRY[stage].armL;
-    const bands = root.findAllByType(Path).filter((p) => p.props.strokeWidth === limb.w + 3);
-    expect(bands).toHaveLength(2);
+  test('kotva sezení = spodní hrana trupu', () => {
+    expect(mascotSeatY(1)).toBe(SEAT_Y);
+    expect(SEAT_Y).toBe(V2.torso.y + V2.torso.h);
   });
 });

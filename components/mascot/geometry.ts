@@ -1,3 +1,4 @@
+import { SEAT_Y } from './monkeyGeometry';
 import type { MascotStage } from '@/types';
 
 /** Paže: x,y = rameno (bod otáčení), w×h obdélník paže, angle ve stupních, + = ven od těla. */
@@ -41,7 +42,8 @@ export const STAGE_GEOMETRY: Record<MascotStage, StageGeometry> = {
 
 /** Kotva sezení (Teplá litina §2.7): spodní hrana trupu ve viewBoxu 200. Na mapě leží přesně na horní
  *  hraně kotouče, pod ní visí jen nohy a konec šálu (`MonkeyFront`). */
-export const seatY = (stage: MascotStage): number => STAGE_GEOMETRY[stage].torso.y + STAGE_GEOMETRY[stage].torso.h;
+// Opice v2 má jednu geometrii pro všechny stage (`monkeyGeometry.ts`); `stage` zůstává kvůli API.
+export const seatY = (_stage: MascotStage): number => SEAT_Y;
 
 /** Bod na ose paže ve vzdálenosti `t` od ramene při úhlu `deg`; `side` −1 = levá, +1 = pravá. */
 export function armPoint(limb: Limb, side: -1 | 1, t: number, deg: number): { x: number; y: number } {

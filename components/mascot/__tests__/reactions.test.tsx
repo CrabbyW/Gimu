@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
-import { Path } from 'react-native-svg';
+import { Circle } from 'react-native-svg';
 import { buildTheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
 import { IDLE_MS, REACTION_COOLDOWN_MS, type ReactionId } from '@/logic/mascotReactions';
@@ -22,7 +22,6 @@ const ALL: ReactionId[] = [
   'hop', 'flip', 'cuddle', 'gaze', 'lookDown', 'dizzy', 'sleep', 'wave', 'nod', 'celebrate', 'proud', 'sad', 'joyJump', 'shrug', 'spinFollow',
 ];
 const theme = buildTheme('dark', null);
-const AMBER = theme.c.accentGraphic;
 const base: MascotProps = { stage: 1, mood: 'idle', size: 'M', cosmetics: {} };
 
 let renderer: TestRenderer.ReactTestRenderer | null = null;
@@ -32,7 +31,8 @@ const mount = (el: React.ReactElement) => {
   act(() => { renderer = TestRenderer.create(<ThemeContext.Provider value={theme}>{el}</ThemeContext.Provider>); });
   return renderer!;
 };
-const amberEdges = (root: ReactTestInstance) => root.findAllByType(Path).filter((p) => p.props.stroke === AMBER);
+// Opice v2: oslava = póza celebrate s červenou tečkou radosti (`live`) nad hlavou.
+const joyDots = (root: ReactTestInstance) => root.findAllByType(Circle).filter((n) => n.props.fill === theme.c.live);
 
 beforeEach(() => { jest.useFakeTimers(); mockReduced = false; mockFeedback.mockClear(); });
 afterEach(() => { unmount(); jest.useRealTimers(); });
@@ -50,17 +50,17 @@ describe('přehrání reakce (prop `reaction`)', () => {
     }
   });
 
-  test('celebrate na chvíli přebije náladu: jantarová hrana šálu, po `holdMs` zmizí', () => {
+  test('celebrate na chvíli přebije náladu: tečka radosti, po `holdMs` zmizí', () => {
     const r = mount(<Mascot {...base} reaction={{ id: 'celebrate', key: 1 }} />);
-    expect(amberEdges(r.root)).toHaveLength(1);
+    expect(joyDots(r.root)).toHaveLength(1);
     act(() => { jest.advanceTimersByTime(motion.reactions.celebrate.holdMs + 1); });
-    expect(amberEdges(r.root)).toHaveLength(0);
+    expect(joyDots(r.root)).toHaveLength(0);
   });
 
   test('omezený pohyb: salto se přehraje jako oslava (nálada), bez omezení zůstane pohybem bez přebití nálady', () => {
-    expect(amberEdges(mount(<Mascot {...base} reaction={{ id: 'flip', key: 1 }} />).root)).toHaveLength(0);
+    expect(joyDots(mount(<Mascot {...base} reaction={{ id: 'flip', key: 1 }} />).root)).toHaveLength(0);
     mockReduced = true;
-    expect(amberEdges(mount(<Mascot {...base} reaction={{ id: 'flip', key: 1 }} />).root)).toHaveLength(1);
+    expect(joyDots(mount(<Mascot {...base} reaction={{ id: 'flip', key: 1 }} />).root)).toHaveLength(1);
   });
 
   test('popisek pro čtečku sleduje přebitou náladu (smutek)', () => {
