@@ -723,3 +723,35 @@ Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičk
 3. Lekce: siluety se hýbou plynule (30 fps), při pauze výdrže a v dialogu Quit stojí, s Reduce Motion jsou statické.
 4. Nový profil: opička na první mapě po dosednutí jednou zamává (při návratu na tab už ne).
 5. VoiceOver na mapě: uzly čtou „completed / up next / locked“.
+
+## QA kolo 0d1cc4e..fee5545 (opice v2, mapa Kurogane, splash, demo build, color grading), HEAD fee5545, 2026-10-12
+
+**Brány:** tsc 0 chyb, eslint 0 (vč. `local/no-worklet-object-capture`), jest 103 sad / 955 OK (stále hláška o workeru, který neskončil: únik časovače, ⚠️ z minula), test:node 25/25, `npm run e2e` 132 passed / 38 failed (všech 38 = vizuální snímky mapa, first-run mapa, first-run oslava, oslava, profile, league; flows i a11y zelené), `npm run e2e:perf` 5/5 (mapa, lekce i oslava ≥ 55 fps, TTI v rozpočtu). Nativní log `$TEMP/expogo.log` (demo server 8084, 21:37): iOS i Android bundle OK, 0 ERROR.
+
+**Ověřeno:**
+- ✅ 0d1cc4e: střed DotPlate je v absolutní vrstvě nad nábojem (fajfka na webu už není pod nábojem). Opička u bosse: `mascotSpot` ji posadí vedle uzlu jen tehdy, když se vejde mezi `edge` a `width - edge`; jinak ji dá nad uzel a x ořízne do mezí, takže za okraj nevyjede. `revealNode` po odemknutí doscrolluje, aby byl nový uzel celý mezi hlavičkou a CTA. Obě dřívější ❌ jsou z kódu pryč. ⚠️ Na boss případ na w320 ale chybí e2e regresní test.
+- ✅ Opice v2: 8 póz jako data v `logic/mascotPoses.ts` s testy, worklety v `lib/poseMotion.ts` a `usePoseMotion` drží jen čísla a sdílené hodnoty (eslint pravidlo prošlo), Reduce Motion = statická póza. Vizuálně jsou mapa, profil, liga i oslava na 320 až 430 bez ořezu a kolize opice.
+- ✅ Mapa Kurogane: done, current i locked uzel, tečkovaná cesta, popisky `20 KG`, StartCard „Start <lekce>“ s mono metadaty na w320 bez ořezu.
+- ✅ Splash: `finish` je jištěný `doneRef` (dvojí ťuknutí = jeden `onDone`), časovače se v cleanupu ruší, e2e intro (přeskočení) zelené.
+- ✅ Oko siluety: `headDotIndex` je testovaný na všech siluetách.
+- ✅ Demo build: `DEMO_BUILD` je jen `EXPO_PUBLIC_DEMO === '1'`. Bez proměnné index ani lekce chování nemění (podmínka `DEMO_BUILD ||` k původní logice jen přidává). Seed se spustí jen jednou (`started` ref).
+- ✅ Kontrast: testy v `theme/__tests__/contrast.test.ts` počítají poměry z palet a jsou zelené (live dark 4.91 na base, light success proti danger 1.43).
+- ✅ Tab bar: snímky na w320 dark i light se se starou baseline shodují (stejný tvar, ikony, zámky i stav aktivní).
+- ✅ Dokončení lekce: oslava na w375 dark (kotouč, opice celebrate s tečkou live, XP rozpis, série, feel picker, CONTINUE) je bez kolizí. Perf oslavy ≥ 55 fps.
+
+**Rozbité / chybí:**
+- ❌ League pódium na w320: jméno „Jake_Pull…“ je uříznuté výpustkou (`Podium.tsx`, `numberOfLines={1}`). Reprodukce: demo profil, w320, záložka League. Vada byla už ve staré baseline, ale podle pravidla „ořez textu na 320 = ❌“ snímek league nejde schválit. Patří **design-agentovi** (zmenšit písmo, zalomit na 2 řádky nebo zkrátit jména v datech).
+- ❌ `npm run e2e` není zelené: 38 vizuálních diffů a baseline zatím nikdo neschválil. Mapu, first-run mapu, oslavu, first-run oslavu a profil jsem posoudil jako vizuálně v pořádku. **Doporučení pro bosse:** po opravě pódia spustit `npm run e2e:update` a schválení baseline zapsat do LOG.
+- ⚠️ Demo seed: když `services.user.loadDemo` selže, `.then` nemá `catch` a obrazovka zůstane navždy na DotLoaderu (patří bossovi, `app/index.tsx`).
+- ⚠️ First-run mapa: bublina průvodce „TAP THE PLATE TO START“ je vedle nové karty „Start Grip“, takže instrukce míří na kotouč, i když hlavní CTA je karta (copy, design-agent nebo boss).
+- ⚠️ Fajfka `DrawnCheck` při dokončení leží přes nový plný disk a záblesk oslavy podle motion-agenta sahá nad viewBox opice. Na snímcích to ořez nezpůsobuje, ale je to otevřené (design-agent / motion-agent).
+- ⚠️ Únik časovače v Jestu přetrvává.
+
+**Verdikt: NESCHVÁLENO (HEAD fee5545).** Ke schválení je potřeba opravit ořez jména na pódiu na w320 (design-agent) a pak přegenerovat a schválit baseline (boss).
+
+**iPhone checklist:**
+1. Splash: navazuje nativní splash na animovaný bez skoku? Je haptika při mrknutí cítit a přeskočí splash ťuknutí?
+2. Mapa: dech prstence a nacvaknutí dokončeného uzlu na plný disk (haptika `seriesPlate`) jsou plynulé, bez trhání.
+3. Opice: živá smyčka a přechod póz po dokončení lekce plynule, bez záškubu. Se zapnutým Reduce Motion je opice statická.
+4. Safe area: karta Start a tab bar nad home indikátorem, nadpis sekce pod Dynamic Island.
+5. VoiceOver: uzel mapy a karta „Start <lekce>“ se čtou srozumitelně (název, váha, počet cviků).
