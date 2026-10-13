@@ -55,6 +55,8 @@ test.describe('s demo profilem', () => {
       await page.waitForTimeout(300);
     }
     await expect(cont).toBeVisible();
+    // Opička na oslavě hraje akci repertoáru (činka, 3.6 s od nástupu); snímek až po jejím doběhnutí (konečná póza).
+    await page.waitForTimeout(3000);
     await shoot(page, 'celebration');
   });
 

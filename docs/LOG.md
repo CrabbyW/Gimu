@@ -1410,3 +1410,67 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
   - Zapojení `poseForRepertoire` do přehrávače.
   - Umístění mini opičky v lekci.
   - Lahev ve wipeSweat je na 120 pt drobná. Při pohybu zvážit větší `PROP.bottle`.
+
+## motion-agent: opice žije — 26 animací repertoáru živě a zapojené (2026-10-13)
+- **Přehrávač** (`lib/repertoireMotion.ts`, `components/mascot/useActPlayer.ts`, prop `act` na `<Mascot>`): akce = časová osa `t` 0 → 1 za `repertoire.ms` (`lib/motion.ts`), lineárně na UI vlákně. Worklety skládají kostru (`applyAct`), celé tělo (`actBody`: posun, výskok, měřítko kolem chodidel, krytí), houpání kolem hrazdy/dlaní (`actSway`), rekvizity (`actProp`), tečky růstu (`growDot`) a ručník (`towelDot`). Rekvizita v ruce jde s dlaní (`handFollow`: činka, lahev, hodinky, tečky ukazování). Každá obálka začíná i končí v nule. JS jen přepíná pózy akce (`ACT_SPEC.poses`, prolnutí 480 ms). Worklety berou jen čísla a sdílené hodnoty.
+- **Choreografie** (ms; `t` = zlomek osy):
+  - warmup 4800: 3 kruhy rameny, pak 2 dřepy s chodidly na zemi (`fold`).
+  - boredSit 6000: houpe bérci 5×, pak zívne s rukama nahoru.
+  - pointStart 3200: 2× šťouchne prstem ke Startu, tečky pulzují, nakloní se, kývne.
+  - plateHop 2000: let tam 0.12–0.38, zpět 0.55–0.81, oblouk 22 pt na mapě (mapa letí sama, `travel={false}`), ve vzduchu skrčené nohy.
+  - handstandPlate 4200: stojka s balancem ±7° kolem dlaní, nohy kontrují.
+  - morningStretch 4000: na špičky, úklon vlevo a vpravo.
+  - eveningTowel 4400: pravá ruka krouží ručníkem (8 teček) nad hlavou, ospalé kývnutí.
+  - streakAtRisk 5200: přechází sem a tam s kroky, zvedne hodinky, 2× ťukne, ručička tiká.
+  - sadThenPoint 5200: posedí v dřepu, vstane, ukáže na Start, kývne.
+  - headShake 1400: 3 slábnoucí kmity ±13°, uši dokmitnou do konce.
+  - giggle 2200: skrčí se, třese se, ramena a hlava poskakují.
+  - hangFinger 2800: kyvadlo ±16° kolem hrazdy, nohy se zpožděním.
+  - trainAlong: prop `train` = silueta + sdílená fáze `useSilhouettePhase` (`ExerciseSilhouette` `phaseOut`). Dřep, klik, shyb, dip, výskok, vis, výdrž. Vlastní smyčka pózy stojí.
+  - strain 3000: sílící třes 13 + 19 Hz, přivřené oči. Na mini opičce zůstává póza cviku a přes ni se kreslí zaťaté zuby.
+  - wipeSweat 4400: utírá pot (kapky stékají a zmizí), pak lahev k puse (lahev se nakloní 110°).
+  - liftBarbell 3600: podřep, výraz nad hlavu, pravý kotouč (PropPart i=1) přijede a v 0.6 nacvakne (zvětšení 1.18 s dokmitem) + haptika `rigid`.
+  - flameJump 3400: přikrčení, výskok 30 pt, plamen roste 0.2 → 1.25, dopad 0.46 (`success`), pak flex 2×.
+  - climbPodium 3000: o stupeň výš (+28/−18 pt), ruce nahoru, haptika `medium` v 0.5.
+  - grow 3200: měřítko 1 → 1.12 → 1, 16 teček kolem roste po obvodu, haptika `success` v 0.3.
+  - waveRun 3600: zamává oběma, od 0.45 běží k uzlu. Na mapě se ukáže 84 pt od uzlu ke středu.
+  - wifiShake 2600: zatřese cedulkou a hlavou, oblouky wifi se 2× marně rozsvítí.
+  - ropeTangle 3200: zmítá se, lano se cuká.
+  - peekBox 3000: nakoukne do krabice, rozhlédne se, pokrčí rameny.
+  - shrug 1600 (stávající reakce `shrug` hraje stejný přehrávač): paže nahoru, dlaně ven.
+  - Sleep, gaze/lookDown a flip zůstávají ze `reactionMotion` (na v2 fungují: oči, hlava, salto).
+- **Zapojení** (rozhoduje jen `logic/mascotRepertoire`; pravidla přehrávače v `lib/mascotAct.ts`):
+  - Najednou jedna akce: idle (0) nepřeruší nic, uživatel (1) přeruší idle, oslava (2) cokoli.
+  - Haptika jen `REPERTOIRE_HAPTIC`, bez zvuku. `useMascotAct`.
+  - Mapa (`useMapIdleActs` v `LessonMap`): první pokus po 12 s, pak `nextPause` 20–40 s + délka akce. Nikdy během odemykací sekvence, skoku po splashi, příchodu v úvodním sledu ani pull-to-refresh (`isBlocked`, jinak pokus za 3 s). Smutná opice idle nehraje. Vstupy: `sinceInteraction` a `streakAtRisk` (z `returnLine.risk`).
+  - Ťuknutí: zóna podle `tapZone(y/px)` (hlava → headShake, břicho → giggle). Série ťuknutí dál dává salto (`report(..., { quietHop })`). Dlouhý stisk s tahem (`Pan.activateAfterLongPress`) → hangFinger. Během akce stojí drobný idle.
+  - Návrat po ≥ 60 s → waveRun (`useMascotReactions` `onAppReturn`, staré mávnutí se pak nehraje). Ztracená série → sadThenPoint.
+  - Lekce: mini opička (`size.mascotMini` 72) vpravo dole u čísla / prstence výdrže, jak to plánoval token. Posledních 3 s výdrže → strain (jednou za cvik). Pauza → wipeSweat (mini opička v rohu prstence). Přeskok → shrug na dalším cviku (`skippedInto`; chování skipu i demo beze změny).
+  - Oslava: liftBarbell, při rekordu série flameJump. Liga: postup = climbPodium na pódiu i ve vlastním řádku, místo skoku radosti. Stage-up: grow v `bornAt`, haptiku nese podpis `stageUp`.
+  - StateView: offline (web `navigator.onLine`) → wifiShake, chyba → ropeTangle, prázdno → peekBox. Opice zůstává v póze akce.
+- **/dev** „Monkey actions“ (`components/mascot/RepertoireLab.tsx`): 27 tlačítek pro 26 animací (řádek 6 = přeskok a stojka zvlášť), velká opice L, „Play all“ a „Stop“, řádek NOW PLAYING.
+- **Malé úpravy**:
+  - Hlava pull-to-refresh 56 → 72 (`size.pullHead`; prstenec ≈ 58 pt se vejde do parkovací mezery 64).
+  - Lahev `PROP.bottle` 12×26 → 16×34 (krk 6), jen rozměr.
+- **Reduce Motion**: akce = první póza akce staticky 1.6 s, bez osy a bez cestování. Haptika zůstává.
+- **Rozhodl jsem sám**:
+  - Mini opička stojí pod číslem vpravo dole podle komentáře tokenu `mascotMini`, ne v panelu siluety. Tam by překrývala široké pózy.
+  - Pózy cviků mini opičky: crow, hollow, superman, L-sit a most = plank s dechem.
+  - Na nativu chybí detekce offline (není NetInfo), chyba tam vždy ukáže lano.
+  - Snímek oslavy ve vizuálním testu se pořizuje až po doběhnutí činky (+3 s).
+- **Testy**:
+  - jest: `lib/__tests__/repertoireMotion.test.ts` (kódy ↔ ACT_CODE/POSE_CODE, geometrie, dlaň = handWorld, pózy = poseForRepertoire, haptika jen REPERTOIRE_HAPTIC, nulové obálky, plynulost po snímcích 60 fps, chodidla na zemi v dřepu, kotouč činky), `lib/__tests__/mascotAct.test.ts` a `components/mascot/__tests__/repertoire.test.tsx` (jedna akce najednou, idle se nespustí, dokud je blokováno odemčení/skok/pull, pauza 20–40 s, haptika v nacvaknutí, všech 24 akcí na celé i dvouvrstvé opici, Reduce Motion).
+  - e2e: `flows/repertoire.spec.ts` (/dev všech 27 tlačítek bez pageerror, Play all, Reduce Motion, mini opička v lekci).
+  - perf: „mapa: běžící idle akce“.
+- **Běhy**:
+  - tsc OK, eslint OK.
+  - jest 108 sad, všechny zelené (jediný pád `LessonScreenRest` opraven: profil bez aktivity).
+  - test:node 25/25.
+  - `npm run e2e` 175/180. Opraveno a znovu zelené: 3 nové testy repertoáru (selektor `aria-selected` web nevydává, teď řádek NOW PLAYING) a vizuál oslavy w375 dark/light (snímek uprostřed činky, teď po doběhnutí). Cílený běh 10/10, baseline nepřepsána.
+  - `e2e:perf` 7/7: mapa 80.7 fps, mapa s běžící idle akcí (streakAtRisk) 92.7, pull 124, lekce s mini opičkou 131, oslava 112.
+- **Snímkové listy** (scratchpad `motion/rep-<akce>.png`, 10 snímků přes osu, /dev L 200 pt dark): všech 27. Lekce w320/w390: `motion/lesson-w320.png`, `lesson-w390.png`.
+- **Otevřené**:
+  - iPhone: haptika nacvaknutí činky, visu na prstu a ťuknutí; souběh Pan po dlouhém stisku se scrollem mapy; mini opička na 320 pt u prstence 160.
+  - Rukama zkontrolovat pauzu (mini opička u prstence odpočinku).
+  - Detekce offline na nativu (NetInfo).
+  - Na w320 by se mini opička mohla zmenšit, pokud bude kolidovat s velkým písmem.

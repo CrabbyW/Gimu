@@ -25,7 +25,9 @@ async function runAll(page: Page) {
     const b = visible(page.getByTestId(`act-${id}`));
     await b.scrollIntoViewIfNeeded();
     await b.click();
-    await expect(b).toHaveAttribute('aria-selected', 'true');
+    // Přehrává se právě tahle akce (řádek NOW PLAYING nese její popisek).
+    const label = (await b.getAttribute('aria-label'))!.replace(/^Play: /, '');
+    await expect(visible(page.getByTestId('mascot-actions-now'))).toContainText(label);
     // Kus akce doběhne (worklety kostry, rekvizit, těla) — chyba by se ukázala hned.
     await page.waitForTimeout(350);
   }
@@ -47,9 +49,10 @@ test('/dev: Play all přehrává postupně a jde zastavit', async ({ page }) => 
   const play = visible(page.getByText('[PLAY ALL]', { exact: true }));
   await play.scrollIntoViewIfNeeded();
   await play.click();
-  await expect(visible(page.getByTestId('act-warmup'))).toHaveAttribute('aria-selected', 'true');
+  const now = visible(page.getByTestId('mascot-actions-now'));
+  await expect(now).toContainText('Warm-up');
   // Rozcvička trvá 4,8 s, pak přijde nuda na kotouči.
-  await expect(visible(page.getByTestId('act-boredSit'))).toHaveAttribute('aria-selected', 'true', { timeout: 8000 });
+  await expect(now).toContainText('Bored on a plate', { timeout: 8000 });
   await visible(page.getByText('[STOP]', { exact: true })).click();
   await expect(visible(page.getByText('[PLAY ALL]', { exact: true }))).toBeVisible();
   expect(errors).toEqual([]);

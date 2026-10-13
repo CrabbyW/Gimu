@@ -332,7 +332,7 @@ export function applyAct(v: readonly number[], code: number, t: number): number[
   } else if (code === SHRUG) {
     // Pokrčení ramen (přeskočený cvik): paže nahoru a dlaně ven, hlava nakloněná.
     const sh = env(t, 0, 1, 0.2, 0.3);
-    add(0, 50 * sh); add(2, 50 * sh); add(1, -70 * sh); add(3, -70 * sh);
+    add(0, 55 * sh); add(2, 55 * sh); add(1, 50 * sh); add(3, 50 * sh);
     add(PV.headTilt, 6 * sh); add(PV.dy, -1.5 * sh); add(PV.lookX, -0.8 * sh);
   }
   return out;
