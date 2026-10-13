@@ -1233,3 +1233,5 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - Expo Go: Cloudflare quick tunel + demo server (EXPO_PUBLIC_DEMO=1) na 8084, protože 8082 drží osiřelý Metro (PID 20160) se starou adresou tunelu a nesmí se zabít. Quick tunel přes noc zanikl → nový tunel, nový QR (artifact M2GTNH9HhRfJv1opnD2p4B). Čerstvý bundle iOS + Android HEAD 1a9e2d2 (kód = 81c2aa6) přes tunel 200, `$TEMP/expogo.log` 0× ERROR.
 - Rozhodl sám: demo jako env přepínač (ne volba v UI); u existujícího profilu se onboarding nepřeskakuje, jen přeskakování v lekci.
 - Otevřené: iPhone checklist z QA kola 2 (uživatel); stage-up bez skipu v demu; šipka průvodce na kotouč místo karty; DrawnCheck na plném disku; záblesk oslavy mimo viewBox; e2e test opičky u bosse na w320; únik časovače v Jestu.
+
+- qa-agent (2026-10-13): doplnění QA kola 2 — HEAD 78080eb mění oproti 81c2aa6 jen dokumentaci; expogo.log 06:29:49 (iOS + Android Bundled, 0 ERROR); README OK. SCHVÁLENO.

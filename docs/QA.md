@@ -783,3 +783,9 @@ Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičk
 3. První mapa: bublina „Tap Start to begin“ a karta Start jsou nad home indikátorem a pod Dynamic Island, ťuknutí na kartu dá haptiku.
 4. Intro pódia (sloupce a opice) proběhne plynule, bez trhání.
 5. Opice na mapě a v oslavě: živá smyčka je plynulá. S Reduce Motion je statická.
+
+## QA kolo 2, doplnění: nativní log po schváleném HEAD (78080eb, navazuje na 81c2aa6)
+- `git diff --stat 81c2aa6 HEAD`: jen README.md, docs/LOG.md, docs/QA.md ✅
+- `$TEMP/expogo.log` (demo server 8084): zapsán 2026-10-13 06:29:49 +0200, tj. po 81c2aa6 (06:00:53); obsahuje „iOS Bundled“ i „Android Bundled“, 0 řádků ERROR ✅
+- README popisuje demo build (`EXPO_PUBLIC_DEMO=1`), splash a `npm run gen:splash` ✅
+- Verdikt: SCHVÁLENO pro HEAD 78080eb (brána 4 splněna).
