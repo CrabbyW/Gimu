@@ -16,7 +16,8 @@ export default function Index() {
   useEffect(() => {
     if (!seeding || started.current) return;
     started.current = true;
-    void services.user.loadDemo(now()).then(() => router.replace('/(tabs)'));
+    // Když se demo nepovede založit, pokračuje se jako bez dema (onboarding), ne nekonečný loader.
+    void services.user.loadDemo(now()).then(() => router.replace('/(tabs)'), () => router.replace('/onboarding/path'));
   }, [seeding]);
   if (profile.status === 'loading' || seeding) return <DotLoaderScreen />;
   if (profile.status === 'error') return <ErrorState what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
