@@ -27,7 +27,9 @@ export const HEAD_R = 7;
 /** Rozsah souřadnic, ve kterém musí ležet každý bod (výskok sahá nad 0). */
 export const BOUNDS = { minX: 0, maxX: 120, minY: -10, maxY: GROUND_Y } as const;
 /** Geometrie tečkové postavy (jednotky viewBoxu, ne pt): rozteč teček na kosti, poloměr, tečky země. */
-export const DOT = { pitch: 5, r: 2.1, groundPitch: 6, groundR: 1 } as const;
+/** 2026-10-13: menší a hustší tečky (pitch 5→3, r 2.1→1.15) = víc detailu kloubů a hlavy; mezera mezi
+ *  tečkami (pitch − 2r ≈ 0.7 r) drží Nothing-dot rytmus. `torsoW` = polovina šířky trupu (2 souběžné řady). */
+export const DOT = { pitch: 3, r: 1.15, groundPitch: 4, groundR: 0.7, torsoW: 1.5 } as const;
 
 type P = [number, number];
 const pose = (head: P, neck: P, hip: P, elbowL: P, handL: P, elbowR: P, handR: P, kneeL: P, footL: P, kneeR: P, footR: P): Pose =>

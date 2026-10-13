@@ -1345,3 +1345,13 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
 - Uživatel o splashi A: „vypadá to hrozně“ (prázdné/nudné, nesedí k appce). Kolo 2 tří směrů (artifact 2DngSQNkYNMUUStM1ed83D), vybral 03 Tečkový nápis → motion-agent d713736, QA 0981dde SCHVÁLENO s podmínkou nativního logu.
 - Nativní log: přes tunel stažen iOS + Android bundle HEAD (kód = d713736), `$TEMP/expogo.log` 09:51:17, 0× ERROR.
 - Otevřené: crossfade OPICE × „Balance 101“ kolem 1.45 s ověřit na iPhonu; iPhone checklist z QA 0981dde.
+
+### design-agent — hustší tečková silueta cviku, 2026-10-13
+- Uživatel: „zlepši toho stickmana (menší tečky = větší detail)“.
+- `DOT` (logic/silhouettePoses.ts): pitch 5→3, r 2.1→1.15, zem groundPitch 6→4 / groundR 1→0.7, nové `torsoW` 1.5. Mezera mezi tečkami ≈ 0.7 r drží rovnoměrný Nothing-dot rytmus; všechny tečky postavy stejně velké.
+- `poseDots`: trup ve 2 souběžných řadách (druhá řada o jednu rozteč kolmo, bez krajních bodů) = naznačená šířka trupu proti tenkým končetinám. Hlava = prstenec 12 teček (dřív 7) + středová `live` tečka; `headDotIndex` beze změny smyslu (hlava za kostmi i za druhou řadou trupu, za ní prstenec), test drží.
+- Počet teček 42–51 → 74–94 (dip s bradly 136). Strop: pitch 3 je nejmenší, kdy je na w320 (≈2 pt/jednotka) tečka ještě ~2.3 pt a nesplývá v čáru; víc teček nepřidávám. Jedno Svg, žádné plátno navíc.
+- Hlava jako dutý prstenec s červeným okem: na malé ploše čitelnější než plný disk (dřív „kytička“ 7 teček).
+- Neřešeno (mimo rozsah zhuštění): dip zepředu pořád připomíná stoj (pomáhají bradla a pokrčená kolena), crow na w320 drobná (rámec beze změny), squat kyčel pod kolenem drží test.
+- Běhy: tsc OK, eslint OK, jest 104 sad / 992 OK (1 dřívější běh 1 fail byl souběžná práce motion-agenta, opakování zelené), `npm run e2e` 171/172 — jediný fail `flows/intro.spec.ts` w390 (splash, soubory motion-agenta, ne silueta); vizuální baseline lekce bez rozdílu, nic nepřepsáno. `e2e:perf` 5/5, lekce (smyčka siluety) ≥ 55 fps.
+- Snímky před/po (15 siluet, t0/t1, w320 + w430, dark + light): scratchpad `sil/before.png`, `sil/after.png`.

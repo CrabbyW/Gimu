@@ -33,8 +33,8 @@ export function boneDotCounts(id: SilhouetteId): number[] {
   });
 }
 
-/** Hlava jako tečkový disk: střed + prstenec. */
-const HEAD_RING = 7;
+/** Hlava jako tečkový disk: střed + prstenec (12 teček ≈ rozteč DOT.pitch po obvodu). */
+const HEAD_RING = 12;
 const HEAD_RING_R = HEAD_R - DOT.r;
 
 /** Tečky postavy pro pózu: kosti (kloub sdílený dvěma kostmi jen jednou) + hlava. Počet je pro siluetu konstantní. */
@@ -49,6 +49,16 @@ export function poseDots(pose: Pose, counts: readonly number[]): Pt[] {
     }
     seen.add(a); seen.add(b);
   });
+  // Trup ve 2 souběžných řadách (druhá řada 2·DOT.torsoW = jedna rozteč kolmo od páteře): naznačená šířka hrudníku a pánve.
+  const [nx, ny] = pose.joints.neck; const [hx, hy] = pose.joints.hip;
+  const len = Math.hypot(hx - nx, hy - ny) || 1;
+  const ox = (-(hy - ny) / len) * DOT.torsoW * 2; const oy = ((hx - nx) / len) * DOT.torsoW * 2;
+  const tn = counts[0] ?? 2;
+  // Vnitřní body druhé řady (bez krajních, ty by kolidovaly s krkem/paží a kyčlí/nohou).
+  for (let i = 1; i < tn - 1; i++) {
+    const [x, y] = lerpPt(pose.joints.neck, pose.joints.hip, i / (tn - 1));
+    out.push([x + ox, y + oy]);
+  }
   out.push(pose.head);
   for (let i = 0; i < HEAD_RING; i++) {
     const ang = (i / HEAD_RING) * Math.PI * 2 - Math.PI / 2;
