@@ -84,7 +84,7 @@ export default function TrainingScreen() {
   const reactions = useMascotReactions(useScreenFocused());
   // Záměr scrollu: mapa (`IntentScrollView`) se rozjede jen při jasně svislém tahu, jinak tah patří tečkám.
   const play = useScrollIntent();
-  // First run (elite fáze 1): průvodce „Tap the plate to start“ a řádek „Finish setup“ v hlavičkovém překryvu.
+  // First run (elite fáze 1): průvodce „Tap Start to begin“ a řádek „Finish setup“ v hlavičkovém překryvu.
   const guide = useGuide('map');
   // Odcházející bublina: zápis „viděno“ proběhne hned, bublina se ještě `overlayResize.outMs` prolíná pryč.
   const [ghost, setGhost] = useState<GuideId | null>(null);

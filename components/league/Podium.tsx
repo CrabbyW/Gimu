@@ -6,7 +6,7 @@ import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { intro, motion } from '@/lib/motion';
-import { dots, useTheme, tabularNums } from '@/theme';
+import { dots, useTheme, tabularNums, typography } from '@/theme';
 import type { LeagueEntry } from '@/types';
 import { podiumColumns } from './podiumLayout';
 
@@ -58,7 +58,9 @@ export function Podium({ entries, play = false, meReaction = null }: {
                 <DotRow total={height * dots.podium.cols} fraction={1} columns={dots.podium.cols} dot={dots.podium.d} from="bottom" intro={play ? at : false} />
                 <Reveal play={play} delay={at + P.mascotLag + P.labelLag} rise={P.rise} config={motion.reveal} style={{ alignItems: 'center', alignSelf: 'stretch' }}>
                   <Text variant="dotStat" tone={rank === 1 ? 'text' : 'muted'}>{rank}</Text>
-                  <Text variant={entry.isMe ? 'bodyStrong' : 'caption'} numberOfLines={1} style={{ textAlign: 'center' }}>{entry.name}</Text>
+                  {/* Jméno se nikdy neořízne výpustkou: zalomí se až na 2 řádky (dlouhé slovo i uprostřed) a výška
+                      2 řádků větší varianty je rezervovaná u všech sloupců, takže sloupce teček stojí na stejné základně. */}
+                  <Text testID="podium-name" variant={entry.isMe ? 'bodyStrong' : 'caption'} numberOfLines={2} style={{ textAlign: 'center', alignSelf: 'stretch', minHeight: typography.bodyStrong.lineHeight * 2 }}>{entry.name}</Text>
                   <Text variant="caption" tone="muted" numberOfLines={1} style={tabularNums}>{copy.league.podiumXp(entry.xpThisWeek)}</Text>
                 </Reveal>
               </View>

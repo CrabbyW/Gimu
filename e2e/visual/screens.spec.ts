@@ -88,7 +88,7 @@ test.describe('first run', () => {
   });
 
   test('first-run mapa', async ({ page }) => {
-    await expect(visible(page.getByRole('button', { name: 'Tap the plate to start' }))).toBeVisible();
+    await expect(visible(page.getByRole('button', { name: 'Tap Start to begin' }))).toBeVisible();
     await shoot(page, 'first-run-map');
   });
 

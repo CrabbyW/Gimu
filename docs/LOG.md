@@ -1208,3 +1208,13 @@ Commity 8d1421b (opice), ab5bac9 (mapa), ccae464 (splash).
 - Rozhodnutí: směr Kurogane zůstává, neutrály zůstávají chladné (teplotní kontrast s teplým akcentem i opicí), komplement akcentu se nepoužívá. Fonty se neměnily: Doto, Inter a JetBrains Mono, tedy 3 rodiny s rozdělenými rolemi. Tab bar, opice a tečka oka siluety beze změny tokenů.
 - Výsledky: tsc OK, eslint OK, jest 103 sad / 955 OK. `npm run e2e`: 132 passed / 38 failed, jde o stejnou sadu vizuálních snímků jako u motion-agenta (nová opice nebo mapa: mapa, first-run mapa a oslava, oslava, profil, liga). Flows i a11y zelené. Baseline NEPŘEPSÁNA.
 - Otevřené: baseline čeká na schválení vzhledu; splash/ikony live nepoužívají, takže se negenerovaly znovu.
+
+### qa-agent — QA kolo 0d1cc4e..fee5545 (HEAD fee5545), 2026-10-12
+Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/170, selhalo jen 38 vizuálních snímků s novou opicí a mapou, flows i a11y prošly. expogo.log (8084) bez ERROR. Opravy U5 z 0d1cc4e jsou ověřené, tab bar se nezměnil. Verdikt NESCHVÁLENO kvůli dvěma ❌: ořez jména na league pódiu na w320 (design-agent) a neschválené baseline. Doporučuji po opravě spustit `npm run e2e:update`. ⚠️ demo seed bez catch, copy průvodce vs StartCard, únik časovače v Jestu. Nic jsem neopravoval.
+
+## design-agent: oprava QA kola 0d1cc4e..fee5545
+- Pódium ligy: jméno už se neořízne výpustkou. `numberOfLines` 1 → 2 (dlouhé slovo jako „Jake_Pullup“ se na w320 zalomí), výška jména je u všech tří sloupců rezervovaná na 2 řádky `typography.bodyStrong` (token), takže sloupce teček stojí na společné základně bez ohledu na délku jména a variantu „já“. Menší řez jsem nevolil: caption 13 je už spodní hranice čitelnosti.
+- E2E `e2e/flows/league.spec.ts`: jména na pódiu (`podium-name`) nejsou oříznutá na w320 ani w430 (scrollWidth/scrollHeight vs. client).
+- Průvodce na mapě: `copy.guide.mapStart` „Tap the plate to start“ → „Tap Start to begin“ (ukazuje na kartu Start); e2e (first-run, onboarding, visual) a komentář v `app/(tabs)/index.tsx` sjednoceny. Ukotvení bubliny beze změny.
+- Fajfka `DrawnCheck` na hotovém uzlu: nechávám. Inverzní fajfka odlišuje hotovo od živého uzlu jinak než velikostí disku (není to jen jedna vizuální stopa), je v iPhone checklistu a kreslení při dokončení je motion vrstva – skrytí není malá designová změna.
+- Ověření: tsc 0, eslint 0, jest 103/103 suites, `npm run e2e` 128 passed; vizuální rozdíly jen u mapy/oslavy/league/profile/first-run (očekávané z minula + nová copy bubliny a výška pódia), baseline nepřepsána. Cílené flows league/first-run/onboarding 7/7.

@@ -19,7 +19,7 @@ test('onboarding: krátký tok Cesta → Zrození → mapa, pak Finish setup', a
   await page.waitForURL((u) => u.pathname === '/');
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
   // First run: průvodce a jednořádková dlaždice „Finish setup“.
-  await expect(visible(page.getByRole('button', { name: 'Tap the plate to start' }))).toBeVisible();
+  await expect(visible(page.getByRole('button', { name: 'Tap Start to begin' }))).toBeVisible();
   const tile = page.getByRole('button', { name: /^Finish setup, 4 steps left$/ });
   await expect(visible(tile)).toBeVisible();
 
@@ -29,8 +29,8 @@ test('onboarding: krátký tok Cesta → Zrození → mapa, pak Finish setup', a
   expect(new URL(page.url()).pathname).toBe('/');
 
   // Průvodce zmizí na tap a už se nevrátí.
-  await visible(page.getByRole('button', { name: 'Tap the plate to start' })).click();
-  await expect(page.getByRole('button', { name: 'Tap the plate to start' }).filter({ visible: true })).toHaveCount(0);
+  await visible(page.getByRole('button', { name: 'Tap Start to begin' })).click();
+  await expect(page.getByRole('button', { name: 'Tap Start to begin' }).filter({ visible: true })).toHaveCount(0);
 
   // Finish setup: čtyři kroky s výchozími hodnotami, Done → dlaždice zmizí.
   await visible(tile).click();
