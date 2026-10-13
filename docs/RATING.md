@@ -1,27 +1,26 @@
-# Rating: opice v2 + mapa Kurogane + pohyb + splash + oko siluety + demo build + barvy/kontrast/typografie (kód 81c2aa6, docs 742533d), 2026-10-13, kolo 2
+# Rating: splash A Probuzení + 30 póz opice v pohybu + zapojení póz (0a78bad..e951c5f), 2026-10-13
 
-**Skóre: 85/85, čeká na iPhone.** Kategorie Zařízení (15) se doplní, až uživatel potvrdí iPhone checklist z QA kola 2.
+## Brány
+1. QA SCHVÁLENO pro 80ba03b (651b7d3). Commity potom (651b7d3, e951c5f) mění jen README.md, docs/LOG.md a docs/QA.md. ✅
+2. tsc 0, eslint 0, jest 103/988 OK, `npm run e2e` 172/172, `npm run e2e:perf` 5/5. Vše spustil rating-agent. ✅
+3. LOG má záznamy design, motion, qa a boss. QA.md má sekci kola 1 (0a78bad..80ba03b). README je aktualizované v e951c5f. ✅
+4. iPhone checklist (5 bodů) je v QA reportu. `$TEMP/expogo.log` zapsán 13. 10. 08:46 (po HEAD kódu), obsahuje iOS Bundled i Android Bundled a 0 řádků ERROR. ✅
 
-## Brány (všechny splněné)
-1. QA SCHVÁLENO pro 81c2aa6 a v doplňku i pro 78080eb. Commity 1a9e2d2, 78080eb a 742533d mění jen README.md, docs/LOG.md a docs/QA.md.
-2. Rating to dnes spustil sám: tsc OK, eslint OK, jest 103 sad / 955 testů, `npm run e2e` 172/172.
-3. docs/LOG.md má záznamy bosse, design-agenta, motion-agenta i qa-agenta. docs/QA.md má sekci kola 2 i doplněk. README popisuje demo build (`EXPO_PUBLIC_DEMO=1`), splash a `gen:splash`.
-4. iPhone checklist (5 bodů) je v QA reportu. `$TEMP/expogo.log` je zapsán 2026-10-13 06:29:49, tedy po 81c2aa6. Obsahuje iOS i Android Bundled a 0 řádků `ERROR`.
+## Skóre: 85/85 „čeká na iPhone“ (z 100)
 
-## Kategorie
 | Kategorie | Body | Poznámka |
 |---|---|---|
-| Funkčnost | 20/20 | e2e/flows projdou (součást 172/172); spec kroku je v QA kole 2 bez ❌ (otevřené jsou jen ⚠️) |
-| Vizuální kvalita | 20/20 | Baseline 4 šířky × dark/light přegenerované v 81c2aa6 a schválené v QA kole 2 (QA.md a LOG); ořez na pódiu na w320 je opravený a jistí ho e2e test `liga: jména na pódiu nejsou oříznutá` (mutačně ověřeno v QA) |
-| Motion a haptika | 15/15 | Prolnutí póz a splash jedou přes withTiming s Reduce Motion variantou (useReducedMotion, statická póza). Pružina u opice (`SvgMascot.tsx:167`) není na klikatelném prvku (role image). Odemčení uzlu `PlateNode.tsx:238` je z dřívější fáze, hodnoceno stejně jako dřív. Haptika: mrknutí ve splashi, unlock, seriesPlate. e2e:perf 5/5, ≥ 55 fps (QA kolo 2 na stejném kódu) |
-| Zařízení | – (čeká) | Uživatel zatím checklist kola nepotvrdil |
-| Přístupnost | 10/10 | Splash Pressable má roli button, opice role image s popiskem, pódium má a11y label bez U+200B; contrast.test.ts je zelený (live dark ≥ 4.5:1); a11y a large-text e2e jsou zelené |
-| Výkon | 10/10 | perf: plátna ≤ 12, TTI mapy ≤ 3000 ms; smyčky póz jsou ve sdílených hodnotách (lib/poseMotion.ts), ne setState |
-| Architektura a kód | 10/10 | Pózy jako data v logic/mascotPoses.ts, headDotIndex v logic/silhouette.ts, hexy jen v theme/palettes.ts, časování z lib/motion; žádné `any`; žádná výjimka z `local/no-worklet-object-capture` |
+| Funkčnost | 20/20 | e2e toky prošly, v QA reportu není ❌ |
+| Vizuální kvalita | 20/20 | 172/172 bez neschválených diffů na 4 šířkách × dark/light včetně 320 pt, červená jen přes theme `ink.live` |
+| Motion a haptika | 15/15 | Reduce Motion je v usePoseMotion i ve splashi, v diffu není spring, perf ≥ 55 fps (mapa, lekce, oslava) |
+| Zařízení | 0/15 (čeká) | uživatel zatím nepotvrdil iPhone checklist kola 1, patří **boss** (předat checklist uživateli) |
+| Přístupnost | 10/10 | test kontrastu prošel, a11y sada e2e je zelená, opička v nastavení je dekorace skrytá pro VoiceOver |
+| Výkon | 10/10 | Skia plátna ≤ 12 a TTI mapy ≤ 3 s (e2e:perf) |
+| Architektura a kód | 10/10 | v diffu 0a78bad..HEAD není `any`, TODO, eslint-disable ani hex barva. Mapování póz je v logic/, smyčky v lib/ |
 
-Nesplněná kritéria: žádná. Chybí jen potvrzení iPhone checklistu od uživatele. Patří bossovi: předat uživateli 5 bodů z QA kola 2.
+## Co chybí do 100/100
+- Uživatel musí potvrdit iPhone checklist kola 1 v docs/QA.md (splash, lekce 8 + stage-up s haptikou, čitelnost poháru a medaile na 48/32 pt, Reduce Motion, nastavení a VoiceOver). Patří **boss**.
 
 ## Doporučení (mimo skóre)
-- Otevřené ⚠️ z QA: ukazatel bubliny průvodce míří na kotouč místo karty Start (design); limit délky jmen v lize pro 3+ řádky (design/boss); chybí e2e test opičky u bosse na w320 (qa); únik časovače v Jestu (qa).
-- Rubrika by měla výslovně říct, že nativní log musí být zapsán po schváleném HEAD.
-- Několik `eslint-disable-next-line react-hooks/exhaustive-deps` nemá odůvodnění za `--` (např. `components/map/PlateNode.tsx:240`). Rubrika to nepostihuje.
+- Vlastní řádek ligy na 1.–3. místě a stage-up po lekci 8 nemají vizuální baseline. Doplnit e2e scénář (boss / design-agent).
+- Jest hlásí worker, který neskončil (únik časovače) (qa-agent).
