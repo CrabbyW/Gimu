@@ -1,4 +1,5 @@
 import TestRenderer, { act } from 'react-test-renderer';
+import { StyleSheet } from 'react-native';
 import { Circle, Ellipse } from 'react-native-svg';
 import { AnimatedSplash } from '@/components/splash/AnimatedSplash';
 import { copy } from '@/data/copy';
@@ -38,7 +39,7 @@ describe('AnimatedSplash', () => {
     expect(plugin[1].backgroundColor).toBe(dark.base);
     expect(plugin[1].imageWidth).toBe(dots.splash.head);
     const { r } = render();
-    expect(r.root.findByProps({ testID: 'splash-head' }).props.style).toMatchObject({ width: dots.splash.head, height: dots.splash.head });
+    expect(StyleSheet.flatten(r.root.findByProps({ testID: 'splash-head' }).props.style)).toMatchObject({ width: dots.splash.head, height: dots.splash.head });
   });
 
   it('kruh 12 teček, jediná v akcentu live, ostatní tlumené; hlava z dark tokenů opice', () => {
@@ -47,6 +48,8 @@ describe('AnimatedSplash', () => {
     expect(ring).toHaveLength(dots.splash.count);
     expect(ring.filter((n) => n.props.fill === dark.live)).toHaveLength(1);
     expect(ring.filter((n) => n.props.fill === dark.mascotProp)).toHaveLength(dots.splash.count - 1);
+    expect(ring[0]!.props.r).toBeGreaterThan(ring[1]!.props.r);
+    expect(r.root.findAll((n) => n.props.testID === 'splash-seed' && n.type === Circle)[0]!.props.fill).toBe(dark.live);
     expect(r.root.findAllByType(Ellipse).map((e) => e.props.fill)).toEqual([dark.mascotEye, dark.mascotEye]);
   });
 
@@ -59,20 +62,26 @@ describe('AnimatedSplash', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('choreografie ≤ 1.2 s: onShown po layoutu, mrknutí s haptikou, pak prolnutí a onDone', () => {
+  it('choreografie A: onShown po layoutu, otevření očí s haptikou, pak prolnutí a onDone', () => {
     const onShown = jest.fn();
     const { r, onDone } = render({ ready: true, onShown });
     start(r);
     expect(onShown).toHaveBeenCalledTimes(1);
-    advance(splash.blinkAt);
+    advance(splash.openAt - 1);
+    expect(feedback).not.toHaveBeenCalled();
+    advance(1);
     expect(feedback).toHaveBeenCalledWith('introPulse');
-    advance(splash.fadeAt - splash.blinkAt);
+    advance(splash.fadeAt - splash.openAt);
     advance(splash.fadeMs - 1);
     expect(onDone).not.toHaveBeenCalled();
     advance(1);
     expect(onDone).toHaveBeenCalledTimes(1);
-    expect(splash.fadeAt + splash.fadeMs).toBeLessThanOrEqual(1200);
-    expect(splash.dotStepMs * (dots.splash.count - 1) + splash.dotInMs).toBeLessThanOrEqual(splash.blinkAt);
+    expect(splash.fadeAt + splash.fadeMs).toBe(splash.totalMs);
+    // Pořadí A: tečka → kruh dohraje dřív, než se otevřou oči; oči otevřené před odchodem.
+    expect(splash.ringAt).toBeLessThan(splash.seedMs);
+    expect(splash.ringAt + splash.dotStepMs * (dots.splash.count - 1) + splash.dotInMs).toBeLessThanOrEqual(splash.openAt + splash.openMs);
+    expect(splash.headAt + splash.headInMs).toBeLessThanOrEqual(splash.fadeAt);
+    expect(splash.openAt + splash.openMs).toBeLessThanOrEqual(splash.fadeAt);
   });
 
   it('appka není ready: drží, onDone až po ready + prolnutí', () => {

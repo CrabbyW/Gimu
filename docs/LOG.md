@@ -1235,3 +1235,16 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - Otevřené: iPhone checklist z QA kola 2 (uživatel); stage-up bez skipu v demu; šipka průvodce na kotouč místo karty; DrawnCheck na plném disku; záblesk oslavy mimo viewBox; e2e test opičky u bosse na w320; únik časovače v Jestu.
 
 - qa-agent (2026-10-13): doplnění QA kola 2 — HEAD 78080eb mění oproti 81c2aa6 jen dokumentaci; expogo.log 06:29:49 (iOS + Android Bundled, 0 ERROR); README OK. SCHVÁLENO.
+
+## motion-agent: splash směr A „Probuzení“ (2026-10-13)
+- `components/splash/AnimatedSplash.tsx` přepsán na choreografii A (maketa splash-smery.html, zkrácené časování, tokeny `splash` v `lib/motion.ts`, geometrie `dots.splash` v `theme/tokens.ts`):
+  1. červená tečka `live` uprostřed: r 0 → 1.4 → 1 (240 + 160 ms, ease.out), seedR 6.4;
+  2. od 280 ms kruh 12 teček po 45 ms (každá 140 ms, lineárně), ringR 80, horní `live` liveR 5.6, ostatní dotR 4.4;
+  3. od 600 ms hlava opice (geometrie V2, jako dřív) opacity 0→1 + scale 0.92→1 (350 ms, ease.out) se zavřenýma očima (ry × 0.12); v 900 ms oči otevře (250 ms, ease.out) + haptika `introPulse`;
+  4. v 1150 ms kruh s hlavou scale → 0.6, translateY → −120 pt a celé prolnutí (550 ms, ease.exit) do mapy. Celkem 1.7 s, mapa čitelná od ~1.4 s.
+  - Tap = okamžitý skip, Reduce Motion = statická hlava + 200 ms prolnutí, NO_INTRO/HOLD beze změny, nedohrané načtení drží otevřené oči do ready.
+- Rozhodnutí: nativní splash = jen černá. `scripts/gen-splash.mjs` generuje `assets/splash-icon.png` plně průhledný (app.json beze změny: backgroundColor #0B0B0C, imageWidth 140 zůstává jen kvůli kontraktu pluginu). Tečka v A roste z nuly, takže první JS snímek = nativní černá, žádný skok. Ikony appky beze změny.
+- Testy: jest AnimatedSplash (pořadí fází, haptika v openAt, seed + větší live tečka), e2e intro čeká na dohrání nástupu hlavy před měřením.
+- Snímky: scratchpad `motion/splashA-0000…1650.png` (Playwright clock), odpovídají maketě A.
+- Výsledky: tsc OK, eslint OK, test:node OK, e2e --grep splash 2/2, e2e:perf 5/5. jest: AnimatedSplash 6/6; 3 suity padají na rozpracovaných souborech design-agenta (mascotPoses, poseMotion, SvgMascot), mimo můj zásah.
+- Otevřené: na iPhonu ověřit plynulé navázání nativní černé na tečku a haptiku při otevření očí. Opičí póza „spí/oči zavřené“ přes API Mascot nepoužita (splash kreslí hlavu z V2 geometrie jako dosud), nové API nebylo potřeba.

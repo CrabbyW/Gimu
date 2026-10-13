@@ -527,13 +527,16 @@ export const mascotPose = {
 };
 
 /**
- * Animovaný splash (plán krok 3): převezme nativní splash (hlava opice uprostřed, `imageWidth` z app.json),
- * pak se kolem hlavy po jedné rozsvítí 12 teček (`dotStepMs`, každá za `dotInMs`, jedna v akcentu `live`),
- * opice mrkne (`blinkAt`, zavření/otevření `blinkCloseMs`/`blinkOpenMs`) a celé se prolne pryč (`fadeMs`,
- * `ease.exit`) s mírným zvětšením hlavy (`exitScale`). Celkem `totalMs` ≤ 1.2 s. Omezený pohyb: jen
- * prolnutí `reducedFadeMs`. Když appka ještě není ready, drží rozsvícený kruh, dokud nebude.
+ * Animovaný splash, směr A „Probuzení“ (maketa splash-smery.html, zkrácené časování). Nativní splash je jen
+ * dark base, takže první snímek = černá. (1) Uprostřed vyroste červená tečka `live` (`seedMs`, 0 → `seedPeak`
+ * v 60 % → 1, `ease.out`). (2) Od `ringAt` se po kruhu po `dotStepMs` rozsvítí 12 teček (každá `dotInMs`).
+ * (3) Od `headAt` nastoupí hlava opice (`headInMs`, scale `headFrom` → 1, `ease.out`) se zavřenýma očima
+ * (`eyesClosed` výšky), v `openAt` je otevře (`openMs`, `ease.out`) + lehká haptika. (4) V `fadeAt` se kruh
+ * s hlavou zmenší na `exitScale`, ustoupí o `exitY` pt nahoru a prolne se (`fadeMs`, `ease.exit`), mapa je
+ * pod tím. Omezený pohyb: jen prolnutí `reducedFadeMs`. Když appka není ready, drží otevřené oči do ready.
  */
 export const splash = {
-  dotStepMs: 45, dotInMs: 140, blinkAt: 640, blinkCloseMs: 70, blinkOpenMs: 110, fadeAt: 880, fadeMs: 300,
-  exitScale: 1.06, reducedFadeMs: 200, totalMs: 1180,
+  seedMs: 400, seedPeak: 1.4, ringAt: 280, dotStepMs: 45, dotInMs: 140,
+  headAt: 600, headInMs: 350, headFrom: 0.92, eyesClosed: 0.12, openAt: 900, openMs: 250,
+  fadeAt: 1150, fadeMs: 550, exitScale: 0.6, exitY: -120, reducedFadeMs: 200, totalMs: 1700,
 };

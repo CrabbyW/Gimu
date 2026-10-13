@@ -42,8 +42,9 @@ export function headSvg({ size, scale = 1, background = null, mono = false }) {
 }
 
 const OUT = [
-  // Nativní splash: průhledné pozadí, výřez přes celý obrázek (app.json `imageWidth` = `dots.splash.head`).
-  { file: 'assets/splash-icon.png', svg: headSvg({ size: 1024 }) },
+  // Nativní splash (směr A „Probuzení“): jen dark base z app.json, obrázek je plně průhledný. Animovaný splash
+  // začíná ve stejné černé a červená tečka teprve vyroste z nuly, takže mezi nativním a JS snímkem není skok.
+  { file: 'assets/splash-icon.png', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"></svg>' },
   // iOS ikona: hlava na dark base s okrajem.
   { file: 'assets/icon.png', svg: headSvg({ size: 1024, scale: 0.66, background: DARK.base }) },
   // Android adaptivní ikona: popředí v bezpečné zóně (66 % → hlava ~ 50 %), pozadí plné, monochrom = silueta.

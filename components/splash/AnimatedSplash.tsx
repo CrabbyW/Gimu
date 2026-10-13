@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated, {
-  Easing, ReduceMotion, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming,
-  type SharedValue,
+  Easing, ReduceMotion, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming,
+  type SharedValue, type WithTimingConfig,
 } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import { copy } from '@/data/copy';
@@ -27,19 +27,20 @@ export interface AnimatedSplashProps {
 }
 
 /**
- * Animovaný splash (plán vast-snuggling-sunbeam, krok 3). Převezme nativní splash: dark base a hlava opice
- * (`dots.splash.head` pt = `imageWidth` v app.json, výřez `dots.splash.view` = `assets/splash-icon.png`)
- * uprostřed okna. Pak se kolem hlavy po jedné rozsvítí 12 teček (horní v akcentu `live`, jako póza 1
- * reference), opice mrkne (jemná haptika) a celé se prolne do appky. Vždy dark paleta: navazuje na nativní
- * splash bez ohledu na režim appky. Omezený pohyb: hlava bez kruhu a jen rychlé prolnutí po ready.
- * Všechno na UI vlákně z jedné hodnoty postupu (`lit`); stav appky na splashi nezávisí.
+ * Animovaný splash, směr A „Probuzení“. Nativní splash je jen dark base (`assets/splash-icon.png` je
+ * průhledný), takže první snímek je černá bez skoku. Uprostřed vyroste červená tečka, z ní se po kruhu
+ * rozsvítí 12 teček (horní `live`, větší), uvnitř nastoupí hlava opice (geometrie V2) se zavřenýma očima,
+ * otevře je (lehká haptika) a kruh s hlavou se zmenší, ustoupí nahoru a prolne se do mapy.
+ * Vždy dark paleta. Omezený pohyb: statická hlava, jen prolnutí. Všechno na UI vlákně ze sdílených hodnot.
  */
 export function AnimatedSplash({ ready = true, onDone, onShown }: AnimatedSplashProps) {
   const reduced = useReducedMotion();
+  const seed = useSharedValue(0);
   const lit = useSharedValue(0);
-  const blink = useSharedValue(1);
+  const head = useSharedValue(0);
+  const open = useSharedValue<number>(S.eyesClosed);
   const shown = useSharedValue(1);
-  const grow = useSharedValue(1);
+  const away = useSharedValue(0);
   const [started, setStarted] = useState(false);
   const [played, setPlayed] = useState(false);
   const doneRef = useRef(false);
@@ -54,20 +55,21 @@ export function AnimatedSplash({ ready = true, onDone, onShown }: AnimatedSplash
     onShown?.();
   }, [started, onShown]);
 
-  // Choreografie: kruh teček → mrknutí + haptika → dohráno.
+  // Choreografie A: tečka → kruh → hlava → otevření očí + haptika → dohráno.
   useEffect(() => {
     if (!started || reduced) return;
-    lit.set(withTiming(T.count, { duration: S.dotStepMs * (T.count - 1) + S.dotInMs, easing: Easing.linear, reduceMotion: NEVER }));
-    const blinkAt = setTimeout(() => {
-      feedback('introPulse');
-      blink.set(withSequence(
-        withTiming(0, { duration: S.blinkCloseMs, easing: ease.out, reduceMotion: NEVER }),
-        withTiming(1, { duration: S.blinkOpenMs, easing: ease.out, reduceMotion: NEVER }),
-      ));
-    }, S.blinkAt);
+    const t = (duration: number, easing: WithTimingConfig['easing'] = ease.out) => ({ duration, easing, reduceMotion: NEVER });
+    seed.set(withSequence(
+      withTiming(S.seedPeak, t(S.seedMs * 0.6)),
+      withTiming(1, t(S.seedMs * 0.4)),
+    ));
+    lit.set(withDelay(S.ringAt, withTiming(T.count, t(S.dotStepMs * (T.count - 1) + S.dotInMs, Easing.linear))));
+    head.set(withDelay(S.headAt, withTiming(1, t(S.headInMs))));
+    open.set(withDelay(S.openAt, withTiming(1, t(S.openMs))));
+    const openAt = setTimeout(() => feedback('introPulse'), S.openAt);
     const playedAt = setTimeout(() => setPlayed(true), S.fadeAt);
-    return () => { clearTimeout(blinkAt); clearTimeout(playedAt); };
-  }, [started, reduced, lit, blink]);
+    return () => { clearTimeout(openAt); clearTimeout(playedAt); };
+  }, [started, reduced, seed, lit, head, open]);
 
   const isPlayed = started && (played || reduced);
   const leaving = isPlayed && ready;
@@ -75,18 +77,26 @@ export function AnimatedSplash({ ready = true, onDone, onShown }: AnimatedSplash
     if (!leaving) return;
     const ms = reduced ? S.reducedFadeMs : S.fadeMs;
     shown.set(withTiming(0, { duration: ms, easing: ease.exit, reduceMotion: NEVER }));
-    if (!reduced) grow.set(withTiming(S.exitScale, { duration: ms, easing: ease.exit, reduceMotion: NEVER }));
+    if (!reduced) away.set(withTiming(1, { duration: ms, easing: ease.exit, reduceMotion: NEVER }));
     const t = setTimeout(finish, ms);
     return () => clearTimeout(t);
-  }, [leaving, reduced, shown, grow, finish]);
+  }, [leaving, reduced, shown, away, finish]);
 
+  const X_SCALE = S.exitScale, X_Y = S.exitY, H_FROM = S.headFrom;
   const rootStyle = useAnimatedStyle(() => ({ opacity: shown.get() }));
-  const artStyle = useAnimatedStyle(() => ({ transform: [{ scale: grow.get() }] }));
+  const artStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: X_Y * away.get() }, { scale: 1 + (X_SCALE - 1) * away.get() }],
+  }));
+  const headStyle = useAnimatedStyle(() => ({
+    opacity: head.get(),
+    transform: [{ scale: H_FROM + (1 - H_FROM) * head.get() }],
+  }));
+  const seedProps = useAnimatedProps(() => ({ r: T_SEED * seed.get() }));
 
-  // Hlava: stejný výřez a velikost jako nativní obraz. Kruh: větší plátno se stejným středem a měřítkem.
+  // Hlava: výřez `view` na `head` pt. Kruh: větší plátno se stejným středem a měřítkem.
   const [vx, vy, side] = T.view;
   const unit = T.head / side;
-  const ringSide = 2 * (T.ringR + T.dotR + 1);
+  const ringSide = 2 * (T.ringR + T.liveR + 1);
   const cx = V2.head.cx, cy = V2.head.cy;
   return (
     <Animated.View testID="splash-layer" pointerEvents={leaving ? 'none' : 'auto'} style={[StyleSheet.absoluteFill, rootStyle]} onLayout={onLayout}>
@@ -106,24 +116,27 @@ export function AnimatedSplash({ ready = true, onDone, onShown }: AnimatedSplash
         >
           {reduced ? null : (
             <Svg testID="splash-ring" width={ringSide * unit} height={ringSide * unit} viewBox={`${cx - ringSide / 2} ${cy - ringSide / 2} ${ringSide} ${ringSide}`} style={StyleSheet.absoluteFill}>
+              <AnimatedCircle testID="splash-seed" cx={cx} cy={cy} r={0} fill={dark.live} animatedProps={seedProps} />
               {Array.from({ length: T.count }, (_, i) => <RingDot key={i} i={i} lit={lit} />)}
             </Svg>
           )}
-          <View testID="splash-head" style={{ width: T.head, height: T.head }}>
+          <Animated.View testID="splash-head" style={[{ width: T.head, height: T.head }, reduced ? null : headStyle]}>
             <Svg width={T.head} height={T.head} viewBox={`${vx} ${vy} ${side} ${side}`}>
               <Circle cx={cx - V2.ears.dx} cy={cy + V2.ears.dy} r={V2.ears.r} fill={dark.mascotFur} />
               <Circle cx={cx + V2.ears.dx} cy={cy + V2.ears.dy} r={V2.ears.r} fill={dark.mascotFur} />
               <Circle cx={cx} cy={cy} r={V2.head.r} fill={dark.mascotFur} />
               <Path d={V2.face} fill={dark.mascotFace} />
-              <Eye x={cx - V2.eyes.dx} blink={blink} />
-              <Eye x={cx + V2.eyes.dx} blink={blink} />
+              <Eye x={cx - V2.eyes.dx} open={open} reduced={reduced} />
+              <Eye x={cx + V2.eyes.dx} open={open} reduced={reduced} />
             </Svg>
-          </View>
+          </Animated.View>
         </Animated.View>
       </Pressable>
     </Animated.View>
   );
 }
+
+const T_SEED = T.seedR;
 
 /** Tečka kruhu: `i` = pořadí od 12 hodin po směru; rozsvítí se, když postup `lit` přejde přes `i`. */
 function RingDot({ i, lit }: { i: number; lit: SharedValue<number> }) {
@@ -134,7 +147,7 @@ function RingDot({ i, lit }: { i: number; lit: SharedValue<number> }) {
       testID="splash-dot"
       cx={V2.head.cx + Math.cos(a) * T.ringR}
       cy={V2.head.cy + Math.sin(a) * T.ringR}
-      r={T.dotR}
+      r={i === 0 ? T.liveR : T.dotR}
       fill={i === 0 ? dark.live : dark.mascotProp}
       opacity={0}
       animatedProps={props}
@@ -142,11 +155,11 @@ function RingDot({ i, lit }: { i: number; lit: SharedValue<number> }) {
   );
 }
 
-/** Oko: mrknutí = výška elipsy (`blink` 1 otevřené → 0 zavřené, minimum = tenká linka). */
-function Eye({ x, blink }: { x: number; blink: SharedValue<number> }) {
+/** Oko: otevření = výška elipsy (`open` `eyesClosed` → 1). Omezený pohyb: rovnou otevřené. */
+function Eye({ x, open, reduced }: { x: number; open: SharedValue<number>; reduced: boolean }) {
   const RY = V2.eyes.ry;
-  const props = useAnimatedProps(() => ({ ry: Math.max(1, RY * blink.get()) }));
-  return <AnimatedEllipse cx={x} cy={V2.eyes.cy} rx={V2.eyes.rx} ry={RY} fill={dark.mascotEye} animatedProps={props} />;
+  const props = useAnimatedProps(() => ({ ry: RY * open.get() }));
+  return <AnimatedEllipse cx={x} cy={V2.eyes.cy} rx={V2.eyes.rx} ry={RY} fill={dark.mascotEye} animatedProps={reduced ? undefined : props} />;
 }
 
 const styles = StyleSheet.create({

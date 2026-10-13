@@ -14,7 +14,8 @@ test('splash: studený start, hlava a kruh teček na w320, ťuknutí přeskočí
   await expect(intro).toHaveAttribute('aria-label', 'Opice');
   await expect(intro).toHaveAttribute('role', 'button');
 
-  // Geometrie: hlava 140 pt (= imageWidth nativního splashe) přesně uprostřed okna, 12 teček kruhu na displeji bez překryvu.
+  // Geometrie (směr A): po nástupu hlava 140 pt přesně uprostřed okna, 12 teček kruhu na displeji bez překryvu.
+  await expect.poll(async () => Math.round((await page.getByTestId('splash-head').boundingBox())?.width ?? 0), { timeout: 5_000 }).toBe(140);
   const head = await page.getByTestId('splash-head').boundingBox();
   if (!head) throw new Error('splash bez hlavy');
   expect(Math.abs(head.width - 140)).toBeLessThanOrEqual(0.5);
@@ -53,7 +54,7 @@ test('splash: studený start, hlava a kruh teček na w320, ťuknutí přeskočí
   expect(errors).toEqual([]);
 });
 
-test('splash: bez ťuknutí sám dohraje (≤ 1.2 s) a prolne se do appky', async ({ page }) => {
+test('splash: bez ťuknutí sám dohraje (A: tečka, kruh, oči, ústup) a prolne se do appky', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/dev');
   const intro = page.getByTestId('splash');
