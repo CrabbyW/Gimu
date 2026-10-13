@@ -1340,3 +1340,8 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 
 ## qa-agent — kolo splash 03 (8309364..d713736)
 Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdikt SCHVÁLENO pro d713736 s podmínkou nativního logu (expogo.log starší než HEAD, 0 ERROR). Otevřené: ověřit prolnutí nápisu s nadpisem mapy na iPhonu.
+
+### boss — splash 03, 2026-10-13
+- Uživatel o splashi A: „vypadá to hrozně“ (prázdné/nudné, nesedí k appce). Kolo 2 tří směrů (artifact 2DngSQNkYNMUUStM1ed83D), vybral 03 Tečkový nápis → motion-agent d713736, QA 0981dde SCHVÁLENO s podmínkou nativního logu.
+- Nativní log: přes tunel stažen iOS + Android bundle HEAD (kód = d713736), `$TEMP/expogo.log` 09:51:17, 0× ERROR.
+- Otevřené: crossfade OPICE × „Balance 101“ kolem 1.45 s ověřit na iPhonu; iPhone checklist z QA 0981dde.
