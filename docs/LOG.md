@@ -1218,3 +1218,10 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - Průvodce na mapě: `copy.guide.mapStart` „Tap the plate to start“ → „Tap Start to begin“ (ukazuje na kartu Start); e2e (first-run, onboarding, visual) a komentář v `app/(tabs)/index.tsx` sjednoceny. Ukotvení bubliny beze změny.
 - Fajfka `DrawnCheck` na hotovém uzlu: nechávám. Inverzní fajfka odlišuje hotovo od živého uzlu jinak než velikostí disku (není to jen jedna vizuální stopa), je v iPhone checklistu a kreslení při dokončení je motion vrstva – skrytí není malá designová změna.
 - Ověření: tsc 0, eslint 0, jest 103/103 suites, `npm run e2e` 128 passed; vizuální rozdíly jen u mapy/oslavy/league/profile/first-run (očekávané z minula + nová copy bubliny a výška pódia), baseline nepřepsána. Cílené flows league/first-run/onboarding 7/7.
+
+### qa-agent: QA kolo 2 (HEAD 81c2aa6), 2026-10-13
+- Brány: tsc, eslint, jest 955, test:node, e2e 172/172 a perf 5/5 zelené. expogo.log bez ERROR.
+- Obě ❌ z kola 1 jsou pryč (ořez na pódiu, červené e2e). Mutační test ořezu pódia selže, když se vrátí numberOfLines={1} (ověřeno a vráceno, necommitováno).
+- QA schvaluje nové baseline z 81c2aa6 (league, map, first-run, celebration, profile).
+- Otevřené ⚠️: šipka bubliny průvodce míří na kotouč, ne na kartu; jména na 3+ řádky; únik časovače v Jestu; chybí e2e boss případu na w320.
+- Verdikt: SCHVÁLENO.

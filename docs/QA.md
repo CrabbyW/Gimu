@@ -755,3 +755,31 @@ Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičk
 3. Opice: živá smyčka a přechod póz po dokončení lekce plynule, bez záškubu. Se zapnutým Reduce Motion je opice statická.
 4. Safe area: karta Start a tab bar nad home indikátorem, nadpis sekce pod Dynamic Island.
 5. VoiceOver: uzel mapy a karta „Start <lekce>“ se čtou srozumitelně (název, váha, počet cviků).
+
+## QA kolo 2: fee5545..81c2aa6 (ad321e9, c7aef39, 81c2aa6: pódium ligy, průvodce, demo fallback, nové baseline), HEAD 81c2aa6, 2026-10-13
+
+**Brány:** tsc 0, eslint 0 (vč. `local/no-worklet-object-capture`), jest 103 sad / 955 OK, test:node OK, `npm run e2e` **172/172 passed**, `npm run e2e:perf` 5/5 (canvas ≤ 12, TTI mapy ≤ 3000 ms, mapa, lekce i oslava ≥ 55 fps). `$TEMP/expogo.log` (naposledy zapsán 12. 10. 21:37) má 0 řádků ERROR a od minulého kola nepřibyl žádný nový běh.
+
+**Ověřeno:**
+- ✅ Ořez na pódiu (❌ z kola 1) je pryč. Baseline league na w320 dark i light: „Jake_ / Pullup“ na 2 řádky, „Dan Squat“ a „Tess.hold“ celé, sloupce na stejné základně. Na w375, w390 i w430 je jméno na jednom řádku. Bez kolizí.
+- ✅ Mutační test: lokálně jsem vrátil `numberOfLines={1}` a test `liga: jména na pódiu nejsou oříznutá` na w320 **selhal** (`["Jake_​Pullup"]`), na w430 prošel, což je správně, protože tam se jméno vejde. Změnu jsem vrátil (`git checkout`) a `dist` znovu exportoval. Nic jsem necommitoval.
+- ✅ a11y: `accessibilityLabel={entry.name}` čte původní jméno bez U+200B. Zalomení `​` je jen ve viditelném textu.
+- ✅ e2e zelené (❌ z kola 1). Baseline z 81c2aa6 jsem prošel: league, map, first-run map, first-run celebration a profile na w320 dark i light a na w430. Ořez ani kolize nejsou, tab bar má stejný tvar, ikony, zámky i aktivní stav jako dřív. **QA tyto baseline schvaluje.**
+- ✅ ad321e9 (⚠️ z kola 1): když selže `loadDemo`, appka přejde na `/onboarding/path`, takže nezůstane viset na nekonečném loaderu.
+- ✅ Copy průvodce je teď „Tap Start to begin“ (⚠️ z kola 1 je jako text vyřešené).
+
+**Otevřené (⚠️, neblokuje):**
+- ⚠️ Ukazatel bubliny průvodce (tečky) pořád míří dolů na kotouč, ne na kartu Start (first-run mapa, všechny šířky). Patří design-agentovi.
+- ⚠️ `numberOfLines={2}`: jméno, které by potřebovalo 3 řádky, by se na w320 znovu uřízlo. Data dema to dnes nemají a e2e by to chytil, ale u reálných jmen z ligy je potřeba limit délky v datech nebo menší písmo (design-agent nebo boss).
+- ⚠️ Pro schválení baseline v 81c2aa6 chybí samostatný záznam v LOG. Je jen v commit message, proto ho doplňuje tento QA záznam.
+- ⚠️ Jest stále hlásí worker, který neskončil (únik časovače).
+- ⚠️ DrawnCheck a záblesk oslavy jsou beze změny (design-agent / motion-agent). Boss případ opičky na w320 stále nemá e2e regresní test.
+
+**Verdikt: SCHVÁLENO (HEAD 81c2aa6).**
+
+**iPhone checklist:**
+1. VoiceOver na League: pódium čte „Jake_Pullup“ plynule jako jedno jméno, bez pauzy nebo divného znaku v místě zalomení.
+2. League na nejužším zařízení (SE / mini): „Jake_ / Pullup“ na 2 řádky, sloupce teček na stejné základně, nic uříznuté.
+3. První mapa: bublina „Tap Start to begin“ a karta Start jsou nad home indikátorem a pod Dynamic Island, ťuknutí na kartu dá haptiku.
+4. Intro pódia (sloupce a opice) proběhne plynule, bez trhání.
+5. Opice na mapě a v oslavě: živá smyčka je plynulá. S Reduce Motion je statická.
