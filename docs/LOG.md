@@ -1306,3 +1306,10 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 ## qa-agent: QA kolo 0a78bad..80ba03b
 - Brány: tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5 jsou zelené. expogo.log má 0 ERROR, ale je starší než HEAD (nativní bundle chybí).
 - Verdikt: SCHVÁLENO pro 80ba03b, s podmínkou čerstvého nativního logu. Otevřené: „spec §4 skeleton“ v SPEC.md není (jde o týmové rozhodnutí), chybí e2e pro vlastní řádek ligy 1.–3. a stage-up v demu.
+
+### boss — splash A + 30 póz, 2026-10-13
+- Uživatel: „zanimuj všech 30 opiček“ a navrhnout splash. Splash: 3 animované směry (artifact XCqMPwbTyemQ7gLrwsz7Dp), uživatel vybral A „Probuzení“ → motion-agent (c639826). Pózy: design-agent 30 statických (1198bc2), motion-agent živé smyčky + rekvizity (61cb4a9), design-agent oprava avatar/handstand + zapojení liga/stage-up/nastavení (80ba03b). QA 651b7d3 SCHVÁLENO s podmínkou čerstvého nativního logu.
+- Oprava odkazu: pózu loading nezapojujeme do načítání ne kvůli „spec §4“ (SPEC to neříká, ř. 537 jen `status: 'loading'`), ale kvůli týmovému rozhodnutí z auditu StateView (elite fáze 4: tečkový skeleton ve tvaru obsahu, ne spinner). Profil a série bez pózy: viz záznam design-agenta.
+- Nativní log: přes tunel stažen iOS + Android bundle HEAD 651b7d3 (kód = 80ba03b), `$TEMP/expogo.log` 08:46:00, 0× ERROR.
+- README: splash A, 30 póz a jejich zapojení.
+- Otevřené: e2e scénář vlastního řádku ligy na 1.–3. místě a stage-up po lekci 8 v demu (demo liga ten stav nemá); čitelnost poháru/medaile 32–48 pt na iPhonu; šipka průvodce na kotouč; únik časovače v Jestu.
