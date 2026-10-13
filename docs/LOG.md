@@ -1302,3 +1302,7 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
   - `e2e:perf` 5/5.
 - Screenshoty jsou ve scratchpadu `wire/` (league, stageup, settings, pose-* pro w320/w430, dark/light).
 - Otevřené: na iPhonu ověřit čitelnost poháru a medaile na pódiu (48 pt) a v řádku (32 pt).
+
+## qa-agent: QA kolo 0a78bad..80ba03b
+- Brány: tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5 jsou zelené. expogo.log má 0 ERROR, ale je starší než HEAD (nativní bundle chybí).
+- Verdikt: SCHVÁLENO pro 80ba03b, s podmínkou čerstvého nativního logu. Otevřené: „spec §4 skeleton“ v SPEC.md není (jde o týmové rozhodnutí), chybí e2e pro vlastní řádek ligy 1.–3. a stage-up v demu.

@@ -789,3 +789,30 @@ Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičk
 - `$TEMP/expogo.log` (demo server 8084): zapsán 2026-10-13 06:29:49 +0200, tj. po 81c2aa6 (06:00:53); obsahuje „iOS Bundled“ i „Android Bundled“, 0 řádků ERROR ✅
 - README popisuje demo build (`EXPO_PUBLIC_DEMO=1`), splash a `npm run gen:splash` ✅
 - Verdikt: SCHVÁLENO pro HEAD 78080eb (brána 4 splněna).
+
+## QA kolo 1: 0a78bad..80ba03b (c639826 splash Probuzení, 1198bc2 30 póz, 61cb4a9 pohyb póz a rekvizit, 80ba03b liga/stage-up/nastavení), HEAD 80ba03b, 2026-10-13
+
+**Brány:** tsc 0, eslint 0 (vč. `local/no-worklet-object-capture`), jest 103 sad / 988 OK, test:node OK, `npm run e2e` **172/172 passed** (baseline beze změny, nic nepřepsáno), `npm run e2e:perf` 5/5 (canvas ≤ 12, mapa, lekce i oslava ≥ 55 fps). `$TEMP/expogo.log` má 0 řádků ERROR, ale je zapsán 06:45, tedy **starší než HEAD** (08:30). Nativní bundle tohoto kola zatím neproběhl, server 8084 jsem nerestartoval.
+
+**Ověřeno:**
+- ✅ Tab bar: `git diff 0a78bad HEAD` se nedotýká tabů ani TabBar. Snímky jsou beze změny.
+- ✅ Červená je jen přes `ink.live` (PoseProps: kruh loading, live tečka, vykřičník). Mimo theme nejsou žádné hex barvy (splash, PoseProps, PropMotion, poseMotion).
+- ✅ Reduce Motion: `usePoseMotion` se při `reduced` vrací (statická póza, wave amp 0). Splash si `useReducedMotion` čte sám a ústup nahoru vynechá.
+- ✅ Logika póz (`logic/mascotPoses`) i smyčky (`lib/poseMotion`) mají unit testy. Mapování poseForAppState/poseForLeagueRank je pokryté.
+- ✅ Dokončení lekce a oslava: e2e oslava (demo i first-run) prošla na 4 šířkách × dark/light a fps oslavy je ≥ 55.
+- ✅ Kolize a ořez: e2e vizuální sada je na w320 až w430 zelená, ani nové pózy na pódiu nezměnily snímek nad toleranci.
+
+**Otevřené (⚠️, neblokuje):**
+- ⚠️ Zdůvodnění „spec §4: skeleton, ne spinner“ v docs/SPEC.md **není**. SPEC ke stavu loading uvádí jen `status: 'loading'` (ř. 537). Skeleton je týmové rozhodnutí z auditu (LOG, StateView). Nezapojit pózu loading je s tímto rozhodnutím konzistentní a se SPEC není v rozporu. Opravit je potřeba odkaz v LOG (boss).
+- ⚠️ Vlastní řádek ligy na 1.–3. místě a stage-up po lekci 8 v demu nemají vlastní vizuální baseline. Demo liga tento stav nemá, takže regresi tu e2e nechytí (boss/design-agent: doplnit e2e scénář).
+- ⚠️ Čitelnost poháru a medaile na 48 pt a 32 pt ověřují jen screenshoty ve scratchpadu design-agenta. Musí se ověřit na iPhonu.
+- ⚠️ Přetrvává z dřívějška: jest hlásí neukončený worker, ukazatel bubliny průvodce míří na kotouč.
+
+**Verdikt: SCHVÁLENO (HEAD 80ba03b), s podmínkou brány 1b.** Nativní log se musí po novém bundlu ověřit na 0 ERROR. Do té doby platí pro rating 85/85 „čeká na iPhone“.
+
+**iPhone checklist:**
+1. Splash: po černém nativním splash se tečka a kruh rozběhnou bez bliknutí, hlava otevře oči a ťuknutí splash přeskočí.
+2. Dokončení lekce 8 v demu: kotouč, opice a stage-up (levelUp, schody na spodní hraně prstence) plynou bez záškubu a haptika je cítit.
+3. League: pohár a medaile na pódiu (48 pt) a ve vlastním řádku (32 pt) jsou čitelné.
+4. Reduce Motion zapnuto: opice i rekvizity stojí, splash vynechá ústup nahoru.
+5. Nastavení: opička 96 pt a podpis jsou nad home indikátorem a reset zůstává dosažitelný. VoiceOver opičku přeskočí jako dekoraci.
