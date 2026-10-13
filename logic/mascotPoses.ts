@@ -134,7 +134,7 @@ export const MASCOT_POSES: Record<MascotPoseId, MascotPose> = {
   inspect: pose({ armR: { upper: 24, lower: 112 }, extra: 'bigLoupe' }),
   settings: pose({ armL: { upper: 22, lower: -10 }, armR: { upper: 22, lower: -10 }, extra: 'gear' }),
   // Busta v tečkovém kruhu (profil): hlava + ramena, ořez pod hrudí.
-  avatar: pose({ figure: 'bust', dy: 24, clipY: 150, extra: 'avatarRing' }),
+  avatar: pose({ figure: 'bust', dy: 34, clipY: 172, extra: 'avatarRing' }),
   locked: pose({ armL: { upper: 26, lower: -40 }, armR: { upper: 26, lower: -40 }, extra: 'padlock' }),
   // ——— Řádek 4: odměny ———
   streak: pose({ dx: -22, armR: { upper: 30, lower: 30 }, extra: 'flame' }),
@@ -154,7 +154,7 @@ export const MASCOT_POSES: Record<MascotPoseId, MascotPose> = {
   // ——— Řádek 5: cviky ———
   // Stojka: celé tělo hlavou dolů, paže do země, nohy nahoru.
   handstand: pose({
-    body: 180, dy: -58, armL: { upper: 140, lower: 20 }, armR: { upper: 140, lower: 20 }, legL: { upper: 4, lower: 0 }, legR: { upper: 4, lower: 0 },
+    body: 180, dy: -76, armL: { upper: 140, lower: 20 }, armR: { upper: 140, lower: 20 }, legL: { upper: 4, lower: 0 }, legR: { upper: 4, lower: 0 },
     head: { dx: 0, dy: 0, tilt: 0 }, reach: 1.9,
   }),
   // Plank: tělo vodorovně na předloktích (hlava vpravo), nohy v ose.

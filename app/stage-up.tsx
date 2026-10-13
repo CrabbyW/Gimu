@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotRing, ringLayout, SkiaGuard } from '@/components/dots';
 import { rowLit } from '@/components/dots/geometry';
 import { Mascot, MASCOT_SIZES } from '@/components/mascot';
+import { poseForAppState } from '@/logic/mascotPoses';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -157,7 +158,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
             <Animated.View style={[center, newRingStyle]}><StageRing stage={to} /></Animated.View>
             {/* Opička sedí na spodní hraně prstence (jako na kotouči mapy): jediný barevný subjekt. */}
             <Animated.View style={[{ position: 'absolute', bottom: -MASCOT_DROP }, newMascotStyle]}>
-              <Mascot stage={to} mood="celebrate" size={MASCOT} cosmetics={cosmetics} decorative />
+              <Mascot stage={to} mood="celebrate" pose={poseForAppState('stageUp')} size={MASCOT} cosmetics={cosmetics} decorative />
             </Animated.View>
           </Animated.View>
         </View>

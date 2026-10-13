@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { DotRow } from '@/components/dots';
 import { IdleMascot, Mascot, type MascotReaction } from '@/components/mascot';
+import { poseForLeagueRank } from '@/logic/mascotPoses';
 import { Reveal } from '@/components/ui/choreo';
 import { Text } from '@/components/ui/Text';
 import { Tile } from '@/components/ui/Tile';
@@ -52,9 +53,9 @@ export function Podium({ entries, play = false, meReaction = null }: {
                   <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                     {/* Vítěz žije: poskakuje radostí častěji (idle kontext `podium`), ostatní stojí. */}
                     {rank === 1 ? (
-                      <IdleMascot idleContext="podium" stage={entry.stage} cosmetics={entry.cosmetics} mood="happy" size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
+                      <IdleMascot idleContext="podium" stage={entry.stage} cosmetics={entry.cosmetics} mood="happy" pose={entry.isMe && meReaction ? undefined : poseForLeagueRank(rank) ?? undefined} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
                     ) : (
-                      <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
+                      <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" pose={entry.isMe && meReaction ? undefined : poseForLeagueRank(rank) ?? undefined} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
                     )}
                   </View>
                 </Reveal>

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 import { Mascot, type MascotReaction } from '@/components/mascot';
+import { poseForLeagueRank } from '@/logic/mascotPoses';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { dur, intro, motion, stagger, useMotionSafe } from '@/lib/motion';
@@ -71,7 +72,7 @@ export function LeagueRow({ entry, rank, index, play = true, last = false, react
         </Text>
         {/* Pro čtečku skrytá: řádek je jeden prvek s `rowA11y`, cizí opice nesmí číst „Tvoje opice“. */}
         <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
-          <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" size={size.rowMascot} decorative reaction={reaction} />
+          <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" pose={me && !reaction ? poseForLeagueRank(rank) ?? undefined : undefined} size={size.rowMascot} decorative reaction={reaction} />
         </View>
         <Text variant={me ? 'bodyStrong' : 'body'} numberOfLines={1} ellipsizeMode="tail" style={{ flex: 1 }}>{entry.name}</Text>
         <Text variant="stat" tone={me ? 'text' : 'muted'} numberOfLines={1} style={{ width: xpCol, textAlign: 'right' }}>

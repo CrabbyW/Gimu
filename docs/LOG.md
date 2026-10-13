@@ -1281,3 +1281,24 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - Galerie /dev: náhledy jsou statické (nový prop `still` na Mascotu, chová se jako reduce motion). Důvod: 31 živých smyček by běželo nad 1000 animovaných props. Náhled je tlačítko, ťuknutí přehraje pózu v přehrávači nahoře. „Play all poses“ projde všech 31 po 3 s. Copy `dev.poseAuto` a `dev.posePlay`.
 - Běhy: tsc OK, eslint OK, jest 103 sad / 988 testů OK (6 nových testů poseMotion), test:node 25/25, `npm run e2e` 172/172, `e2e:perf` 5/5 (mapa, lekce i oslava ≥ 55 fps). Přehrávač na webu 144 fps (rAF). Snímky: scratchpad `motion/poses30-*.png` (listy `poses30-sheet1/2.png`).
 - Otevřené: busta avataru je kvůli clipY 150 skoro celá oříznutá a pod hlavou zůstává tenký oblouk (geometrie design-agenta). Stojka má hlavu u spodní hrany viewBoxu, i to je geometrie. Na iPhonu je potřeba ověřit plynulost přehrávače a prolnutí výřezu. Zapojení póz do obrazovek zůstává bossovi a design-agentovi.
+
+## design-agent: geometrie avataru a stojky, pózy v obrazovkách (2026-10-13)
+- Avatar: busta jako v referenci (řádek 3, 5. póza). Hlava je ve středu kruhu (`dy` 34), busta je vyšší kupole (`PROP.bust` cy 140, rx 50, ry 40) a má rovný spodek na `clipY` 172. Dřív zbyl pod hlavou jen tenký oblouk.
+- Stojka: `dy` −58 → −76. Hlava je teď celá nad spodní hranou viewBoxu. Pivot balancu (`swayPivotY`) se počítá z pózy, takže smyčka motion-agenta jede dál. Ověřeno přehrávačem v /dev.
+- Zapojené pózy:
+  - Pódium ligy: 1. místo trophy, 2.–3. medal.
+  - Vlastní řádek v lize: pózu dostává jen při 1.–3. místě; cizí řádky stojí, aby seznam nebyl hlučný.
+  - Aktivní reakce má přednost před pózou (`resolvePose` by ji jinak přebil).
+  - Stage-up: nová opice dostane levelUp. Schody leží na spodní hraně prstence.
+  - Nastavení: na konci obsahu je tichý podpis, opička settings 96 pt. Je pod reset, nic nepřebíjí.
+- Nezapojeno a proč:
+  - Loading: spec §4 říká, že skeleton je ve tvaru obsahu, ne spinner. Póza loading je hlava v kruhu, tedy spinner, a byl by to rozpor se spec. Rozhodne boss.
+  - Profil: hrdina stojí v ProfileFrame na podstavci z kotoučů a nese kosmetiku. Busta s vlastním kruhem by udělala dvojitý kruh, skryla oblečení a visela by nad podstavcem.
+  - Streak: u série (StreakPill, StreakBarbell) opice není a přidat ji by přeplnilo kompaktní prvky.
+- Běhy:
+  - tsc OK, eslint OK.
+  - jest: 103 sad / 988 testů OK.
+  - `npm run e2e` 172/172. Vizuální snímky se nezměnily: liga v demu nemá vlastní řádek na 1.–3. místě a pódium je pod tolerancí. Baseline nepřepsána.
+  - `e2e:perf` 5/5.
+- Screenshoty jsou ve scratchpadu `wire/` (league, stageup, settings, pose-* pro w320/w430, dark/light).
+- Otevřené: na iPhonu ověřit čitelnost poháru a medaile na pódiu (48 pt) a v řádku (32 pt).

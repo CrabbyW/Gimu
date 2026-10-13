@@ -3,6 +3,7 @@ import { ChevronRight, X } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Mascot } from '@/components/mascot';
 import { Reveal } from '@/components/ui/choreo';
 import { PillButton } from '@/components/ui/PillButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -17,6 +18,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { useProfileStats } from '@/hooks/useProfileStats';
 import { REMINDER_HOURS, useSettingsPrefs, type ThemePreference } from '@/hooks/useSettingsPrefs';
 import { haptics } from '@/lib/haptics';
+import { poseForAppState } from '@/logic/mascotPoses';
 import { intro, motion } from '@/lib/motion';
 import { services } from '@/services';
 import { useDevControls } from '@/hooks/useDevControls';
@@ -31,6 +33,8 @@ const HOURS = REMINDER_HOURS;
  *  Řádky jedné sekce leží v jedné dlaždici a dělí je jen vlasová linka `rule` (jediná technika oddělení).
  *  Vzhled je pilulkový SegmentedControl bez dlaždice (pilulka je sama plocha). Připomínka: Toggle + čas přes
  *  ValueWheelSheet + test; při `denied` vysvětlení a cesta do systému, na webu jen věta, že notifikace nejdou. */
+const NO_COSMETICS = {} as const;
+
 export default function SettingsScreen() {
   const { c, space, size, stroke } = useTheme();
   const insets = useSafeAreaInsets();
@@ -185,6 +189,13 @@ export default function SettingsScreen() {
             </Tile>
           </Section>
         ) : null}
+
+        {/* Tichý podpis na konci (opice v2): opička ladí kolo, jediný barevný subjekt, pod obsahem, nic nepřebíjí. */}
+        <Section i={7} play={first}>
+          <View style={{ alignItems: 'center' }}>
+            <Mascot stage={stats?.stage ?? 1} mood="idle" pose={poseForAppState('settings')} size={size.heroMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
+          </View>
+        </Section>
       </IntentScrollView>
     </ReactiveBackground>
   );

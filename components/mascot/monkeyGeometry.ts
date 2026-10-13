@@ -42,7 +42,7 @@ export const PROP = {
   box: { s: 32, y: 164 },
   loupe: { small: 12, big: 22, ring: 4, handle: 6 },
   chest: 16,
-  bust: { cy: 160, rx: 46, ry: 34 },
+  bust: { cy: 140, rx: 50, ry: 40 },
 } as const;
 
 /** Oči podle pózy: výška elipsy (zavřené = tenká linka, přivřené = nižší a níž). */
