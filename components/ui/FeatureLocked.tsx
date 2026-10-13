@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { DotRow, IntentScrollView } from '@/components/dots';
 import { Mascot } from '@/components/mascot';
+import { poseForAppState } from '@/logic/mascotPoses';
 import { copy } from '@/data/copy';
 import { enterSafe, motion, useMotionSafe } from '@/lib/motion';
 import type { CosmeticSlot, MascotStage } from '@/types';
@@ -40,7 +41,7 @@ export function FeatureLocked({ what, left, done, need, stage, cosmetics, onCta 
             Vše zarovnané vlevo do jedné osy; pilulka se stále vejde nad ohyb i na 320 × 568. */}
         {/* Nástup opičky (U5): krátký zdvih s prolnutím; omezený pohyb = `calmFade`. */}
         <Animated.View entering={enterSafe(reduced, 0, motion.mascotReveal.rise)}>
-          <Mascot stage={stage} mood="idle" size={size.heroMascot} cosmetics={cosmetics} decorative hop={false} />
+          <Mascot stage={stage} mood="idle" pose={poseForAppState('locked')} size={size.heroMascot} cosmetics={cosmetics} decorative hop={false} />
         </Animated.View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}>
           <Lock size={size.lockIcon} color={c.muted} strokeWidth={stroke.icon} />

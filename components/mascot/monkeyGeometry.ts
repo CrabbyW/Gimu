@@ -22,6 +22,29 @@ export const V2 = {
   leg: { upper: 16, lower: 16, w: 18 },
 } as const;
 
+/**
+ * Rekvizity póz (`PoseProps.tsx`) ve viewBoxu 200: tečky stejné velikosti jako hrazda a Zz, střed kruhů
+ * = střed hlavy samotné (pózy `figure: 'head'`), hruď = 18 pt rekvizita na trupu 52 pt.
+ */
+export const PROP = {
+  dot: 2.4, step: 7, halo: 1.4, liveDot: 5, arrow: 6,
+  center: 100, ring: 76, ringDot: 5, avatar: 84,
+  hourglass: { x: 162, top: 118, bottom: 170, half: 12 },
+  flame: {
+    x: 160, y: 156, liveDy: 12,
+    outline: [[0, -30], [6, -20], [14, -10], [17, 2], [14, 14], [6, 20], [-6, 20], [-14, 14], [-17, 2], [-13, -8], [-6, -4], [-4, -16], [0, -30]] as const,
+  },
+  stairs: [[44, 186, 152], [124, 168, 72], [152, 150, 44]] as const,
+  stairH: 12, stairRx: 3,
+  ledge: { x: 30, y: 146, w: 140, h: 12, dot: 5, dotGap: 16 },
+  triangle: { w: 58, h: 50, dy: 30 },
+  wifi: { dx: 48, dy: 50, arcs: [10, 19, 28], slash: 18 },
+  box: { s: 32, y: 164 },
+  loupe: { small: 12, big: 22, ring: 4, handle: 6 },
+  chest: 16,
+  bust: { cy: 160, rx: 46, ry: 34 },
+} as const;
+
 /** Oči podle pózy: výška elipsy (zavřené = tenká linka, přivřené = nižší a níž). */
 export const EYE_RY = { open: V2.eyes.ry, half: 3.2, closed: 1 } as const;
 export const EYE_DROP = { open: 0, half: 2.4, closed: 2.6 } as const;

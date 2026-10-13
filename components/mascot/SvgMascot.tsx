@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import Animated, {
   cancelAnimation, Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle, Ellipse, G, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path, Rect } from 'react-native-svg';
 import { copy } from '@/data/copy';
 import { ease, mascotPose as MP, motion, spring, useMotionSafe } from '@/lib/motion';
 import { groupMatrix, LIFE_CLOCK_MS, limbD, swayDeg, zzFrame } from '@/lib/poseMotion';
@@ -12,6 +12,7 @@ import { MASCOT_POSES, poseForIdle, resolvePose, type MascotPose, type MascotPos
 import { useTheme, type Colors } from '@/theme';
 import type { Mood } from '@/types';
 import { armPath, EYE_DROP, EYE_RY, handWorld, legPath, V2 } from './monkeyGeometry';
+import { bustShape, propsBack, propsFront } from './PoseProps';
 import { useReactionMotion } from './reactionMotion';
 import { usePoseMotion } from './usePoseMotion';
 import { resolveMascotSize, type MascotProps } from './types';
@@ -252,6 +253,10 @@ function MascotSvg({
   const swayT = groupMatrix(0, 100, BAR, 0, 0, IS_WEB);
   const earT = groupMatrix(0, HCX, HCY, 0, 0, IS_WEB);
   const { head, ears, torso, eyes } = V2;
+  // Výřez postavy (busta, jen hlava) a spodní ořez (vykukování přes hranu, busta v kruhu).
+  const full = pose.figure === 'full';
+  const clipId = `mclip${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const clip = pose.clipY > 0 ? `url(#${clipId})` : undefined;
   const limb = (d: string, w: number, key: string, animatedProps: Partial<{ d: string }>) => (
     <AnimatedPath key={key} d={d} stroke={ink.fur} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" fill="none" animatedProps={animatedProps} />
   );
@@ -266,10 +271,14 @@ function MascotSvg({
     >
       <Svg width={px} height={px} viewBox="0 0 200 200">
         {drawBack ? <PoseExtras pose={pose} ink={ink} extrasIn={extrasIn} clock={clock} zzMoving={poseId === 'sleep' && !reduced} /> : null}
+        {pose.clipY > 0 ? (
+          <Defs><ClipPath id={clipId}><Rect x={0} y={0} width={200} height={pose.clipY} /></ClipPath></Defs>
+        ) : null}
+        <G clipPath={clip}>
         <AnimatedG {...swayT} animatedProps={swayProps}>
         <AnimatedG {...bodyT} animatedProps={bodyProps}>
           {/* Nohy: vlastní vrstva s pivotem v kyčli (sedící opice je kreslí vpředu přes hranu kotouče). */}
-          {drawLegs ? (
+          {drawLegs && full ? (
             <G testID="mascot-legs">
               {limb(legPath(pose, -1), V2.leg.w, 'legL', legLProps)}
               {limb(legPath(pose, 1), V2.leg.w, 'legR', legRProps)}
@@ -277,12 +286,15 @@ function MascotSvg({
           ) : null}
           {drawBack ? (
             <>
-              <Rect x={torso.x} y={torso.y} width={torso.w} height={torso.h} rx={torso.rx} fill={ink.fur} />
+              {full ? <Rect x={torso.x} y={torso.y} width={torso.w} height={torso.h} rx={torso.rx} fill={ink.fur} /> : null}
+              {pose.figure === 'bust' ? bustShape(ink) : null}
               {/* Paže: pivot v rameni, loket = druhý bod tahu. */}
-              <G testID="mascot-arms">
-                {limb(armPath(pose, -1), V2.arm.w, 'armL', armLProps)}
-                {limb(armPath(pose, 1), V2.arm.w, 'armR', armRProps)}
-              </G>
+              {full ? (
+                <G testID="mascot-arms">
+                  {limb(armPath(pose, -1), V2.arm.w, 'armL', armLProps)}
+                  {limb(armPath(pose, 1), V2.arm.w, 'armR', armRProps)}
+                </G>
+              ) : null}
               {/* Hlava: náklon pózy kolem krku, nad ním matice reakcí (natočení, kývnutí). */}
               <AnimatedG {...headT} animatedProps={poseHeadProps}>
                 <AnimatedG animatedProps={headProps}>
@@ -298,6 +310,8 @@ function MascotSvg({
           ) : null}
         </AnimatedG>
         </AnimatedG>
+        </G>
+        {drawBack ? <PropLayer testID="mascot-props-front" nodes={propsFront(pose.extra, pose, ink)} extrasIn={extrasIn} /> : null}
       </Svg>
     </Animated.View>
   );
@@ -376,5 +390,14 @@ function PoseExtras({ pose, ink, extrasIn, clock, zzMoving }: ExtrasProps) {
     const y = Math.min(l.y, r.y) - 6;
     for (let x = 52; x <= 148; x += 8) nodes.push(<Circle key={`bar${x}`} cx={x} cy={y} r={2.6} fill={ink.prop} />);
   }
+  const back = propsBack(pose.extra, pose, ink);
+  if (back.length) nodes.push(<PropLayer key="props" testID="mascot-props-back" nodes={back} extrasIn={extrasIn} />);
   return <G testID="mascot-extras">{nodes}</G>;
+}
+
+/** Vrstva rekvizit: rozsvítí se s náběhem pózy (`extrasIn`); worklet drží jen sdílenou hodnotu. */
+function PropLayer({ nodes, extrasIn, testID }: { nodes: React.ReactElement[]; extrasIn: SharedValue<number>; testID: string }) {
+  const fade = useAnimatedProps(() => ({ opacity: Math.min(1, extrasIn.value * 1.5) }));
+  if (!nodes.length) return null;
+  return <AnimatedG testID={testID} animatedProps={fade}>{nodes}</AnimatedG>;
 }

@@ -1,16 +1,23 @@
 import { IDLE_ACTIONS } from '@/logic/mascotIdle';
 import {
-  limbEnd, MASCOT_POSE_IDS, MASCOT_POSES, mixPose, poseForIdle, poseForMood, poseForReaction, resolvePose,
+  limbEnd, MASCOT_POSE_GRID, MASCOT_POSE_IDS, MASCOT_POSES, mixPose, poseForAppState, poseForIdle, poseForLeagueRank, poseForMood,
+  poseForReaction, resolvePose,
 } from '@/logic/mascotPoses';
 
-test('osm statických póz, každá s čísly v rozumných mezích', () => {
-  expect(MASCOT_POSE_IDS).toEqual(['idle', 'wave', 'celebrate', 'sad', 'sleep', 'hang', 'pushup', 'run']);
+test('statické pózy: původních 8 na začátku (kódy pohybu), celkem klid + sad + 30 z reference, čísla v mezích', () => {
+  expect(MASCOT_POSE_IDS.slice(0, 8)).toEqual(['idle', 'wave', 'celebrate', 'sad', 'sleep', 'hang', 'pushup', 'run']);
+  expect(MASCOT_POSE_IDS).toHaveLength(32);
+  expect(MASCOT_POSE_GRID).toHaveLength(30);
+  expect(new Set(MASCOT_POSE_GRID).size).toBe(30);
+  // Každá póza mimo klid a smutek je v mřížce reference.
+  expect(MASCOT_POSE_IDS.filter((id) => !MASCOT_POSE_GRID.includes(id))).toEqual(['idle', 'sad']);
   for (const p of Object.values(MASCOT_POSES)) {
     for (const l of [p.armL, p.armR, p.legL, p.legR]) {
       expect(Math.abs(l.upper)).toBeLessThanOrEqual(180);
       expect(Math.abs(l.lower)).toBeLessThanOrEqual(180);
     }
-    expect(Math.abs(p.body)).toBeLessThanOrEqual(90);
+    expect(Math.abs(p.body)).toBeLessThanOrEqual(180);
+    expect(p.clipY === 0 || (p.clipY > 100 && p.clipY < 200)).toBe(true);
     expect(p.reach).toBeGreaterThan(0);
   }
 });
@@ -70,4 +77,43 @@ test('mixPose: krajní body = vstupy, polovina = průměr úhlů, diskrétní po
   expect(m.joyDot).toBe(true);
   expect(mixPose(a, b, 0.49).joyDot).toBe(false);
   expect(mixPose(a, b, 2)).toEqual(b);
+});
+
+test('pózy z reference: výřez postavy, rekvizity, stojka hlavou dolů', () => {
+  expect(MASCOT_POSES.loading).toMatchObject({ figure: 'head', extra: 'ring' });
+  expect(MASCOT_POSES.sync).toMatchObject({ figure: 'head', extra: 'syncArrows' });
+  expect(MASCOT_POSES.peek.figure).toBe('head');
+  expect(MASCOT_POSES.peek.clipY).toBeGreaterThan(0);
+  expect(MASCOT_POSES.avatar).toMatchObject({ figure: 'bust', extra: 'avatarRing' });
+  expect(MASCOT_POSES.fail.eyes).toBe('half');
+  expect(MASCOT_POSES.handstand.body).toBe(180);
+  expect(MASCOT_POSES.stretch.armL.upper + MASCOT_POSES.stretch.armL.lower).toBeGreaterThan(180);
+  // Bez rekvizity jsou jen čisté pohybové pózy.
+  expect(MASCOT_POSE_IDS.filter((id) => MASCOT_POSES[id].extra === null))
+    .toEqual(['idle', 'wave', 'sad', 'pushup', 'run', 'flex', 'handstand', 'plank', 'stretch']);
+});
+
+test('mapování stavů appky na pózy', () => {
+  expect(poseForAppState('empty')).toBe('empty');
+  expect(poseForAppState('error')).toBe('fail');
+  expect(poseForAppState('offline')).toBe('offline');
+  expect(poseForAppState('locked')).toBe('locked');
+  expect(poseForAppState('stageUp')).toBe('levelUp');
+  expect(poseForAppState('streak')).toBe('streak');
+  expect(poseForAppState('settings')).toBe('settings');
+  expect(poseForAppState('profile')).toBe('avatar');
+  expect(poseForAppState('loading')).toBe('loading');
+  expect(poseForAppState('leagueWin')).toBe('trophy');
+  expect(poseForLeagueRank(1)).toBe('trophy');
+  expect(poseForLeagueRank(2)).toBe('medal');
+  expect(poseForLeagueRank(3)).toBe('medal');
+  expect(poseForLeagueRank(4)).toBeNull();
+  expect(poseForLeagueRank(0)).toBeNull();
+});
+
+test('prolnutí s novými poli: ořez je číslo, výřez se přepne v polovině', () => {
+  const a = MASCOT_POSES.idle, b = MASCOT_POSES.peek;
+  expect(mixPose(a, b, 0.5).clipY).toBeCloseTo(b.clipY / 2);
+  expect(mixPose(a, b, 0.4).figure).toBe('full');
+  expect(mixPose(a, b, 0.5).figure).toBe('head');
 });

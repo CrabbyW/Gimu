@@ -1,4 +1,4 @@
-import type { EyeState, MascotPose, MascotPoseId } from '@/logic/mascotPoses';
+import { MASCOT_POSE_IDS, type EyeState, type MascotPose, type MascotPoseId } from '@/logic/mascotPoses';
 
 /**
  * Pózy opice v pohybu (motion-agent, plán „vast-snuggling-sunbeam“ krok 1). Póza z `logic/mascotPoses` se
@@ -43,7 +43,10 @@ export function mixVector(a: readonly number[], b: readonly number[], t: number)
  * Kódy póz: pořadí `MASCOT_POSE_IDS`.
  */
 export const LIFE_CLOCK_MS = 60000;
-export const POSE_CODE: Record<MascotPoseId, number> = { idle: 0, wave: 1, celebrate: 2, sad: 3, sleep: 4, hang: 5, pushup: 6, run: 7 };
+/** Kódy 0–7 mají živou smyčku; 8+ (22 statických póz z reference, design-agent) zatím stojí, smyčku doplní motion-agent. */
+export const POSE_CODE = Object.fromEntries(MASCOT_POSE_IDS.map((id, i) => [id, i])) as Record<MascotPoseId, number>;
+/** Počet póz se živou smyčkou v `applyLife` (kódy 0 … LIVE_POSES − 1). */
+export const LIVE_POSES = 8;
 /** Perioda smyčky pózy v ms (dělí `LIFE_CLOCK_MS`); mávnutí předloktím má vlastní `WAVE_MS`. */
 export const LIFE_MS = [5000, 5000, 1000, 6000, 4000, 2000, 1500, 600] as const;
 export const WAVE_MS = 600;

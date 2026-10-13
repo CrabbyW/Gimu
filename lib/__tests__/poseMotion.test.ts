@@ -1,5 +1,5 @@
 import { EYE_DROP, EYE_RY, limbPath } from '@/components/mascot/monkeyGeometry';
-import { applyLife, bezierOut, groupMatrix, LIFE_CLOCK_MS, LIFE_MS, limbD, mixVector, POSE_CODE, POSE_LEN, poseVector, PV, swayDeg, WAVE_MS, zzFrame } from '@/lib/poseMotion';
+import { applyLife, bezierOut, groupMatrix, LIFE_CLOCK_MS, LIFE_MS, LIVE_POSES, limbD, mixVector, POSE_CODE, POSE_LEN, poseVector, PV, swayDeg, WAVE_MS, zzFrame } from '@/lib/poseMotion';
 import { MASCOT_POSE_IDS, MASCOT_POSES, mixPose } from '@/logic/mascotPoses';
 
 const EYES = { ry: EYE_RY, drop: EYE_DROP };
@@ -53,7 +53,7 @@ const at = (code: number, p: number) => (p * (LIFE_MS[code] ?? 1)) / LIFE_CLOCK_
 
 test('živá smyčka: periody dělí hodinu beze zbytku (přetočení bez skoku), kódy = pořadí póz', () => {
   for (const ms of [...LIFE_MS, WAVE_MS]) expect(LIFE_CLOCK_MS % ms).toBe(0);
-  expect(MASCOT_POSE_IDS.map((id) => POSE_CODE[id])).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+  expect(MASCOT_POSE_IDS.map((id) => POSE_CODE[id])).toEqual(MASCOT_POSE_IDS.map((_, i) => i));
   for (const id of MASCOT_POSE_IDS) {
     const v = vec(id), c = POSE_CODE[id];
     // Začátek a konec hodiny = stejný snímek.
@@ -61,8 +61,9 @@ test('živá smyčka: periody dělí hodinu beze zbytku (přetočení bez skoku)
   }
 });
 
-test('každá póza žije (se zapnutým pohybem se vektor v čase mění), omezený pohyb = statická póza', () => {
-  for (const id of MASCOT_POSE_IDS) {
+test('každá póza se smyčkou žije (se zapnutým pohybem se vektor v čase mění), omezený pohyb = statická póza', () => {
+  // Kódy ≥ LIVE_POSES jsou zatím statické pózy z reference (smyčku doplní motion-agent).
+  for (const id of MASCOT_POSE_IDS.slice(0, LIVE_POSES)) {
     const v = vec(id), c = POSE_CODE[id];
     const a = applyLife(v, c, at(c, 0.25), 1, 0), b = applyLife(v, c, at(c, 0.75), 1, 0);
     expect(a).not.toEqual(b);

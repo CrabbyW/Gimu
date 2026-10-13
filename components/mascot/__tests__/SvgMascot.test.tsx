@@ -2,7 +2,7 @@ import TestRenderer, { act, type ReactTestInstance } from 'react-test-renderer';
 import { Circle, Ellipse, G, Path, Svg } from 'react-native-svg';
 import { buildTheme, type Scheme } from '@/theme';
 import { ThemeContext } from '@/theme/ThemeProvider';
-import { MASCOT_POSE_IDS, type MascotPoseId } from '@/logic/mascotPoses';
+import { MASCOT_POSE_IDS, MASCOT_POSES, type MascotPoseId } from '@/logic/mascotPoses';
 import type { Mood } from '@/types';
 import { Mascot, MASCOT_SIZES, mascotSeatY, MonkeyBack, MonkeyFront } from '..';
 import { MOOD_POSE } from '../SvgMascot';
@@ -64,8 +64,23 @@ test.each(MASCOT_POSE_IDS)('póza %s se vykreslí: hlava, obě oči, končetiny 
   const root = render({ pose });
   expect(head(root)).toHaveLength(1);
   expect(eyes(root)).toHaveLength(2);
-  expect(byTestID(root, 'mascot-arms')).toHaveLength(1);
-  expect(byTestID(root, 'mascot-legs')).toHaveLength(1);
+  // Pózy s výřezem (jen hlava, busta) končetiny nekreslí.
+  const full = MASCOT_POSES[pose].figure === 'full' ? 1 : 0;
+  expect(byTestID(root, 'mascot-arms')).toHaveLength(full);
+  expect(byTestID(root, 'mascot-legs')).toHaveLength(full);
+});
+
+test('rekvizity: červená jen tam, kde je v referenci (loader, varování, zvonek, plamen, oslava)', () => {
+  const { c } = buildTheme('dark', null);
+  const reds = MASCOT_POSE_IDS.filter((pose) => render({ pose }).findAllByType(Circle).some((n) => n.props.fill === c.live));
+  expect(reds.sort()).toEqual(['celebrate', 'loading', 'notify', 'streak', 'warning']);
+  // Každá rekvizita je samostatná vrstva (za postavou nebo před ní).
+  const layers = (pose: MascotPoseId) => byTestID(render({ pose }), 'mascot-props-back').length + byTestID(render({ pose }), 'mascot-props-front').length;
+  for (const pose of MASCOT_POSE_IDS.slice(8)) {
+    if (['flex', 'handstand', 'plank', 'stretch'].includes(pose)) expect(layers(pose)).toBe(0);
+    else expect(layers(pose)).toBeGreaterThan(0);
+  }
+  expect(layers('idle')).toBe(0);
 });
 
 test('doplňky z teček: tečka radosti jen v oslavě, Zz ve spánku, hrazda ve visu', () => {

@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import Animated, { Easing, ReduceMotion, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import type { Edge } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/mascot';
+import { poseForAppState } from '@/logic/mascotPoses';
 import { copy } from '@/data/copy';
 import { ease, enterSafe, motion, useMotionSafe } from '@/lib/motion';
 import { opacity, useTheme } from '@/theme';
@@ -47,7 +48,7 @@ function ErrorBody({ what, message, actionLabel, onRetry, edges }: Extract<Props
   return (
     <Screen edges={edges}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: space.l }}>
-        <Mascot stage={1} mood="sad" size={size.stateMascot} cosmetics={NO_COSMETICS} decorative breathe={false} hop={false} />
+        <Mascot stage={1} mood="sad" pose={poseForAppState('error')} size={size.stateMascot} cosmetics={NO_COSMETICS} decorative breathe={false} hop={false} />
         <View style={{ gap: space.s }}>
           <Text variant="title" accessibilityRole="alert">{title}</Text>
           {message ? null : <Text tone="muted">{copy.common.loadErrorHint}</Text>}
@@ -68,7 +69,7 @@ function EmptyBody({ message, title, actionLabel, onAction, inline, edges }: Ext
         {/* UX pass U5: prázdná obrazovka = pozvánka s opičkou (klidná, ne smutná), pak titulek a věta. */}
         {/* Nástup opičky (U5): krátký zdvih s prolnutím; omezený pohyb = `calmFade`. */}
         <Animated.View entering={enterSafe(reduced, 0, motion.mascotReveal.rise)}>
-          <Mascot stage={1} mood="idle" size={size.stateMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
+          <Mascot stage={1} mood="idle" pose={poseForAppState('empty')} size={size.stateMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
         </Animated.View>
         {title ? <Text variant="title">{title}</Text> : null}
         <Text tone="muted">{message}</Text>
