@@ -55,3 +55,27 @@ test('bump revize u stejného klíče drží stará data (stale-while-refetch), 
   await act(async () => { await Promise.resolve(); });
   expect(last).toMatchObject({ status: 'ready', data: 'data-2' });
 });
+
+test('refresh (pull-to-refresh): znovu zavolá fetcher, drží ready a promise se splní až po doběhnutí', async () => {
+  let n = 0;
+  let release!: () => void;
+  const fetcher = () => {
+    n += 1;
+    if (n === 1) return Promise.resolve('v1');
+    return new Promise<string>((resolve) => { release = () => resolve('v2'); });
+  };
+  let last: Query<string> | undefined;
+  await act(async () => { TestRenderer.create(createElement(Probe, { fetcher, deps: ['k'], onQuery: (q) => { last = q; } })); });
+  expect(last).toMatchObject({ status: 'ready', data: 'v1' });
+  if (last?.status !== 'ready') throw new Error('není ready');
+  let done = false;
+  let p!: Promise<void>;
+  act(() => { p = (last as { refresh(): Promise<void> }).refresh(); p.then(() => { done = true; }); });
+  await act(async () => { await Promise.resolve(); });
+  expect(n).toBe(2);
+  expect(done).toBe(false);
+  expect(last).toMatchObject({ status: 'ready', data: 'v1' });
+  await act(async () => { release(); await p; });
+  expect(done).toBe(true);
+  expect(last).toMatchObject({ status: 'ready', data: 'v2' });
+});

@@ -8,6 +8,7 @@ import { DotField, DotRing, ScrollIntentProvider, useDotTouch, useScrollIntent }
 import { backgroundPitch } from '@/components/dots/geometry';
 import { FinishSetupTile } from '@/components/map/FinishSetupTile';
 import { LessonMap } from '@/components/map/LessonMap';
+import { PullIndicator, usePullRefresh } from '@/components/map/PullRefresh';
 import { ReturnLine } from '@/components/map/ReturnLine';
 import { GuideBubble } from '@/components/mascot/GuideBubble';
 import { useMascotReactions, useScreenFocused } from '@/components/mascot';
@@ -73,6 +74,13 @@ export default function TrainingScreen() {
   const stats = useProfileStats(data);
   // UX pass U4: „Next: <lekce> · N min“ a stav série pod pokrokem sekce.
   const returnLine = useReturnLine(data, viewData, minutesOf);
+  // Pull-to-refresh (tah dolů na začátku mapy): znovu načte profil i cestu přes `refresh` hooků; indikátor
+  // (opičí hlava) se točí, dokud obě obnovy nedoběhnou.
+  const refreshMap = () => Promise.all([
+    profile.status === 'ready' ? profile.refresh() : undefined,
+    view.status === 'ready' ? view.refresh() : undefined,
+  ]);
+  const ptr = usePullRefresh(refreshMap);
   // Liga při načtení vyhodnotí uplynulý týden (postup/sestup), i když mapa úroveň už neukazuje.
   useLeague();
   // Po sekvenci se parametr smaže, aby se při návratu na tab nepřehrála znovu.
@@ -120,7 +128,8 @@ export default function TrainingScreen() {
       insetShift.value = withTiming(0, { duration: overlayResize.ms, easing: ease.out, reduceMotion: ReduceMotion.Never });
     }
   }, [inset, overlayH, reduced, insetShift]);
-  const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch, play), [field.gesture, reactions.touch, play]);
+  const ptrGesture = ptr.gesture;
+  const touch = useMemo(() => Gesture.Simultaneous(field.gesture, reactions.touch, play, ptrGesture), [field.gesture, reactions.touch, play, ptrGesture]);
 
   if (profile.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.profile} onRetry={profile.retry} />;
   if (view.status === 'error') return <ErrorState edges={['top']} what={copy.common.loadTarget.path} onRetry={view.retry} />;
@@ -144,7 +153,7 @@ export default function TrainingScreen() {
     <MapContent
       unlocked={unlocked ?? null}
       render={(intro) => (
-        <ScrollIntentProvider gesture={play}>
+        <ScrollIntentProvider gesture={play} together={ptrGesture}>
         {/* Provider vně: GestureDetector potřebuje View jako přímého potomka, jinak se gesto nepřipojí
             (tečky přestaly reagovat). */}
         <GestureDetector gesture={touch}>
@@ -181,6 +190,8 @@ export default function TrainingScreen() {
                 greet={stats.isNew}
                 line={mascotLine.line?.text ?? null}
                 onMascotTap={mascotLine.say}
+                pull={ptr.pull}
+                scrollOut={ptr.scrollY}
               />
             </View>
           ) : null}
@@ -202,6 +213,8 @@ export default function TrainingScreen() {
             ]}
           />
           </Animated.View>
+          {/* Pull-to-refresh: opičí hlava v mezeře, kterou tah otevře pod hlavičkou (vynoří se zpod její hrany). */}
+          {overlayH > 0 ? <PullIndicator pull={ptr.pull} refreshing={ptr.refreshing} top={overlayH} width={width} stage={stats.stage} /> : null}
           {/* Překryv: hlavička + řádek sekce. Prázdná místa propouští tah do mapy pod sebou. */}
           <View
             pointerEvents="box-none"

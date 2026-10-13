@@ -46,10 +46,13 @@ export function useScrollIntent(enabled = true) {
   [enabled]);
 }
 
-const ScrollIntentContext = createContext<GestureType | null>(null);
+const ScrollIntentContext = createContext<{ gesture: GestureType | null; together: GestureType | null }>({ gesture: null, together: null });
 
-export function ScrollIntentProvider({ gesture, children }: { gesture: GestureType | null; children?: ReactNode }) {
-  return <ScrollIntentContext.Provider value={gesture}>{children}</ScrollIntentContext.Provider>;
+/** `together`: gesto, které běží souběžně se scrollem (pull-to-refresh mapy: tah na začátku mapy obsah nescrolluje,
+ *  ale nesmí ho nativní scroll zrušit). */
+export function ScrollIntentProvider({ gesture, together = null, children }: { gesture: GestureType | null; together?: GestureType | null; children?: ReactNode }) {
+  const value = useMemo(() => ({ gesture, together }), [gesture, together]);
+  return <ScrollIntentContext.Provider value={value}>{children}</ScrollIntentContext.Provider>;
 }
 
 /**
@@ -57,8 +60,12 @@ export function ScrollIntentProvider({ gesture, children }: { gesture: GestureTy
  * reaktivního pozadí selže. Mimo pozadí se chová jako obyčejný ScrollView.
  */
 export const IntentScrollView = forwardRef<ScrollView, ScrollViewProps>(function IntentScrollView(props, ref) {
-  const intent = useContext(ScrollIntentContext);
-  const native = useMemo(() => (intent ? Gesture.Native().requireExternalGestureToFail(intent) : null), [intent]);
+  const { gesture: intent, together } = useContext(ScrollIntentContext);
+  const native = useMemo(() => {
+    if (!intent) return null;
+    const g = Gesture.Native().requireExternalGestureToFail(intent);
+    return together ? g.simultaneousWithExternalGesture(together) : g;
+  }, [intent, together]);
   const view = <ScrollView ref={ref} {...props} />;
   return native ? <GestureDetector gesture={native}>{view}</GestureDetector> : view;
 });

@@ -1,9 +1,9 @@
 import { expect, test } from '../fixtures';
-import { collectErrors, pill, visible, waitForIdle } from '../helpers';
+import { collectErrors, gotoTab, pill, visible, waitForIdle } from '../helpers';
 
 test.use({ intro: true });
 
-test('splash: studený start, tečkový nápis OPICE s opicí na w320, ťuknutí přeskočí na mapu', async ({ page }) => {
+test('splash: studený start, tečkový nápis OPICE (bez opice) na w320, ťuknutí přeskočí na mapu', async ({ page }) => {
   const errors = collectErrors(page);
   // Splash drží do ťuknutí (jinak by se sám prolnul dřív, než změříme geometrii).
   await page.addInitScript('globalThis.__OPICE_HOLD_INTRO__ = true;');
@@ -15,19 +15,15 @@ test('splash: studený start, tečkový nápis OPICE s opicí na w320, ťuknutí
   await expect(intro).toHaveAttribute('role', 'button');
 
   // Geometrie (03 Tečkový nápis): nápis OPICE vodorovně uprostřed a celý na displeji, svítící tečky bez překryvu,
-  // hlava opice nad „O“ (vykoukne zpoza něj) celá na displeji, jediná živá tečka nad I.
+  // jediná živá tečka nad I; opice ve splashi není (skočí pak na mapě).
   const word = page.getByTestId('splash-word');
-  await expect.poll(async () => Math.round((await page.getByTestId('splash-head').boundingBox())?.width ?? 0), { timeout: 5_000 }).toBeGreaterThan(60);
+  await expect(page.getByTestId('splash-head')).toHaveCount(0);
+  await expect(page.getByTestId('splash-dot-on').first()).toBeVisible();
   const wb = await word.boundingBox();
   if (!wb) throw new Error('splash bez nápisu');
   expect(Math.abs(wb.x + wb.width / 2 - 160)).toBeLessThanOrEqual(1);
+  expect(Math.abs(wb.y + wb.height / 2 - 284)).toBeLessThanOrEqual(1);
   expect(wb.x).toBeGreaterThanOrEqual(0); expect(wb.x + wb.width).toBeLessThanOrEqual(320);
-  const head = await page.getByTestId('splash-head').boundingBox();
-  if (!head) throw new Error('splash bez hlavy');
-  expect(head.x).toBeGreaterThanOrEqual(0);
-  expect(head.y).toBeGreaterThanOrEqual(0);
-  expect(head.x + head.width / 2).toBeLessThan(wb.x + wb.width * 0.2);
-  expect(head.y + head.height).toBeLessThanOrEqual(wb.y + wb.height / 2);
   await expect(page.getByTestId('splash-live')).toHaveCount(1);
   const dotsLoc = page.getByTestId('splash-dot-on');
   await expect.poll(() => dotsLoc.count()).toBeGreaterThan(60);
@@ -62,7 +58,7 @@ test('splash: studený start, tečkový nápis OPICE s opicí na w320, ťuknutí
   expect(errors).toEqual([]);
 });
 
-test('splash: bez ťuknutí sám dohraje (03: sken, opice, živá tečka, ústup) a prolne se do appky', async ({ page }) => {
+test('splash: bez ťuknutí sám dohraje (03: sken, živá tečka, ústup) a prolne se do appky', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/dev');
   const intro = page.getByTestId('splash');
@@ -78,5 +74,52 @@ test('splash: bez ťuknutí sám dohraje (03: sken, opice, živá tečka, ústup
   await expect(intro).toBeVisible({ timeout: 30_000 });
   await expect(intro).toHaveCount(0, { timeout: 10_000 });
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
+  expect(errors).toEqual([]);
+});
+
+/** Vzorky opacity a svislé polohy opice na mapě (`map-mascot`) po dobu `ms`. */
+const sampleMascot = (page: import('@playwright/test').Page, ms: number) => page.evaluate((duration) => new Promise<{ o: number; y: number }[]>((resolve) => {
+  const out: { o: number; y: number }[] = [];
+  const end = performance.now() + duration;
+  const tick = () => {
+    const el = [...document.querySelectorAll('[data-testid="map-mascot"]')].find((e) => (e as HTMLElement).offsetParent !== null);
+    if (el) out.push({ o: Number(getComputedStyle(el).opacity), y: el.getBoundingClientRect().y });
+    if (performance.now() < end) requestAnimationFrame(tick); else resolve(out);
+  };
+  requestAnimationFrame(tick);
+}), ms);
+
+test('splash bez opice: po studeném startu opice jednou doskočí na aktuální uzel, návrat na tab už ne', async ({ page }) => {
+  const errors = collectErrors(page);
+  await page.goto('/dev');
+  const intro = page.getByTestId('splash');
+  await expect(intro).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('splash-head')).toHaveCount(0);
+  await expect(intro).toHaveCount(0, { timeout: 10_000 });
+  await visible(page.getByText(/Load demo profile/i)).click();
+  await page.waitForURL((u) => u.pathname === '/', { timeout: 30_000 });
+  await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
+
+  // Studený start nad mapou: během splashe je opice schovaná, po něm doskočí shora na svůj uzel.
+  await page.reload();
+  await expect(intro).toBeVisible({ timeout: 30_000 });
+  await expect(intro).toHaveCount(0, { timeout: 10_000 });
+  const hop = await sampleMascot(page, 1400);
+  expect(hop.length).toBeGreaterThan(10);
+  const last = hop[hop.length - 1]!;
+  expect(last.o).toBe(1);
+  // Přiletěla shora (nad svým místem), ne že by stála.
+  expect(Math.min(...hop.map((s) => s.y))).toBeLessThan(last.y - 30);
+  const box = await page.getByTestId('map-mascot').first().boundingBox();
+  const vp = page.viewportSize()!;
+  expect(box && box.y > 0 && box.y + box.height < vp.height).toBe(true);
+
+  // Návrat na tab: žádný skok, opice stojí.
+  await gotoTab(page, 'league');
+  await gotoTab(page, '');
+  const again = await sampleMascot(page, 700);
+  const ys = again.map((s) => s.y);
+  expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(2);
+  expect(again.every((s) => s.o === 1)).toBe(true);
   expect(errors).toEqual([]);
 });

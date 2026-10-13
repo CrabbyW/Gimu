@@ -186,6 +186,21 @@ export const motion = {
   bossUnlock: { from: 0.8 },
   /** Přeskok opičky na nový uzel (§3.1): zpoždění po dosednutí, výška oblouku, přikrčení a propad (pt). */
   mapHop: { delay: 120, arc: 28, crouch: 3, dip: 3 },
+  /** Skok opice k aktuální lekci po splashi (studený start, `lib/introHop`): opice vyskočí zpoza hlavičky
+   *  (`fromX` pt od levé hrany, `fromAbove` pt nad horní hranou výřezu mapy) a obloukem `arc` pt dopadne na uzel
+   *  za `ms` (rovnoměrně + parabola výšky `arc`, jako `mapHop`), dopad = `mapHop.dip` + `settle`, haptika `monkeyHop`.
+   *  Start `delay` ms po konci splashe (nápis dojel do nadpisu). Omezený pohyb: jen prolnutí `calmFade` na místě. */
+  splashHop: { delay: 80, fromX: 56, fromAbove: 24, arc: 64, ms: 560 },
+  /**
+   * Pull-to-refresh mapy (opičí hlava, póza `loading`). Tah dolů na začátku mapy: obsah jede za prstem s odporem
+   * `resist` (nejvýš `max` pt), hlava se vynoří a natáčí úměrně tahu (`dragTurns` otáčky na `threshold`).
+   * Po prahu `threshold` lehká haptika `pullArm`; puštění nad prahem = hlava zaparkuje na `rest` pt a točí se
+   * (`spinMs` na otáčku, lineárně), dokud se data nenačtou, aspoň `minSpinMs` (ať to nebliká), pak se obsah
+   * i hlava vrátí za `hideMs` (`ease.out`). Puštění pod prahem = návrat za `hideMs`. Slop `slop` pt, svislý tah
+   * jako `scrollIntent.verticalRatio`. Omezený pohyb: bez rotace, hlava jen prolíná a při načítání pulzuje
+   * opacitou `pulseLow` ↔ 1 po `pulseMs`.
+   */
+  pullRefresh: { slop: 8, resist: 0.5, max: 112, threshold: 72, rest: 64, dragTurns: 0.75, spinMs: 900, minSpinMs: 600, hideMs: 240, parkMs: 180, pulseMs: 700, pulseLow: 0.4 },
   /** Kreslení tečkované cesty mapy. */
   pathDrawMs: 420,
   /** Popover uzlu: vyroste z `from` a přisune se o `shift` pt. */
@@ -532,14 +547,14 @@ export const mascotPose = {
  * Splash 03 „Tečkový nápis“ (maketa splash2.html build3, uživatel 2026-10-13). Nativní splash = černá base.
  * (1) Nápis OPICE z teček se rozsvěcuje sloupec po sloupci zleva: čelo `scan` jede 0 → cols + `colFade`
  *     po `colStepMs` na sloupec (lineárně), zhasnutá matrice je vidět jako displej.
- * (2) Od `peekAt` opice vykoukne zpoza „O“ (`peekMs`, `ease.out`, vyjede z výřezu nahoru).
- * (3) V `liveAt` tečka nad I zčervená (`liveMs`). (4) V `blinkAt` opice mrkne (`blinkMs` zavřít + otevřít)
- *     a lehká haptika `introPulse`. (5) V `exitAt` (a appka ready) nápis smrští a odjede na místo nadpisu mapy
- *     (`exitMs`, `ease.inOut`), hlava zmizí v první polovině, podklad se prolne od `bgFrom` × exitMs, nápis
- *     v druhé polovině. Konec `totalMs` = mapa. Omezený pohyb: statický nápis s opicí, prolnutí `reducedFadeMs`.
+ * (2) Bez opice (2026-10-13, uživatel): v `liveAt` tečka nad I zčervená (`liveMs`) a hned mrkne (`blinkMs`:
+ *     zhasne na `blinkLow` a rozsvítí se), s lehkou haptikou `introPulse`. (3) V `exitAt` (a appka ready) nápis
+ *     smrští a odjede na místo nadpisu mapy (`exitMs`, `ease.inOut`), podklad se prolne od `bgFrom` × exitMs,
+ *     nápis v druhé polovině. Konec `totalMs` = mapa, pak opice skočí na aktuální uzel (`motion.splashHop`).
+ *     Omezený pohyb: statický nápis s živou tečkou, prolnutí `reducedFadeMs`.
  */
 export const splash = {
-  colStepMs: 18, colFade: 2, peekAt: 560, peekMs: 320, liveAt: 820, liveMs: 120,
-  blinkAt: 1000, blinkMs: 140, eyesClosed: 0.12, exitAt: 1180, exitMs: 480, bgFrom: 0.2,
-  reducedFadeMs: 200, totalMs: 1660,
+  colStepMs: 18, colFade: 2, liveAt: 700, liveMs: 120,
+  blinkMs: 140, blinkLow: 0.15, exitAt: 1080, exitMs: 480, bgFrom: 0.2,
+  reducedFadeMs: 200, totalMs: 1560,
 };

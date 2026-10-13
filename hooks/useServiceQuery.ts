@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDb } from '@/store/db';
 
 export type Query<T> =
   | { status: 'loading' }
-  | { status: 'error'; error: Error; retry(): void }
-  | { status: 'ready'; data: T; refresh(): void };
+  | { status: 'error'; error: Error; retry(): Promise<void> }
+  /** `refresh` znovu načte data (stale-while-refetch: zůstává 'ready'); promise se splní, až nový fetch doběhne
+   *  (úspěch i chyba), např. pro pull-to-refresh. */
+  | { status: 'ready'; data: T; refresh(): Promise<void> };
 
 export interface UseServiceQueryOptions {
   /** false = nevolat fetcher a vracet 'loading' (např. dokud není znám pathId). */
@@ -28,12 +30,16 @@ export function useServiceQuery<T>(
   const [tick, setTick] = useState(0);
   const key = JSON.stringify(deps);
   const [state, setState] = useState<InternalState<T>>({ status: 'loading' });
+  // Čekající `refresh`/`retry`: splní je nejbližší doběhnutý fetch (i z jiného důvodu, např. revize DB).
+  const waiters = useRef<(() => void)[]>([]);
+  const settle = useCallback(() => { const w = waiters.current; waiters.current = []; w.forEach((f) => f()); }, []);
+  useEffect(() => settle, [settle]);
 
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    fetcher().then((data) => alive && setState({ status: 'ready', data, key }))
-      .catch((e: unknown) => alive && setState({ status: 'error', error: e instanceof Error ? e : new Error(String(e)), key }));
+    fetcher().then((data) => { if (alive) { setState({ status: 'ready', data, key }); settle(); } })
+      .catch((e: unknown) => { if (alive) { setState({ status: 'error', error: e instanceof Error ? e : new Error(String(e)), key }); settle(); } });
     return () => { alive = false; };
     // deps je pole závislostí volajícího hooku (např. lessonId); fetcher se
     // úmyslně nevkládá do pole závislostí, protože je to nová funkce při
@@ -41,7 +47,10 @@ export function useServiceQuery<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revision, tick, key, enabled]);
 
-  const again = useCallback(() => setTick((t) => t + 1), []);
+  const again = useCallback(() => new Promise<void>((resolve) => {
+    waiters.current.push(resolve);
+    setTick((t) => t + 1);
+  }), []);
 
   if (!enabled) return { status: 'loading' };
   // Stav patří jinému klíči (deps se změnily, např. jiné lessonId) → dokud

@@ -64,6 +64,24 @@ test.describe('perf', () => {
     expect(fps).toBeGreaterThanOrEqual(MIN_FPS);
   });
 
+  test(`mapa: pull-to-refresh (tah + točení hlavy) medián fps ≥ ${MIN_FPS}`, async ({ page }) => {
+    await page.goto('/');
+    await expect(pill(page, 'Start lesson')).toBeVisible();
+    await waitForIdle(page, 900);
+    const vp = page.viewportSize()!;
+    await page.mouse.move(28, vp.height * 0.4);
+    for (let i = 0; i < 10; i++) await page.mouse.wheel(0, -2000);
+    await page.waitForTimeout(400);
+    await page.mouse.down();
+    // Tah (≈ 500 ms) a hned po puštění točení (min. 600 ms): fps přes obojí.
+    const during = sampleFps(page, 1100);
+    for (let i = 1; i <= 24; i++) { await page.mouse.move(28, vp.height * 0.4 + i * 12); await page.waitForTimeout(16); }
+    await page.mouse.up();
+    const fps = await during;
+    test.info().annotations.push({ type: 'fps-ptr', description: fps.toFixed(1) });
+    expect(fps).toBeGreaterThanOrEqual(MIN_FPS);
+  });
+
   test(`lekce (smyčka siluety): medián fps ≥ ${MIN_FPS}`, async ({ page }) => {
     await pill(page, 'Start lesson').click();
     await page.waitForURL(/\/lesson\//);

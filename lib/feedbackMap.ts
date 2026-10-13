@@ -9,7 +9,7 @@ export type FeedbackId =
   | 'impact' | 'xpTick' | 'seriesPlate' | 'wheelStep' | 'formError' | 'mascotTap' | 'mascotJoy'
   | 'flightStart' | 'lessonDone' | 'stageUp' | 'guideShow' | 'setupDone'
   | 'timerStart' | 'timerStop' | 'introPulse'
-  | 'restTick' | 'restEnd' | 'restExtend' | 'feelSelect';
+  | 'restTick' | 'restEnd' | 'restExtend' | 'feelSelect' | 'pullArm';
 
 /** Navigace a ovládání: jen haptika, nikdy zvuk (zvuk je pro dění ve hře). */
 export const NAVIGATION_IDS: readonly FeedbackId[] = ['tab', 'cta', 'tapLight', 'wheelStep'];
@@ -59,4 +59,6 @@ export const FEEDBACK_MAP: Record<FeedbackId, readonly [HapticKind | null, SfxNa
   restExtend: ['light', null],
   // UX pass U2: výběr pocitu po lekci = výběr volby (selection + select).
   feelSelect: ['selection', 'select'],
+  // Pull-to-refresh mapy: překročení prahu (puštění teď obnoví data) = lehký výběr, bez zvuku.
+  pullArm: ['selection', null],
 };

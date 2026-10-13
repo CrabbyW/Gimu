@@ -1355,3 +1355,34 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
 - Neřešeno (mimo rozsah zhuštění): dip zepředu pořád připomíná stoj (pomáhají bradla a pokrčená kolena), crow na w320 drobná (rámec beze změny), squat kyčel pod kolenem drží test.
 - Běhy: tsc OK, eslint OK, jest 104 sad / 992 OK (1 dřívější běh 1 fail byl souběžná práce motion-agenta, opakování zelené), `npm run e2e` 171/172 — jediný fail `flows/intro.spec.ts` w390 (splash, soubory motion-agenta, ne silueta); vizuální baseline lekce bez rozdílu, nic nepřepsáno. `e2e:perf` 5/5, lekce (smyčka siluety) ≥ 55 fps.
 - Snímky před/po (15 siluet, t0/t1, w320 + w430, dark + light): scratchpad `sil/before.png`, `sil/after.png`.
+
+## motion-agent: pull-to-refresh s opicí + splash bez opice se skokem k lekci (2026-10-13)
+- **Pull-to-refresh na mapě** (`components/map/PullRefresh.tsx`, zapojení v `app/(tabs)/index.tsx`, posun obsahu v `LessonMap` přes prop `pull`).
+  - Je to vlastní ruční gesto (`Gesture.Manual`) v kořenovém `Gesture.Simultaneous` obrazovky, ne RefreshControl. Ten na Androidu nejde přestylovat a na webu není.
+  - Gesto se aktivuje jen na začátku mapy (scroll ≤ 0.5, scroll předává `scrollOut`) a jen při jasně svislém tahu dolů (slop 8 pt, poměr `scrollIntent.verticalRatio`). Jinak hned selže, takže scroll, tečky ani roztočení kotouče neruší.
+  - Nativní scroll mapy je s ním souběžný: `ScrollIntentProvider` dostal volitelný parametr `together`. iOS odraz je na mapě vypnutý, jinak by obsah jel dvakrát.
+  - Parametry `motion.pullRefresh`: odpor 0.5, max 112 pt, práh 72 pt (haptika `pullArm` = selection, bez zvuku), parkování na 64 pt za 180 ms `ease.out`, točení 900 ms na otáčku lineárně, minimum 600 ms, schování 240 ms `ease.out`. Během tahu se hlava natočí o 0.75 otáčky na práh.
+  - Indikátor: `Mascot` v póze `loading` (hlava, 12 teček, horní živá), velikost S, `still`. Vynoří se zpod hrany hlavičky.
+  - Reduce Motion: hlava se netočí, jen prolne a pulzuje opacitou 0.4 ↔ 1 po 700 ms.
+  - Obnova dat: `useServiceQuery.refresh()` / `retry()` teď vracejí promise, která se splní po doběhnutí nového fetche (stale-while-refetch zůstává). Obrazovka volá refresh profilu i cesty.
+- **Splash 03 bez opice**: hlava, oči a výřez jsou pryč. Tečka nad I se v 700 ms rozsvítí (120 ms), hned mrkne (140 ms na 0.15) a s tím přijde haptika `introPulse`. Ústup začíná v 1080 ms, konec je v 1560 ms (dřív 1660). Tokeny `dots.splash.peek*` v theme zůstaly nepoužité, úklid nechávám na design-agentovi.
+- **Skok k lekci po splashi** (`lib/introHop.ts` + `LessonMap`):
+  - Splash při layoutu ohlásí `splashShown` a opice na mapě zůstane schovaná. Na konci (dohrání i skip) ohlásí `splashDone`.
+  - Mapa si skok vezme jednou (`takeIntroHop`) a jen do 1.5 s po konci splashe. Po onboardingu nebo /dev už se neskáče, při návratu na tab nikdy.
+  - Skok (`motion.splashHop`): start 80 ms po konci splashe z bodu x 56 pt, 24 pt nad horní hranou výřezu (zpoza hlavičky, kam odjel nápis). Oblouk je 64 pt, trvá 560 ms a používá stejný vzorec jako přeskok při odemčení (výška oblouku je teď sdílená hodnota `arcH`). Dopad: `mapHop.dip` + `settle`, haptika `monkeyHop`.
+  - Reduce Motion: opice se jen prolne (`calmFade`). Úvodní scroll k uzlu je beze změny.
+- Testy:
+  - jest: `lib/__tests__/introHop.test.ts`, splash (bez hlavy, haptika při živé tečce, skok pustí jen jednou), `useServiceQuery` refresh promise.
+  - e2e: `flows/map-refresh.spec.ts` (tah → točí se → zmizí; krátký tah nic nespustí; Reduce Motion bez rotace), `intro.spec.ts` (bez hlavy; skok po studeném startu; návrat na tab bez skoku).
+  - perf: nový test fps během pull-to-refresh.
+- Běhy:
+  - tsc OK, eslint OK
+  - jest: moje sady zelené. 1 cizí pád je v `logic/__tests__/mascotPoses.test.ts`: neucommitnuté změny póz od paralelního agenta, ty soubory nejsou moje a v commitu nejsou.
+  - test:node 25/25
+  - `npm run e2e` 176/176 (vizuální baseline beze změny)
+  - `e2e:perf` 6/6 (≥ 55 fps i s pull-to-refresh)
+- Snímky (Playwright clock nad čerstvým exportem ve scratchpadu): `scratchpad/motion/splash4-{0100…2400}.png` (sken, červená tečka, ústup, skok opice ~1.9 s, dosednutí) a `ptr-01…13` (tah 40–200, točení, schování).
+- Otevřené:
+  - Na iPhonu ověřit, že vypnutý odraz mapy nevadí, haptiku na prahu a skok opice pod notchem.
+  - Na Androidu ověřit souběh gesta s nativním scrollem v Expo Go.
+  - Hlava v indikátoru má velikost S (56) a je drobná. Případné zvětšení je na design-agentovi.
