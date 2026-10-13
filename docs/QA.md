@@ -837,3 +837,35 @@ Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičk
 3. Odjezd do nadpisu mapy a prolnutí plyne bez skoku a záškubu.
 4. Ťuknutí splash přeskočí; s Reduce Motion se ukáže statický konec bez pohybu.
 5. Nápis a hlava jsou celé v safe area (notch / Dynamic Island).
+
+## QA kolo: d0d8294..6b541e9 (pull-to-refresh, introHop, silueta, repertoár 26 akcí) — HEAD 6b541e9
+
+**Verdikt: NESCHVÁLENO** (HEAD `6b541e9`)
+
+### Brány
+- ✅ `npx tsc --noEmit` 0 chyb; ✅ `npx eslint .` 0 problémů (vč. `local/no-worklet-object-capture`); ✅ `npx jest` 108 sad / 1080 testů; ✅ `npm run test:node`.
+- ✅ `npm run e2e` plné: 180 passed (12.1 min), žádný vizuální diff.
+- ❌ `npm run e2e:perf`: 7/7 failed, dvakrát po sobě (lekce 15.3 fps, oslava 33.5 fps, mapa 46 fps, idle akce 46, pull 49, TTI 9.5 s, canvas test timeout na start-card).
+  - Kontrola: stejný perf na `d0d8294` (worktree, stejný stroj, stejná chvíle) má lekci a oslavu ✅ (≥ 55), mapa/TTI/canvas tam selhávají taky. Takže mapa/TTI/canvas jsou zatížený stroj (⚠️, zopakovat na klidném stroji), ale **lekce (silueta + mini opička) a oslava (činka) jsou regrese tohoto kola** ❌ → motion-agent (mini opička v lekci dělá drahý přepočet každý snímek; oslava: choreografie liftBarbell).
+  - Testy perf na idle akci a pull jsou nové, baseline na d0d8294 nemají.
+- 1b. Nativní log `$TEMP/expogo.log`: 0 řádků `ERROR`, ale log je z 16:56, starší než HEAD (18:11) → nové akce na nativu ověřené nejsou ⚠️.
+
+### Cílené kontroly
+- ✅ `e2e/visual/screens.spec.ts` +3 s u oslavy: není maskování. Snímek se dělá po doběhnutí činky (3.6 s od nástupu) v konečné póze; průběh akce kryje e2e repertoáru. Perf oslavy ale ❌, viz výše.
+- ✅ Mini opička na w320/w390 (light i dark), měřeno bounding boxy textových uzlů: příprava, běžící cvik i **pauza** (`rest-coach`) bez překryvu s textem. Box opičky na w320 končí na y=334 a „Advanced move…“ začíná ~y=345, „GET READY“ končí na x≈200 a opička začíná na x=224. Na hraně, ale bez kolize. ⚠️ design-agent: při velkém písmu (Dynamic Type) to může kolidovat, ověřit na iPhonu.
+- ⚠️ motion-agent, liftBarbell 0–1150 ms (podnět bosse): činka a dlaně jsou vykreslené přes obličej (rekvizita nad hlavou ve vrstvě). Obličej je chvíli zakrytý, tvar i oči zůstávají čitelné. Doporučení: v nadhozu nakreslit tyč pod bradu nebo ruce za hlavu.
+- ⚠️ Silueta na w320 v světlém režimu: končetiny jsou tenké, ale čitelné (stojka i crow). Dip/crow čitelnost bez výhrad.
+- ✅ Haptika jen u `REPERTOIRE_HAPTIC`, kryto testy `lib/__tests__/repertoireMotion.test.ts` a `logic/__tests__/mascotRepertoire.test.ts`. Jedna akce najednou a idle mimo odemčení/skok/pull kryje logika a e2e repertoáru.
+- ✅ Tab bar beze změny (žádný diff). Demo skip v lekci beze změny (přeskok jen poznamená pokrčení).
+
+### Co opravit (komu)
+1. ❌ motion-agent: perf lekce (15 fps) a oslavy (33 fps) vrátit na ≥ 55 (na d0d8294 prochází).
+2. ⚠️ motion-agent: vrstvení činky přes obličej v liftBarbell.
+3. ⚠️ boss: spustit perf na klidném stroji (mapa/TTI selhávají i na baseline) a obnovit nativní log po HEAD.
+
+### iPhone checklist
+1. Pull-to-refresh na mapě: opičí hlava se točí plynule, iOS bounce nikde neprosvítá.
+2. Po intru opička doskočí k aktuální lekci bez záškubu a v safe area.
+3. Lekce: mini opička cvičí plynule (sledovat fps) a s velkým písmem nepřekrývá „GET READY“ ani text.
+4. Oslava: zvednutí činky má haptiku jednou na vrcholu; při Reduce Motion je jen statická póza.
+5. VoiceOver mini opičku přeskočí (dekorativní) a čte jen cvik a časovač.

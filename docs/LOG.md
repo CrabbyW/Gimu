@@ -1474,3 +1474,8 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
   - Rukama zkontrolovat pauzu (mini opička u prstence odpočinku).
   - Detekce offline na nativu (NetInfo).
   - Na w320 by se mini opička mohla zmenšit, pokud bude kolidovat s velkým písmem.
+
+## qa-agent — kolo d0d8294..6b541e9 (HEAD 6b541e9)
+- Udělal: tsc/eslint/jest/test:node ✅, plné e2e 180/180 ✅, perf 7/7 ❌. Srovnal jsem perf s baseline d0d8294: lekce a oslava jsou regrese, mapa/TTI je zatížený stroj. Kolize mini opičky změřena na w320/w390 light/dark včetně pauzy, bez kolize.
+- Rozhodl sám: čekání +3 s u snímku oslavy není maskování.
+- Otevřené: perf lekce/oslavy (motion), činka přes obličej (motion), nativní log starší než HEAD. Verdikt NESCHVÁLENO.
