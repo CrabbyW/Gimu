@@ -4,7 +4,8 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withD
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
-import { LineBubbleMotion, Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, type MascotReactions } from '@/components/mascot';
+import { LineBubbleMotion, Mascot, MASCOT_SIZES, MonkeyBack, MonkeyFront, mascotSeatY, ReactiveMascot, useMapIdleActs, type MascotActs, type MascotReactions } from '@/components/mascot';
+import { ACT_SPEC } from '@/lib/repertoireMotion';
 import { IntentScrollView, plateOuterRadius } from '@/components/dots';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
@@ -12,7 +13,7 @@ import { feedback } from '@/lib/feedback';
 import { haptics } from '@/lib/haptics';
 import { introHopPending, subscribeIntroHop, takeIntroHop } from '@/lib/introHop';
 import { playSfx } from '@/lib/sound';
-import { ease, intro as T, motion, useMotionSafe } from '@/lib/motion';
+import { ease, intro as T, motion, repertoire as RP, useMotionSafe } from '@/lib/motion';
 import type { NodeState } from '@/logic/map';
 import type { LessonPathView, MapNode } from '@/services/contracts';
 import { dots, typography, useTheme } from '@/theme';
@@ -35,6 +36,10 @@ const MASCOT_VIEWBOX = 200;
  *  a dosednutí `motion.settle`, soft (`monkeyHop`). */
 const HOP = motion.mapHop;
 const SPLASH_HOP = motion.splashHop;
+/** Přeskok na sousední kotouč a zpět (idle `plateHop`) a doběh k uzlu po návratu (`waveRun`): časy z osy akce. */
+const EX_MS = ACT_SPEC.plateHop.ms;
+const EX_ARC = RP.hop.arc;
+const RUN_MS = ACT_SPEC.waveRun.ms;
 // První mapa: opička zamává jen jednou za běh appky (ne při každém návratu na tab).
 let greetedThisRun = false;
 const POPOVER_ROOM = 220; // odhad výšky popoveru (i se zavírací ikonou) pro volbu strany
@@ -73,6 +78,10 @@ interface Props {
   pull?: SharedValue<number>;
   /** Scroll mapy pro UI vlákno ven (pull-to-refresh se chytí jen na začátku mapy). */
   scrollOut?: SharedValue<number>;
+  /** Akce repertoáru opičky (`useMascotAct` obrazovky): idle na mapě, ťuknutí, návrat, ztracená série. */
+  acts?: MascotActs;
+  /** Série dnes končí („Streak ends tonight“): opička nervózně přechází a ukazuje na hodinky. */
+  streakAtRisk?: boolean;
 }
 
 /** Programový scroll (dojetí na uzel, popover) není uživatelův pohyb: opička se po tuto dobu nedívá dolů. */
@@ -97,7 +106,7 @@ const mascotSpot = (p: NodePosition, cx: number, isBoss: boolean, beside: boolea
   return { x: Math.min(hi, Math.max(lo, p.x)), y: p.y - top - MASCOT / 2 };
 };
 
-export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions, line = null, onMascotTap, greet = false, pull, scrollOut }: Props) {
+export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId = null, onOpenLesson, onUnlockSequenceEnd, intro = false, footerSpace = 0, topInset = 0, insetShift, reactions, line = null, onMascotTap, greet = false, pull, scrollOut, acts, streakAtRisk = false }: Props) {
   const { space, seasonal, size } = useTheme();
   const { reduced } = useMotionSafe();
   const insets = useSafeAreaInsets();
@@ -239,6 +248,12 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const dy = useSharedValue(0);
   // Výška oblouku: přeskok při odemčení `HOP.arc`, skok po splashi `SPLASH_HOP.arc`.
   const arcH = useSharedValue<number>(HOP.arc);
+  // Výlet z uzlu akcí repertoáru (UI vlákno): přeskok tam a zpět (exT 0 → 1 → 2), doběh z místa vedle uzlu (runK 1 → 0).
+  const exX = useSharedValue(0);
+  const exY = useSharedValue(0);
+  const exT = useSharedValue(0);
+  const runX = useSharedValue(0);
+  const runK = useSharedValue(0);
   useEffect(() => {
     if (!spot) return;
     if (!hopping) { mx.value = spot.x; my.value = spot.y; fromX.value = spot.x; fromY.value = spot.y; arcT.value = 1; return; }
@@ -323,8 +338,17 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const dropMascot = reduced ? 0 : T.map.mascotDrop;
   const mascotStyle = useAnimatedStyle(() => {
     const t = arcT.value;
-    const x = fromX.value + (mx.value - fromX.value) * t;
-    const y = fromY.value + (my.value - fromY.value) * t - arcH.value * 4 * t * (1 - t) + dy.value;
+    // Výlet akce repertoáru: přeskok na souseda a zpět (dva oblouky), doběh z boku.
+    const e = exT.value;
+    let ex = runX.value * runK.value, ey = 0;
+    if (e > 0 && e < 2) {
+      const k = e <= 1 ? e : 2 - e;
+      const f = e - Math.floor(e);
+      ex += exX.value * k;
+      ey = exY.value * k - EX_ARC * 4 * f * (1 - f);
+    }
+    const x = fromX.value + (mx.value - fromX.value) * t + ex;
+    const y = fromY.value + (my.value - fromY.value) * t - arcH.value * 4 * t * (1 - t) + dy.value + ey;
     return {
       opacity: Math.min(1, arrive.value * 1.6) * crossfade.value * hopIn.value,
       transform: [{ translateX: x - MASCOT / 2 }, { translateY: y - MASCOT / 2 - (1 - arrive.value) * dropMascot }],
@@ -342,11 +366,57 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   const sadOnOpen = stats.mood === 'sad';
   useEffect(() => {
     if (!sadOnOpen || !report) return;
-    const id = setTimeout(() => report({ type: 'streakLost' }), plan && !reduced ? plan.mascotAt : 0);
+    // Repertoár: posedí, zvedne se a ukáže na Start (bez výčitky); bez repertoáru stará smutná reakce.
+    const id = setTimeout(() => { if (!acts?.play('sadThenPoint')) report({ type: 'streakLost' }); }, plan && !reduced ? plan.mascotAt : 0);
     return () => clearTimeout(id);
     // Jednou při otevření mapy se ztracenou sérií.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sadOnOpen]);
+
+  // --- Repertoár na mapě (26 animací) ---
+  // Soused pro přeskok: předchozí (hotový) kotouč, jinak další; jen u opičky sedící na kotouči.
+  const ci = mascotNode ? flat.findIndex((n) => n.lesson.id === mascotNode.lesson.id) : -1;
+  const nbNode = ci > 0 && !flat[ci - 1]?.lesson.isBoss ? flat[ci - 1] : ci >= 0 && !flat[ci + 1]?.lesson.isBoss ? flat[ci + 1] : undefined;
+  const nbPos = nbNode ? posOf(nbNode.lesson.id) : undefined;
+  const nbSpot = seated && nbPos && nbNode ? mascotSpot(nbPos, cx, false, false, stats.stage, width, space.m) : null;
+  const actKey = acts?.act?.key ?? null;
+  const actId = acts?.act?.id ?? null;
+  useEffect(() => {
+    exT.set(0); runK.set(0);
+    if (actKey === null || reduced || !spot) return;
+    const lin = (ms: number) => ({ duration: ms, easing: Easing.linear, reduceMotion: ReduceMotion.Never });
+    if (actId === 'plateHop' && nbSpot) {
+      const [a0, a1] = RP.hop.to, [b0, b1] = RP.hop.back;
+      exX.set(nbSpot.x - spot.x);
+      exY.set(nbSpot.y - spot.y);
+      exT.set(withSequence(
+        withDelay(a0 * EX_MS, withTiming(1, lin((a1 - a0) * EX_MS))),
+        withDelay((b0 - a1) * EX_MS, withTiming(2, lin((b1 - b0) * EX_MS))),
+        withTiming(0, { duration: 0 }),
+      ));
+    } else if (actId === 'waveRun') {
+      // Zamává vedle uzlu (ke středu displeje) a doběhne na svůj kotouč.
+      const W = RP.waveRun;
+      runX.set((spot.x < cx ? 1 : -1) * W.offset);
+      runK.set(1);
+      runK.set(withDelay(W.runFrom * RUN_MS, withTiming(0, lin((W.runTo - W.runFrom) * RUN_MS))));
+    }
+    // Spouští se novou akcí; poloha uzlu a souseda je v té chvíli platná.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actKey]);
+  // Idle akce nikdy během odemykací sekvence, skoku po splashi, příchodu v úvodním sledu ani pull-to-refresh.
+  const sequenceOn = pair !== null && !reduced && phase < 6;
+  const blockedRef = useRef(sequenceOn);
+  useLayoutEffect(() => { blockedRef.current = sequenceOn; });
+  const isBlocked = useCallback(
+    () => blockedRef.current || introHopPending() || arcT.get() < 1 || hopIn.get() < 1 || arrive.get() < 1 || pullBy.get() > 0.5,
+    [arcT, hopIn, arrive, pullBy],
+  );
+  const hasNeighbour = nbSpot !== null;
+  useMapIdleActs({
+    acts, focused: reactions?.focused ?? false, blocked: isBlocked, enabled: Boolean(reactions) && stats.mood !== 'sad',
+    input: () => ({ sinceInteractionMs: reactions?.sinceInteraction() ?? 0, streakAtRisk, hasNeighbour }),
+  });
 
   // First run (UX pass U5): opička na prvním kotouči po dosednutí jednou zamává („pojď“). Větší opička by na
   // w320 × 568 narazila do bubliny průvodce a CTA, proto výraznější reakce místo velikosti. Jednou za běh appky;
@@ -542,10 +612,12 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
         // zbytek kotouče (tap = lekce, tah = roztočení) zůstává volný.
         <Animated.View testID="map-mascot" pointerEvents="box-none" style={[{ position: 'absolute', left: 0, top: 0 }, mascotStyle]}>
           <ReactiveMascot
-            reactions={reactions} seated={seated} spin={plateSpin} scrollLook={scrollLook} idleContext={seated ? 'map' : 'default'}
+            reactions={reactions} acts={acts} travel={false} seated={seated} spin={plateSpin} scrollLook={scrollLook} idleContext={seated ? 'map' : 'default'}
             stage={stats.stage} cosmetics={cosmetics} mood={mood} size="S" hop={false} breathe={!seated}
             onTap={onMascotTap}
           />
+          {/* Značka běžící akce repertoáru (testy, perf): nulová velikost, čtečka ji nevidí. */}
+          {acts?.act ? <View testID={`map-act-${acts.act.id}`} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: 'absolute', width: 0, height: 0 }} /> : null}
           {/* Nástup/odchod a výměnu textu řídí motion obal; po vypršení repliky se odchod dopřehraje. */}
           <LineBubbleMotion
             text={line}

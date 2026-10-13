@@ -2,8 +2,10 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated, { Easing, ReduceMotion, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming, type SharedValue } from 'react-native-reanimated';
 import type { Edge } from 'react-native-safe-area-context';
-import { Mascot } from '@/components/mascot';
-import { poseForAppState } from '@/logic/mascotPoses';
+import { Mascot, useMascotAct } from '@/components/mascot';
+import { isOffline } from '@/lib/online';
+import { eventToRepertoire, type RepertoireEvent } from '@/logic/mascotRepertoire';
+import { poseForRepertoire } from '@/logic/mascotPoses';
 import { copy } from '@/data/copy';
 import { ease, enterSafe, motion, useMotionSafe } from '@/lib/motion';
 import { opacity, useTheme } from '@/theme';
@@ -42,13 +44,31 @@ export function StateView(props: Props) {
   return <EmptyBody {...props} />;
 }
 
+/**
+ * Opička stavu (repertoár): při objevení stavu jednou zahraje jeho akci (offline = zatřese wifi cedulkou,
+ * chyba = zmítá se v laně, prázdno = nakoukne do krabice) a zůstane v její póze.
+ */
+function useStateAct(e: RepertoireEvent) {
+  const acts = useMascotAct();
+  const { play } = acts;
+  const [id] = useState(() => eventToRepertoire(e));
+  useEffect(() => {
+    if (!id) return;
+    const t = setTimeout(() => play(id), motion.ui.duration);
+    return () => clearTimeout(t);
+  }, [id, play]);
+  return { act: acts.act, pose: id ? poseForRepertoire(id) ?? undefined : undefined };
+}
+
 function ErrorBody({ what, message, actionLabel, onRetry, edges }: Extract<Props, { kind: 'error' }>) {
   const { space, size } = useTheme();
   const title = message ?? copy.common.loadError(what ?? '');
+  const [offline] = useState(isOffline);
+  const state = useStateAct({ type: offline ? 'offline' : 'error' });
   return (
     <Screen edges={edges}>
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', gap: space.l }}>
-        <Mascot stage={1} mood="sad" pose={poseForAppState('error')} size={size.stateMascot} cosmetics={NO_COSMETICS} decorative breathe={false} hop={false} />
+        <Mascot stage={1} mood="sad" pose={state.pose} act={state.act} size={size.stateMascot} cosmetics={NO_COSMETICS} decorative breathe={false} hop={false} />
         <View style={{ gap: space.s }}>
           <Text variant="title" accessibilityRole="alert">{title}</Text>
           {message ? null : <Text tone="muted">{copy.common.loadErrorHint}</Text>}
@@ -62,6 +82,7 @@ function ErrorBody({ what, message, actionLabel, onRetry, edges }: Extract<Props
 function EmptyBody({ message, title, actionLabel, onAction, inline, edges }: Extract<Props, { kind: 'empty' }>) {
   const { space, size } = useTheme();
   const { reduced } = useMotionSafe();
+  const state = useStateAct({ type: 'empty' });
   if (inline) return <Text variant="caption" tone="muted">{message}</Text>;
   return (
     <Screen edges={edges}>
@@ -69,7 +90,7 @@ function EmptyBody({ message, title, actionLabel, onAction, inline, edges }: Ext
         {/* UX pass U5: prázdná obrazovka = pozvánka s opičkou (klidná, ne smutná), pak titulek a věta. */}
         {/* Nástup opičky (U5): krátký zdvih s prolnutím; omezený pohyb = `calmFade`. */}
         <Animated.View entering={enterSafe(reduced, 0, motion.mascotReveal.rise)}>
-          <Mascot stage={1} mood="idle" pose={poseForAppState('empty')} size={size.stateMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
+          <Mascot stage={1} mood="idle" pose={state.pose} act={state.act} size={size.stateMascot} cosmetics={NO_COSMETICS} decorative hop={false} />
         </Animated.View>
         {title ? <Text variant="title">{title}</Text> : null}
         <Text tone="muted">{message}</Text>

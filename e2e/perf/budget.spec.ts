@@ -64,6 +64,19 @@ test.describe('perf', () => {
     expect(fps).toBeGreaterThanOrEqual(MIN_FPS);
   });
 
+  test(`mapa: běžící idle akce opičky (repertoár) medián fps ≥ ${MIN_FPS}`, async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto('/');
+    await expect(pill(page, 'Start lesson')).toBeVisible();
+    // První idle akce nejdřív po `repertoire.idleFirstMs` (12 s), pak 20–40 s; měří se, dokud akce běží.
+    const act = page.locator('[data-testid^="map-act-"]').first();
+    await act.waitFor({ state: 'attached', timeout: 60_000 });
+    const name = await act.getAttribute('data-testid');
+    const fps = await sampleFps(page, 2000);
+    test.info().annotations.push({ type: 'fps-map-idle', description: `${name} ${fps.toFixed(1)}` });
+    expect(fps).toBeGreaterThanOrEqual(MIN_FPS);
+  });
+
   test(`mapa: pull-to-refresh (tah + točení hlavy) medián fps ≥ ${MIN_FPS}`, async ({ page }) => {
     await page.goto('/');
     await expect(pill(page, 'Start lesson')).toBeVisible();

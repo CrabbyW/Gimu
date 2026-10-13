@@ -19,6 +19,8 @@ export const size = {
   liveDot: 6, holdRing: 260, heroTile: 148,
   // Mini opička „cvičí s tebou“ v lekci (repertoár trainAlong): pod prstencem výdrže, vpravo dole, nepřekrývá číslo.
   mascotMini: 72,
+  // Opičí hlava pull-to-refresh na mapě (motion 2026-10-13: S 56 byla drobná); prstenec loaderu ≈ 0.8 × 72 se vejde do mezery `pullRefresh.rest` 64.
+  pullHead: 72,
   // Nízký displej (useShort, 568 pt): prstenec výdrže 160 s číslem `heroShort` (Doto 42),
   // aby „10“ nesahalo na vnitřní kruh teček.
   holdRingShort: 160,

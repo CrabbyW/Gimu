@@ -12,7 +12,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { DotField, DotPlate, DotRow, SkiaGuard, plateDotRadius, useDotInk, useDotTouch } from '@/components/dots';
 import { spiralLerp, type Pt } from '@/components/dots/animate';
 import { plateDots, ringCountForKg, ringDots, spiralOrder } from '@/components/dots/geometry';
-import { Mascot, useMascotReactions } from '@/components/mascot';
+import { Mascot, useMascotAct, useMascotReactions } from '@/components/mascot';
+import { PRIO } from '@/lib/mascotAct';
+import { eventToRepertoire } from '@/logic/mascotRepertoire';
 import { GuideBubble } from '@/components/mascot/GuideBubble';
 import { PillButton } from '@/components/ui/PillButton';
 import { Text } from '@/components/ui/Text';
@@ -113,6 +115,13 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
   // Scéna je modální a krátká: nečinnost se nepočítá (focused=false).
   // Do plánovaných kroků (UI vlákno → scheduleOnRN) jde jen funkce `report`, nikdy objekt s gestem.
   const { report: reportReaction, reaction: mascotReaction } = useMascotReactions(false);
+  // Repertoár: oslava = činka nad hlavou s nacvaknutím kotouče; rekord série má přednost (výskok s plamenem → flex).
+  const acts = useMascotAct();
+  const { play: playAct } = acts;
+  const cheerAct = () => {
+    const id = eventToRepertoire({ type: result.streakRecord ? 'streakRecord' : 'lessonDone' });
+    if (id) playAct(id, PRIO.moment);
+  };
 
   // --- Rozměry: plocha scény (onLayout) a střed kotouče v ní (measureInWindow) ---
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
@@ -246,6 +255,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
       // Podpis = success haptika + zvuk success v jednom okamžiku (feedback 'lessonDone').
       for (const [, kind] of celebrationHaptics(true)) signature(kind);
       reportReaction({ type: 'lessonDone' });
+      cheerAct();
       // Rekord: řádek je hned vidět (recordIn = 1), hrdost až po cooldownu celebrate.
       const calmBeat = prideBeat({ streakRecord: result.streakRecord, seriesGain, reduced: true, cheerAt: 0, scanMs: 0, cooldownMs: REACTION_COOLDOWN_MS });
       if (calmBeat.proudAt !== null) at(calmBeat.proudAt, () => reportReaction({ type: 'streakUp' }));
@@ -279,6 +289,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
     at(cheerStep.at, () => {
       setMood(cheer);
       reportReaction({ type: 'lessonDone' });
+      cheerAct();
       mascotIn.value = withSpring(1, { ...motion.settle, ...NEVER });
       textIn.value = withTiming(1, { ...motion.reveal, ...NEVER });
       xp.value = withTiming(result.xp.total, { duration: cheerStep.durationMs, easing: ease.out, ...NEVER });
@@ -378,7 +389,7 @@ export function LessonCompleteScene({ result, lesson, cosmetics, onContinue, gui
                 ) : null}
                 <View style={{ alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: space.m }}>
                   <Animated.View style={mascotStyle}>
-                    <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={compact ? 'S' : 'M'} hop={false} scarfEdge={mood === cheer} decorative reaction={mascotReaction} />
+                    <Mascot stage={result.stageBefore} cosmetics={cosmetics} mood={mood} size={compact ? 'S' : 'M'} hop={false} scarfEdge={mood === cheer} decorative reaction={mascotReaction} act={acts.act} />
                   </Animated.View>
                   <Animated.View style={[{ flex: 1, gap: space.s }, textStyle]}>
                     <View

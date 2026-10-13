@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { DOT, GROUND_Y, SILHOUETTES } from '@/logic/silhouettePoses';
 import { useSilhouettePhase } from './useSilhouettePhase';
@@ -14,14 +15,17 @@ interface Props {
   phase?: number;
   /** Bez `phase`: smyčka běží, když `playing` (pauza výdrže / dialog = false). */
   playing?: boolean;
+  /** Fáze ven pro mini opičku, která cvičí s tebou ve stejné fázi (sdílená hodnota, bez překreslení rodiče). */
+  phaseOut?: SharedValue<number>;
 }
 
 /** Tečková postava cviku (Nothing Dot): kosti i hlava z teček v barvě textu, zem jako tečkovaná linka
  *  ve `faint`. Jedno Svg, žádné Skia plátno (rozpočet pláten beze změny). */
-export function ExerciseSilhouette({ id, phase, playing = true }: Props) {
+export function ExerciseSilhouette({ id, phase, playing = true, phaseOut }: Props) {
   const { c } = useTheme();
   const loop = useSilhouettePhase(SILHOUETTES[id].kind, phase === undefined && playing);
   const t = phase ?? loop;
+  useEffect(() => { phaseOut?.set(t); }, [t, phaseOut]);
   const vb = poseFrame(id);
   const dots = silhouetteDots(id, t);
   const eye = headDotIndex(dots.length);

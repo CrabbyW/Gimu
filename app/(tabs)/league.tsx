@@ -6,7 +6,9 @@ import { LeagueRow } from '@/components/league/LeagueRow';
 import { Podium } from '@/components/league/Podium';
 import { TierBadge } from '@/components/league/TierBadge';
 import { ZoneDivider } from '@/components/league/ZoneDivider';
-import { useMascotReactions, type MascotReaction } from '@/components/mascot';
+import { useMascotAct, useMascotReactions, type MascotReaction } from '@/components/mascot';
+import { PRIO } from '@/lib/mascotAct';
+import { eventToRepertoire } from '@/logic/mascotRepertoire';
 import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { DotLoaderScreen } from '@/components/ui/DotLoader';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -141,11 +143,17 @@ function Standings({ view }: { view: LeagueWeekView }) {
   // Hraje jednou při zobrazení výsledku, až po nástupu pódia (první zobrazení) nebo hned. Hraje ji opička
   // v pódiu i ve vlastním řádku (obě jsou ta tvoje).
   const reactions = useMascotReactions(false);
+  // Repertoár: postup = opička vyšplhá o stupeň výš (`climbPodium`) místo skoku radosti.
+  const acts = useMascotAct();
+  const { play: playAct } = acts;
   const outcome = view.lastResult?.outcome;
   const { report } = reactions;
   useEffect(() => {
     if (outcome !== 'promote' && outcome !== 'demote') return;
-    const id = setTimeout(() => report({ type: outcome === 'promote' ? 'leagueUp' : 'leagueDown' }), first ? LS.afterMs : motion.ui.duration);
+    const id = setTimeout(() => {
+      const rep = outcome === 'promote' ? eventToRepertoire({ type: 'leagueUp' }) : null;
+      if (!rep || !playAct(rep, PRIO.moment)) report({ type: outcome === 'promote' ? 'leagueUp' : 'leagueDown' });
+    }, first ? LS.afterMs : motion.ui.duration);
     return () => clearTimeout(id);
     // Jednou na výsledek; `first` se rozhoduje při mountu.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -183,7 +191,7 @@ function Standings({ view }: { view: LeagueWeekView }) {
       ) : null}
       {/* QA N1: pódium je subjekt obrazovky, proto první blok pod hlavičkou; pozice a odznak až pod ním.
           Odhad polohy vlastního řádku (`headerH`) měří celou hlavičku seznamu, pořadí bloků ho nemění. */}
-      <Podium entries={view.entries} play={podiumPlay} meReaction={meReaction} />
+      <Podium entries={view.entries} play={podiumPlay} meReaction={meReaction} meAct={acts.act} />
       <Reveal play={first} delay={motion.screenIn.heroAt} rise={motion.screenIn.rise} style={{ paddingHorizontal: space.l, paddingBottom: space.m }}>
         {/* Pozice (obr. 2): Doto číslo pozice + „/ 30“ vlevo nahoře, odznak úrovně vpravo, název ligy a věta týdne
             vlevo dole. Bez minimální výšky: druhý blok, nemá pódium odsunout pod ohyb. */}
@@ -218,7 +226,7 @@ function Standings({ view }: { view: LeagueWeekView }) {
       contentContainerStyle={{ paddingBottom: space.xxxl }}
       ListHeaderComponent={hero}
       renderItem={({ item, index }) => (item.kind === 'row'
-        ? <LeagueRow entry={item.entry} rank={item.rank} index={index} play={first} last={item.last} reaction={item.entry.isMe ? meReaction : null} />
+        ? <LeagueRow entry={item.entry} rank={item.rank} index={index} play={first} last={item.last} reaction={item.entry.isMe ? meReaction : null} act={item.entry.isMe ? acts.act : null} />
         : <Reveal play={first} delay={intro.league.rows + stagger(index)} rise={0}><ZoneDivider kind={item.zone} /></Reveal>)}
       ListFooterComponent={
         <View style={{ paddingHorizontal: space.l, paddingTop: space.l, gap: space.m }}>

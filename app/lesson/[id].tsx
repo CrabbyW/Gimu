@@ -22,13 +22,16 @@ import { useFinishSetup } from '@/hooks/useGoals';
 import { useGuide } from '@/hooks/useGuide';
 import { useLesson } from '@/hooks/useLesson';
 import { useProfile } from '@/hooks/useProfile';
+import { useProfileStats } from '@/hooks/useProfileStats';
+import { useMascotAct, type MascotReaction } from '@/components/mascot';
+import { eventToRepertoire } from '@/logic/mascotRepertoire';
 import { now } from '@/lib/clock';
 import { canSkip } from '@/logic/adaptive';
 import { DEMO_BUILD } from '@/lib/demo';
 import { nextFlowPhase, type FlowPhase } from '@/logic/lessonFlow';
 import { services, type LessonResult } from '@/services';
 import { useShort, useTheme, tabularNums } from '@/theme';
-import type { CosmeticSlot, Exercise } from '@/types';
+import type { CosmeticSlot, Exercise, MascotStage } from '@/types';
 import { ReactiveBackground } from '@/components/dots/ReactiveBackground';
 import { IntentScrollView } from '@/components/dots';
 
@@ -62,6 +65,9 @@ export default function LessonScreen() {
   const leaving = useRef(false);
   const profile = useProfile();
   const cosmetics = profile.status === 'ready' ? profile.data?.equipped ?? NO_COSMETICS : NO_COSMETICS;
+  // Mini opička, která cvičí s tebou (repertoár): stage z profilu, po přeskoku na dalším cviku pokrčí rameny.
+  const coachStage: MascotStage = useProfileStats(profile.status === 'ready' && Array.isArray(profile.data?.activity) ? profile.data : null)?.stage ?? 1;
+  const [skippedInto, setSkippedInto] = useState<number | null>(null);
   // Demo: přeskočit jde každý cvik a přeskok se počítá jako odcvičený (lekce doběhne do oslavy, žádná slepá ulička).
   const demo = DEMO_BUILD || (profile.status === 'ready' && profile.data?.demo === true);
   // First run (elite fáze 1): průvodce na cviku a na oslavě, „Set your goals“ na oslavě.
@@ -153,7 +159,7 @@ export default function LessonScreen() {
       <ReactiveBackground style={{ backgroundColor: c.base }}>
         <Screen edges={[]} transparent>
           <LessonProgress total={exercises.length} current={phase.next} onClose={askQuit} />
-          <RestStep key={`rest-${phase.next}`} next={upcoming} onContinue={endRest} />
+          <RestStep key={`rest-${phase.next}`} next={upcoming} onContinue={endRest} coach={{ stage: coachStage, cosmetics }} />
         </Screen>
       </ReactiveBackground>
     );
@@ -181,7 +187,9 @@ export default function LessonScreen() {
           guide={lessonGuide.id ? <GuideBubble id={lessonGuide.id} text={exercise.type === 'reps' ? copy.guide.lessonReps : copy.guide.lessonHold} arrow="down" align="end" compact={short} stretch={short} onDismiss={lessonGuide.dismiss} /> : null}
           onAct={lessonGuide.dismiss}
           alwaysSkip={demo}
-          onSkip={demo ? () => void advance(true, true) : canSkip(done, index, exercises.length) ? () => void advance(false, true) : undefined}
+          coach={{ stage: coachStage, cosmetics, skipped: skippedInto === index }}
+          // Přeskok: chování beze změny (demo drží boss), jen se poznamená, kam se přeskočilo (pokrčení ramen mini opičky).
+          onSkip={demo ? () => { setSkippedInto(index + 1); void advance(true, true); } : canSkip(done, index, exercises.length) ? () => { setSkippedInto(index + 1); void advance(false, true); } : undefined}
         />
       </Screen>
     </ReactiveBackground>
@@ -209,6 +217,8 @@ interface StepProps {
   guide?: ReactNode;
   /** Jakákoli akce v liště (start, hotovo, pauza) = průvodce splnil účel a zmizí. */
   onAct?: () => void;
+  /** Mini opička (repertoár `trainAlong`): vzhled a zda se sem přišlo přeskokem (pokrčí rameny). */
+  coach?: { stage: MascotStage; cosmetics: Partial<Record<CosmeticSlot, string>>; skipped: boolean };
 }
 
 /**
@@ -217,7 +227,7 @@ interface StepProps {
  * 2) řádek „Next up: … · …“ / „Last one“ s tichou textovou akcí [SKIP] vpravo (mimo hlavní palec),
  * 3) velké [DONE] / [START] přes celou šířku, 64 pt. Klíčovaný cvikem, odpočet výdrže začíná pro každý cvik znovu.
  */
-function ExerciseStep({ exercise, enter = false, busy, suspended, extra, next, onDone, onSkip, alwaysSkip = false, guide, onAct }: StepProps) {
+function ExerciseStep({ exercise, enter = false, busy, suspended, extra, next, onDone, onSkip, alwaysSkip = false, guide, onAct, coach }: StepProps) {
   const { c, space, size } = useTheme();
   const short = useShort();
   const insets = useSafeAreaInsets();
@@ -226,6 +236,17 @@ function ExerciseStep({ exercise, enter = false, busy, suspended, extra, next, o
   const { pause } = timer;
   useEffect(() => { if (suspended) pause(); }, [suspended, pause]);
   const { tip } = splitTip(exercise.description);
+  // Mini opička: posledních 3 s výdrže se zatne (`holdRemaining` → strain), jednou za cvik.
+  const acts = useMascotAct();
+  const { play } = acts;
+  const strained = useRef(false);
+  const holdMs = hold && timer.status === 'running' ? timer.secondsLeft * 1000 : 0;
+  useEffect(() => {
+    if (holdMs <= 0 || strained.current) return;
+    const id = eventToRepertoire({ type: 'holdRemaining', ms: holdMs });
+    if (id) strained.current = play(id);
+  }, [holdMs, play]);
+  const [shrug] = useState<MascotReaction | null>(() => (coach?.skipped ? { id: 'shrug', key: 1 } : null));
 
   const primary = !hold
     ? { label: copy.common.done, onPress: onDone }
@@ -244,7 +265,10 @@ function ExerciseStep({ exercise, enter = false, busy, suspended, extra, next, o
       {/* Nástup po pauze (U1): obsah přijede zprava, patička s [DONE] stojí. První cvik stojí hned. */}
       <LessonStepEnter play={enter} style={{ flex: 1, marginHorizontal: -space.l }}>
       <IntentScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: space.l, paddingTop: short ? space.s : space.l, paddingBottom: short ? space.s : space.l }}>
-        <ExerciseCard exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} tipOutside still={!!suspended || timer.status === 'paused'} />
+        <ExerciseCard
+          exercise={exercise} timer={hold ? timer : undefined} guided={!!guide} tipOutside still={!!suspended || timer.status === 'paused'}
+          coach={coach ? { stage: coach.stage, cosmetics: coach.cosmetics, act: acts.act, reaction: shrug } : undefined}
+        />
         {extra > 0 ? <Text variant="caption" tone="muted" style={[tabularNums, { marginTop: space.s }]}>{copy.lesson.extra(extra, hold)}</Text> : null}
         {/* Bublina průvodce je součástí obsahu: nezmenšuje patičku a nikdy nekryje tip ani [DONE]. */}
         {guide ? <View style={{ marginTop: short ? space.s : space.m }}>{guide}</View> : null}

@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { DotRow } from '@/components/dots';
-import { IdleMascot, Mascot, type MascotReaction } from '@/components/mascot';
+import { IdleMascot, Mascot, type MascotAct, type MascotReaction } from '@/components/mascot';
 import { poseForLeagueRank } from '@/logic/mascotPoses';
 import { Reveal } from '@/components/ui/choreo';
 import { Text } from '@/components/ui/Text';
@@ -23,8 +23,10 @@ const breakable = (name: string) => name.replace(/[_.]/g, '$&\u200B');
  * Méně než 3 hráči = jen existující sloupce; nikdo s XP = pódium se nekreslí (pořadí by bylo náhodné,
  * prázdný stav nese věta v hero dlaždici). Nejvýš 3 plátna.
  */
-export function Podium({ entries, play = false, meReaction = null }: {
+export function Podium({ entries, play = false, meReaction = null, meAct = null }: {
   entries: LeagueEntry[]; play?: boolean;
+  /** Akce repertoáru vlastní opičky (postup: šplh o stupeň výš). */
+  meAct?: MascotAct | null;
   /** Reakce vlastní opičky na pódiu (fáze 3, výsledek minulého týdne). */
   meReaction?: MascotReaction | null;
 }) {
@@ -53,9 +55,9 @@ export function Podium({ entries, play = false, meReaction = null }: {
                   <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                     {/* Vítěz žije: poskakuje radostí častěji (idle kontext `podium`), ostatní stojí. */}
                     {rank === 1 ? (
-                      <IdleMascot idleContext="podium" stage={entry.stage} cosmetics={entry.cosmetics} mood="happy" pose={entry.isMe && meReaction ? undefined : poseForLeagueRank(rank) ?? undefined} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
+                      <IdleMascot idleContext="podium" stage={entry.stage} cosmetics={entry.cosmetics} mood="happy" pose={entry.isMe && meReaction ? undefined : poseForLeagueRank(rank) ?? undefined} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} act={entry.isMe ? meAct : null} />
                     ) : (
-                      <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" pose={entry.isMe && meReaction ? undefined : poseForLeagueRank(rank) ?? undefined} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} />
+                      <Mascot stage={entry.stage} cosmetics={entry.cosmetics} mood="idle" pose={entry.isMe && meReaction ? undefined : poseForLeagueRank(rank) ?? undefined} size={size.podiumMascot} decorative hop={false} reaction={entry.isMe ? meReaction : null} act={entry.isMe ? meAct : null} />
                     )}
                   </View>
                 </Reveal>

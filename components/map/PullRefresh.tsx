@@ -6,7 +6,8 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { Mascot, MASCOT_SIZES } from '@/components/mascot';
+import { Mascot } from '@/components/mascot';
+import { size } from '@/theme/tokens';
 import { feedback } from '@/lib/feedback';
 import { ease, motion, useMotionSafe } from '@/lib/motion';
 import type { MascotStage } from '@/types';
@@ -16,7 +17,7 @@ const P = motion.pullRefresh;
 const { slop: SLOP, resist: RESIST, max: MAX, threshold: THRESHOLD, rest: REST, dragTurns: TURNS, spinMs: SPIN_MS, hideMs: HIDE_MS, parkMs: PARK_MS, pulseMs: PULSE_MS, pulseLow: PULSE_LOW } = P;
 const RATIO = motion.scrollIntent.verticalRatio;
 const NEVER = ReduceMotion.Never;
-const HEAD = MASCOT_SIZES.S;
+const HEAD = size.pullHead;
 const NO_COSMETICS = {};
 
 export interface PullRefresh {
@@ -164,7 +165,7 @@ export function PullIndicator({ pull, refreshing, top, width, stage }: {
       style={{ position: 'absolute', left: (width - HEAD) / 2, top, width: HEAD, height: HEAD }}
     >
       <Animated.View testID="map-refresh" style={[{ width: HEAD, height: HEAD }, loopStyle]}>
-        <Mascot stage={stage} mood="idle" pose="loading" size="S" cosmetics={NO_COSMETICS} decorative hop={false} still />
+        <Mascot stage={stage} mood="idle" pose="loading" size={HEAD} cosmetics={NO_COSMETICS} decorative hop={false} still />
       </Animated.View>
     </View>
   );

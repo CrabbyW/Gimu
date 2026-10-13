@@ -25,8 +25,10 @@ export function useScreenFocused(): boolean {
 }
 
 export interface MascotReactions {
-  /** Ohlášení události z obrazovky; vrátí přehranou reakci (po `degrade`), nebo null (cooldown, priorita). */
-  report(e: MascotEvent): ReactionId | null;
+  /** Ohlášení události z obrazovky; vrátí přehranou reakci (po `degrade`), nebo null (cooldown, priorita).
+   *  `quietHop`: obyčejný poskok z ťuknutí se nepřehraje (obrazovka místo něj hraje akci zóny ťuknutí,
+   *  `headShake`/`giggle`); série ťuknutí se dál počítá, takže rychlé ťukání dá salto. */
+  report(e: MascotEvent, opts?: { quietHop?: boolean }): ReactionId | null;
   /** Ťuknutí na opičku teď (zkratka za `report({ type: 'tap', at: Date.now() })`). */
   tap(): ReactionId | null;
   /** Dotyk kdekoli na obrazovce: nuluje nečinnost a probudí spící opičku. */
@@ -50,7 +52,13 @@ export interface MascotReactions {
  * návrat do appky přes `AppState` (mávnutí jen po ≥ 60 s, `shouldWave`). Omezený pohyb: `degrade`.
  * Haptika: poskok `selection`, salto a skok radosti `success`; ostatní reakce jsou tiché.
  */
-export function useMascotReactions(focused: boolean): MascotReactions {
+export function useMascotReactions(focused: boolean, opts?: {
+  /** Návrat do appky: obrazovka ho může přehrát vlastní akcí repertoáru (mapa: `waveRun`); `true` = vyřízeno,
+   *  stará reakce (mávnutí) se pak nehraje. */
+  onAppReturn?(awayMs: number): boolean;
+}): MascotReactions {
+  const onAppReturn = useRef(opts?.onAppReturn);
+  useEffect(() => { onAppReturn.current = opts?.onAppReturn; });
   const { reduced } = useMotionSafe();
   const reducedRef = useRef(reduced);
   useEffect(() => { reducedRef.current = reduced; }, [reduced]);
@@ -80,12 +88,13 @@ export function useMascotReactions(focused: boolean): MascotReactions {
     }
   }, []);
 
-  const report = useCallback((e: MascotEvent): ReactionId | null => {
+  const report = useCallback((e: MascotEvent, opts?: { quietHop?: boolean }): ReactionId | null => {
     const now = Date.now();
     if (e.type !== 'idle' && e.type !== 'appReturn') touched();
     const r = pickReaction(e, state.current, now);
     state.current = r.state;
     if (!r.id) return null;
+    if (r.id === 'hop' && opts?.quietHop) return 'hop';
     if (r.id === 'hop') feedback('mascotTap');
     else if (r.id === 'flip' || r.id === 'joyJump') feedback('mascotJoy');
     play(r.id);
@@ -116,7 +125,7 @@ export function useMascotReactions(focused: boolean): MascotReactions {
         if (leftAt !== null && focused) {
           const awayMs = Date.now() - leftAt;
           touched();
-          report({ type: 'appReturn', awayMs });
+          if (!onAppReturn.current?.(awayMs)) report({ type: 'appReturn', awayMs });
         }
         leftAt = null;
       } else if (leftAt === null) {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInRight, FadeOut, FadeOutLeft, ReduceMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInRight, FadeOut, FadeOutLeft, ReduceMotion, useSharedValue } from 'react-native-reanimated';
+import { Mascot, type MascotAct, type MascotReaction } from '@/components/mascot';
 import { DotField } from '@/components/dots';
 import { Reveal } from '@/components/ui/choreo';
 import { Stat } from '@/components/ui/Stat';
@@ -9,7 +10,7 @@ import { Tile } from '@/components/ui/Tile';
 import { copy } from '@/data/copy';
 import { intro, motion, useMotionSafe } from '@/lib/motion';
 import { useShort, useTheme } from '@/theme';
-import type { Exercise } from '@/types';
+import type { CosmeticSlot, Exercise, MascotStage } from '@/types';
 import { ExerciseSilhouette } from './ExerciseSilhouette';
 import { HoldTimer } from './HoldTimer';
 import type { HoldTimer as HoldTimerState } from './useHoldTimer';
@@ -36,12 +37,14 @@ interface Props {
   tipOutside?: boolean;
   /** Smyčka siluety stojí (pauza výdrže, otevřený dialog). */
   still?: boolean;
+  /** Mini opička, která cvičí s tebou (repertoár `trainAlong`): akce (zatnutí) a reakce (pokrčení po přeskoku). */
+  coach?: { stage: MascotStage; cosmetics: Partial<Record<CosmeticSlot, string>>; act: MascotAct | null; reaction: MascotReaction | null };
 }
 
 /** Karta cviku (Nothing Dot §6): panel = dlaždice se siluetou stojící na „podlaze“ z teček (pole doznívá
  *  nahoru k horizontu), pod ním JEDNO velké Doto číslo (opakování, u výdrže tečkový odpočet) — to má
  *  cvičenec v hlavě —, pak název a popis techniky. Silueta zůstává beze změny (subjekt, ne ozdoba). */
-export function ExerciseCard({ exercise, timer, guided = false, tipOutside = false, still = false }: Props) {
+export function ExerciseCard({ exercise, timer, guided = false, tipOutside = false, still = false, coach }: Props) {
   const { c, space, size } = useTheme();
   // Nízký displej (320×568): menší panel, menší číslo a těsnější mezery — vše nad lištou bez scrollu.
   const short = useShort();
@@ -54,6 +57,8 @@ export function ExerciseCard({ exercise, timer, guided = false, tipOutside = fal
   const panelHeight = guided || (tipOutside && short) ? (short ? size.silhouettePanelGuide : size.silhouettePanelShort)
     : tipOutside && exercise.type === 'hold' ? size.silhouettePanelShort
       : short ? size.silhouettePanelShort : size.silhouettePanel;
+  // Fáze smyčky siluety pro mini opičku (UI vlákno, bez překreslení karty).
+  const phase = useSharedValue(0);
   return (
     <Animated.View entering={reduced ? calmEnter : enter} exiting={reduced ? calmExit : exit} style={{ gap: short ? space.m : space.l }}>
       <Tile pad="none" style={{ height: panelHeight }}>
@@ -61,13 +66,22 @@ export function ExerciseCard({ exercise, timer, guided = false, tipOutside = fal
         <Reveal play delay={intro.floor.at} rise={intro.floor.rise} config={motion.reveal} style={StyleSheet.absoluteFill}><Floor /></Reveal>
         {/* Vnitřní sled karty (motion): panel přijede s kartou, silueta v něm se zvedne o úder později,
             pak číslo, název a popis po 50 ms. Celý sled ≤ 260 + 200 ms. */}
-        <Reveal play delay={step} rise={rise} style={{ flex: 1, padding: short ? space.s : space.m }}><ExerciseSilhouette id={exercise.silhouette} playing={!still} /></Reveal>
+        <Reveal play delay={step} rise={rise} style={{ flex: 1, padding: short ? space.s : space.m }}><ExerciseSilhouette id={exercise.silhouette} playing={!still} phaseOut={phase} /></Reveal>
       </Tile>
       <View style={{ gap: short ? space.xs : space.s }}>
         <Reveal play delay={step * 2} rise={rise}>
           {exercise.type === 'hold' && timer
             ? <HoldTimer timer={timer} total={exercise.amount} />
             : <Stat size={short ? 'M' : 'L'} value={exercise.amount} unit={copy.lesson.reps} />}
+          {/* Mini opička vpravo dole pod číslem / prstencem výdrže (roh mimo kruh): cvičí totéž ve stejné fázi jako silueta. */}
+          {coach ? (
+            <View testID="lesson-coach" pointerEvents="none" style={{ position: 'absolute', right: 0, bottom: 0 }}>
+              <Mascot
+                stage={coach.stage} cosmetics={coach.cosmetics} mood="idle" size={size.mascotMini}
+                train={{ silhouette: exercise.silhouette, phase }} act={coach.act} reaction={coach.reaction} hop={false} breathe={false} decorative
+              />
+            </View>
+          ) : null}
         </Reveal>
         {/* S patičkou (tipOutside) stojí název a CAUTION v patičce nad tipem, aby byly vidět bez scrollu. */}
         {tipOutside ? null : <Reveal play delay={step * 3} rise={rise}><ExerciseTitle exercise={exercise} /></Reveal>}

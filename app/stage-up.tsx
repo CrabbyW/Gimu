@@ -10,7 +10,9 @@ import { Group, Points, vec } from '@shopify/react-native-skia';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DotRing, ringLayout, SkiaGuard } from '@/components/dots';
 import { rowLit } from '@/components/dots/geometry';
-import { Mascot, MASCOT_SIZES } from '@/components/mascot';
+import { Mascot, MASCOT_SIZES, useMascotAct } from '@/components/mascot';
+import { PRIO } from '@/lib/mascotAct';
+import { eventToRepertoire } from '@/logic/mascotRepertoire';
 import { poseForAppState } from '@/logic/mascotPoses';
 import { BigActionBar } from '@/components/ui/BigActionBar';
 import { Text } from '@/components/ui/Text';
@@ -85,6 +87,11 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
   const newRing = useSharedValue(reduced ? 1 : 0);
   const newOpacity = useSharedValue(reduced ? 0 : 1);
   const textOpacity = useSharedValue(0);
+  // Repertoár: nová opička po zrodu povyroste a tečky kolem ní rostou (`grow`). Haptiku nese podpis `stageUp`.
+  const acts = useMascotAct();
+  const playRef = useRef(acts.play);
+  useEffect(() => { playRef.current = acts.play; });
+  const playAct: typeof acts.play = (...a) => playRef.current(...a);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -93,6 +100,8 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
       newOpacity.set(withTiming(1, FADE));
       textOpacity.set(withTiming(1, FADE));
       feedback('stageUp');
+      const g = eventToRepertoire({ type: 'stageUp' });
+      if (g) playAct(g, PRIO.moment, { haptic: false });
     } else {
       // 1) Stará opička se stáhne a zmizí (příprava, ease-out, bez pružiny); prstenec se nadechne.
       oldMascot.set(withDelay(T.shrinkAt, withTiming(0, { duration: T.shrinkMs, easing: motion.reveal.easing })));
@@ -109,6 +118,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
       newRing.set(withDelay(T.bornAt, withTiming(1, { duration: T.handoffMs })));
       newScale.set(withDelay(T.bornAt, withSpring(1, motion.pop)));
       timers.push(setTimeout(() => feedback('stageUp'), T.bornAt));
+      timers.push(setTimeout(() => { const g = eventToRepertoire({ type: 'stageUp' }); if (g) playAct(g, PRIO.moment, { haptic: false }); }, T.bornAt));
       textOpacity.set(withDelay(T.textAt, withTiming(1, motion.ui)));
     }
     timers.push(setTimeout(() => setReady(true), reduced ? FADE.duration : T.ctaAt));
@@ -158,7 +168,7 @@ function StageUpScene({ from, to, unlocked }: { from: MascotStage; to: MascotSta
             <Animated.View style={[center, newRingStyle]}><StageRing stage={to} /></Animated.View>
             {/* Opička sedí na spodní hraně prstence (jako na kotouči mapy): jediný barevný subjekt. */}
             <Animated.View style={[{ position: 'absolute', bottom: -MASCOT_DROP }, newMascotStyle]}>
-              <Mascot stage={to} mood="celebrate" pose={poseForAppState('stageUp')} size={MASCOT} cosmetics={cosmetics} decorative />
+              <Mascot stage={to} mood="celebrate" pose={poseForAppState('stageUp')} size={MASCOT} cosmetics={cosmetics} decorative act={acts.act} />
             </Animated.View>
           </Animated.View>
         </View>

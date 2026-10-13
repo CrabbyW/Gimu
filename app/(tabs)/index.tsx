@@ -11,7 +11,8 @@ import { LessonMap } from '@/components/map/LessonMap';
 import { PullIndicator, usePullRefresh } from '@/components/map/PullRefresh';
 import { ReturnLine } from '@/components/map/ReturnLine';
 import { GuideBubble } from '@/components/mascot/GuideBubble';
-import { useMascotReactions, useScreenFocused } from '@/components/mascot';
+import { useMascotAct, useMascotReactions, useScreenFocused } from '@/components/mascot';
+import { eventToRepertoire } from '@/logic/mascotRepertoire';
 import { useMascotLine } from '@/hooks/useMascotLine';
 import { currentSection, SectionHero } from '@/components/map/SectionHero';
 import { Card } from '@/components/ui/Card';
@@ -89,7 +90,15 @@ export default function TrainingScreen() {
   const field = useDotTouch();
   // Reakce opičky (fáze 3): sleduje prst po celé obrazovce (gesto jen čte dotyky), usíná při nečinnosti
   // zaostřené mapy, mává po návratu do appky a kývne na start lekce.
-  const reactions = useMascotReactions(useScreenFocused());
+  // Repertoár (26 animací): akce opičky na mapě (idle, ťuknutí, návrat do appky, ztracená série). Návrat po ≥ 60 s
+  // = zamává oběma a doběhne k uzlu (`waveRun`) místo starého mávnutí.
+  const acts = useMascotAct();
+  const reactions = useMascotReactions(useScreenFocused(), {
+    onAppReturn: (awayMs) => {
+      const id = eventToRepertoire({ type: 'appReturn', awayMs });
+      return id ? acts.play(id) : false;
+    },
+  });
   // Záměr scrollu: mapa (`IntentScrollView`) se rozjede jen při jasně svislém tahu, jinak tah patří tečkám.
   const play = useScrollIntent();
   // First run (elite fáze 1): průvodce „Tap Start to begin“ a řádek „Finish setup“ v hlavičkovém překryvu.
@@ -187,6 +196,8 @@ export default function TrainingScreen() {
                 // Pod posledním uzlem: tab bar + pilulka CTA, ať jde poslední prvek odscrollovat nad ně.
                 footerSpace={clearance + (currentId ? size.startCard + space.m * 2 : space.m)}
                 reactions={reactions}
+                acts={acts}
+                streakAtRisk={returnLine?.risk === 'atRisk'}
                 greet={stats.isNew}
                 line={mascotLine.line?.text ?? null}
                 onMascotTap={mascotLine.say}
