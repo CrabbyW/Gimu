@@ -558,3 +558,30 @@ export const splash = {
   blinkMs: 140, blinkLow: 0.15, exitAt: 1080, exitMs: 480, bgFrom: 0.2,
   reducedFadeMs: 200, totalMs: 1560,
 };
+
+/**
+ * Repertoár opičky (26 animací, plán 2026-10-13-opice-26-animaci; motion-agent). Každá akce = jedna časová osa
+ * `t` 0 → 1 za `ms` (lineárně, UI vlákno); choreografie je worklet `lib/repertoireMotion`, který z `t` skládá
+ * posuny kostry, celého těla a rekvizit (obálky začínají i končí v nule = žádný skok). Pózy se během akce
+ * střídají podle `ACT_SPEC` (prolnutí `mascotPose.transitionMs`). Omezený pohyb: póza akce staticky
+ * `reducedMs`, bez osy. Idle akce na mapě po `idleFirstMs`, pak `nextPause` (20–40 s), cooldown po akci
+ * od uživatele `userCooldownMs`.
+ * Přeskok na kotouči (mapa): let tam v `hop.to`, zpět v `hop.back` (zlomky osy), oblouk `hop.arc` pt;
+ * doběh po návratu: opice se ukáže `waveRun.offset` pt od uzlu (ke středu), mává do `runFrom`, běží do `runTo`.
+ */
+export const repertoire = {
+  ms: {
+    warmup: 4800, boredSit: 6000, pointStart: 3200, plateHop: 2000, handstandPlate: 4200,
+    morningStretch: 4000, eveningTowel: 4400, streakAtRisk: 5200, sadThenPoint: 5200,
+    headShake: 1400, giggle: 2200, hangFinger: 2800, trainAlong: 6000, strain: 3000, wipeSweat: 4400,
+    liftBarbell: 3600, flameJump: 3400, climbPodium: 3000, grow: 3200, waveRun: 3600,
+    wifiShake: 2600, ropeTangle: 3200, peekBox: 3000, shrug: 1600,
+  },
+  reducedMs: 1600,
+  idleFirstMs: 12000,
+  userCooldownMs: 600,
+  hop: { to: [0.12, 0.38], back: [0.55, 0.81], arc: 22 },
+  waveRun: { offset: 84, runFrom: 0.45, runTo: 0.95, fadeTo: 0.06 },
+  /** Přehrávání všech akcí v /dev: mezera mezi akcemi. */
+  playAllGapMs: 400,
+} as const;

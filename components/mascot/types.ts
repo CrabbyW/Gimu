@@ -1,8 +1,9 @@
 import type { SharedValue } from 'react-native-reanimated';
+import type { ActId } from '@/lib/repertoireMotion';
 import type { IdleActionId } from '@/logic/mascotIdle';
 import type { MascotPoseId } from '@/logic/mascotPoses';
 import type { ReactionId } from '@/logic/mascotReactions';
-import type { CosmeticSlot, MascotStage, Mood } from '@/types';
+import type { CosmeticSlot, MascotStage, Mood, SilhouetteId } from '@/types';
 
 /** Přehrání reakce: nový `key` = přehrát znovu. `null`/chybějící = klid (probudí spící opičku). */
 export interface MascotReaction { id: ReactionId; key: number }
@@ -10,6 +11,10 @@ export interface MascotReaction { id: ReactionId; key: number }
 /** Přehrání idle akce (život v klidu): nový `key` = přehrát. Reakce ji kdykoli přeruší. */
 export interface MascotIdle { id: IdleActionId; key: number }
 export type MascotGaze = SharedValue<{ x: number; y: number } | null>;
+/** Akce repertoáru (26 animací, `lib/repertoireMotion`): nový `key` = přehrát. `null` = konec / nic. */
+export interface MascotAct { id: ActId; key: number }
+/** Mini opička cvičí s tebou: silueta cviku a sdílená fáze smyčky siluety (0–1, `useSilhouettePhase`). */
+export interface MascotTrain { silhouette: SilhouetteId; phase: SharedValue<number> }
 
 export type MascotSize = number | 'S' | 'M' | 'L' | 'XL';
 
@@ -44,6 +49,12 @@ export interface MascotProps {
   pose?: MascotPoseId;
   /** Statická opice bez jakéhokoli pohybu (jako omezený pohyb): náhledy v galerii, kde by 31 živých smyček zbytečně zatížilo UI vlákno. */
   still?: boolean;
+  /** Akce repertoáru (`useMascotAct`): póza a choreografie na časové ose; přebije `pose` po dobu akce. */
+  act?: MascotAct | null;
+  /** Cvičí s tebou (lekce): póza cviku ve fázi siluety; vlastní živá smyčka pózy stojí. */
+  train?: MascotTrain | null;
+  /** Cestuje akce v plátně (galerie, výchozí ano)? Mapa kreslí přeskok a doběh sama (`false`). */
+  travel?: boolean;
 }
 
 export const MASCOT_SIZES = { S: 56, M: 120, L: 200, XL: 280 } as const;

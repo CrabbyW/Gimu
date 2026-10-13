@@ -48,7 +48,7 @@ export const PROP = {
   barbell: { overhang: 34, lift: 5, inner: { dx: 22, h: 30 }, outer: { dx: 30, h: 22 }, col: 4 },
   /** Ručník přes levé rameno (2 sloupce teček na srsti), lahev v levé ruce, kapky potu u levého spánku. */
   towel: { x: 82, top: 102, bottom: 140, gap: 5 },
-  bottle: { w: 12, h: 26, neck: 5 },
+  bottle: { w: 16, h: 34, neck: 6 },
   sweat: [[38, 38], [30, 50]] as const,
   /** Čelenka (dvě řady teček přes temeno v souřadnicích hlavy) a ručník kolem krku (dva pruhy po hrudi). */
   headband: { y: 37, rows: 2, rowGap: 5, step: 5, tail: [[136, 31], [142, 26], [146, 33]] as const },

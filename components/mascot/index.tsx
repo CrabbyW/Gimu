@@ -12,3 +12,5 @@ export { LineBubbleMotion } from './LineBubbleMotion';
 export { IdleMascot } from './IdleMascot';
 export { useMascotIdle } from './useMascotIdle';
 export type { MascotIdle } from './types';
+export { useMascotAct, useMapIdleActs, type MascotActs } from './useMascotAct';
+export type { MascotAct, MascotTrain } from './types';

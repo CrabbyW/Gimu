@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import {
-  cancelAnimation, Easing, useDerivedValue, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
+  type SharedValue, cancelAnimation, Easing, useDerivedValue, useSharedValue, withDelay, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import { ease, mascotPose as MP } from '@/lib/motion';
 import { applyLife, bezierOut, LIFE_CLOCK_MS, mixVector, POSE_CODE, poseVector, WAVE_MS } from '@/lib/poseMotion';
+import { applyAct, applyTrain } from '@/lib/repertoireMotion';
 import { MASCOT_POSES, type MascotPoseId } from '@/logic/mascotPoses';
 import { EYE_DROP, EYE_RY } from './monkeyGeometry';
 
@@ -14,7 +15,14 @@ const EYES = { ry: EYE_RY, drop: EYE_DROP };
  * (obě pózy dál „žijí“ po dobu přechodu, takže smyčka nedá skok). Hodina smyčky `clock` běží jen bez
  * omezeného pohybu; s ním je póza statická. Vrací jen sdílené hodnoty (worklety kreslení smí zachytit jen je).
  */
-export function usePoseMotion(poseId: MascotPoseId, reduced: boolean) {
+export function usePoseMotion(poseId: MascotPoseId, reduced: boolean, act?: { code: SharedValue<number>; t: SharedValue<number>; trainMode: number; trainPhase?: SharedValue<number> }) {
+  const noCode = useSharedValue(-1);
+  const zero = useSharedValue(0);
+  // Akce repertoáru (osa t, kód) a cvičení mini opičky (fáze siluety): jen sdílené hodnoty a číslo pro worklet.
+  const actCode = act?.code ?? noCode;
+  const actT = act?.t ?? zero;
+  const trainPhase = act?.trainPhase ?? zero;
+  const trainMode = act?.trainMode ?? -1;
   const target = poseVector(MASCOT_POSES[poseId], EYES);
   const from = useSharedValue<number[]>(target);
   const to = useSharedValue<number[]>(target);
@@ -71,12 +79,16 @@ export function usePoseMotion(poseId: MascotPoseId, reduced: boolean) {
   }, [poseId, reduced, waveAmp]);
 
   const on = reduced ? 0 : 1;
+  // Mini opička cvičí ve fázi siluety: vlastní smyčka pózy by s ní nebyla v taktu, proto stojí.
+  const lifeOn = trainMode >= 0 ? 0 : on;
   const live = useDerivedValue(() => {
     // Prolnutí s křivkou ease.out (cubic-bezier 0.22,1,0.36,1) ve workletu: t běží lineárně.
     const k = bezierOut(t.value);
     const c = clock.value;
     const w = waveAmp.value;
-    return mixVector(applyLife(from.value, fromCode.value, c, on, w), applyLife(to.value, toCode.value, c, on, w), k);
+    const mixed = mixVector(applyLife(from.value, fromCode.value, c, lifeOn, w), applyLife(to.value, toCode.value, c, lifeOn, w), k);
+    // Nad pózou: fáze cviku (mini opička), pak choreografie akce repertoáru (obálka 0 na začátku i konci osy).
+    return applyAct(applyTrain(mixed, trainMode, trainPhase.value), actCode.value, actT.value);
   });
-  return { live, clock, toCode, extrasIn, on };
+  return { live, clock, toCode, to, extrasIn, on };
 }

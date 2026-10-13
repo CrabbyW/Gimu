@@ -8,13 +8,15 @@ import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path, Rect } from 'react-nativ
 import { copy } from '@/data/copy';
 import { ease, mascotPose as MP, motion, spring, useMotionSafe } from '@/lib/motion';
 import { groupMatrix, LIFE_CLOCK_MS, limbD, swayDeg, swayPivotY, zzFrame } from '@/lib/poseMotion';
+import { actBody, actSway, GROW_DOTS, GROW_R, growDot, handAt, TRAIN_FOR, towelDot, trainLift } from '@/lib/repertoireMotion';
 import { MASCOT_POSES, poseForIdle, resolvePose, type MascotPose, type MascotPoseId } from '@/logic/mascotPoses';
 import { useTheme, type Colors } from '@/theme';
 import type { Mood } from '@/types';
-import { armPath, EYE_DROP, EYE_RY, handWorld, legPath, V2 } from './monkeyGeometry';
+import { armPath, EYE_DROP, EYE_RY, handWorld, legPath, PROP, V2 } from './monkeyGeometry';
 import { bustShape, propsBack, propsFace, propsFront } from './PoseProps';
 import { PropMotionContext } from './PropMotion';
 import { useReactionMotion } from './reactionMotion';
+import { useActPlayer } from './useActPlayer';
 import { usePoseMotion } from './usePoseMotion';
 import { resolveMascotSize, type MascotProps } from './types';
 
@@ -77,7 +79,7 @@ export const monkeyInk = (c: Colors) => ({ fur: c.mascotFur, face: c.mascotFace,
 
 function MascotSvg({
   mood: baseMood, size, accessibilityLabel, decorative, breathe: breatheProp = true, hop: hopProp = true,
-  reaction, gaze, spin, idle, scrollLook, pose: poseProp, layer, still,
+  reaction, gaze, spin, idle, scrollLook, pose: poseProp, layer, still, act, train, travel,
 }: MascotProps & { layer: Layer }) {
   const { c } = useTheme();
   const ink = monkeyInk(c);
@@ -97,10 +99,21 @@ function MascotSvg({
   const moodPose = MOOD_POSE[mood];
   // Idle akce s pózou (protažení = vis, radostný poskok = oslava) drží pózu `idlePoseMs`, pak zpět na náladu.
   // Jen celá opice: sedící na kotouči (dvě vrstvy) pózu nemění, jen hraje pohyb akce.
-  const idlePose = useIdlePose(layer === 'all' && !reduced ? idle : null);
-  const poseId = resolvePose({ pose: poseProp ?? idlePose, mood, reaction: ov && reaction ? reaction.id : null });
+  // Akce repertoáru (26 animací): pokrčení ramen ze staré reakce hraje stejný přehrávač (paže v2).
+  const effAct = act ?? (reaction?.id === 'shrug' ? { id: 'shrug' as const, key: -reaction.key } : null);
+  const player = useActPlayer(effAct, reduced);
+  const trainSpec = train ? TRAIN_FOR[train.silhouette] : null;
+  // Mini opička při zatnutí zůstává v póze cviku (třes a zaťaté zuby přes ni).
+  const actPose = train && effAct?.id === 'strain' ? null : player.pose;
+  const idlePose = useIdlePose(layer === 'all' && !reduced && !effAct ? idle : null);
+  const poseId = resolvePose({ pose: actPose ?? poseProp ?? trainSpec?.pose ?? idlePose, mood, reaction: ov && reaction ? reaction.id : null });
   const pose: MascotPose = MASCOT_POSES[poseId];
-  const { live, clock, toCode, extrasIn, on: lifeOn } = usePoseMotion(poseId, reduced);
+  const zeroSV = useSharedValue(0);
+  const tPhase = train?.phase ?? zeroSV;
+  const tMode = trainSpec?.mode ?? -1;
+  const { live, clock, toCode, to: target, extrasIn, on: lifeOn } = usePoseMotion(poseId, reduced, { code: player.code, t: player.t, trainMode: tMode, trainPhase: tPhase });
+  const aCode = player.code, aT = player.t;
+  const TRAV = travel === false ? 0 : 1;
   const breathScale = sleeping ? motion.reactions.sleep.breathScale : moodPose.face === 'sad' ? BREATH_SCALE_SAD : BREATH_SCALE;
   const breathHalfMs = sleeping ? motion.reactions.sleep.breathHalfMs : moodPose.breathHalfMs;
 
@@ -176,12 +189,18 @@ function MascotSvg({
   }, [moodPose.face, reduced, bob, eyeRy]);
 
   const bodyStyle = useAnimatedStyle(() => {
-    const sy = 1 + breath.value * breathScale - squash.value * motion.hop.squash - rSquash.value + stretch.value - bob.value;
-    const sx = 1 + (squash.value * motion.hop.squash + rSquash.value) * 0.6;
+    // Celé tělo akce repertoáru (viewBox → pt): posun, náklon, měřítko kolem chodidel, krytí; výskok mini opičky.
+    const b = actBody(aCode.value, aT.value, TRAV);
+    const k = b[3] ?? 1;
+    const sy = (1 + breath.value * breathScale - squash.value * motion.hop.squash - rSquash.value + stretch.value - bob.value) * k;
+    const sx = (1 + (squash.value * motion.hop.squash + rSquash.value) * 0.6) * k;
+    const u = px / 200;
     return {
+      opacity: b[4] ?? 1,
       transform: [
-        { translateY: (hop.value + lift.value - (sy - 1) / 2) * px },
-        { translateY: px / 2 }, { rotate: `${tilt.value}deg` }, { translateY: -px / 2 },
+        { translateX: (b[0] ?? 0) * u },
+        { translateY: (hop.value + lift.value - (sy - 1) / 2) * px + ((b[1] ?? 0) + trainLift(tMode, tPhase.value)) * u },
+        { translateY: px / 2 }, { rotate: `${tilt.value + (b[2] ?? 0)}deg` }, { translateY: -px / 2 },
         { rotate: `${roll.value}deg` },
         { scaleY: sy },
         { scaleX: sx },
@@ -229,7 +248,7 @@ function MascotSvg({
   const STAND = HANDSTAND_Y;
   const swayProps = useAnimatedProps(() => {
     const code = toCode.value;
-    return groupMatrix(swayDeg(code, clock.value, lifeOn), 100, swayPivotY(code, BAR, STAND), 0, 0, IS_WEB);
+    return groupMatrix(swayDeg(code, clock.value, lifeOn) + actSway(aCode.value, aT.value), 100, swayPivotY(code, BAR, STAND), 0, 0, IS_WEB);
   });
   // Výřez postavy se prolíná (žádný skok v polovině přechodu): krytí trupu a končetin, busty, spodní ořez.
   const fullProps = useAnimatedProps(() => ({ opacity: Math.max(0, Math.min(1, live.value[21] ?? 1)) }));
@@ -275,7 +294,7 @@ function MascotSvg({
   const clipId = `mclip${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const clipOn = layer === 'all';
   const clipH = pose.clipY > 0 ? pose.clipY : 200;
-  const propMotion = { clock, code: toCode, entry: extrasIn, on: lifeOn };
+  const propMotion = { clock, code: toCode, entry: extrasIn, on: lifeOn, actCode: aCode, actT: aT, live, target };
   const limb = (d: string, w: number, key: string, animatedProps: Partial<{ d: string }>) => (
     <AnimatedPath key={key} d={d} stroke={ink.fur} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" fill="none" animatedProps={animatedProps} />
   );
@@ -331,6 +350,8 @@ function MascotSvg({
                   <AnimatedEllipse cx={head.cx + eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeR} />
                   {/* Obličej pózy (smích, zatnutí, čelenka): ve skupině hlavy, jde s jejím náklonem. */}
                   {propsFace(pose.extra, ink, eyeCy)}
+                  {/* Zatnutí v posledních 3 s výdrže na mini opičce, která zůstává v póze cviku. */}
+                  {effAct?.id === 'strain' && pose.extra !== 'clench' ? propsFace('clench', ink, eyeCy) : null}
                 </AnimatedG>
               </AnimatedG>
             </>
@@ -339,6 +360,9 @@ function MascotSvg({
         </AnimatedG>
         </G>
         {drawBack ? <PropLayer testID="mascot-props-front" nodes={propsFront(pose.extra, pose, ink)} extrasIn={extrasIn} /> : null}
+        {drawBack && !reduced && (effAct?.id === 'grow' || effAct?.id === 'eveningTowel') ? (
+          <ActExtras kind={effAct.id} t={aT} live={live} ink={ink} />
+        ) : null}
         </PropMotionContext.Provider>
       </Svg>
     </Animated.View>
@@ -428,4 +452,40 @@ function PropLayer({ nodes, extrasIn, testID }: { nodes: React.ReactElement[]; e
   const fade = useAnimatedProps(() => ({ opacity: Math.min(1, extrasIn.value * 1.5) }));
   if (!nodes.length) return null;
   return <AnimatedG testID={testID} animatedProps={fade}>{nodes}</AnimatedG>;
+}
+
+/**
+ * Tečky akce, které nepatří žádné póze: kruh růstu kolem opice (`grow`, tečky rostou po obvodu) a ručník
+ * kroužící nad dlaní (`eveningTowel`, dlaň z živé kostry). Worklety čtou jen sdílené hodnoty a čísla.
+ */
+function ActExtras({ kind, t, live, ink }: { kind: 'grow' | 'eveningTowel'; t: SharedValue<number>; live: SharedValue<number[]>; ink: ReturnType<typeof monkeyInk> }) {
+  if (kind === 'grow') {
+    return <G testID="mascot-act-grow">{Array.from({ length: GROW_DOTS }, (_, i) => <GrowDot key={i} i={i} t={t} fill={ink.prop} />)}</G>;
+  }
+  return <G testID="mascot-act-towel">{Array.from({ length: TOWEL_DOTS }, (_, i) => <TowelDot key={i} i={i} t={t} live={live} fill={ink.prop} />)}</G>;
+}
+
+const TOWEL_DOTS = 8;
+const PROP_DOT = PROP.dot;
+
+function GrowDot({ i, t, fill }: { i: number; t: SharedValue<number>; fill: string }) {
+  const n = GROW_DOTS, CY = GROW_R.cy;
+  const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+  const ca = Math.cos(a), sa = Math.sin(a);
+  const p = useAnimatedProps(() => {
+    const g = growDot(t.value, i, n);
+    const d = g[1] ?? 0;
+    return { r: g[0] ?? 0, cx: 100 + ca * d, cy: CY + sa * d, opacity: g[2] ?? 0 };
+  });
+  return <AnimatedCircle cx={100} cy={CY} r={0} fill={fill} animatedProps={p} />;
+}
+
+function TowelDot({ i, t, live, fill }: { i: number; t: SharedValue<number>; live: SharedValue<number[]>; fill: string }) {
+  const n = TOWEL_DOTS;
+  const p = useAnimatedProps(() => {
+    const h = handAt(live.value, 1);
+    const d = towelDot(t.value, i, n, h[0] ?? 0, h[1] ?? 0);
+    return { cx: d[0] ?? 0, cy: d[1] ?? 0, opacity: d[2] ?? 0 };
+  });
+  return <AnimatedCircle cx={100} cy={100} r={PROP_DOT} fill={fill} opacity={0} animatedProps={p} />;
 }
