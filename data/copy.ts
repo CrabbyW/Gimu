@@ -395,6 +395,18 @@ export const copy = {
     streakLoss: 'Simulate streak loss', resetTime: 'Reset time offset', now: 'NOW', offset: 'OFFSET',
     offsetValue: (d: number, h: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)} D ${h} H`, // nezlomitelné mezery: telemetrie se nesmí zalomit
     noSeason: 'No season is running right now to skip.', done: 'Done',
+    // Repertoár 26 animací (/dev): tlačítko pro každou akci na velké opici, v pořadí plánu.
+    actions: 'Monkey actions', actionsPlayAll: 'Play all', actionsStop: 'Stop', actionsNow: 'NOW PLAYING',
+    actionPlay: (label: string) => `Play: ${label}`,
+    action: {
+      warmup: 'Warm-up', boredSit: 'Bored on a plate', sleep: 'Falls asleep · tap to wake', gaze: 'Follows your finger',
+      pointStart: 'Points at Start', plateHop: 'Hops to the next plate', handstandPlate: 'Handstand on the plate',
+      headShake: 'Head tap', giggle: 'Belly tap', flip: 'Rapid taps · flip', hangFinger: 'Hangs on your finger',
+      trainAlong: 'Trains with you', strain: 'Last 3 s of a hold', wipeSweat: 'Rest · sweat and a sip', shrug: 'Skipped exercise',
+      liftBarbell: 'Lesson done · barbell', flameJump: 'Streak record', climbPodium: 'League promotion', grow: 'Monkey grows',
+      morningStretch: 'Morning stretch', eveningTowel: 'Evening towel', waveRun: 'Welcome back', streakAtRisk: 'Streak at risk',
+      sadThenPoint: 'Streak lost', wifiShake: 'Offline', ropeTangle: 'Something broke', peekBox: 'Nothing here yet',
+    } as Record<string, string>,
   },
   season: {
     errorWhat: 'the season', close: 'Close',

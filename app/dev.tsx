@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
 import { DotGallery } from '@/components/dots/DotGallery';
 import { MascotGallery } from '@/components/mascot/MascotGallery';
+import { RepertoireLab } from '@/components/mascot/RepertoireLab';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/choreo';
 import { intro } from '@/lib/motion';
@@ -97,6 +98,7 @@ export default function DevScreen() {
           </Pressable>
         </Group>
         {note ? <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">{note}</Text> : null}
+        <RepertoireLab />
         <MascotGallery />
         <DotGallery />
       </ScrollView>
