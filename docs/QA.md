@@ -816,3 +816,24 @@ Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičk
 3. League: pohár a medaile na pódiu (48 pt) a ve vlastním řádku (32 pt) jsou čitelné.
 4. Reduce Motion zapnuto: opice i rekvizity stojí, splash vynechá ústup nahoru.
 5. Nastavení: opička 96 pt a podpis jsou nad home indikátorem a reset zůstává dosažitelný. VoiceOver opičku přeskočí jako dekoraci.
+
+## QA kolo: 8309364..d713736 (splash 03 „Tečkový nápis“), HEAD d713736, 2026-10-13
+
+**Brány:** tsc 0, eslint 0 (vč. `local/no-worklet-object-capture`), jest 103 sad / 988 OK, test:node OK, `npm run e2e` **172/172 passed** (baseline nepřepsány), `npm run e2e:perf` 5/5. Nativní log `$TEMP/expogo.log`: 0 řádků ERROR, ale zapsán 08:50, tj. **starší než HEAD** (09:35) — bundle splashe 03 na iPhonu neproběhl (boss: stáhnout čerstvý bundle, 8084 jsem nerestartoval).
+
+**Ověřeno:**
+- ✅ Choreografie (kód + snímky motion-agenta splash3-*): sken OPICE po sloupcích, hlava vykoukne nad O, tečka nad I přes `dark.live` (jediná barva, mimo theme žádný hex), mrknutí + `introPulse`, smrštění k nadpisu mapy a prolnutí.
+- ✅ Odjezd čeká na `ready`; tap skip, Reduce Motion (statický konec), NO_INTRO/HOLD pokryté jest testem a e2e `flows/intro.spec.ts`.
+- ✅ Worklety čtou jen sdílené hodnoty a čísla (eslint pravidlo zelené).
+- ✅ Tab bar a ostatní obrazovky beze změny (diff se jich nedotýká, vizuální sada zelená na w320–w430 × dark/light, bez ořezu).
+- ⚠️ Mezisnímek prolnutí (~1450 ms) krátce ukazuje nápis OPICE přes nadpis „Balance 101“ — záměrný crossfade, ověřit na iPhonu, že nepůsobí jako skok (motion-agent).
+- ⚠️ Přetrvává: jest neukončený worker.
+
+**Verdikt: SCHVÁLENO (HEAD d713736), s podmínkou brány 1b** — po čerstvém bundlu 0 ERROR; do té doby rating 85/85 „čeká na iPhone“.
+
+**iPhone checklist:**
+1. Splash: sken OPICE bez bliknutí po nativním splash, hlava nad O, červená tečka nad I.
+2. Mrknutí opice je cítit jako lehká haptika (jednou).
+3. Odjezd do nadpisu mapy a prolnutí plyne bez skoku a záškubu.
+4. Ťuknutí splash přeskočí; s Reduce Motion se ukáže statický konec bez pohybu.
+5. Nápis a hlava jsou celé v safe area (notch / Dynamic Island).

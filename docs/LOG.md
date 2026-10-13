@@ -1337,3 +1337,6 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - Otevřené:
   - Na iPhonu ověřit haptiku při mrknutí, plynulost 31 sloupců a ústupu a cíl nadpisu pod notchem. Cíl bere `initialWindowMetrics` (splash je mimo SafeAreaProvider).
   - Nápis přistává ~10 pt pod nadpisem mapy, protože v tu chvíli už mizí. Kdyby to na iPhonu bylo vidět, doladit `titleY`.
+
+## qa-agent — kolo splash 03 (8309364..d713736)
+Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdikt SCHVÁLENO pro d713736 s podmínkou nativního logu (expogo.log starší než HEAD, 0 ERROR). Otevřené: ověřit prolnutí nápisu s nadpisem mapy na iPhonu.
