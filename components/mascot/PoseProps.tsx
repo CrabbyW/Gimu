@@ -61,6 +61,22 @@ function arrowHead(cx: number, cy: number, rad: number, deg: number, fill: strin
   const d = `M${x + tx * s} ${y + ty * s} L${x - tx * s * 0.4 + nx * s * 0.8} ${y - ty * s * 0.4 + ny * s * 0.8} L${x - tx * s * 0.4 - nx * s * 0.8} ${y - ty * s * 0.4 - ny * s * 0.8} Z`;
   return <Path key={key} d={d} fill={fill} />;
 }
+
+/** Tečky po elipse natočené o `rot` (°); `t0`–`t1` = rozsah parametru ve stupních (90 = spodní bod = vpředu). */
+function dotEllipse(cx: number, cy: number, rx: number, ry: number, rot: number, t0: number, t1: number, n: number, fill: string, key: string, r: number = R): Node[] {
+  const q = (rot * Math.PI) / 180;
+  return Array.from({ length: n }, (_, i) => {
+    const t = ((t0 + ((t1 - t0) * i) / Math.max(1, n - 1)) * Math.PI) / 180;
+    const x = Math.cos(t) * rx, y = Math.sin(t) * ry;
+    return <Circle key={`${key}${i}`} cx={cx + x * Math.cos(q) - y * Math.sin(q)} cy={cy + x * Math.sin(q) + y * Math.cos(q)} r={r} fill={fill} />;
+  });
+}
+/** Kotouč činky z čela: `cols` sloupců teček po `PROP.barbell.col`, výška `h` kolem `cy`. */
+function dotColumn(x: number, cy: number, h: number, cols: number, fill: string, key: string): Node[] {
+  const out: Node[] = [];
+  for (let c = 0; c < cols; c++) out.push(...dotLine(x + c * PROP.barbell.col, cy - h / 2, x + c * PROP.barbell.col, cy + h / 2, fill, `${key}c${c}_`, R, PROP.barbell.col + 1));
+  return out;
+}
 /** Lupa: dvojitý tah (světlý lem pod tmavým), aby byla vidět na srsti i na obličeji. */
 /** Jedna pohyblivá část (index `i` z `n`) s pivotem (cx, cy). */
 const part = (key: string, i: number, n: number, cx: number, cy: number, nodes: Node[]): Node => (
@@ -121,6 +137,27 @@ export function propsBack(extra: PoseExtra | null, pose: MascotPose, ink: PropIn
       const h = handWorld(pose, 1);
       return [part('rpM', 0, 1, h.x, h.y, dotLine(h.x + 6, h.y, 196, h.y, ink.prop, 'rp'))];
     }
+    case 'seatPlate': { // Kotouč pod sedem: horní obvod a spodní (přední) hrana z teček, nohy visí přes čelo.
+      const k = PROP.seatPlate;
+      return [
+        ...dotEllipse(C, k.cy, k.rx, k.ry, 0, 0, 360 - 360 / k.dots, k.dots, ink.prop, 'spT'),
+        ...dotEllipse(C, k.cy + k.h, k.rx, k.ry, 0, 0, 180, Math.round(k.dots / 2) + 1, ink.prop, 'spB'),
+        ...dotLine(C - k.rx, k.cy, C - k.rx, k.cy + k.h, ink.prop, 'spL'),
+        ...dotLine(C + k.rx, k.cy, C + k.rx, k.cy + k.h, ink.prop, 'spR'),
+      ];
+    }
+    case 'pointDots': { // Tři tečky ve směru natažené paže, zmenšují se (směr k Startu).
+      const h = handWorld(pose, 1);
+      const j = handWorld({ ...pose, reach: pose.reach * 0.5 }, 1);
+      const len = Math.hypot(h.x - j.x, h.y - j.y) || 1;
+      const ux = (h.x - j.x) / len, uy = (h.y - j.y) / len;
+      const g = PROP.pointDots.gap;
+      return [part('pdM', 0, 1, h.x, h.y, Array.from({ length: PROP.pointDots.n }, (_, i) => (
+        <Circle key={`pd${i}`} cx={h.x + ux * g * (i + 1.4)} cy={h.y + uy * g * (i + 1.4)} r={R * (1 - i * 0.22)} fill={ink.prop} />
+      )))];
+    }
+    case 'tangle': // Zadní polovina smyček lana (za tělem).
+      return PROP.tangle.loops.flatMap(([x, y, rx, ry, rot], i) => dotEllipse(x + pose.dx, y + pose.dy, rx, ry, rot, 180, 360, 9, ink.prop, `tgB${i}`));
     default:
       return [];
   }
@@ -225,6 +262,118 @@ export function propsFront(extra: PoseExtra | null, pose: MascotPose, ink: PropI
         <Circle key="md" cx={cx} cy={cy + s * 0.55} r={s * 0.85} fill={ink.face} />,
         <Circle key="mi" cx={cx} cy={cy + s * 0.55} r={s * 0.5} stroke={ink.fur} strokeWidth={1.2} fill="none" />,
       ])];
+    }
+    case 'barbell': { // Tyč nad dlaněmi, kotouče z teček; vnější pravý kotouč = část 1 (nacvaknutí).
+      const b = PROP.barbell;
+      const l = handWorld(pose, -1), r = handWorld(pose, 1);
+      const y = Math.min(l.y, r.y) - b.lift;
+      const x0 = l.x - b.overhang, x1 = r.x + b.overhang;
+      return [
+        part('bbM', 0, 2, (l.x + r.x) / 2, y, [
+          ...dotLine(x0, y, x1, y, ink.prop, 'bb', R + 0.2),
+          ...dotColumn(l.x - b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbLi'),
+          ...dotColumn(l.x - b.outer.dx - b.col * 2, y, b.outer.h, 2, ink.fur, 'bbLo'),
+          ...dotColumn(r.x + b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbRi'),
+        ]),
+        part('bbClick', 1, 2, r.x + b.outer.dx, y, dotColumn(r.x + b.outer.dx, y, b.outer.h, 2, ink.fur, 'bbRo')),
+      ];
+    }
+    case 'towelBottle': { // Ručník přes levé rameno (na srsti světlý), lahev v levé ruce, dvě kapky potu.
+      const t = PROP.towel, bt = PROP.bottle;
+      const h = handWorld(pose, -1);
+      const bx = h.x - bt.w / 2, by = h.y - bt.h / 2;
+      const bottle = haloed(dotPoly([[bx, by], [bx + bt.w, by], [bx + bt.w, by + bt.h], [bx, by + bt.h], [bx, by]], ink.prop, 'bt', R * 0.85), ink.face, 'bt');
+      return [
+        ...dotLine(t.x + pose.dx, t.top + pose.dy, t.x + pose.dx, t.bottom + pose.dy, ink.face, 'twA'),
+        ...dotLine(t.x + t.gap + pose.dx, t.top + pose.dy, t.x + t.gap + pose.dx, t.bottom - t.gap + pose.dy, ink.face, 'twB'),
+        part('btM', 0, 2, h.x, h.y, [
+          ...bottle,
+          <Rect key="btn" x={h.x - bt.neck / 2} y={by - bt.neck - 2} width={bt.neck} height={bt.neck} rx={1} fill={ink.prop} />,
+        ]),
+        part('swM', 1, 2, PROP.sweat[0][0] + pose.dx, PROP.sweat[0][1] + pose.dy, PROP.sweat.map(([x, y], i) => (
+          <Circle key={`sw${i}`} cx={x + pose.dx} cy={y + pose.dy} r={R * (1 - i * 0.2)} fill={ink.prop} />
+        ))),
+      ];
+    }
+    case 'headband': { // Ručník kolem krku: dva pruhy po hrudi (čelenka je ve vrstvě obličeje).
+      const n = PROP.neckTowel;
+      return ([-1, 1] as const).flatMap((side) => [
+        ...dotLine(cx + side * n.dx, n.top + pose.dy, cx + side * n.dx, n.bottom + pose.dy, ink.face, `nt${side}a`),
+        ...dotLine(cx + side * (n.dx + n.gap), n.top + pose.dy, cx + side * (n.dx + n.gap), n.bottom - n.gap + pose.dy, ink.face, `nt${side}b`),
+      ]);
+    }
+    case 'watch': { // Hodinky na levém zápěstí: světlý ciferník, ručička = jediná živá tečka.
+      const w = PROP.watch;
+      const h = handWorld(pose, -1);
+      return [
+        part('wM', 0, 2, h.x, h.y, [
+          <Rect key="ws" x={h.x - w.strap / 2} y={h.y - w.r - w.strap} width={w.strap} height={(w.r + w.strap) * 2} rx={w.strap / 2} fill={ink.face} />,
+          <Circle key="wf" cx={h.x} cy={h.y} r={w.r} fill={ink.face} />,
+          <Circle key="wr" cx={h.x} cy={h.y} r={w.r - 2.4} stroke={ink.fur} strokeWidth={1.2} fill="none" />,
+        ]),
+        part('wL', 1, 2, h.x, h.y, [
+          <Circle key="wl" testID="mascot-prop-live" cx={h.x} cy={h.y - 2.2} r={2.2} fill={ink.live} />,
+        ]),
+      ];
+    }
+    case 'tangle': { // Přední polovina smyček (s lemem, čitelná na srsti) a volný konec lana k zemi.
+      const g = PROP.tangle;
+      const loops = g.loops.flatMap(([x, y, rx, ry, rot], i) => dotEllipse(x + pose.dx, y + pose.dy, rx, ry, rot, 0, 180, 10, ink.prop, `tgF${i}`));
+      return [part('tgM', 0, 1, cx, cy, [...haloed(loops, ink.face, 'tgF'), ...dotPoly(g.tail, ink.prop, 'tgT')])];
+    }
+    case 'openBox': { // Otevřená krabice před tělem: čtverec z teček a odklopené chlopně.
+      const b = PROP.openBox;
+      const x0 = cx - b.w / 2, x1 = cx + b.w / 2, y0 = b.y + pose.dy, y1 = y0 + b.h;
+      return [part('obM', 0, 1, cx, y1, haloed([
+        ...dotPoly([[x0, y0], [x0, y1], [x1, y1], [x1, y0], [x0, y0]], ink.prop, 'ob'),
+        ...dotLine(x0, y0, x0 - b.flap * 0.75, y0 - b.flap, ink.prop, 'obL').slice(1),
+        ...dotLine(x1, y0, x1 + b.flap * 0.75, y0 - b.flap, ink.prop, 'obR').slice(1),
+      ], ink.face, 'ob'))];
+    }
+    default:
+      return [];
+  }
+}
+
+/**
+ * Vrstva obličeje: kreslí se ve skupině hlavy (souřadnice V2 bez posunu pózy), takže jde s náklonem i
+ * reakcemi hlavy. Smích (obloučky nad zavřenýma očima + otevřená pusa), zatnutí (obočí + zuby), čelenka.
+ */
+export function propsFace(extra: PoseExtra | null, ink: PropInk, eyeCy: number): Node[] {
+  const H = V2.head, E = V2.eyes;
+  switch (extra) {
+    case 'laugh': {
+      const L = PROP.laugh, m = L.mouth;
+      const arc = (x: number, key: string) => (
+        <Path key={key} d={`M${x - E.rx - 1} ${eyeCy} Q${x} ${eyeCy - L.arcH * 2} ${x + E.rx + 1} ${eyeCy}`} stroke={ink.fur} strokeWidth={PROP.faceStroke} strokeLinecap="round" fill="none" />
+      );
+      return [
+        arc(H.cx - E.dx, 'lgL'), arc(H.cx + E.dx, 'lgR'),
+        <Path key="lgM" d={`M${H.cx - m.w / 2} ${m.cy} H${H.cx + m.w / 2} Q${H.cx + m.w / 2} ${m.cy + m.h} ${H.cx} ${m.cy + m.h} Q${H.cx - m.w / 2} ${m.cy + m.h} ${H.cx - m.w / 2} ${m.cy} Z`} fill={ink.fur} />,
+      ];
+    }
+    case 'clench': {
+      const b = PROP.clench.brow, t = PROP.clench.teeth;
+      const by = E.cy + b.dy;
+      const brow = (side: -1 | 1) => {
+        const x = H.cx + side * E.dx;
+        return <Path key={`cb${side}`} d={`M${x + (side * b.len) / 2} ${by} L${x - (side * b.len) / 2} ${by + b.slant}`} stroke={ink.fur} strokeWidth={PROP.faceStroke} strokeLinecap="round" />;
+      };
+      const tx = H.cx - t.w / 2, ty = t.cy - t.h / 2;
+      return [
+        brow(-1), brow(1),
+        <Rect key="ct" x={tx} y={ty} width={t.w} height={t.h} rx={2} fill={ink.fur} />,
+        <Path key="ctl" d={`M${tx + 2} ${t.cy} H${tx + t.w - 2} M${H.cx - t.w / 4} ${ty + 1} V${ty + t.h - 1} M${H.cx} ${ty + 1} V${ty + t.h - 1} M${H.cx + t.w / 4} ${ty + 1} V${ty + t.h - 1}`} stroke={ink.face} strokeWidth={1} />,
+      ];
+    }
+    case 'headband': {
+      const k = PROP.headband;
+      const rows = Array.from({ length: k.rows }, (_, r) => {
+        const y = k.y + r * k.rowGap;
+        const half = Math.sqrt(H.r * H.r - (y - H.cy) ** 2) - 3;
+        return dotLine(H.cx - half, y, H.cx + half, y, ink.face, `hb${r}_`, R, k.step);
+      }).flat();
+      return [...rows, ...k.tail.map(([x, y], i) => <Circle key={`hbt${i}`} cx={x} cy={y} r={R} fill={ink.prop} />)];
     }
     default:
       return [];

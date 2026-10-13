@@ -383,7 +383,14 @@ export const copy = {
   },
   dev: {
     title: 'Dev menu', demo: 'Load demo profile',
-    dots: 'Dots', poses: 'Monkey poses', poseAuto: 'Play all poses', posePlay: (id: string) => `Play pose ${id}`, dotState: { locked: 'Locked', current: 'Current', done: 'Done' }, reset: 'Reset app', resetConfirm: 'Delete all data? The theme stays.', xp: '+500 XP',
+    dots: 'Dots', poses: 'Monkey poses', repertoire: 'Repertoire poses',
+    // Popisky nových póz repertoáru (galerie /dev): co opička dělá a kdy.
+    repertoireCaption: {
+      warmup: 'Warm-up · map idle', boredSit: 'Bored on a plate · map idle', pointStart: 'Points at Start · no tap 25 s',
+      giggle: 'Giggle · belly tap', strain: 'Strain · last 3 s of a hold', wipeSweat: 'Towel and bottle · rest',
+      liftBarbell: 'Barbell overhead · lesson done', eveningTowel: 'Headband and towel · evening',
+      streakAtRisk: 'Checks the watch · streak at risk', ropeTangle: 'Tangled in rope · error', peekBox: 'Peeks into the box · empty',
+    } as Record<string, string>, poseAuto: 'Play all poses', posePlay: (id: string) => `Play pose ${id}`, dotState: { locked: 'Locked', current: 'Current', done: 'Done' }, reset: 'Reset app', resetConfirm: 'Delete all data? The theme stays.', xp: '+500 XP',
     stage: (s: number | null) => `Monkey stage: ${s ?? 'auto'}`, seasonEnd: 'Jump to season end',
     streakLoss: 'Simulate streak loss', resetTime: 'Reset time offset', now: 'NOW', offset: 'OFFSET',
     offsetValue: (d: number, h: number) => `${d >= 0 ? '+' : '−'}${Math.abs(d)} D ${h} H`, // nezlomitelné mezery: telemetrie se nesmí zalomit

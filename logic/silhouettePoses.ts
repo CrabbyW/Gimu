@@ -35,6 +35,13 @@ type P = [number, number];
 const pose = (head: P, neck: P, hip: P, elbowL: P, handL: P, elbowR: P, handR: P, kneeL: P, footL: P, kneeR: P, footR: P): Pose =>
   ({ head, joints: { neck, hip, elbowL, handL, elbowR, handR, kneeL, footL, kneeR, footR } });
 
+/** Zvětšení pózy `k`× kolem bodu (cx, zem): kompaktní cvik zaplní rámec, chodidla/dlaně zůstanou na zemi. */
+const grow = (p: Pose, k: number, cx: number): Pose => {
+  const f = ([x, y]: Pt): P => [Math.round((cx + (x - cx) * k) * 10) / 10, Math.round((GROUND_Y + (y - GROUND_Y) * k) * 10) / 10];
+  const j = p.joints;
+  return pose(f(p.head), f(j.neck), f(j.hip), f(j.elbowL), f(j.handL), f(j.elbowR), f(j.handR), f(j.kneeL), f(j.footL), f(j.kneeR), f(j.footR));
+};
+
 /** Opakování = technika (nahoře / uprostřed / dole). Výdrž = poloha + jemný „dech“ (≤ 4 jednotky),
  *  žádný předstíraný pohyb. */
 export const SILHOUETTES: Readonly<Record<SilhouetteId, PoseLoop>> = {
@@ -77,10 +84,11 @@ export const SILHOUETTES: Readonly<Record<SilhouetteId, PoseLoop>> = {
   lsit: { kind: 'hold', keys: [
     pose([58,39],[58,49],[58,83],[48,67],[46,86],[68,67],[70,86],[76,83],[96,82],[76,84],[96,83]),
     pose([58,37],[58,47],[58,81],[48,66],[46,86],[68,66],[70,86],[76,81],[96,80],[76,82],[96,81])] },
-  // Dip: propnuté paže na bradlech → lokty 90°; nohy celou dobu ve vzduchu (pokrčená kolena), bradla jako opora.
-  dip: { kind: 'reps', props: [[[30,63],[90,63]], [[34,63],[34,108]], [[86,63],[86,108]]], keys: [
-    pose([60,20],[60,30],[60,62],[48,46],[44,62],[72,46],[76,62],[57,82],[64,96],[63,82],[70,96]),
-    pose([60,34],[60,44],[60,76],[44,48],[44,62],[76,48],[76,62],[57,92],[70,100],[63,92],[76,100])] },
+  // Dip z boku (2026-10-13: zepředu se četl jako stoj): bradla = vodorovná tyč s nohami, ruce na ní u boků,
+  // lokty jdou dozadu do 90°, kolena pokrčená a chodidla vzadu (zkřížené kotníky) = jasně ve vzduchu.
+  dip: { kind: 'reps', props: [[[18,64],[102,64]], [[24,64],[24,108]], [[96,64],[96,108]]], keys: [
+    pose([56,20],[58,30],[60,62],[56,47],[54,63],[58,47],[56,63],[58,82],[74,92],[60,82],[76,91]),
+    pose([52,34],[56,44],[62,76],[70,52],[54,63],[72,52],[56,63],[60,94],[76,102],[62,94],[78,101])] },
   // Shyb: vis → půl cesty → brada nad hrazdou.
   pullup: { kind: 'reps', keys: [
     pose([60,40],[60,50],[60,82],[44,30],[46,12],[76,30],[74,12],[56,96],[56,108],[64,96],[64,108]),
@@ -94,10 +102,11 @@ export const SILHOUETTES: Readonly<Record<SilhouetteId, PoseLoop>> = {
   bridge: { kind: 'reps', keys: [
     pose([24,100],[32,102],[66,98],[36,106],[48,108],[38,106],[50,108],[84,88],[92,108],[84,89],[94,108]),
     pose([24,100],[32,100],[66,80],[36,106],[48,108],[38,106],[50,108],[84,78],[92,108],[84,79],[94,108])] },
-  // Vrána: kolena na pažích, váha vpřed; dech = drobný přesun těžiště.
+  // Vrána: kolena na pažích, váha vpřed; dech = drobný přesun těžiště. Kreslená ×1.35 kolem dlaní
+  // (2026-10-13: na w320 byla drobná), zem zůstává na y = 108.
   crow: { kind: 'hold', keys: [
-    pose([44,75],[50,79],[70,69],[50,92],[50,108],[58,92],[58,108],[60,86],[80,86],[64,86],[82,86]),
-    pose([43,77],[49,81],[70,67],[50,93],[50,108],[58,93],[58,108],[59,85],[80,83],[63,85],[82,83])] },
+    grow(pose([44,75],[50,79],[70,69],[50,92],[50,108],[58,92],[58,108],[60,86],[80,86],[64,86],[82,86]), 1.35, 60),
+    grow(pose([43,77],[49,81],[70,67],[50,93],[50,108],[58,93],[58,108],[59,85],[80,83],[63,85],[82,83]), 1.35, 60)] },
   // Výskok: dřep → odraz (propnutí) → let.
   jump: { kind: 'reps', keys: [
     pose([56,40],[58,50],[66,78],[46,54],[34,52],[50,56],[36,54],[46,86],[54,108],[50,88],[62,108]),

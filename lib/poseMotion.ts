@@ -51,7 +51,7 @@ export const LIFE_CLOCK_MS = 60000;
 /** Kód pózy = pořadí v `MASCOT_POSE_IDS`; všech 32 póz má živou smyčku. */
 export const POSE_CODE = Object.fromEntries(MASCOT_POSE_IDS.map((id, i) => [id, i])) as Record<MascotPoseId, number>;
 /** Počet póz se živou smyčkou v `applyLife` (kódy 0 … LIVE_POSES − 1) = všechny. */
-export const LIVE_POSES = 32;
+export const LIVE_POSES = 43;
 /** Kódy póz z reference (číselné konstanty: worklet nesmí zachytit objekt `POSE_CODE`; test hlídá shodu). */
 export const PC = {
   loading: 8, peek: 9, wait: 10, pull: 11, sync: 12, success: 13, fail: 14, warning: 15, offline: 16, empty: 17,
@@ -70,6 +70,8 @@ export const LIFE_MS = [
   5000, 5000, 1000, 6000, 4000, 2000, 1500, 600,
   2400, 4000, 6000, 2000, 3000, 3000, 4000, 1200, 3000, 3000, 4000, 2000, 4000, 6000, 6000, 3000,
   1200, 3000, 3000, 2000, 2000, 3000, 2000, 5000,
+  // Repertoár (design-agent, statické pózy; vlastní pohyb dodá motion-agent): obecná živá smyčka.
+  4000, 4000, 5000, 3000, 3000, 2000, 1500, 6000, 4000, 3000, 4000,
 ] as const;
 /** Vedlejší periody (dělí `LIFE_CLOCK_MS`): ťukání nohou, mihotání plamene, třes výdrže, oběh tečkového kruhu profilu. */
 export const SUB_MS = { tap: 1500, flicker: 600, tremorA: 200, tremorB: 300, avatarOrbit: 6000 } as const;
@@ -273,6 +275,11 @@ function lifeRef(out: number[], v: readonly number[], code: number, clock: numbe
     const st = 0.5 * (1 - Math.cos(p * T));
     add(14, A.stretchReach * st); add(10, -2 * st);
     add(8, 2 * s); add(13, -2 * sl);
+    ears(A.idleHeadDeg);
+  } else if (code >= 32) {
+    // Repertoár (design-agent, dočasně): jen dech a hlava, vlastní pohyb pózy dodá motion-agent.
+    add(10, -A.chestBreath * 0.5 * (1 - Math.cos(p * T)));
+    add(13, -A.idleHeadDeg * sl);
     ears(A.idleHeadDeg);
   }
 }

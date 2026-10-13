@@ -1,16 +1,16 @@
 import { IDLE_ACTIONS } from '@/logic/mascotIdle';
 import {
-  limbEnd, MASCOT_POSE_GRID, MASCOT_POSE_IDS, MASCOT_POSES, mixPose, poseForAppState, poseForIdle, poseForLeagueRank, poseForMood,
+  limbEnd, MASCOT_POSE_GRID, MASCOT_POSE_IDS, MASCOT_POSES, mixPose, MASCOT_REPERTOIRE_POSES, poseForAppState, poseForRepertoire, poseForIdle, poseForLeagueRank, poseForMood,
   poseForReaction, resolvePose,
 } from '@/logic/mascotPoses';
 
 test('statické pózy: původních 8 na začátku (kódy pohybu), celkem klid + sad + 30 z reference, čísla v mezích', () => {
   expect(MASCOT_POSE_IDS.slice(0, 8)).toEqual(['idle', 'wave', 'celebrate', 'sad', 'sleep', 'hang', 'pushup', 'run']);
-  expect(MASCOT_POSE_IDS).toHaveLength(32);
+  expect(MASCOT_POSE_IDS).toHaveLength(43);
   expect(MASCOT_POSE_GRID).toHaveLength(30);
   expect(new Set(MASCOT_POSE_GRID).size).toBe(30);
   // Každá póza mimo klid a smutek je v mřížce reference.
-  expect(MASCOT_POSE_IDS.filter((id) => !MASCOT_POSE_GRID.includes(id))).toEqual(['idle', 'sad']);
+  expect(MASCOT_POSE_IDS.filter((id) => !MASCOT_POSE_GRID.includes(id) && !MASCOT_REPERTOIRE_POSES.includes(id))).toEqual(['idle', 'sad']);
   for (const p of Object.values(MASCOT_POSES)) {
     for (const l of [p.armL, p.armR, p.legL, p.legR]) {
       expect(Math.abs(l.upper)).toBeLessThanOrEqual(180);
@@ -90,7 +90,7 @@ test('pózy z reference: výřez postavy, rekvizity, stojka hlavou dolů', () =>
   expect(MASCOT_POSES.stretch.armL.upper + MASCOT_POSES.stretch.armL.lower).toBeGreaterThan(180);
   // Bez rekvizity jsou jen čisté pohybové pózy.
   expect(MASCOT_POSE_IDS.filter((id) => MASCOT_POSES[id].extra === null))
-    .toEqual(['idle', 'wave', 'sad', 'pushup', 'run', 'flex', 'handstand', 'plank', 'stretch']);
+    .toEqual(['idle', 'wave', 'sad', 'pushup', 'run', 'flex', 'handstand', 'plank', 'stretch', 'warmup']);
 });
 
 test('mapování stavů appky na pózy', () => {
@@ -116,4 +116,25 @@ test('prolnutí s novými poli: ořez je číslo, výřez se přepne v polovině
   expect(mixPose(a, b, 0.5).clipY).toBeCloseTo(b.clipY / 2);
   expect(mixPose(a, b, 0.4).figure).toBe('full');
   expect(mixPose(a, b, 0.5).figure).toBe('head');
+});
+
+test('repertoár: každá akce má pózu nebo je čistý pohyb, nové pózy existují a jsou v galerii', () => {
+  expect(poseForRepertoire('liftBarbell')).toBe('liftBarbell');
+  expect(poseForRepertoire('wipeSweat')).toBe('wipeSweat');
+  expect(poseForRepertoire('giggle')).toBe('giggle');
+  expect(poseForRepertoire('strain')).toBe('strain');
+  expect(poseForRepertoire('flameJump')).toBe('streak');
+  expect(poseForRepertoire('climbPodium')).toBe('levelUp');
+  expect(poseForRepertoire('hangFinger')).toBe('hang');
+  expect(poseForRepertoire('wifiShake')).toBe('offline');
+  expect(poseForRepertoire('headShake')).toBeNull();
+  expect(poseForRepertoire('trainAlong')).toBeNull();
+  expect(MASCOT_REPERTOIRE_POSES).toHaveLength(11);
+  for (const id of MASCOT_REPERTOIRE_POSES) expect(MASCOT_POSE_IDS).toContain(id);
+  // Nové pózy jsou za původními (kódy pohybu 0–31 se neposunou).
+  expect(MASCOT_POSE_IDS.slice(32)).toEqual(expect.arrayContaining([...MASCOT_REPERTOIRE_POSES]));
+  expect(MASCOT_POSES.giggle.eyes).toBe('closed');
+  expect(MASCOT_POSES.strain.eyes).toBe('half');
+  // Činka: obě dlaně nad temenem.
+  expect(MASCOT_POSES.liftBarbell.armL.upper).toBeGreaterThan(150);
 });

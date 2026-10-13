@@ -4,12 +4,13 @@ import { PillButton } from '@/components/ui/PillButton';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
-import { MASCOT_POSE_GRID, type MascotPoseId } from '@/logic/mascotPoses';
+import { MASCOT_POSE_GRID, MASCOT_REPERTOIRE_POSES, type MascotPoseId } from '@/logic/mascotPoses';
 import { useTheme } from '@/theme';
 import { SvgMascot } from './SvgMascot';
 import { MASCOT_SIZES } from './types';
 
-const ALL: readonly MascotPoseId[] = ['idle', ...MASCOT_POSE_GRID];
+const ALL: readonly MascotPoseId[] = ['idle', ...MASCOT_POSE_GRID, ...MASCOT_REPERTOIRE_POSES];
+const GRID: readonly MascotPoseId[] = ['idle', ...MASCOT_POSE_GRID];
 
 /**
  * Dev menu: klid + 30 póz opice v2 v pořadí reference `opice-v2-pozy.png` (5 × 6) pro kontrolu obou režimů.
@@ -24,7 +25,7 @@ export function MascotGallery() {
       <SectionLabel>{copy.dev.poses}</SectionLabel>
       <PosePlayer pick={sel} onAuto={() => setSel(null)} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.m }}>
-        {ALL.map((id) => (
+        {GRID.map((id) => (
           <Pressable
             key={id}
             testID={`pose-${id}`}
@@ -36,6 +37,25 @@ export function MascotGallery() {
           >
             <SvgMascot stage={1} cosmetics={{}} mood="idle" pose={id} size={MASCOT_SIZES.M} breathe={false} hop={false} still decorative />
             <Text variant="label" tone={sel?.id === id ? 'text' : 'muted'}>{id}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {/* Repertoár 26 animací: nové statické pózy s popiskem, kdy je opička hraje. */}
+      <SectionLabel>{copy.dev.repertoire}</SectionLabel>
+      <View testID="mascot-repertoire" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.m }}>
+        {MASCOT_REPERTOIRE_POSES.map((id) => (
+          <Pressable
+            key={id}
+            testID={`pose-${id}`}
+            accessibilityRole="button"
+            accessibilityLabel={copy.dev.posePlay(id)}
+            accessibilityState={{ selected: sel?.id === id }}
+            onPress={() => setSel((s) => ({ id, key: (s?.key ?? 0) + 1 }))}
+            style={{ width: MASCOT_SIZES.M, gap: space.xs, borderBottomWidth: 2, borderColor: sel?.id === id ? c.text : 'transparent' }}
+          >
+            <SvgMascot stage={1} cosmetics={{}} mood="idle" pose={id} size={MASCOT_SIZES.M} breathe={false} hop={false} still decorative />
+            <Text variant="label" tone={sel?.id === id ? 'text' : 'muted'}>{id}</Text>
+            <Text variant="caption" tone="muted">{copy.dev.repertoireCaption[id] ?? ''}</Text>
           </Pressable>
         ))}
       </View>

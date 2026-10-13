@@ -27,7 +27,7 @@ export const V2 = {
  * = střed hlavy samotné (pózy `figure: 'head'`), hruď = 18 pt rekvizita na trupu 52 pt.
  */
 export const PROP = {
-  dot: 2.4, step: 7, halo: 1.4, liveDot: 5, arrow: 6,
+  dot: 2.4, step: 7, faceStroke: 2.6, halo: 1.4, liveDot: 5, arrow: 6,
   center: 100, ring: 76, ringDot: 5, avatar: 84,
   hourglass: { x: 162, top: 118, bottom: 170, half: 12 },
   flame: {
@@ -43,6 +43,29 @@ export const PROP = {
   loupe: { small: 12, big: 22, ring: 4, handle: 6 },
   chest: 16,
   bust: { cy: 140, rx: 50, ry: 40 },
+  // ——— Repertoár (2026-10-13) ———
+  /** Činka: tyč přes ruce (přesah za dlaně), kotouče = sloupce teček (vnitřní vyšší, vnější „nacvakne“). */
+  barbell: { overhang: 34, lift: 5, inner: { dx: 22, h: 30 }, outer: { dx: 30, h: 22 }, col: 4 },
+  /** Ručník přes levé rameno (2 sloupce teček na srsti), lahev v levé ruce, kapky potu u levého spánku. */
+  towel: { x: 82, top: 102, bottom: 140, gap: 5 },
+  bottle: { w: 12, h: 26, neck: 5 },
+  sweat: [[38, 38], [30, 50]] as const,
+  /** Čelenka (dvě řady teček přes temeno v souřadnicích hlavy) a ručník kolem krku (dva pruhy po hrudi). */
+  headband: { y: 37, rows: 2, rowGap: 5, step: 5, tail: [[136, 31], [142, 26], [146, 33]] as const },
+  neckTowel: { dx: 11, top: 100, bottom: 134, gap: 5 },
+  /** Hodinky na zápěstí: světlý ciferník na srsti, živá tečka = ručička (jediná červená pózy). */
+  watch: { r: 10, strap: 5 },
+  /** Lano: dvě šikmé smyčky přes trup (elipsy z teček) a volný konec k zemi. */
+  tangle: { loops: [[100, 120, 36, 7, -10], [100, 140, 34, 7, 12]] as const, tail: [[132, 146], [148, 166], [140, 186], [160, 192]] as const },
+  /** Obličej v souřadnicích hlavy: obloučky smíchu nad zavřenýma očima, otevřená pusa; zatnutí = obočí + zuby. */
+  laugh: { arcH: 5, mouth: { cy: 86, w: 14, h: 9 } },
+  clench: { brow: { dy: -12, len: 9, slant: 3 }, teeth: { cy: 88, w: 20, h: 7 } },
+  /** Kotouč pod sedem: horní plocha (elipsa teček) a čelo kotouče (pevná hmota). */
+  seatPlate: { cy: 154, rx: 52, ry: 9, h: 10, dots: 26 },
+  /** Tečky směru za ukazujícím prstem (zmenšují se). */
+  pointDots: { gap: 9, n: 3 },
+  /** Otevřená krabice před tělem: čtverec z teček a dvě odklopené chlopně. */
+  openBox: { w: 64, y: 150, h: 40, flap: 16 },
 } as const;
 
 /** Oči podle pózy: výška elipsy (zavřené = tenká linka, přivřené = nižší a níž). */

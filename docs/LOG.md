@@ -1386,3 +1386,27 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
   - Na iPhonu ověřit, že vypnutý odraz mapy nevadí, haptiku na prahu a skok opice pod notchem.
   - Na Androidu ověřit souběh gesta s nativním scrollem v Expo Go.
   - Hlava v indikátoru má velikost S (56) a je drobná. Případné zvětšení je na design-agentovi.
+
+### design-agent — statické pózy repertoáru 26 animací, 2026-10-13
+- 11 nových póz (`logic/mascotPoses.ts`, za původními 32 → kódy pohybu 0–31 beze změny): warmup, boredSit, pointStart, giggle, strain, wipeSweat, liftBarbell, eveningTowel, streakAtRisk, ropeTangle, peekBox. Nové rekvizity (`PoseExtra`) v `components/mascot/PoseProps.tsx`, geometrie v `PROP` (`monkeyGeometry.ts`).
+- `poseForRepertoire(RepertoireId)` (data + test): kde stačí existující póza, mapuje na ni (plateHop→run, handstandPlate→handstand, morningStretch→stretch, flameJump→streak, climbPodium/grow→levelUp, waveRun→wave, wifiShake→offline, hangFinger→hang, sadThenPoint→sad). `null` = čistý pohyb (headShake) nebo póza z cviku (trainAlong, mini velikost `size.mascotMini` 72 v theme).
+- Rozhodnutí:
+  - Činka: tyč z teček `prop` nad dlaněmi, kotouče jako sloupce teček `fur` (pevná hmota jako schody). Vnější pravý kotouč je samostatná `PropPart` (i = 1), motion ho „nacvakne“.
+  - Obličejové rekvizity (smích: obloučky nad zavřenýma očima + otevřená pusa; zatnutí: šikmé obočí + zuby; čelenka) jsou nová vrstva `propsFace` uvnitř skupiny hlavy v `SvgMascot`, takže jdou s náklonem a reakcemi hlavy. Ručník kolem krku je ve vrstvě vpředu.
+  - Červená: jen hodinky (streakAtRisk), jedna tečka = ručička. Ostatní nové pózy jsou monochromní.
+  - Paže se kreslí pod hlavou. Proto utírání potu nejde přes čelo: dlaň je u pravého spánku, kapky u levého.
+  - boredSit má svěšená ramena a sed na tečkovém kotouči. Brada v dlani se na 120 pt slévala do skvrny.
+  - warmup nemá rekvizitu, jen prsty na ramenou a lokty do stran.
+- `lib/poseMotion.ts` (motion soubor, zásah minimální kvůli testům): `LIFE_MS` +11 period, `LIVE_POSES` 43, dočasná obecná smyčka pro kódy ≥ 32 (dech + hlava). Vlastní pohyb dodá motion-agent.
+- Galerie /dev: sekce „Repertoire poses“ (`mascot-repertoire`), statické náhledy s popiskem, kdy se hrají. Ťuknutí přehraje pózu.
+- Silueta: dip je překreslený z boku (vodorovná bradla, lokty dozadu, kolena pokrčená, chodidla vzadu), zepředu se četl jako stoj. Crow je ×1.35 kolem dlaní (`grow`) a zem drží.
+- Běhy:
+  - tsc OK, eslint OK
+  - jest 105 sad / 1034 OK
+  - `npm run e2e` 176/176, baseline nepřepsána
+- Snímky: scratchpad `rep-dark.png`, `rep-light.png`.
+- Otevřené:
+  - Pohyb všech 11 póz (motion).
+  - Zapojení `poseForRepertoire` do přehrávače.
+  - Umístění mini opičky v lekci.
+  - Lahev ve wipeSweat je na 120 pt drobná. Při pohybu zvážit větší `PROP.bottle`.

@@ -73,11 +73,11 @@ test.each(MASCOT_POSE_IDS)('póza %s se vykreslí: hlava, obě oči, končetiny 
 test('rekvizity: červená jen tam, kde je v referenci (loader, varování, zvonek, plamen, oslava)', () => {
   const { c } = buildTheme('dark', null);
   const reds = MASCOT_POSE_IDS.filter((pose) => render({ pose }).findAllByType(Circle).some((n) => n.props.fill === c.live));
-  expect(reds.sort()).toEqual(['celebrate', 'loading', 'notify', 'streak', 'warning']);
+  expect(reds.sort()).toEqual(['celebrate', 'loading', 'notify', 'streak', 'streakAtRisk', 'warning']);
   // Každá rekvizita je samostatná vrstva (za postavou nebo před ní).
   const layers = (pose: MascotPoseId) => byTestID(render({ pose }), 'mascot-props-back').length + byTestID(render({ pose }), 'mascot-props-front').length;
   for (const pose of MASCOT_POSE_IDS.slice(8)) {
-    if (['flex', 'handstand', 'plank', 'stretch'].includes(pose)) expect(layers(pose)).toBe(0);
+    if (['flex', 'handstand', 'plank', 'stretch', 'warmup', 'giggle', 'strain'].includes(pose)) expect(layers(pose)).toBe(0);
     else expect(layers(pose)).toBeGreaterThan(0);
   }
   expect(layers('idle')).toBe(0);
@@ -119,4 +119,10 @@ describe('vrstvy pro sezení na kotouči', () => {
     expect(mascotSeatY(1)).toBe(SEAT_Y);
     expect(SEAT_Y).toBe(V2.torso.y + V2.torso.h);
   });
+});
+
+test('repertoár: smích a zatnutí kreslí obličej ve skupině hlavy (víc tahů než klid)', () => {
+  const paths = (pose: MascotPoseId) => render({ pose }).findAllByType(Path).length;
+  expect(paths('giggle')).toBeGreaterThan(paths('idle'));
+  expect(paths('strain')).toBeGreaterThan(paths('idle'));
 });

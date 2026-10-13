@@ -1,6 +1,7 @@
 import type { Mood } from '@/types';
 import type { IdleActionId } from './mascotIdle';
 import type { ReactionId } from './mascotReactions';
+import type { RepertoireId } from './mascotRepertoire';
 
 /**
  * Statické pózy opice v2 (plán „vast-snuggling-sunbeam“, krok 1). Čistá čísla, žádné kreslení:
@@ -17,7 +18,10 @@ export type MascotPoseId =
   | 'success' | 'fail' | 'warning' | 'offline' | 'empty' | 'search'
   | 'notify' | 'inspect' | 'settings' | 'avatar' | 'locked'
   | 'streak' | 'trophy' | 'medal' | 'levelUp' | 'flex'
-  | 'handstand' | 'plank' | 'stretch';
+  | 'handstand' | 'plank' | 'stretch'
+  // Repertoár 26 animací (plán 2026-10-13-opice-26-animaci): nové statické pózy, pohyb dodá motion-agent.
+  | 'liftBarbell' | 'wipeSweat' | 'eveningTowel' | 'streakAtRisk' | 'ropeTangle'
+  | 'giggle' | 'strain' | 'boredSit' | 'pointStart' | 'warmup' | 'peekBox';
 
 export interface LimbPose { upper: number; lower: number }
 export type EyeState = 'open' | 'half' | 'closed';
@@ -30,7 +34,11 @@ export type PoseExtra =
   | 'ring' | 'ledge' | 'hourglass' | 'rope' | 'syncArrows'
   | 'check' | 'cross' | 'triangle' | 'wifiOff' | 'emptyBox' | 'loupe'
   | 'bell' | 'bigLoupe' | 'gear' | 'avatarRing' | 'padlock'
-  | 'flame' | 'cup' | 'medal' | 'stairs';
+  | 'flame' | 'cup' | 'medal' | 'stairs'
+  // Repertoár: činka (vnější pravý kotouč = oddělitelná část „nacvaknutí“), ručník + lahev, čelenka + ručník,
+  // hodinky (jediná živá tečka), zamotané lano, obličej smích / zatnutí (kreslí se ve skupině hlavy),
+  // kotouč pod sedem, tečky směru ukazování, otevřená krabice.
+  | 'barbell' | 'towelBottle' | 'headband' | 'watch' | 'tangle' | 'laugh' | 'clench' | 'seatPlate' | 'pointDots' | 'openBox';
 /** Co z postavy se kreslí: celá, busta (hlava + horní trup, profil) nebo jen hlava (loader, synchronizace, vykukování). */
 export type PoseFigure = 'full' | 'bust' | 'head';
 
@@ -164,6 +172,35 @@ export const MASCOT_POSES: Record<MascotPoseId, MascotPose> = {
   }),
   // Protahuje ruce nad hlavou, dlaně se potkají nad temenem.
   stretch: pose({ dy: 14, armL: { upper: 150, lower: 65 }, armR: { upper: 150, lower: 65 }, reach: 3.3, eyes: 'closed' }),
+  // ——— Repertoár (statické kresby, design-agent 2026-10-13) ———
+  // Činka nad hlavou: dlaně široko nad temenem, tyč s kotouči leží nad rukama; široký stoj.
+  liftBarbell: pose({
+    dy: 10, armL: { upper: 160, lower: 15 }, armR: { upper: 160, lower: 15 }, legL: { upper: 14, lower: -4 }, legR: { upper: 14, lower: -4 },
+    reach: 2.8, extra: 'barbell',
+  }),
+  // Pauza: pravá dlaň u spánku (utírá pot), kapky u levého spánku, ručník přes levé rameno, v levé ruce lahev.
+  wipeSweat: pose({ armR: { upper: 137, lower: 57 }, armL: { upper: 26, lower: 0 }, reach: 2.3, eyes: 'half', extra: 'towelBottle' }),
+  // Večer: čelenka přes temeno a ručník kolem krku, ospale přivřené oči, ruce volně.
+  eveningTowel: pose({ eyes: 'half', armL: { upper: 10, lower: 0 }, armR: { upper: 10, lower: 0 }, extra: 'headband' }),
+  // Série v ohrožení: levé zápěstí s hodinkami před hrudí, hlava skloněná k nim.
+  streakAtRisk: pose({ armL: { upper: 50, lower: -150 }, reach: 1.2, head: { dx: 0, dy: 4, tilt: 0 }, extra: 'watch' }),
+  // Chyba: paže přitažené k tělu a přes ně dvě smyčky lana, konec visí k zemi.
+  ropeTangle: pose({ eyes: 'half', armL: { upper: 6, lower: 0 }, armR: { upper: 6, lower: 0 }, legL: { upper: 2, lower: 0 }, legR: { upper: 2, lower: 0 }, extra: 'tangle' }),
+  // Smích po ťuknutí na břicho: oči zavřené obloučky, otevřená pusa, ruka na břiše, mírný záklon.
+  giggle: pose({ body: -4, eyes: 'closed', armL: { upper: 30, lower: -100 }, armR: { upper: 40, lower: 30 }, extra: 'laugh' }),
+  // Zatnutí v posledních sekundách výdrže: přivřené oči, stažené obočí, zaťaté zuby, pěsti u těla.
+  strain: pose({ dy: 2, eyes: 'half', armL: { upper: 40, lower: -70 }, armR: { upper: 40, lower: -70 }, legL: { upper: 10, lower: -4 }, legR: { upper: 10, lower: -4 }, extra: 'clench' }),
+  // Nuda: sedí na kotouči, nohy visí přes hranu (kolena ven), ramena svěšená, dlaně na hraně kotouče, hlava stranou.
+  boredSit: pose({
+    eyes: 'half', armL: { upper: 22, lower: -8 }, armR: { upper: 22, lower: -8 },
+    legL: { upper: 30, lower: -40 }, legR: { upper: 30, lower: -40 }, head: { dx: 0, dy: 4, tilt: -8 }, extra: 'seatPlate',
+  }),
+  // Ukazuje na Start: pravá paže natažená dolů doprava, za prstem tři tečky směru; levá v bok.
+  pointStart: pose({ dx: -14, armR: { upper: 60, lower: 0 }, armL: { upper: 40, lower: -90 }, reach: 1.8, head: { dx: 0, dy: 0, tilt: 6 }, extra: 'pointDots' }),
+  // Rozcvička: prsty na ramenou, lokty do stran (kroužení rameny dodá pohyb).
+  warmup: pose({ reach: 1.3, armL: { upper: 110, lower: 140 }, armR: { upper: 110, lower: 140 }, legL: { upper: 12, lower: 0 }, legR: { upper: 12, lower: 0 } }),
+  // Prázdná krabice: nakloněná hlava nad otevřenou krabicí před tělem, ruce na jejích hranách.
+  peekBox: pose({ head: { dx: 0, dy: 8, tilt: 0 }, armL: { upper: 30, lower: -30 }, armR: { upper: 30, lower: -30 }, reach: 1.2, extra: 'openBox' }),
 };
 
 /** Pořadí jako v referenci `opice-v2-pozy.png` (5 řádků × 6); klid `idle` stojí před mřížkou. */
@@ -189,6 +226,26 @@ const APP_STATE_TO_POSE: Record<AppPoseState, MascotPoseId> = {
 export const poseForAppState = (s: AppPoseState): MascotPoseId => APP_STATE_TO_POSE[s];
 /** Liga: 1. místo = pohár, 2.–3. = medaile, jinak bez speciální pózy. */
 export const poseForLeagueRank = (rank: number): MascotPoseId | null => (rank === 1 ? 'trophy' : rank >= 2 && rank <= 3 ? 'medal' : null);
+
+/** Nové pózy repertoáru (galerie /dev, sekce „Repertoár“). */
+export const MASCOT_REPERTOIRE_POSES: readonly MascotPoseId[] = [
+  'warmup', 'boredSit', 'pointStart', 'giggle', 'strain', 'wipeSweat',
+  'liftBarbell', 'eveningTowel', 'streakAtRisk', 'ropeTangle', 'peekBox',
+];
+
+/**
+ * Akce repertoáru → statická póza, ze které motion-agent animuje. `null` = čistý pohyb nad aktuální pózou
+ * (ťuk na hlavu) nebo póza z právě cvičeného cviku (trainAlong: mini opička v pozici cviku, velikost `size.mascotMini`).
+ */
+const REPERTOIRE_TO_POSE: Record<RepertoireId, MascotPoseId | null> = {
+  warmup: 'warmup', boredSit: 'boredSit', pointStart: 'pointStart', plateHop: 'run', handstandPlate: 'handstand',
+  morningStretch: 'stretch', eveningTowel: 'eveningTowel', streakAtRisk: 'streakAtRisk', sadThenPoint: 'sad',
+  headShake: null, giggle: 'giggle', hangFinger: 'hang',
+  trainAlong: null, strain: 'strain', wipeSweat: 'wipeSweat',
+  liftBarbell: 'liftBarbell', flameJump: 'streak', climbPodium: 'levelUp', grow: 'levelUp',
+  waveRun: 'wave', wifiShake: 'offline', ropeTangle: 'ropeTangle', peekBox: 'peekBox',
+};
+export const poseForRepertoire = (id: RepertoireId): MascotPoseId | null => REPERTOIRE_TO_POSE[id];
 
 export const MASCOT_POSE_IDS = Object.keys(MASCOT_POSES) as MascotPoseId[];
 

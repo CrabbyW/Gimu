@@ -12,7 +12,7 @@ import { MASCOT_POSES, poseForIdle, resolvePose, type MascotPose, type MascotPos
 import { useTheme, type Colors } from '@/theme';
 import type { Mood } from '@/types';
 import { armPath, EYE_DROP, EYE_RY, handWorld, legPath, V2 } from './monkeyGeometry';
-import { bustShape, propsBack, propsFront } from './PoseProps';
+import { bustShape, propsBack, propsFace, propsFront } from './PoseProps';
 import { PropMotionContext } from './PropMotion';
 import { useReactionMotion } from './reactionMotion';
 import { usePoseMotion } from './usePoseMotion';
@@ -329,6 +329,8 @@ function MascotSvg({
                   <Path d={V2.face} fill={ink.face} />
                   <AnimatedEllipse cx={head.cx - eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeL} />
                   <AnimatedEllipse cx={head.cx + eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeR} />
+                  {/* Obličej pózy (smích, zatnutí, čelenka): ve skupině hlavy, jde s jejím náklonem. */}
+                  {propsFace(pose.extra, ink, eyeCy)}
                 </AnimatedG>
               </AnimatedG>
             </>

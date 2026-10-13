@@ -17,6 +17,8 @@ export const size = {
   // Živá tečka stavového řádku 6, tečkový prstenec výdrže 260 (Doto 64 + jednotka se vejde do vnitřního prstence),
   // minimální výška hero dlaždice mapy (číslo nahoře, název dole jako obr. 2).
   liveDot: 6, holdRing: 260, heroTile: 148,
+  // Mini opička „cvičí s tebou“ v lekci (repertoár trainAlong): pod prstencem výdrže, vpravo dole, nepřekrývá číslo.
+  mascotMini: 72,
   // Nízký displej (useShort, 568 pt): prstenec výdrže 160 s číslem `heroShort` (Doto 42),
   // aby „10“ nesahalo na vnitřní kruh teček.
   holdRingShort: 160,
