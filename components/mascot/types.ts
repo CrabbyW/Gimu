@@ -42,6 +42,8 @@ export interface MascotProps {
   scrollLook?: SharedValue<number>;
   /** Opice v2: explicitní statická póza (`logic/mascotPoses`); bez ní póza z reakce / nálady. */
   pose?: MascotPoseId;
+  /** Statická opice bez jakéhokoli pohybu (jako omezený pohyb): náhledy v galerii, kde by 31 živých smyček zbytečně zatížilo UI vlákno. */
+  still?: boolean;
 }
 
 export const MASCOT_SIZES = { S: 56, M: 120, L: 200, XL: 280 } as const;

@@ -1255,3 +1255,29 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - Rozhodl jsem sám: „dash“ přeskočen (běh s tečkovou stopou je jen run, který už existuje). Stojka = tělo 180° (obličej hlavou dolů jako v referenci). `POSE_CODE` se teď generuje z pořadí `MASCOT_POSE_IDS`; kódy 0–7 mají živou smyčku, 8+ jsou statické (`LIVE_POSES` = 8) — test „každá póza žije“ ověřuje jen 0–7. Mapování stavů appky `poseForAppState` (empty/error→fail/offline/locked/leagueWin→trophy/leaguePodium→medal/stageUp→levelUp/streak/settings/profile→avatar/loading/…) a `poseForLeagueRank` (1 = trophy, 2–3 = medal). Zapojil jsem jen triviální místa: StateView chyba → fail, prázdno → empty, FeatureLocked → locked.
 - Běhy: tsc OK, eslint OK, jest 103 sad / 983 testů OK, `npm run e2e` 172/172 passed (vizuální snímky beze změny, StateView/FeatureLocked v nich nejsou). Baseline nepřepsána. Screenshot galerie dark/light ve scratchpadu.
 - Otevřené (boss/motion-agent): živé smyčky pro 24 nových póz (rozsvícení loaderu dokola, otáčení šipek sync a kola, kyvadlo přesýpacích hodin, tah lana, výstup po schodech); přechod mezi `figure` je skokový v polovině prolnutí. Zapojení do obrazovek, kde to není triviální: loader (`LoadingSkeleton`), liga (pódium/odměna → trophy/medal), stage-up → levelUp, streak, nastavení → settings, profil → avatar, offline stav (appka zatím nemá). Plank je kvůli proporcím (trup 52 pt) čitelný hlavně z předloktí; na iPhonu ověřit čitelnost rekvizit na hrudi ve velikosti S.
+
+## motion-agent: všech 30 póz v pohybu, plynulý výřez postavy (2026-10-13)
+- Smyčky celého těla: `lib/poseMotion.ts` má `LIVE_POSES = 32`. Dosavadních 8 póz je beze změny, 24 nových má vlastní větev `lifeRef` (váha, hlava a uši se zpožděním, oči) a k tomu pohyb, který odpovídá póze. Periody v ms (každá dělí hodinu 60 s, takže přetočení nedá skok): loading 2400, peek 4000, wait 6000, pull 2000, sync 3000, success 3000, fail 4000, warning 1200, offline 3000, empty 3000, search 4000, notify 2000, inspect 4000, settings 6000, avatar 6000, locked 3000, streak 1200, trophy 3000, medal 3000, levelUp 2000, flex 2000, handstand 3000, plank 2000, stretch 5000. Vedlejší periody `SUB_MS`: ťukání nohou 1500, plamen 600, třes 200/300, oběh kruhu avataru 6000. Amplitudy jsou v `LIFE_AMP`.
+- Rekvizity: nový `components/mascot/PropMotion.tsx`. Context se sdílenými hodnotami (clock, kód pózy, náběh) a `PropPart`. Worklet `propPart` vrací pro každou část [deg, sx, sy, tx, ty, opacity], `partMatrix` ji otočí nebo zvětší kolem pivotu. `PoseProps.tsx` jen obaluje pohyblivé části, kresbu nemění.
+  - Kruh loaderu obíhá a červená tečka putuje s ním (360°/2.4 s).
+  - Šipky sync obíhají (3 s).
+  - Kolo nastavení se točí (6 s).
+  - Přesýpací hodiny se v 80–95 % periody otočí o 180°.
+  - Lano se při každém tahu posune o jednu tečku.
+  - Pokrok u peek se plní po tečkách, pak zhasne a opice se schová pod hranu (12 pt).
+  - Fajfka a X se při vstupu do pózy dokreslí po tečkách.
+  - „!“ pulzuje (×1.14).
+  - Oblouky wifi zhasínají od vnějšího k vnitřnímu.
+  - Lupa krouží (2.5 pt), velká lupa přibližuje (×1.1).
+  - Zvonek se rozhoupe (14°, doznívá), červená tečka pulzuje.
+  - Zámek cukne (8°).
+  - Plamen plápolá (scale ±7 %, ±3°).
+  - Medaile se houpe (±6°), pohár se zvedá spolu s hrudí (2 pt).
+  - Po kruhu avataru obíhá vlna zvětšení.
+  - Rekvizity na hrudi se hýbou s dechem trupu (`chestDy`), aby se neodtrhly od rukou.
+  - Stojka balancuje kolem dlaní (±2.5°, `swayPivotY`). Plank se třese, flex zatíná biceps, stretch se protahuje, levelUp střídá nohy.
+- Výřez postavy se prolíná. Vektor pózy má navíc indexy full, bust a clipY (POSE_LEN 24). Trup a končetiny tvoří jednu skupinu s animovaným krytím, takže na překryvu nevznikají švy. Busta má také animované krytí. Výška ořezu je `AnimatedRect` v clipPath (jen layer `all`). Skok v polovině přechodu zmizel.
+- Reduce Motion: statická póza (`on = 0`). Fajfka a X se ukážou celé, peek ukáže 4 ze 6 teček jako kresba. Ve workletech jsou jen čísla a sdílené hodnoty (kódy póz jako konstanty `PC`, test hlídá shodu s `POSE_CODE`).
+- Galerie /dev: náhledy jsou statické (nový prop `still` na Mascotu, chová se jako reduce motion). Důvod: 31 živých smyček by běželo nad 1000 animovaných props. Náhled je tlačítko, ťuknutí přehraje pózu v přehrávači nahoře. „Play all poses“ projde všech 31 po 3 s. Copy `dev.poseAuto` a `dev.posePlay`.
+- Běhy: tsc OK, eslint OK, jest 103 sad / 988 testů OK (6 nových testů poseMotion), test:node 25/25, `npm run e2e` 172/172, `e2e:perf` 5/5 (mapa, lekce i oslava ≥ 55 fps). Přehrávač na webu 144 fps (rAF). Snímky: scratchpad `motion/poses30-*.png` (listy `poses30-sheet1/2.png`).
+- Otevřené: busta avataru je kvůli clipY 150 skoro celá oříznutá a pod hlavou zůstává tenký oblouk (geometrie design-agenta). Stojka má hlavu u spodní hrany viewBoxu, i to je geometrie. Na iPhonu je potřeba ověřit plynulost přehrávače a prolnutí výřezu. Zapojení póz do obrazovek zůstává bossovi a design-agentovi.

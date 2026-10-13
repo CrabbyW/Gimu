@@ -7,12 +7,13 @@ import Animated, {
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path, Rect } from 'react-native-svg';
 import { copy } from '@/data/copy';
 import { ease, mascotPose as MP, motion, spring, useMotionSafe } from '@/lib/motion';
-import { groupMatrix, LIFE_CLOCK_MS, limbD, swayDeg, zzFrame } from '@/lib/poseMotion';
+import { groupMatrix, LIFE_CLOCK_MS, limbD, swayDeg, swayPivotY, zzFrame } from '@/lib/poseMotion';
 import { MASCOT_POSES, poseForIdle, resolvePose, type MascotPose, type MascotPoseId } from '@/logic/mascotPoses';
 import { useTheme, type Colors } from '@/theme';
 import type { Mood } from '@/types';
 import { armPath, EYE_DROP, EYE_RY, handWorld, legPath, V2 } from './monkeyGeometry';
 import { bustShape, propsBack, propsFront } from './PoseProps';
+import { PropMotionContext } from './PropMotion';
 import { useReactionMotion } from './reactionMotion';
 import { usePoseMotion } from './usePoseMotion';
 import { resolveMascotSize, type MascotProps } from './types';
@@ -21,9 +22,12 @@ const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedG = Animated.createAnimatedComponent(G);
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
 const IS_WEB = Platform.OS === 'web';
 /** Hrazda visu (osa houpání) ve viewBoxu: nad rukama pózy `hang`, stejně jako ji kreslí `PoseExtras`. */
 const HANG_BAR_Y = Math.min(handWorld(MASCOT_POSES.hang, -1).y, handWorld(MASCOT_POSES.hang, 1).y) - 6;
+/** Pivot balancování ve stojce: dlaně na zemi. */
+const HANDSTAND_Y = Math.max(handWorld(MASCOT_POSES.handstand, -1).y, handWorld(MASCOT_POSES.handstand, 1).y);
 const ARM_L = { x: V2.hip.x - V2.shoulder.dx, y: V2.shoulder.y };
 const ARM_R = { x: V2.hip.x + V2.shoulder.dx, y: V2.shoulder.y };
 const LEG_L = { x: V2.hip.x - V2.hipJoint.dx, y: V2.hipJoint.y };
@@ -73,13 +77,15 @@ export const monkeyInk = (c: Colors) => ({ fur: c.mascotFur, face: c.mascotFace,
 
 function MascotSvg({
   mood: baseMood, size, accessibilityLabel, decorative, breathe: breatheProp = true, hop: hopProp = true,
-  reaction, gaze, spin, idle, scrollLook, pose: poseProp, layer,
+  reaction, gaze, spin, idle, scrollLook, pose: poseProp, layer, still,
 }: MascotProps & { layer: Layer }) {
   const { c } = useTheme();
   const ink = monkeyInk(c);
   const drawBack = layer !== 'front';
   const drawLegs = layer !== 'back';
-  const { reduced } = useMotionSafe();
+  const { reduced: motionReduced } = useMotionSafe();
+  // Statická opice (galerie): stejné jako omezený pohyb, jen bez čtení systémového nastavení.
+  const reduced = motionReduced || still === true;
   const px = resolveMascotSize(size);
   const {
     override: ov, ref: rootRef, lift, squash: rSquash, stretch, roll, tilt, eyeClose, droop: rDroop, pupilX, pupilY, headProps: headMatrix,
@@ -220,7 +226,15 @@ function MascotSvg({
     const v = live.value;
     return groupMatrix(v[8] ?? 0, HX, HY, v[9] ?? 0, v[10] ?? 0, IS_WEB);
   });
-  const swayProps = useAnimatedProps(() => groupMatrix(swayDeg(toCode.value, clock.value, lifeOn), 100, BAR, 0, 0, IS_WEB));
+  const STAND = HANDSTAND_Y;
+  const swayProps = useAnimatedProps(() => {
+    const code = toCode.value;
+    return groupMatrix(swayDeg(code, clock.value, lifeOn), 100, swayPivotY(code, BAR, STAND), 0, 0, IS_WEB);
+  });
+  // Výřez postavy se prolíná (žádný skok v polovině přechodu): krytí trupu a končetin, busty, spodní ořez.
+  const fullProps = useAnimatedProps(() => ({ opacity: Math.max(0, Math.min(1, live.value[21] ?? 1)) }));
+  const bustProps = useAnimatedProps(() => ({ opacity: Math.max(0, Math.min(1, live.value[22] ?? 0)) }));
+  const clipProps = useAnimatedProps(() => ({ height: live.value[23] ?? 200 }));
   // Uši: dokmitání za hlavou = malé natočení kolem středu hlavy (každé ucho zvlášť).
   const HCX = V2.head.cx, HCY = V2.head.cy;
   const earLProps = useAnimatedProps(() => groupMatrix(live.value[17] ?? 0, HCX, HCY, 0, 0, IS_WEB));
@@ -254,9 +268,14 @@ function MascotSvg({
   const earT = groupMatrix(0, HCX, HCY, 0, 0, IS_WEB);
   const { head, ears, torso, eyes } = V2;
   // Výřez postavy (busta, jen hlava) a spodní ořez (vykukování přes hranu, busta v kruhu).
+  // Výřez i ořez jdou z živého vektoru (prolnutí), statické hodnoty = cílová póza. Ořez jen u celé opice
+  // (sedící dvouvrstvá opice na mapě ho nikdy nemá).
   const full = pose.figure === 'full';
+  const bust = pose.figure === 'bust';
   const clipId = `mclip${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  const clip = pose.clipY > 0 ? `url(#${clipId})` : undefined;
+  const clipOn = layer === 'all';
+  const clipH = pose.clipY > 0 ? pose.clipY : 200;
+  const propMotion = { clock, code: toCode, entry: extrasIn, on: lifeOn };
   const limb = (d: string, w: number, key: string, animatedProps: Partial<{ d: string }>) => (
     <AnimatedPath key={key} d={d} stroke={ink.fur} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" fill="none" animatedProps={animatedProps} />
   );
@@ -270,31 +289,37 @@ function MascotSvg({
       style={[{ width: px, height: px }, bodyStyle]}
     >
       <Svg width={px} height={px} viewBox="0 0 200 200">
+        <PropMotionContext.Provider value={propMotion}>
         {drawBack ? <PoseExtras pose={pose} ink={ink} extrasIn={extrasIn} clock={clock} zzMoving={poseId === 'sleep' && !reduced} /> : null}
-        {pose.clipY > 0 ? (
-          <Defs><ClipPath id={clipId}><Rect x={0} y={0} width={200} height={pose.clipY} /></ClipPath></Defs>
+        {clipOn ? (
+          <Defs><ClipPath id={clipId}><AnimatedRect x={0} y={0} width={200} height={clipH} animatedProps={clipProps} /></ClipPath></Defs>
         ) : null}
-        <G clipPath={clip}>
+        <G clipPath={clipOn ? `url(#${clipId})` : undefined}>
         <AnimatedG {...swayT} animatedProps={swayProps}>
         <AnimatedG {...bodyT} animatedProps={bodyProps}>
+          {drawBack ? <AnimatedG opacity={bust ? 1 : 0} animatedProps={bustProps}>{bustShape(ink)}</AnimatedG> : null}
+          {/* Trup a končetiny jedna skupina: výřez full ↔ busta/hlava se prolne jako celek (bez švů na překryvu). */}
+          <AnimatedG opacity={full ? 1 : 0} animatedProps={fullProps}>
           {/* Nohy: vlastní vrstva s pivotem v kyčli (sedící opice je kreslí vpředu přes hranu kotouče). */}
-          {drawLegs && full ? (
-            <G testID="mascot-legs">
+          {drawLegs ? (
+            <G testID={full ? 'mascot-legs' : undefined}>
               {limb(legPath(pose, -1), V2.leg.w, 'legL', legLProps)}
               {limb(legPath(pose, 1), V2.leg.w, 'legR', legRProps)}
             </G>
           ) : null}
           {drawBack ? (
             <>
-              {full ? <Rect x={torso.x} y={torso.y} width={torso.w} height={torso.h} rx={torso.rx} fill={ink.fur} /> : null}
-              {pose.figure === 'bust' ? bustShape(ink) : null}
+              <Rect x={torso.x} y={torso.y} width={torso.w} height={torso.h} rx={torso.rx} fill={ink.fur} />
               {/* Paže: pivot v rameni, loket = druhý bod tahu. */}
-              {full ? (
-                <G testID="mascot-arms">
-                  {limb(armPath(pose, -1), V2.arm.w, 'armL', armLProps)}
-                  {limb(armPath(pose, 1), V2.arm.w, 'armR', armRProps)}
-                </G>
-              ) : null}
+              <G testID={full ? 'mascot-arms' : undefined}>
+                {limb(armPath(pose, -1), V2.arm.w, 'armL', armLProps)}
+                {limb(armPath(pose, 1), V2.arm.w, 'armR', armRProps)}
+              </G>
+            </>
+          ) : null}
+          </AnimatedG>
+          {drawBack ? (
+            <>
               {/* Hlava: náklon pózy kolem krku, nad ním matice reakcí (natočení, kývnutí). */}
               <AnimatedG {...headT} animatedProps={poseHeadProps}>
                 <AnimatedG animatedProps={headProps}>
@@ -312,6 +337,7 @@ function MascotSvg({
         </AnimatedG>
         </G>
         {drawBack ? <PropLayer testID="mascot-props-front" nodes={propsFront(pose.extra, pose, ink)} extrasIn={extrasIn} /> : null}
+        </PropMotionContext.Provider>
       </Svg>
     </Animated.View>
   );
