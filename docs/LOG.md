@@ -1225,3 +1225,11 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - QA schvaluje nové baseline z 81c2aa6 (league, map, first-run, celebration, profile).
 - Otevřené ⚠️: šipka bubliny průvodce míří na kotouč, ne na kartu; jména na 3+ řádky; únik časovače v Jestu; chybí e2e boss případu na w320.
 - Verdikt: SCHVÁLENO.
+
+### boss — opice v2 + Kurogane + demo, 2026-10-12/13
+- Plán `~/.claude/plans/vast-snuggling-sunbeam.md` (schválil uživatel): opice z reference `old files and designs/opice-v2-pozy.png` v pohybu, mapa Kurogane, splash, Expo Go QR. Delegováno: design-agent (opice, mapa, barvy/kontrast/typografie, pódium), motion-agent (pohyb, splash), qa-agent (2 kola), rating-agent.
+- Sám: commit oprav QA U5 (0d1cc4e), archiv opice v1 do `old files and designs/` + výjimky v tsconfig/eslint/jest (47c84ee), červená tečka oka siluety cviku `headDotIndex` (61d462a), demo build `lib/demo.ts` + `app/index.tsx` + `app/lesson/[id].tsx` (30ecb7e), fallback při selhání `loadDemo` (ad321e9), zalomení jména na pódiu za `_`/`.` přes ​ s a11y labelem (81c2aa6).
+- Baseline: `npm run e2e:update` (44 snímků, nová opice a mapa) + vynucené přegenerování `league.png` (rozdíl pod tolerancí 1 % by se jinak nepřepsal); namátkou prohlédnuto, QA kolo 2 schválilo. Růžová tečka u odpočtu ve snímcích = maska Playwrightu, v appce není.
+- Expo Go: Cloudflare quick tunel + demo server (EXPO_PUBLIC_DEMO=1) na 8084, protože 8082 drží osiřelý Metro (PID 20160) se starou adresou tunelu a nesmí se zabít. Quick tunel přes noc zanikl → nový tunel, nový QR (artifact M2GTNH9HhRfJv1opnD2p4B). Čerstvý bundle iOS + Android HEAD 1a9e2d2 (kód = 81c2aa6) přes tunel 200, `$TEMP/expogo.log` 0× ERROR.
+- Rozhodl sám: demo jako env přepínač (ne volba v UI); u existujícího profilu se onboarding nepřeskakuje, jen přeskakování v lekci.
+- Otevřené: iPhone checklist z QA kola 2 (uživatel); stage-up bez skipu v demu; šipka průvodce na kotouč místo karty; DrawnCheck na plném disku; záblesk oslavy mimo viewBox; e2e test opičky u bosse na w320; únik časovače v Jestu.
