@@ -27,6 +27,6 @@ for (const width of [320, 430]) {
       .filter((el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)
       .map((el) => el.textContent));
     expect(clipped).toEqual([]);
-    await expect(names.filter({ hasText: 'Jake_Pullup' })).toHaveCount(1);
+    await expect(names.filter({ hasText: /Jake_\u200B?Pullup/ })).toHaveCount(1);
   });
 }

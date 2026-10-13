@@ -12,6 +12,9 @@ import { podiumColumns } from './podiumLayout';
 
 const P = intro.podium;
 
+/** Zalomení za `_` a `.` (neviditelná mezera nulové šířky): „Jake_ / Pullup“ místo „Jake_Pullu / p“. */
+const breakable = (name: string) => name.replace(/[_.]/g, '$&\u200B');
+
 /**
  * Pódium top 3 (Nothing Dot fáze 2): dlaždice se sloupci z teček v pořadí 2 · 1 · 3 (`podiumColumns`).
  * Sloupec = `DotRow` 3 tečky široký, výška v řádcích = pořadí (9 / 6 / 4), všechny tečky rozsvícené.
@@ -60,7 +63,7 @@ export function Podium({ entries, play = false, meReaction = null }: {
                   <Text variant="dotStat" tone={rank === 1 ? 'text' : 'muted'}>{rank}</Text>
                   {/* Jméno se nikdy neořízne výpustkou: zalomí se až na 2 řádky (dlouhé slovo i uprostřed) a výška
                       2 řádků větší varianty je rezervovaná u všech sloupců, takže sloupce teček stojí na stejné základně. */}
-                  <Text testID="podium-name" variant={entry.isMe ? 'bodyStrong' : 'caption'} numberOfLines={2} style={{ textAlign: 'center', alignSelf: 'stretch', minHeight: typography.bodyStrong.lineHeight * 2 }}>{entry.name}</Text>
+                  <Text testID="podium-name" variant={entry.isMe ? 'bodyStrong' : 'caption'} numberOfLines={2} style={{ textAlign: 'center', alignSelf: 'stretch', minHeight: typography.bodyStrong.lineHeight * 2 }} accessibilityLabel={entry.name}>{breakable(entry.name)}</Text>
                   <Text variant="caption" tone="muted" numberOfLines={1} style={tabularNums}>{copy.league.podiumXp(entry.xpThisWeek)}</Text>
                 </Reveal>
               </View>
