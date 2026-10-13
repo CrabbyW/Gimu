@@ -1,7 +1,7 @@
 // Vyrenderuje nativní splash a ikony z geometrie opice v2 (plán vast-snuggling-sunbeam, krok 3).
 // Použití: `npm run gen:splash` (Chrome přes Playwright, CHROME_PATH jako v e2e).
 // Čísla = `components/mascot/monkeyGeometry.ts` (V2: hlava, uši, obličej, oči) a dark paleta `theme/palettes.ts`
-// (mascotFur/Face/Eye, base); výřez = `dots.splash.view` v `theme/tokens.ts`. Při změně geometrie spusť znovu.
+// (mascotFur/Face/Eye, base); výřez hlavy ikon je vlastní (VIEW níž). Při změně geometrie spusť znovu.
 import { chromium } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -16,7 +16,7 @@ export const V2_HEAD = {
   eyes: { dx: 12, cy: 69, rx: 5, ry: 7 },
 };
 export const DARK = { base: '#0B0B0C', fur: '#E9EBEE', face: '#3A3C40', eye: '#E9EBEE' };
-/** Výřez viewBoxu kolem hlavy (x, y, strana) = `dots.splash.view`. */
+/** Výřez viewBoxu kolem hlavy ikon (x, y, strana). */
 export const VIEW = [34, 0, 132];
 
 /** SVG hlavy: `scale` = podíl strany obrázku, který zabere výřez (1 = splash, menší = ikona s okrajem). */

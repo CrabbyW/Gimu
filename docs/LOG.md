@@ -1313,3 +1313,27 @@ Výsledky bran: tsc, eslint, jest 955, test:node 25 a perf 5/5 zelené. e2e 132/
 - Nativní log: přes tunel stažen iOS + Android bundle HEAD 651b7d3 (kód = 80ba03b), `$TEMP/expogo.log` 08:46:00, 0× ERROR.
 - README: splash A, 30 póz a jejich zapojení.
 - Otevřené: e2e scénář vlastního řádku ligy na 1.–3. místě a stage-up po lekci 8 v demu (demo liga ten stav nemá); čitelnost poháru/medaile 32–48 pt na iPhonu; šipka průvodce na kotouč; únik časovače v Jestu.
+
+## motion-agent: splash 03 „Tečkový nápis“ místo A (2026-10-13)
+- Proč pryč s A „Probuzení“: uživatel o něm řekl „vypadá to hrozně — prázdné/nudné, nesedí k appce“. Kruh teček s hlavou na prázdné černé nemá vztah k tomu, jak appka vypadá. Z nového kola (maketa splash2.html) vybral 03.
+- `components/splash/AnimatedSplash.tsx` je přepsaný. Nativní splash zůstává jen černý (#0B0B0C).
+  1. Nápis OPICE z teček (RN View, bez Skia). Zhasnutá matrice 5×7 na písmeno má `dotOff`, svítící tečky `text`. Čelo skenu `scan` jede lineárně 0 → 31 sloupců, `colStepMs` 18 na sloupec (558 ms), každý sloupec se prolne přes `colFade` 2 sloupce.
+  2. Opice vykoukne zpoza „O“, od 560 ms, 320 ms, `ease.out`. Hlava (V2, výřez `peekView` 34 20 132 86) má šíři 32 % nápisu, nejvýš 120 pt (na w320 je to ~76 pt, v maketě ~30). Vyjede z výřezu, jehož spodní hrana je 0.6 buňky pod horní řadou O, takže se brada schová za O.
+  3. Tečka nad I (nový glyf `SPLASH_GLYPHS.I`) zčervená v 820 ms (`live`, 120 ms). Je to jediná barva.
+  4. Mrknutí v 1000 ms: zavření za 70 ms (`ease.exit`), otevření za 70 ms (`ease.out`). Spolu s ním lehká haptika `introPulse`.
+  5. Od 1180 ms (a jen když je appka ready) se nápis za 480 ms smrští (`ease.inOut`, nový `ease.inOut` 0.65 0 0.35 1) a odjede na místo nadpisu mapy (`titleX` 24, `titleY` 46 + safe area, výška `titleH` 30). Hlava zmizí v první polovině, černý podklad se prolne od 20 % (je pod ním mapa), nápis zmizí ve druhé polovině. Konec v 1660 ms, mapa je čitelná zhruba od 1.4 s.
+- Tap = okamžitý skip. Reduce Motion: statický nápis s opicí a živou tečkou, prolnutí 200 ms, bez haptiky. Když appka není ready, nápis drží. NO_INTRO a HOLD_INTRO zůstávají beze změny.
+- Tokeny: `dots.splash` je v `theme/tokens.ts` (`head` 140 zůstává kvůli `imageWidth` v app.json). Časování `splash` je v `lib/motion.ts`. `logic/dotGlyphs.ts`: `textDots(text, overrides)` a `li` u tečky, DotIntro se nemění. Komentář v `scripts/gen-splash.mjs` už neodkazuje na zrušený token. Ve workletech jsou jen čísla a sdílené hodnoty.
+- Testy:
+  - jest `AnimatedSplash` přepsaný: tečky odpovídají glyfům, jediná `live` tečka, pořadí choreografie, ≤ 1.8 s, ready/hold, reduce motion.
+  - e2e `intro.spec.ts`: nápis vodorovně uprostřed na w320, hlava nad O celá na displeji, svítící tečky bez překryvu, skip, samovolné dohrání.
+- Běhy:
+  - tsc OK, eslint OK
+  - jest 103 sad / 988 testů
+  - test:node 25/25
+  - `npm run e2e` 172/172
+  - `e2e:perf` 5/5 (≥ 55 fps)
+- Snímky: Playwright clock nad čerstvým exportem ve scratchpadu (`splash3-dist`, demo profil, dark). Jsou v `scratchpad/motion/splash3-{100…1700}.png` a v listu `splash3-sheet.png`. Proti maketě sedí sken, opice nad O, červená tečka, mrknutí i odjezd do „Balance 101“. Opice je oproti maketě zhruba 2.5× větší.
+- Otevřené:
+  - Na iPhonu ověřit haptiku při mrknutí, plynulost 31 sloupců a ústupu a cíl nadpisu pod notchem. Cíl bere `initialWindowMetrics` (splash je mimo SafeAreaProvider).
+  - Nápis přistává ~10 pt pod nadpisem mapy, protože v tu chvíli už mizí. Kdyby to na iPhonu bylo vidět, doladit `titleY`.

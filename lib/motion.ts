@@ -24,6 +24,8 @@ export const ease = {
   press: Easing.bezier(0.5, 0, 0.75, 0),
   /** Klidná smyčka (dech, puls). */
   sine: Easing.bezier(0.37, 0, 0.63, 1),
+  /** Přesun z místa na místo (splash: nápis do nadpisu mapy). */
+  inOut: Easing.bezier(0.65, 0, 0.35, 1),
 };
 
 /** Bezier s ořezaným vstupem 0–1. Na webu dostane první snímek animace spuštěné z efektu občas záporný čas
@@ -527,16 +529,17 @@ export const mascotPose = {
 };
 
 /**
- * Animovaný splash, směr A „Probuzení“ (maketa splash-smery.html, zkrácené časování). Nativní splash je jen
- * dark base, takže první snímek = černá. (1) Uprostřed vyroste červená tečka `live` (`seedMs`, 0 → `seedPeak`
- * v 60 % → 1, `ease.out`). (2) Od `ringAt` se po kruhu po `dotStepMs` rozsvítí 12 teček (každá `dotInMs`).
- * (3) Od `headAt` nastoupí hlava opice (`headInMs`, scale `headFrom` → 1, `ease.out`) se zavřenýma očima
- * (`eyesClosed` výšky), v `openAt` je otevře (`openMs`, `ease.out`) + lehká haptika. (4) V `fadeAt` se kruh
- * s hlavou zmenší na `exitScale`, ustoupí o `exitY` pt nahoru a prolne se (`fadeMs`, `ease.exit`), mapa je
- * pod tím. Omezený pohyb: jen prolnutí `reducedFadeMs`. Když appka není ready, drží otevřené oči do ready.
+ * Splash 03 „Tečkový nápis“ (maketa splash2.html build3, uživatel 2026-10-13). Nativní splash = černá base.
+ * (1) Nápis OPICE z teček se rozsvěcuje sloupec po sloupci zleva: čelo `scan` jede 0 → cols + `colFade`
+ *     po `colStepMs` na sloupec (lineárně), zhasnutá matrice je vidět jako displej.
+ * (2) Od `peekAt` opice vykoukne zpoza „O“ (`peekMs`, `ease.out`, vyjede z výřezu nahoru).
+ * (3) V `liveAt` tečka nad I zčervená (`liveMs`). (4) V `blinkAt` opice mrkne (`blinkMs` zavřít + otevřít)
+ *     a lehká haptika `introPulse`. (5) V `exitAt` (a appka ready) nápis smrští a odjede na místo nadpisu mapy
+ *     (`exitMs`, `ease.inOut`), hlava zmizí v první polovině, podklad se prolne od `bgFrom` × exitMs, nápis
+ *     v druhé polovině. Konec `totalMs` = mapa. Omezený pohyb: statický nápis s opicí, prolnutí `reducedFadeMs`.
  */
 export const splash = {
-  seedMs: 400, seedPeak: 1.4, ringAt: 280, dotStepMs: 45, dotInMs: 140,
-  headAt: 600, headInMs: 350, headFrom: 0.92, eyesClosed: 0.12, openAt: 900, openMs: 250,
-  fadeAt: 1150, fadeMs: 550, exitScale: 0.6, exitY: -120, reducedFadeMs: 200, totalMs: 1700,
+  colStepMs: 18, colFade: 2, peekAt: 560, peekMs: 320, liveAt: 820, liveMs: 120,
+  blinkAt: 1000, blinkMs: 140, eyesClosed: 0.12, exitAt: 1180, exitMs: 480, bgFrom: 0.2,
+  reducedFadeMs: 200, totalMs: 1660,
 };

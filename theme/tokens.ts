@@ -105,11 +105,16 @@ export const dots = {
   /** Kurogane uzel mapy (2026-10-12), zlomky průměru uzlu: done = plný disk s otvorem, current = prstenec
    *  `ringDots` teček + živý (`live`) střed, locked = slabý obrys `lockedDots` teček. */
   node: { doneDisc: 0.6, hole: 0.22, ringR: 0.4, ringDots: 24, ringDot: 0.05, liveCore: 0.2, lockedR: 0.28, lockedDots: 14, lockedDot: 0.042 },
-  /** Splash (motion, plán krok 3): hlava opice `head` pt (= `imageWidth` nativního splashe v app.json),
-   *  výřez viewBoxu opice `view` (x, y, strana; stejný jako `assets/splash-icon.png` ze `scripts/gen-splash.mjs`),
-   *  kruh `count` teček kolem středu hlavy o poloměru `ringR` a tečce `dotR` (horní `liveR`), úvodní tečka
-   *  `seedR` (jednotky viewBoxu 200; maketa A: kruh 62 px při hlavě 0.78). */
-  splash: { head: 140, view: [34, 0, 132] as const, ringR: 80, dotR: 4.4, liveR: 5.6, seedR: 6.4, count: 12 },
+  /** Splash 03 „Tečkový nápis“ (2026-10-13): `head` = `imageWidth` nativního splashe v app.json (nativní je jen
+   *  černý, obraz průhledný). Nápis OPICE: buňka tak, aby zabral `widthFrac` šířky (nejvýš `maxCell`), tečka `dotFrac`
+   *  buňky. Opice vykoukne zpoza „O“: výřez hlavy `peekView` (x, y, šířka, výška ve viewBoxu opice 200) šíře `peekFrac`
+   *  šířky nápisu (nejvýš `peekMax` pt), brada `peekSink` buňky pod horní řadou O (schová se za ni).
+   *  Cíl ústupu = nadpis mapy: levý okraj `titleX`, horní hrana `titleY` pod safe area, výška `titleH`. */
+  splash: {
+    head: 140, widthFrac: 0.84, maxCell: 14, dotFrac: 0.72,
+    peekView: [34, 20, 132, 86] as const, peekFrac: 0.32, peekMax: 120, peekSink: 0.6,
+    titleX: 24, titleY: 46, titleH: 30,
+  },
   /** Tečková činka bosse: rozteč 6 = dva sloupce teček na kotouč šíře 12 (tečka `path.r`). */
   boss: { pitch: 6 },
   /** Tečkový glyf cesty a vize (onboarding, SVG ve viewBoxu 48): rozteč mřížky výplně i obrysu a poloměr tečky.

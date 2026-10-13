@@ -1,10 +1,11 @@
 import TestRenderer, { act } from 'react-test-renderer';
 import { StyleSheet } from 'react-native';
-import { Circle, Ellipse } from 'react-native-svg';
+import { Ellipse } from 'react-native-svg';
 import { AnimatedSplash } from '@/components/splash/AnimatedSplash';
 import { copy } from '@/data/copy';
 import { feedback } from '@/lib/feedback';
 import { splash } from '@/lib/motion';
+import { SPLASH_GLYPHS, textDots } from '@/logic/dotGlyphs';
 import { dots } from '@/theme';
 import { dark } from '@/theme/palettes';
 import appJson from '../../../app.json';
@@ -34,23 +35,20 @@ beforeEach(() => { jest.useFakeTimers(); mockReduced = false; (feedback as jest.
 afterEach(() => { jest.useRealTimers(); });
 
 describe('AnimatedSplash', () => {
-  it('navazuje na nativní splash: stejná barva podkladu a velikost hlavy jako app.json', () => {
+  it('navazuje na nativní splash: stejná barva podkladu a app.json imageWidth z tokenu', () => {
     const plugin = appJson.expo.plugins.find((p) => Array.isArray(p) && p[0] === 'expo-splash-screen') as [string, { backgroundColor: string; imageWidth: number }];
     expect(plugin[1].backgroundColor).toBe(dark.base);
     expect(plugin[1].imageWidth).toBe(dots.splash.head);
-    const { r } = render();
-    expect(StyleSheet.flatten(r.root.findByProps({ testID: 'splash-head' }).props.style)).toMatchObject({ width: dots.splash.head, height: dots.splash.head });
   });
 
-  it('kruh 12 teček, jediná v akcentu live, ostatní tlumené; hlava z dark tokenů opice', () => {
+  it('nápis OPICE z teček: svítící tečky = glyfy, jediná tečka v live (nad I), hlava opice z dark tokenů', () => {
     const { r } = render();
-    const ring = r.root.findAll((n) => n.props.testID === 'splash-dot' && n.type === Circle);
-    expect(ring).toHaveLength(dots.splash.count);
-    expect(ring.filter((n) => n.props.fill === dark.live)).toHaveLength(1);
-    expect(ring.filter((n) => n.props.fill === dark.mascotProp)).toHaveLength(dots.splash.count - 1);
-    expect(ring[0]!.props.r).toBeGreaterThan(ring[1]!.props.r);
-    expect(r.root.findAll((n) => n.props.testID === 'splash-seed' && n.type === Circle)[0]!.props.fill).toBe(dark.live);
+    const on = r.root.findAll((n) => n.props.testID === 'splash-dot-on' && typeof n.type === 'string');
+    expect(on).toHaveLength(textDots('OPICE', SPLASH_GLYPHS).dots.length);
+    const liveDots = r.root.findAll((n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.backgroundColor === dark.live);
+    expect(liveDots).toHaveLength(1);
     expect(r.root.findAllByType(Ellipse).map((e) => e.props.fill)).toEqual([dark.mascotEye, dark.mascotEye]);
+    expect(r.root.findAllByProps({ testID: 'splash-head' }).length).toBeGreaterThan(0);
   });
 
   it('a11y: jedno tlačítko s labelem a nápovědou, ťuknutí = onDone jednou', () => {
@@ -62,42 +60,43 @@ describe('AnimatedSplash', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('choreografie A: onShown po layoutu, otevření očí s haptikou, pak prolnutí a onDone', () => {
+  it('choreografie 03: onShown po layoutu, mrknutí s haptikou, pak ústup do mapy a onDone', () => {
     const onShown = jest.fn();
     const { r, onDone } = render({ ready: true, onShown });
     start(r);
     expect(onShown).toHaveBeenCalledTimes(1);
-    advance(splash.openAt - 1);
+    advance(splash.blinkAt - 1);
     expect(feedback).not.toHaveBeenCalled();
     advance(1);
     expect(feedback).toHaveBeenCalledWith('introPulse');
-    advance(splash.fadeAt - splash.openAt);
-    advance(splash.fadeMs - 1);
+    advance(splash.exitAt - splash.blinkAt);
+    advance(splash.exitMs - 1);
     expect(onDone).not.toHaveBeenCalled();
     advance(1);
     expect(onDone).toHaveBeenCalledTimes(1);
-    expect(splash.fadeAt + splash.fadeMs).toBe(splash.totalMs);
-    // Pořadí A: tečka → kruh dohraje dřív, než se otevřou oči; oči otevřené před odchodem.
-    expect(splash.ringAt).toBeLessThan(splash.seedMs);
-    expect(splash.ringAt + splash.dotStepMs * (dots.splash.count - 1) + splash.dotInMs).toBeLessThanOrEqual(splash.openAt + splash.openMs);
-    expect(splash.headAt + splash.headInMs).toBeLessThanOrEqual(splash.fadeAt);
-    expect(splash.openAt + splash.openMs).toBeLessThanOrEqual(splash.fadeAt);
+    expect(splash.exitAt + splash.exitMs).toBe(splash.totalMs);
+    expect(splash.totalMs).toBeLessThanOrEqual(1800);
+    // Pořadí: sken dohraje dřív než mrknutí; opice vykoukne před živou tečkou; vše před ústupem.
+    const cols = textDots('OPICE', SPLASH_GLYPHS).cols;
+    expect((cols + splash.colFade) * splash.colStepMs).toBeLessThanOrEqual(splash.blinkAt);
+    expect(splash.peekAt).toBeLessThan(splash.liveAt);
+    expect(splash.peekAt + splash.peekMs).toBeLessThanOrEqual(splash.blinkAt);
+    expect(splash.blinkAt + splash.blinkMs).toBeLessThanOrEqual(splash.exitAt);
   });
 
-  it('appka není ready: drží, onDone až po ready + prolnutí', () => {
+  it('appka není ready: drží, onDone až po ready + ústupu', () => {
     const { r, onDone } = render({ ready: false });
     start(r);
     advance(5000);
     expect(onDone).not.toHaveBeenCalled();
     act(() => { r.update(<AnimatedSplash onDone={onDone} ready />); });
-    advance(splash.fadeMs);
+    advance(splash.exitMs);
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('omezený pohyb: bez kruhu a haptiky, jen rychlé prolnutí', () => {
+  it('omezený pohyb: bez haptiky, jen rychlé prolnutí', () => {
     mockReduced = true;
     const { r, onDone } = render({ ready: true });
-    expect(r.root.findAll((n) => n.props.testID === 'splash-ring')).toHaveLength(0);
     start(r);
     advance(splash.reducedFadeMs);
     expect(onDone).toHaveBeenCalledTimes(1);

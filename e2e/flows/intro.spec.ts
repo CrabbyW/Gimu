@@ -3,7 +3,7 @@ import { collectErrors, pill, visible, waitForIdle } from '../helpers';
 
 test.use({ intro: true });
 
-test('splash: studený start, hlava a kruh teček na w320, ťuknutí přeskočí na mapu', async ({ page }) => {
+test('splash: studený start, tečkový nápis OPICE s opicí na w320, ťuknutí přeskočí na mapu', async ({ page }) => {
   const errors = collectErrors(page);
   // Splash drží do ťuknutí (jinak by se sám prolnul dřív, než změříme geometrii).
   await page.addInitScript('globalThis.__OPICE_HOLD_INTRO__ = true;');
@@ -14,15 +14,23 @@ test('splash: studený start, hlava a kruh teček na w320, ťuknutí přeskočí
   await expect(intro).toHaveAttribute('aria-label', 'Opice');
   await expect(intro).toHaveAttribute('role', 'button');
 
-  // Geometrie (směr A): po nástupu hlava 140 pt přesně uprostřed okna, 12 teček kruhu na displeji bez překryvu.
-  await expect.poll(async () => Math.round((await page.getByTestId('splash-head').boundingBox())?.width ?? 0), { timeout: 5_000 }).toBe(140);
+  // Geometrie (03 Tečkový nápis): nápis OPICE vodorovně uprostřed a celý na displeji, svítící tečky bez překryvu,
+  // hlava opice nad „O“ (vykoukne zpoza něj) celá na displeji, jediná živá tečka nad I.
+  const word = page.getByTestId('splash-word');
+  await expect.poll(async () => Math.round((await page.getByTestId('splash-head').boundingBox())?.width ?? 0), { timeout: 5_000 }).toBeGreaterThan(60);
+  const wb = await word.boundingBox();
+  if (!wb) throw new Error('splash bez nápisu');
+  expect(Math.abs(wb.x + wb.width / 2 - 160)).toBeLessThanOrEqual(1);
+  expect(wb.x).toBeGreaterThanOrEqual(0); expect(wb.x + wb.width).toBeLessThanOrEqual(320);
   const head = await page.getByTestId('splash-head').boundingBox();
   if (!head) throw new Error('splash bez hlavy');
-  expect(Math.abs(head.width - 140)).toBeLessThanOrEqual(0.5);
-  expect(Math.abs(head.x + head.width / 2 - 160)).toBeLessThanOrEqual(1);
-  expect(Math.abs(head.y + head.height / 2 - 284)).toBeLessThanOrEqual(1);
-  const dotsLoc = page.getByTestId('splash-dot');
-  await expect(dotsLoc).toHaveCount(12);
+  expect(head.x).toBeGreaterThanOrEqual(0);
+  expect(head.y).toBeGreaterThanOrEqual(0);
+  expect(head.x + head.width / 2).toBeLessThan(wb.x + wb.width * 0.2);
+  expect(head.y + head.height).toBeLessThanOrEqual(wb.y + wb.height / 2);
+  await expect(page.getByTestId('splash-live')).toHaveCount(1);
+  const dotsLoc = page.getByTestId('splash-dot-on');
+  await expect.poll(() => dotsLoc.count()).toBeGreaterThan(60);
   const boxes = await dotsLoc.evaluateAll((els) => els.map((e) => {
     const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height };
   }));
@@ -54,12 +62,12 @@ test('splash: studený start, hlava a kruh teček na w320, ťuknutí přeskočí
   expect(errors).toEqual([]);
 });
 
-test('splash: bez ťuknutí sám dohraje (A: tečka, kruh, oči, ústup) a prolne se do appky', async ({ page }) => {
+test('splash: bez ťuknutí sám dohraje (03: sken, opice, živá tečka, ústup) a prolne se do appky', async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto('/dev');
   const intro = page.getByTestId('splash');
   await expect(intro).toBeVisible({ timeout: 30_000 });
-  // Žádný tap: po rozsvícení kruhu, mrknutí a prolnutí splash zmizí sám a pod ním je appka.
+  // Žádný tap: po skenu, mrknutí a ústupu splash zmizí sám a pod ním je appka.
   await expect(intro).toHaveCount(0, { timeout: 10_000 });
   await visible(page.getByText(/Load demo profile/i)).click();
   await page.waitForURL((u) => u.pathname === '/', { timeout: 30_000 });
