@@ -123,9 +123,9 @@ describe('<Mascot act>: všech 24 akcí se přehraje a vrátí do klidu', () => 
   test('omezený pohyb: statická póza akce, pak zpět (činka zmizí)', () => {
     mockReduced = true;
     const r = mount(<Mascot {...base} act={{ id: 'liftBarbell', key: 1 }} />);
-    expect(r.root.findAll((n) => n.props.testID === 'mascot-props-front' && typeof n.type === 'string').length).toBeGreaterThan(0);
+    expect(r.root.findAll((n) => n.props.testID === 'mascot-props-back' && typeof n.type === 'string').length).toBeGreaterThan(0);
     act(() => { jest.advanceTimersByTime(repertoire.reducedMs + 1); });
-    expect(r.root.findAll((n) => n.props.testID === 'mascot-props-front' && typeof n.type === 'string')).toHaveLength(0);
+    expect(r.root.findAll((n) => n.props.testID === 'mascot-props-back' && typeof n.type === 'string')).toHaveLength(0);
   });
 
   test('mini opička cvičí s tebou (každá silueta) a zatne se bez změny pózy', () => {

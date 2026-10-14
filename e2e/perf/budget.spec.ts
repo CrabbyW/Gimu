@@ -27,7 +27,12 @@ const sampleFps = (page: Page, ms = 5000) =>
   }), ms);
 
 test.describe('perf', () => {
-  test.beforeEach(async ({ page }) => { await loadDemo(page); });
+  test.beforeEach(async ({ page }) => {
+    await loadDemo(page);
+    // Pomalejší stroj (QA, telefon): `E2E_CPU_THROTTLE=4` zpomalí CPU přes CDP; srovnání vždy proti základu ve stejném běhu.
+    const rate = Number(process.env.E2E_CPU_THROTTLE ?? 1);
+    if (rate > 1) await (await page.context().newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate });
+  });
 
   test(`<canvas> ≤ ${MAX_CANVAS} na každé obrazovce`, async ({ page }) => {
     const counts: Record<string, number> = {};

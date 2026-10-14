@@ -1479,3 +1479,31 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
 - Udělal: tsc/eslint/jest/test:node ✅, plné e2e 180/180 ✅, perf 7/7 ❌. Srovnal jsem perf s baseline d0d8294: lekce a oslava jsou regrese, mapa/TTI je zatížený stroj. Kolize mini opičky změřena na w320/w390 light/dark včetně pauzy, bez kolize.
 - Rozhodl sám: čekání +3 s u snímku oslavy není maskování.
 - Otevřené: perf lekce/oslavy (motion), činka přes obličej (motion), nativní log starší než HEAD. Verdikt NESCHVÁLENO.
+
+## motion-agent: oprava po QA d341d87 (perf, činka přes obličej) (2026-10-14)
+- **Činka za hlavou**: `barbell` se přesunul z `propsFront` do `propsBack` (`PoseProps.tsx`). Při výrazu od ramen už tyč nejde přes obličej a nad hlavou nic nezakrývá. Nacvaknutí kotouče (část 1) i haptika zůstávají.
+- **Méně práce na snímek**:
+  - `usePoseMotion`: bez akce a bez cvičení se nekopíruje vektor pózy (`applyAct`/`applyTrain` jen když běží).
+  - Mini opička (režim `train`) nemá běžící hodinu živé smyčky, kreslí se jen se změnou fáze cviku.
+  - `ExerciseSilhouette` posílá fázi mini opičce na poloviční frekvenci (15 Hz).
+- **Měření** proti d0d8294 ve stejném běhu (worktree, oba exporty, `--workers=1`, base a head po sobě). Stroj byl celý den přetížený (málo paměti), takže absolutní fps neplatí ani pro základ. Rozhoduje poměr.
+- **Nástroj**: `E2E_CPU_THROTTLE` v `e2e/perf/budget.spec.ts` (CDP zpomalení CPU) pro reprodukci pomalého stroje.
+
+| Scéna | Před opravou, throttle 4 (base / head) | Po opravě, bez throttle (base / head) |
+|---|---|---|
+| mapa | 102 / 66 | 34.6 / 40.9 |
+| mapa s běžící idle akcí | (v base není) | head 36.7 |
+| pull-to-refresh | 41.5 / 31.9 | 38.0 / 38.4 |
+| lekce | 121.6 / 44 | 118 / 76.9 (před 15 Hz); druhý běh 42.2 / 36.0 |
+| oslava | 28.8 / 26.3 | 32.0 / 26.0; druhý běh 17.6 / 16.8 |
+
+- **Výsledky**:
+  - Mapa a pull-to-refresh jsou na úrovni základu.
+  - Lekce a oslava jsou do ~15 % pod základem. Rozdíl nese mini opička, respektive činka.
+  - ≥ 55 fps absolutně na tomhle zatíženém stroji nesplní ani základ d0d8294. Potvrdit na klidném stroji.
+- **Běhy**:
+  - tsc OK, eslint OK.
+  - jest 108/108 sad (1080 testů).
+  - e2e 180/180 (dist z HEAD, workers 2).
+  - test:node 25/25 v minulém kole, beze změny.
+- **Otevřené**: perf na klidném stroji s porovnáním proti d0d8294. Případně ještě lehčí mini opička (bez animovaných očí a uší).

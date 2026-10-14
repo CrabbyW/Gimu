@@ -39,11 +39,12 @@ export function usePoseMotion(poseId: MascotPoseId, reduced: boolean, act?: { co
   // S omezeným pohybem stojí (statická póza).
   useEffect(() => {
     cancelAnimation(clock);
-    if (reduced) return;
+    // Mini opička cvičí ve fázi siluety: živá smyčka stojí, hodina by jen zbytečně překreslovala každý snímek (perf QA d341d87).
+    if (reduced || trainMode >= 0) return;
     clock.set(0);
     clock.set(withRepeat(withTiming(1, { duration: LIFE_CLOCK_MS, easing: Easing.linear }), -1, false));
     return () => cancelAnimation(clock);
-  }, [reduced, clock]);
+  }, [reduced, clock, trainMode]);
 
   useEffect(() => {
     if (prev.current === poseId) return;
@@ -88,7 +89,10 @@ export function usePoseMotion(poseId: MascotPoseId, reduced: boolean, act?: { co
     const w = waveAmp.value;
     const mixed = mixVector(applyLife(from.value, fromCode.value, c, lifeOn, w), applyLife(to.value, toCode.value, c, lifeOn, w), k);
     // Nad pózou: fáze cviku (mini opička), pak choreografie akce repertoáru (obálka 0 na začátku i konci osy).
-    return applyAct(applyTrain(mixed, trainMode, trainPhase.value), actCode.value, actT.value);
+    // Bez akce a cvičení žádné kopie pole navíc (každý snímek každé opice).
+    const code = actCode.value;
+    const trained = trainMode >= 0 ? applyTrain(mixed, trainMode, trainPhase.value) : mixed;
+    return code >= 0 ? applyAct(trained, code, actT.value) : trained;
   });
   return { live, clock, toCode, to, extrasIn, on };
 }

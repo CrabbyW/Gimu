@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
@@ -25,7 +25,13 @@ export function ExerciseSilhouette({ id, phase, playing = true, phaseOut }: Prop
   const { c } = useTheme();
   const loop = useSilhouettePhase(SILHOUETTES[id].kind, phase === undefined && playing);
   const t = phase ?? loop;
-  useEffect(() => { phaseOut?.set(t); }, [t, phaseOut]);
+  // Mini opička (72 pt) stačí na poloviční frekvenci: každá změna fáze překreslí celou její kostru (perf QA d341d87).
+  const tick = useRef(0);
+  useEffect(() => {
+    if (!phaseOut) return;
+    tick.current += 1;
+    if (tick.current % 2 === 0 || t === 0) phaseOut.set(t);
+  }, [t, phaseOut]);
   const vb = poseFrame(id);
   const dots = silhouetteDots(id, t);
   const eye = headDotIndex(dots.length);

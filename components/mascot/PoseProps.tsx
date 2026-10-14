@@ -104,6 +104,22 @@ function loupe(cx: number, cy: number, r: number, hx: number, hy: number, ink: P
 export function propsBack(extra: PoseExtra | null, pose: MascotPose, ink: PropInk): Node[] {
   const C = PROP.center;
   switch (extra) {
+    // Činka za hlavou (QA d341d87): při výrazu od ramen nad hlavu tyč nejde přes obličej; nad hlavou nic nezakrývá.
+    case 'barbell': { // Tyč nad dlaněmi, kotouče z teček; vnější pravý kotouč = část 1 (nacvaknutí).
+      const b = PROP.barbell;
+      const l = handWorld(pose, -1), r = handWorld(pose, 1);
+      const y = Math.min(l.y, r.y) - b.lift;
+      const x0 = l.x - b.overhang, x1 = r.x + b.overhang;
+      return [
+        part('bbM', 0, 2, (l.x + r.x) / 2, y, [
+          ...dotLine(x0, y, x1, y, ink.prop, 'bb', R + 0.2),
+          ...dotColumn(l.x - b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbLi'),
+          ...dotColumn(l.x - b.outer.dx - b.col * 2, y, b.outer.h, 2, ink.fur, 'bbLo'),
+          ...dotColumn(r.x + b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbRi'),
+        ]),
+        part('bbClick', 1, 2, r.x + b.outer.dx, y, dotColumn(r.x + b.outer.dx, y, b.outer.h, 2, ink.fur, 'bbRo')),
+      ];
+    }
     case 'ring': // Loader: 12 teček kolem hlavy, horní živá.
       return [part('ringM', 0, 1, C, C, Array.from({ length: 12 }, (_, i) => {
         const a = ((i * 30 - 90) * Math.PI) / 180;
@@ -262,21 +278,6 @@ export function propsFront(extra: PoseExtra | null, pose: MascotPose, ink: PropI
         <Circle key="md" cx={cx} cy={cy + s * 0.55} r={s * 0.85} fill={ink.face} />,
         <Circle key="mi" cx={cx} cy={cy + s * 0.55} r={s * 0.5} stroke={ink.fur} strokeWidth={1.2} fill="none" />,
       ])];
-    }
-    case 'barbell': { // Tyč nad dlaněmi, kotouče z teček; vnější pravý kotouč = část 1 (nacvaknutí).
-      const b = PROP.barbell;
-      const l = handWorld(pose, -1), r = handWorld(pose, 1);
-      const y = Math.min(l.y, r.y) - b.lift;
-      const x0 = l.x - b.overhang, x1 = r.x + b.overhang;
-      return [
-        part('bbM', 0, 2, (l.x + r.x) / 2, y, [
-          ...dotLine(x0, y, x1, y, ink.prop, 'bb', R + 0.2),
-          ...dotColumn(l.x - b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbLi'),
-          ...dotColumn(l.x - b.outer.dx - b.col * 2, y, b.outer.h, 2, ink.fur, 'bbLo'),
-          ...dotColumn(r.x + b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbRi'),
-        ]),
-        part('bbClick', 1, 2, r.x + b.outer.dx, y, dotColumn(r.x + b.outer.dx, y, b.outer.h, 2, ink.fur, 'bbRo')),
-      ];
     }
     case 'towelBottle': { // Ručník přes levé rameno (na srsti světlý), lahev v levé ruce, dvě kapky potu.
       const t = PROP.towel, bt = PROP.bottle;
