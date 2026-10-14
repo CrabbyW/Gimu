@@ -62,6 +62,9 @@
     "e2e": "expo export --platform web && playwright test -c e2e/playwright.config.ts flows visual a11y",
     "e2e:visual": "expo export --platform web && playwright test -c e2e/playwright.config.ts visual",
     "e2e:update": "expo export --platform web && playwright test -c e2e/playwright.config.ts visual --update-snapshots",
+    "perf:baseline": "node scripts/perf.mjs baseline",
+    "perf:compare": "node scripts/perf.mjs compare",
+    "phone": "node scripts/phone.mjs",
     "e2e:perf": "expo export --platform web && playwright test -c e2e/playwright.config.ts --project=perf-prod"
   },
   "jest": {

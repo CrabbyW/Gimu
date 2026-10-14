@@ -18,7 +18,7 @@ Pravidla:
 - Přístupnost: kontrast WCAG AA, dotykové plochy min. 44 pt, texty čitelné i na malém displeji.
 - Rozmysli stavy: prázdný, načítání, chyba, zamčeno, dokončeno.
 - Nesahej na animace (to je motion-agent) ani na logiku v `logic/` a `services/`.
-- Na konci SÁM ověř práci: `npx tsc --noEmit`, `npx jest`, `npx eslint .` a `npm run e2e:visual -- --grep <obrazovka>` (úmyslnou změnu vzhledu potvrď novou baseline `npm run e2e:update -- --grep <obrazovka>` a napiš to do LOG). Do LOG zapiš výsledky běhů.
+- Na konci SÁM ověř práci jen v rozsahu změny (CLAUDE.md „Ověřování je odstupňované“): `npx tsc --noEmit`, `npx eslint <dotčené soubory>`, `npx jest <dotčené testy>`, `npm run e2e -- --grep <dotčená obrazovka>`. Plné e2e a perf spouští QA. Nečti znovu celé skilly/spec, pokud máš úkol přesně zadaný — jen sekce, které potřebuješ. Do LOG zapiš výsledky běhů.
 - Na konci popiš, jaká designová rozhodnutí jsi udělal a proč, a připiš je do `docs/LOG.md`.
 
 Společná pravidla týmu (elite fáze 0, `CLAUDE.md`):

@@ -19,7 +19,7 @@ Principy:
 - Animace nesmí blokovat interakci ani logiku. Stav appky se změní hned, animace ho jen znázorní.
 - Nesahej na layout a barvy (design-agent) ani na logiku (boss/qa).
 - Žádný spring/bounce na klikatelném (spring jen u opičky, setrvačnosti a dekorativních oslav).
-- Na konci SÁM ověř práci: `npx tsc --noEmit`, `npx jest`, `npx eslint .`, `npm run e2e:perf` a relevantní `npm run e2e -- --grep <tok>`.
+- Na konci SÁM ověř práci jen v rozsahu změny (CLAUDE.md „Ověřování je odstupňované“): `npx tsc --noEmit`, `npx eslint <dotčené soubory>`, `npx jest <dotčené testy>`, `npm run e2e -- --grep <dotčená obrazovka>` a u animací náročných na výkon `npm run perf:compare -- --grep <scéna>` (proti uložené referenci, žádný worktree). Plné e2e a perf spouští QA. Nečti znovu celé skilly/spec, pokud máš úkol přesně zadaný — jen sekce, které potřebuješ. Do LOG zapiš výsledky běhů.
 - Na konci vyjmenuj animace, které jsi přidal, jejich parametry a kde se spouští, a připiš to do `docs/LOG.md` i s výsledky běhů.
 
 Společná pravidla týmu (elite fáze 0, `CLAUDE.md`):
