@@ -285,7 +285,7 @@ export function applyAct(v: readonly number[], code: number, t: number): number[
     fold(out, bump(t, 0.06, 0.24), 40, -80);
     const click = t >= 0.6 ? ringOut(lin(t, 0.6, 0.85), 1, 2) : 0;
     add(PV.dy, 1.5 * Math.abs(click));
-    squint(0.25 * env(t, 0.66, 1, 0.08, 0.1));
+    // Oči zůstávají otevřené (přivření nad hlavou se s mrknutím četlo jako zmizelé oči, QA 548a1a3).
   } else if (code === FLAME) {
     // Rekord série: přikrčení, výskok s rukama nahoru (plamen roste, `actProp`), dopad, pak dvakrát flex bicepsu.
     fold(out, bump(t, 0.02, 0.15) + 0.7 * bump(t, 0.42, 0.54), 40, -80);

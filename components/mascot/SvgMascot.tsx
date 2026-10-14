@@ -47,6 +47,11 @@ const BREATH_SCALE_SAD = 0.012;
 const HOP_HEIGHT = 0.12;
 const GAZE_DOWN = 3;
 const EYE_RY_MIN = EYE_RY.closed;
+/** Oči na webu zmizí, když atribut dostane NaN/Infinity (QA 548a1a3, činka): ve workletu vždy konečné číslo. */
+function finiteOr(x: number, fallback: number): number {
+  'worklet';
+  return Number.isFinite(x) ? x : fallback;
+}
 
 type Face = 'idle' | 'happy' | 'sad';
 type MoodPose = { face: Face; armsUp: boolean; earsDown: boolean; breathHalfMs: number; hopRepeat: boolean };
@@ -223,9 +228,9 @@ function MascotSvg({
     const blink = Math.max(0, Math.min(1, eyeRy.value / EYE_RY_OPEN));
     const v = live.value;
     return {
-      ry: Math.max(EYE_RY_MIN, (v[15] ?? 0) * (v[20] ?? 1) * blink * (1 - close) + EYE_RY_MIN * close),
-      cx: cxL + (v[19] ?? 0) + pupilX.value * PX,
-      cy: EY + (v[16] ?? 0) + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY,
+      ry: finiteOr(Math.max(EYE_RY_MIN, (v[15] ?? 0) * (v[20] ?? 1) * blink * (1 - close) + EYE_RY_MIN * close), EYE_RY_OPEN),
+      cx: finiteOr(cxL + (v[19] ?? 0) + pupilX.value * PX, cxL),
+      cy: finiteOr(EY + (v[16] ?? 0) + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY, EY),
     };
   });
   const eyeR = useAnimatedProps(() => {
@@ -233,9 +238,9 @@ function MascotSvg({
     const blink = Math.max(0, Math.min(1, eyeRy.value / EYE_RY_OPEN));
     const v = live.value;
     return {
-      ry: Math.max(EYE_RY_MIN, (v[15] ?? 0) * (v[20] ?? 1) * blink * (1 - close) + EYE_RY_MIN * close),
-      cx: cxR + (v[19] ?? 0) + pupilX.value * PX,
-      cy: EY + (v[16] ?? 0) + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY,
+      ry: finiteOr(Math.max(EYE_RY_MIN, (v[15] ?? 0) * (v[20] ?? 1) * blink * (1 - close) + EYE_RY_MIN * close), EYE_RY_OPEN),
+      cx: finiteOr(cxR + (v[19] ?? 0) + pupilX.value * PX, cxR),
+      cy: finiteOr(EY + (v[16] ?? 0) + Math.min(1, rDroop.value) * GAZE_DOWN + pupilY.value * PY, EY),
     };
   });
   const headProps = useAnimatedProps(() => headMatrix.value);
