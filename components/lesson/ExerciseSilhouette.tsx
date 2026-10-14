@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { DOT, GROUND_Y, SILHOUETTES } from '@/logic/silhouettePoses';
 import { useSilhouettePhase } from './useSilhouettePhase';
 import { headDotIndex, poseFrame, silhouetteDots } from '@/logic/silhouette';
 import { useTheme } from '@/theme';
 import type { SilhouetteId } from '@/types';
+
+/** Tečky jako JEDEN Path (kruh = dva oblouky): stovky `Circle` uzlů dusily lekci (QA 548a1a3, lekce 39 fps). */
+const dotsPath = (pts: readonly (readonly [number, number])[], r: number): string =>
+  pts.map(([x, y]) => `M${(x - r).toFixed(2)} ${y.toFixed(2)}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`).join('');
 
 interface Props {
   id: SilhouetteId;
@@ -40,12 +44,14 @@ export function ExerciseSilhouette({ id, phase, playing = true, phaseOut }: Prop
     for (let x = Math.ceil((vb.x - 200) / DOT.groundPitch) * DOT.groundPitch; x <= vb.x + vb.w + 200; x += DOT.groundPitch) xs.push(x);
     return xs;
   }, [vb.x, vb.w]);
+  const groundPath = useMemo(() => dotsPath(ground.map((x) => [x, GROUND_Y + DOT.r] as const), DOT.groundR), [ground]);
   // Dekorativní: Svg na webu atributy přístupnosti propouští do DOM, proto je skrývá obalový View.
   return (
     <View testID={`silhouette-${id}`} style={{ flex: 1, alignSelf: 'stretch' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Svg aria-hidden width="100%" height="100%" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMax meet">
-        {ground.map((x) => <Circle key={`g${x}`} cx={x} cy={GROUND_Y + DOT.r} r={DOT.groundR} fill={c.faint} />)}
-        {dots.map(([x, y], i) => <Circle key={i} cx={x} cy={y} r={DOT.r} fill={i === eye ? c.live : c.text} />)}
+        <Path testID="silhouette-ground" d={groundPath} fill={c.faint} />
+        <Path testID="silhouette-figure" d={dotsPath(dots.filter((_, i) => i !== eye), DOT.r)} fill={c.text} />
+        {dots[eye] ? <Circle testID="silhouette-eye" cx={dots[eye][0]} cy={dots[eye][1]} r={DOT.r} fill={c.live} /> : null}
       </Svg>
     </View>
   );
