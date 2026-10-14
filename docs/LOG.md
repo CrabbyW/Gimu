@@ -1507,3 +1507,29 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
   - e2e 180/180 (dist z HEAD, workers 2).
   - test:node 25/25 v minulém kole, beze změny.
 - **Otevřené**: perf na klidném stroji s porovnáním proti d0d8294. Případně ještě lehčí mini opička (bez animovaných očí a uší).
+
+## motion-agent: odlehčení mini opičky a činky (volba uživatele, 2026-10-14)
+- **Mini opička v lekci** (`train`, 72 pt, `SvgMascot` režim `lite`): oči a uši jsou statické (žádné animované props). Bez `propsFace`, bez rekvizit a doplňků. Jen tělo a končetiny podle fáze cviku, ve fázi siluety. Zatnutí v posledních 3 s tím přišlo o zaťaté zuby, zbývá třes.
+- **Činka** (`PoseProps` `barbell`): tyč je jedna čára (`Path`), kotouče plné zaoblené obdélníky (`Rect`) místo desítek teček. Pravý vnější kotouč zůstal samostatnou částí 1, takže nacvaknutí i haptika `rigid` v 0.6 fungují dál. Činka zůstává v zadní vrstvě (za hlavou).
+- **Perf** proti d0d8294 ve stejném běhu (worktree, oba exporty, `--workers=1`, base a head hned po sobě). Hodnoty jsou fps, base / head:
+
+| Scéna | Bez zpomalení | `E2E_CPU_THROTTLE=4`, běh A | Throttle 4, běh B |
+|---|---|---|---|
+| mapa | 141.5 / 140.5 | 76.9 / 68.0 | 69.1 / 75.9 |
+| mapa s idle akcí | (v base není) / 142.1 | – / 67.1 | – / 69.0 |
+| pull-to-refresh | 142.1 / 145.6 | 36.5 / 37.0 | 41.5 / 37.8 |
+| lekce | 140.0 / 144.0 | 116.0 / 53.5 | 88.0 / 73.0 |
+| oslava | 139.6 / 140.0 | 29.2 / 28.8 | 33.0 / 32.3 |
+
+- **Rozbor** (oba ve stejném běhu, throttle 4):
+  - Lekce s vypnutou mini opičkou: d0d8294 112.4 / HEAD 60.6.
+  - Commit 9f5c9ec (design-agent, hustší silueta, před tímto kolem) / HEAD: 59.5 / 62.0.
+  - Zbylý rozdíl lekce proti d0d8294 tedy nese hustší tečková silueta z 9f5c9ec. Mini opička ani repertoár ho nezpůsobují: HEAD je proti 9f5c9ec rychlejší.
+  - Oslava, mapa a pull-to-refresh jsou na úrovni d0d8294.
+  - Pull-to-refresh a oslava na throttle 4 nesplňují 55 fps ani na d0d8294.
+- **Běhy**:
+  - tsc OK, eslint OK.
+  - jest 108/108 sad (1080 testů), test:node 25/25.
+  - e2e 180/180 (workers 2, dist z HEAD).
+  - Servery 8083 a 8086 jsem ukončil, worktree odstranil.
+- **Otevřené**: hustota siluety v lekci (9f5c9ec) je na rozhodnutí design-agenta a bosse, pokud se má lekce na pomalém stroji vrátit k d0d8294.

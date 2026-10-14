@@ -114,6 +114,8 @@ function MascotSvg({
   const { live, clock, toCode, to: target, extrasIn, on: lifeOn } = usePoseMotion(poseId, reduced, { code: player.code, t: player.t, trainMode: tMode, trainPhase: tPhase });
   const aCode = player.code, aT = player.t;
   const TRAV = travel === false ? 0 : 1;
+  /** Mini opička v lekci: jen tělo a končetiny podle fáze cviku. */
+  const lite = trainSpec !== null;
   const breathScale = sleeping ? motion.reactions.sleep.breathScale : moodPose.face === 'sad' ? BREATH_SCALE_SAD : BREATH_SCALE;
   const breathHalfMs = sleeping ? motion.reactions.sleep.breathHalfMs : moodPose.breathHalfMs;
 
@@ -309,7 +311,7 @@ function MascotSvg({
     >
       <Svg width={px} height={px} viewBox="0 0 200 200">
         <PropMotionContext.Provider value={propMotion}>
-        {drawBack ? <PoseExtras pose={pose} ink={ink} extrasIn={extrasIn} clock={clock} zzMoving={poseId === 'sleep' && !reduced} /> : null}
+        {drawBack && !lite ? <PoseExtras pose={pose} ink={ink} extrasIn={extrasIn} clock={clock} zzMoving={poseId === 'sleep' && !reduced} /> : null}
         {clipOn ? (
           <Defs><ClipPath id={clipId}><AnimatedRect x={0} y={0} width={200} height={clipH} animatedProps={clipProps} /></ClipPath></Defs>
         ) : null}
@@ -342,16 +344,35 @@ function MascotSvg({
               {/* Hlava: náklon pózy kolem krku, nad ním matice reakcí (natočení, kývnutí). */}
               <AnimatedG {...headT} animatedProps={poseHeadProps}>
                 <AnimatedG animatedProps={headProps}>
-                  <AnimatedG {...earT} animatedProps={earLProps}><Circle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} /></AnimatedG>
-                  <AnimatedG {...earT} animatedProps={earRProps}><Circle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} /></AnimatedG>
+                  {lite ? (
+                    // Mini opička (cvičí s tebou): uši a oči statické, bez obličejových rekvizit (perf, volba uživatele 2026-10-14).
+                    <>
+                      <Circle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} />
+                      <Circle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} />
+                    </>
+                  ) : (
+                    <>
+                      <AnimatedG {...earT} animatedProps={earLProps}><Circle cx={head.cx - ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} /></AnimatedG>
+                      <AnimatedG {...earT} animatedProps={earRProps}><Circle cx={head.cx + ears.dx} cy={head.cy + ears.dy} r={ears.r} fill={ink.fur} /></AnimatedG>
+                    </>
+                  )}
                   <Circle cx={head.cx} cy={head.cy} r={head.r} fill={ink.fur} />
                   <Path d={V2.face} fill={ink.face} />
-                  <AnimatedEllipse cx={head.cx - eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeL} />
-                  <AnimatedEllipse cx={head.cx + eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeR} />
+                  {lite ? (
+                    <>
+                      <Ellipse cx={head.cx - eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} />
+                      <Ellipse cx={head.cx + eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} />
+                    </>
+                  ) : (
+                    <>
+                      <AnimatedEllipse cx={head.cx - eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeL} />
+                      <AnimatedEllipse cx={head.cx + eyes.dx} cy={eyeCy} rx={eyes.rx} ry={baseRy} fill={ink.eye} animatedProps={eyeR} />
+                    </>
+                  )}
                   {/* Obličej pózy (smích, zatnutí, čelenka): ve skupině hlavy, jde s jejím náklonem. */}
-                  {propsFace(pose.extra, ink, eyeCy)}
+                  {lite ? null : propsFace(pose.extra, ink, eyeCy)}
                   {/* Zatnutí v posledních 3 s výdrže na mini opičce, která zůstává v póze cviku. */}
-                  {effAct?.id === 'strain' && pose.extra !== 'clench' ? propsFace('clench', ink, eyeCy) : null}
+                  {!lite && effAct?.id === 'strain' && pose.extra !== 'clench' ? propsFace('clench', ink, eyeCy) : null}
                 </AnimatedG>
               </AnimatedG>
             </>
@@ -359,7 +380,7 @@ function MascotSvg({
         </AnimatedG>
         </AnimatedG>
         </G>
-        {drawBack ? <PropLayer testID="mascot-props-front" nodes={propsFront(pose.extra, pose, ink)} extrasIn={extrasIn} /> : null}
+        {drawBack && !lite ? <PropLayer testID="mascot-props-front" nodes={propsFront(pose.extra, pose, ink)} extrasIn={extrasIn} /> : null}
         {drawBack && !reduced && (effAct?.id === 'grow' || effAct?.id === 'eveningTowel') ? (
           <ActExtras kind={effAct.id} t={aT} live={live} ink={ink} />
         ) : null}

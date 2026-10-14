@@ -71,12 +71,6 @@ function dotEllipse(cx: number, cy: number, rx: number, ry: number, rot: number,
     return <Circle key={`${key}${i}`} cx={cx + x * Math.cos(q) - y * Math.sin(q)} cy={cy + x * Math.sin(q) + y * Math.cos(q)} r={r} fill={fill} />;
   });
 }
-/** Kotouč činky z čela: `cols` sloupců teček po `PROP.barbell.col`, výška `h` kolem `cy`. */
-function dotColumn(x: number, cy: number, h: number, cols: number, fill: string, key: string): Node[] {
-  const out: Node[] = [];
-  for (let c = 0; c < cols; c++) out.push(...dotLine(x + c * PROP.barbell.col, cy - h / 2, x + c * PROP.barbell.col, cy + h / 2, fill, `${key}c${c}_`, R, PROP.barbell.col + 1));
-  return out;
-}
 /** Lupa: dvojitý tah (světlý lem pod tmavým), aby byla vidět na srsti i na obličeji. */
 /** Jedna pohyblivá část (index `i` z `n`) s pivotem (cx, cy). */
 const part = (key: string, i: number, n: number, cx: number, cy: number, nodes: Node[]): Node => (
@@ -110,14 +104,16 @@ export function propsBack(extra: PoseExtra | null, pose: MascotPose, ink: PropIn
       const l = handWorld(pose, -1), r = handWorld(pose, 1);
       const y = Math.min(l.y, r.y) - b.lift;
       const x0 = l.x - b.overhang, x1 = r.x + b.overhang;
+      // Odlehčeno (perf oslavy, uživatel 2026-10-14): tyč = čára, kotouče = plné zaoblené obdélníky (dřív desítky teček).
+      const plate = (x: number, h: number, key: string) => <Rect key={key} x={x} y={y - h / 2} width={b.col * 2} height={h} rx={b.col / 2} fill={ink.fur} />;
       return [
         part('bbM', 0, 2, (l.x + r.x) / 2, y, [
-          ...dotLine(x0, y, x1, y, ink.prop, 'bb', R + 0.2),
-          ...dotColumn(l.x - b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbLi'),
-          ...dotColumn(l.x - b.outer.dx - b.col * 2, y, b.outer.h, 2, ink.fur, 'bbLo'),
-          ...dotColumn(r.x + b.inner.dx - b.col, y, b.inner.h, 2, ink.fur, 'bbRi'),
+          <Path key="bbBar" d={`M${x0} ${y} H${x1}`} stroke={ink.prop} strokeWidth={(R + 0.2) * 2} strokeLinecap="round" />,
+          plate(l.x - b.inner.dx - b.col, b.inner.h, 'bbLi'),
+          plate(l.x - b.outer.dx - b.col * 2, b.outer.h, 'bbLo'),
+          plate(r.x + b.inner.dx - b.col, b.inner.h, 'bbRi'),
         ]),
-        part('bbClick', 1, 2, r.x + b.outer.dx, y, dotColumn(r.x + b.outer.dx, y, b.outer.h, 2, ink.fur, 'bbRo')),
+        part('bbClick', 1, 2, r.x + b.outer.dx, y, [plate(r.x + b.outer.dx, b.outer.h, 'bbRo')]),
       ];
     }
     case 'ring': // Loader: 12 teček kolem hlavy, horní živá.
