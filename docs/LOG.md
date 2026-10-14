@@ -1533,3 +1533,14 @@ Brány zelené (tsc, eslint, jest 988, test:node, e2e 172/172, perf 5/5). Verdik
   - e2e 180/180 (workers 2, dist z HEAD).
   - Servery 8083 a 8086 jsem ukončil, worktree odstranil.
 - **Otevřené**: hustota siluety v lekci (9f5c9ec) je na rozhodnutí design-agenta a bosse, pokud se má lekce na pomalém stroji vrátit k d0d8294.
+
+## qa-agent: kolo 2 d341d87..b48ac04 — NESCHVÁLENO (HEAD b48ac04, 2026-10-14)
+- **Brány**: tsc, eslint, jest 1080, test:node 25 a e2e 180/180 jsou zelené.
+- **Perf**: d0d8294 a HEAD ve stejném sezení. Lekce 86.8 / 38.9 fps je regrese jen na HEAD (❌). Mapa, pull a oslava vychází stejně na obou, tj. zatížený stroj (⚠️). Throttle 4 tu není použitelný.
+- **Rozhodl jsem**: přání uživatele mít hustší siluetu není přijetí propadu perf brány. Potřeba je zlevnit vykreslení, nebo výslovný souhlas uživatele přes bosse.
+- **Ověřeno**: činka už nejde přes obličej. Mini opička na w320 bez kolize.
+- **Otevřené**:
+  - ⚠️ mizející oči v liftBarbell na webu (motion-agent).
+  - Zatnutí je teď jen třes.
+  - Nativní log po HEAD neproběhl.
+- **Úklid**: worktree a servery 8083/8087 jsou uklizené. Na 8082 jsem nesahal.

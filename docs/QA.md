@@ -869,3 +869,40 @@ Blokují dvě ❌: neviditelná fajfka dokončeného uzlu na webu a ořez opičk
 3. Lekce: mini opička cvičí plynule (sledovat fps) a s velkým písmem nepřekrývá „GET READY“ ani text.
 4. Oslava: zvednutí činky má haptiku jednou na vrcholu; při Reduce Motion je jen statická póza.
 5. VoiceOver mini opičku přeskočí (dekorativní) a čte jen cvik a časovač.
+
+## QA kolo 2: d341d87..b48ac04 (perf mini opičky, činka za hlavou) — HEAD b48ac04, 2026-10-14
+
+**Verdikt: NESCHVÁLENO** (HEAD `b48ac04`)
+
+### Brány
+- ✅ `npx tsc --noEmit` 0; ✅ `npx eslint .` 0 (vč. `local/no-worklet-object-capture`); ✅ jest 108 sad / 1080 testů; ✅ test:node 25/25.
+- ✅ `npm run e2e`: **180/180 passed** (14.9 min), žádný vizuální diff, baseline nepřepsány.
+- ❌ `npm run e2e:perf` (HEAD): 0/7. Vlastní srovnání d0d8294 vs HEAD **ve stejném sezení** (worktree, `--workers=1`, base export s `EXPO_ROUTER_APP_ROOT` — bez něj worktree export hlásí „No routes found“), fps bez throttlingu, base / head:
+  - mapa 33.7 / 33.2, pull 36.5 / 37.1, oslava 24.0 / 20.6, TTI 6979 / 7065 ms → stejné na obou, tj. zatížený stroj (běží Metro 8082 uživatele), ⚠️ ne vada kola.
+  - **lekce 86.8 ✅ / 38.9 ❌** — HEAD 2.2× pomalejší a pod 55 fps, base prochází. Canvas test: base ✅, HEAD timeout (90 s).
+  - `E2E_CPU_THROTTLE=4` na tomto stroji nepoužitelné (base i head 4–9 fps, timeouty), čísla motion-agenta (≥ 139 fps) jsem nezreplikoval, stroj byl v tu chvíli výrazně vytíženější.
+- 1b. `$TEMP/expogo.log`: 0 řádků `ERROR`, ale log je z 2026-10-13 16:56, **nativní bundle tohoto HEAD neproběhl** (demo server neběží) ⚠️.
+
+### Rozhodnutí o perf lekce
+Rozdíl lekce je reprodukovatelný i bez throttlingu a brána ≥ 55 fps padá jen na HEAD. Podle motion-agenta jde o hustší siluetu (1380e29/9f5c9ec, na téže větvi). Uživatel si vyžádal „menší tečky = větší detail“, ale to není souhlas s propadem pod perf bránu. Je to tedy ❌ tohoto kroku. Řešení: design-agent/motion-agent zlevní siluetu (např. tečky jedné kosti jako jeden `Path` místo stovek `<Circle>`), nebo boss vyžádá od uživatele výslovné přijetí nižšího fps a pak se upraví rozpočet v `e2e/perf/budget.spec.ts`.
+
+### Cílené kontroly
+- ✅ Činka za hlavou: snímky /dev (light i dark, 0.25–4.5 s). Tyč i kotouče jsou nad temenem, přes obličej nejdou. V nadhozu (~0.4 s) jsou kotouče po stranách hlavy a obličej je volný.
+- ⚠️ motion-agent: během liftBarbell na webu **občas mizí oči** (snímky v ~0.6, 1.0, 1.5 a 2.5 s bez očí, ve 1.2 a 2.1 s s očima). DOM má `ry` 5.25–7 a `elementFromPoint` vrací oko, takže jde nejspíš o chybu vykreslení na webu. Repro: `/dev`, tlačítko `act-liftBarbell`, snímky stage po 250 ms. Ověřit na iPhonu.
+- ✅ Mini opička w320 light: box x 224–296, y 262–334. Žádný textový uzel se nepřekrývá (měřeno), „Advanced move…“ začíná ~y 345. Oči jsou vidět.
+- ⚠️ Zatnutí v posledních 3 s: v režimu `lite` zbyl jen třes (`applyAct` STRAIN), zuby a obličej už ne. Je to volba uživatele, na 72 pt to může být málo čitelné → iPhone.
+- ✅ `usePoseMotion`: mimo akci a cvik se nedělají kopie, hodina stojí při `trainMode >= 0`. `ExerciseSilhouette` posílá fázi každý 2. snímek. Worklety jsou čisté.
+- ✅ Test reduced motion přepnut na `mascot-props-back`, činka po `reducedMs` zmizí.
+- Přetrvává ⚠️: jest neukončený worker; Dynamic Type u mini opičky.
+
+### Co opravit (komu)
+1. ❌ design-agent + motion-agent: lekce ≥ 55 fps na tomtéž stroji, kde ji d0d8294 splňuje (zlevnit vykreslení husté siluety). Alternativa: výslovné přijetí uživatelem přes bosse.
+2. ⚠️ motion-agent: blikající/mizející oči v liftBarbell (web).
+3. ⚠️ boss: čerstvý nativní bundle a log po HEAD.
+
+### iPhone checklist
+1. Lekce: silueta i mini opička běží plynule bez trhání, na starším iPhonu taky.
+2. Oslava, zvednutí činky: činka nad hlavou, oči jsou vidět celou dobu, haptika jednou při nacvaknutí kotouče.
+3. Posledních 3 s výdrže: třes mini opičky je čitelný jako zatnutí.
+4. Mini opička s větším písmem (Dynamic Type) nepřekrývá „GET READY“ ani popis.
+5. VoiceOver mini opičku přeskočí a čte jen cvik a časovač.
