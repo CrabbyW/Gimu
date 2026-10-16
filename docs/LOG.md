@@ -250,3 +250,8 @@ Uživatel na telefonu hodnotil pohyb jako „dost amatérský“. Systém je v `
 - Boss: README „Stav“ a SPEC §7.1 (dreamBody jako věta, R41) aktualizovány v db69d21.
 - Rozhodnutí v kroku 3: kotvy rukou stage 1 na konec paže (R31), úhel paží celebrate po stage 120/140/160 (R32), presety pohybu v `lib/motion.ts` (R33), DotLoader jako nativní port (R34), odchylky T17 přijaty (R35), onboarding s výběrem (R36, R37), brag pro pohyb v appce (R38, R39), tick při výběru vize (R40), dreamBody věta (R41).
 - Pokračuje krok 4: liga, progres, sezóna + recap, šatník, notifikace.
+
+## 2026-10-16 · boss · konkurence, plán „o 10 % lepší“, /brag
+**Udělal:** rešerše konkurence (Sport Is My Game, Fito, ELYS, Level Up, Lever, Calistack a další). Plán `docs/superpowers/plans/2026-10-16-o-10-procent-lepsi.md`: pět pák (P1 opice ukazuje, co cvičíš, P2 dokončení lekce, P3 laskavý streak, P4 první lekce do 2 minut, P5 recap opice) navázaných na tasky plánu B. Skilly brag a brag-slim (latent-spaces/brag 0.4.0) v `.claude/skills/`. Launch video `brag-output/brag.mp4` (20 s, 1080p, tón cinematic), zdroj scén v `brag-output/work/index.html` (opice a kotouče převedené z `SvgMascot.tsx` a `Plate.tsx`), zvuky appky + hudba ende.app z balíčku brag.
+**Rozhodl sám:** video česky, poster = snímek s titulkem OPICE a opicí stage 1.
+**Otevřené:** schválení plánu a tři rozhodnutí v něm (P1, P3, P4). Licence hudby ende.app ověřit před veřejným sdílením videa (README brag to vyžaduje).

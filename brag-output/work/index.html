@@ -1,0 +1,165 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+:root{--base:#0E0D0C;--surface:#171615;--raised:#201E1C;--rule:#2C2926;--text:#EFEDE8;--muted:#8C8780;--accent:#FF6B35;--ink:#131316}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--base)}
+#stage{position:absolute;inset:0;overflow:hidden}
+.abs{position:absolute}
+.display{font-family:'Bebas Neue';color:var(--text);line-height:.9}
+.body{font-family:Inter;color:var(--muted)}
+.label{font-family:'JetBrains Mono';font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+</style></head>
+<body><div id="stage"></div><div style="position:absolute;opacity:0;pointer-events:none"><span class="display">Č</span><span class="body">Č</span><b class="body" style="font-weight:600">Č</b><span class="label">Č</span></div>
+<script>
+// Paleta a geometrie převzaté z theme/palettes.ts, theme/tokens.ts, components/mascot/*, components/map/Plate.tsx.
+const C={base:'#0E0D0C',surface:'#171615',raised:'#201E1C',rule:'#2C2926',text:'#EFEDE8',muted:'#8C8780',accent:'#FF6B35',onAccent:'#131316',
+  plate5:'#6B6660',plate10:'#57534E',plate15:'#46423E',plate20:'#36332F',plate25:'#2A2724',plateRim:'#3A3632',plateHighlight:'rgba(255,255,255,0.10)'};
+const M={fur:'#7A5236',furShade:'#5E3F29',face:'#E8C7A0'};
+const G={
+ 1:{head:{cx:100,cy:80,r:54},ears:{dx:54,dy:-2,r:18},torso:{x:72,y:122,w:56,h:52,rx:26},shoulders:null,armL:{x:74,y:128,w:14,h:40,angle:18},armR:{x:126,y:128,w:14,h:40,angle:18},legs:{y:176,dx:18,r:12}},
+ 2:{head:{cx:100,cy:72,r:44},ears:{dx:44,dy:-2,r:15},torso:{x:66,y:108,w:68,h:64,rx:28},shoulders:null,armL:{x:70,y:114,w:16,h:50,angle:14},armR:{x:130,y:114,w:16,h:50,angle:14},legs:{y:178,dx:16,r:14}},
+ 3:{head:{cx:100,cy:64,r:40},ears:{dx:40,dy:-2,r:14},torso:{x:70,y:112,w:60,h:60,rx:24},shoulders:{dx:44,y:120,r:18,trapY:92},armL:{x:54,y:112,w:22,h:56,angle:10},armR:{x:146,y:112,w:22,h:56,angle:10},legs:{y:178,dx:17,r:15}},
+};
+const UP={1:120,2:140,3:160};
+let uidN=0;
+function armPt(l,s,t,deg){const r=deg*Math.PI/180;return{x:l.x+s*Math.sin(r)*t,y:l.y+Math.cos(r)*t}}
+function trap(sh){const top=sh.y-sh.r,l=100-sh.dx,r=100+sh.dx,n=20;return `M ${l} ${top} Q ${100-n-8} ${top-1} ${100-n} ${sh.trapY} L ${100+n} ${sh.trapY} Q ${100+n+8} ${top-1} ${r} ${top} L ${r} ${sh.y} L ${l} ${sh.y} Z`}
+// Opice: stage, arms 0..1 (celebrate), happy 0..1, eye 0..1 (mrknutí).
+function mascot(stage,{arms=0,happy=0,eye=1}={}){
+ const g=G[stage],u='m'+(uidN++),fs=g.head.r/54,{head,ears,torso,shoulders:sh,legs}=g;
+ const ft=`translate(${head.cx} ${head.cy}) scale(${fs}) translate(-100 -80)`;
+ const arm=(l,s)=>{const deg=l.angle+(UP[stage]-l.angle)*arms,a=armPt(l,s,l.w/2,deg),b=armPt(l,s,l.h-l.w/2,deg);
+  let o=`<path d="M${a.x} ${a.y} L${b.x} ${b.y}" stroke="${M.furShade}" stroke-width="${l.w}" stroke-linecap="round"/>`;
+  if(sh){const p=armPt(l,s,l.h*.4,deg);o+=`<circle cx="${p.x}" cy="${p.y}" r="${l.w*.6}" fill="${M.furShade}"/>`}return o};
+ let s=`<svg viewBox="0 0 200 200" width="100%" height="100%"><defs><clipPath id="${u}b"><rect x="${torso.x}" y="${torso.y}" width="${torso.w}" height="${torso.h}" rx="${torso.rx}"/></clipPath><clipPath id="${u}h"><circle cx="${head.cx}" cy="${head.cy}" r="${head.r}"/></clipPath>`;
+ if(sh)[-1,1].forEach(d=>s+=`<clipPath id="${u}d${d}"><circle cx="${100+d*(sh.dx+arms*2)}" cy="${sh.y-arms*6}" r="${sh.r}"/></clipPath>`);
+ s+=`</defs><circle cx="${100-legs.dx}" cy="${legs.y}" r="${legs.r}" fill="${M.furShade}"/><circle cx="${100+legs.dx}" cy="${legs.y}" r="${legs.r}" fill="${M.furShade}"/>`;
+ s+=arm(g.armL,-1)+arm(g.armR,1);
+ if(sh){s+=`<path d="${trap(sh)}" fill="${M.fur}"/>`;[-1,1].forEach(d=>{const cx=100+d*(sh.dx+arms*2),cy=sh.y-arms*6;s+=`<circle cx="${cx}" cy="${cy}" r="${sh.r}" fill="${M.furShade}"/><circle cx="${cx}" cy="${cy-5}" r="${sh.r}" fill="${M.fur}" clip-path="url(#${u}d${d})"/>`})}
+ s+=`<rect x="${torso.x}" y="${torso.y}" width="${torso.w}" height="${torso.h}" rx="${torso.rx}" fill="${M.furShade}"/><rect x="${torso.x}" y="${torso.y-6}" width="${torso.w}" height="${torso.h}" rx="${torso.rx}" fill="${M.fur}" clip-path="url(#${u}b)"/><ellipse cx="100" cy="${torso.y+torso.h/2-2}" rx="${torso.w/4}" ry="${torso.h*.23}" fill="${M.face}"/>`;
+ [-1,1].forEach(d=>s+=`<circle cx="${head.cx+d*ears.dx}" cy="${head.cy+ears.dy}" r="${ears.r}" fill="${M.fur}"/><circle cx="${head.cx+d*ears.dx}" cy="${head.cy+ears.dy}" r="${ears.r/2}" fill="${M.face}"/>`);
+ s+=`<circle cx="${head.cx}" cy="${head.cy}" r="${head.r}" fill="${M.furShade}"/><circle cx="${head.cx}" cy="${head.cy-5*fs}" r="${head.r}" fill="${M.fur}" clip-path="url(#${u}h)"/>`;
+ const ry=0.6+5.4*eye;
+ s+=`<g transform="${ft}"><ellipse cx="100" cy="105" rx="34" ry="22" fill="${M.furShade}"/><circle cx="82" cy="78" r="24" fill="${M.face}"/><circle cx="118" cy="78" r="24" fill="${M.face}"/><ellipse cx="100" cy="102" rx="34" ry="22" fill="${M.face}"/>
+ <ellipse cx="84" cy="78" rx="5" ry="${ry}" fill="${C.onAccent}"/><ellipse cx="116" cy="78" rx="5" ry="${ry}" fill="${C.onAccent}"/>
+ <circle cx="86" cy="75" r="1.6" fill="${M.face}" opacity="${eye>.5?1:0}"/><circle cx="118" cy="75" r="1.6" fill="${M.face}" opacity="${eye>.5?1:0}"/>
+ <circle cx="95" cy="96" r="2" fill="${C.onAccent}"/><circle cx="105" cy="96" r="2" fill="${C.onAccent}"/>
+ <path d="M88 108 Q100 112 112 108" stroke="${C.onAccent}" stroke-width="3" stroke-linecap="round" fill="none" opacity="${1-happy}"/>
+ <path d="M86 104 Q100 122 114 104 Z" fill="${C.onAccent}" opacity="${happy}"/></g></svg>`;
+ return s;
+}
+// Kotouč: kg, state done|current|locked, check 0..1 (délka tahu fajfky).
+function plate(kg,state,check=0){
+ const u='p'+(uidN++);
+ if(state==='locked')return `<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="48" fill="none" stroke="${C.rule}" stroke-width="2"/><g transform="translate(38 38) scale(1)" fill="none" stroke="${C.muted}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g></svg>`;
+ const fill=C['plate'+kg];
+ return `<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="${u}l" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="${C.plateHighlight}"/><stop offset="1" stop-color="${C.onAccent}" stop-opacity=".22"/></radialGradient><pattern id="${u}g" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="1" height="1" fill="${C.plateHighlight}"/><rect x="2" y="3" width="1" height="1" fill="${C.onAccent}" opacity=".1"/></pattern></defs>
+ <circle cx="50" cy="50" r="48" fill="${fill}"/><circle cx="50" cy="50" r="48" fill="url(#${u}l)"/><circle cx="50" cy="50" r="48" fill="url(#${u}g)"/>
+ <circle cx="50" cy="50" r="40" fill="none" stroke="${C.plateRim}" stroke-width="1.2"/><circle cx="50" cy="50" r="20" fill="none" stroke="${C.plateRim}" stroke-width="1.2"/><circle cx="50" cy="50" r="9" fill="${C.base}"/>
+ <text x="50" y="36" font-family="Bebas Neue" font-size="22" fill="${C.text}" text-anchor="middle">${kg}</text>
+ ${state==='done'?`<path d="M44 50 l4 4 l8 -9" stroke="${C.accent}" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="18" stroke-dashoffset="${18*(1-check)}"/>`:''}
+ ${state==='current'?`<circle cx="50" cy="50" r="48" fill="none" stroke="${C.accent}" stroke-width="2"/>`:''}</svg>`;
+}
+// Easing
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const p=(t,a,b)=>cl((t-a)/(b-a));
+const out=x=>1-Math.pow(1-x,3), out5=x=>1-Math.pow(1-x,5), inQ=x=>x*x, io=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+// Text, který dosedne: zdola, ease-out.
+function rise(t,a,dur=.45,dist=40){const k=out5(p(t,a,a+dur));return `opacity:${k};transform:translateY(${(1-k)*dist}px)`}
+function slam(t,a,dur=.35){const k=out5(p(t,a,a+dur));return `opacity:${cl(k*3)};transform:scale(${1.2-.2*k})`}
+// Poskok (motion.hop): přikrčení, odraz, pád s gravitací, dopad.
+function hop(t,a,h=60){const c=.08,r=.22,f=.26,l=.08,rc=.14,x=t-a;let y=0,sq=0;
+ if(x<0||x>c+r+f+l+rc)return{y:0,sq:0};
+ if(x<c)sq=out(x/c);else if(x<c+r){y=-h*out((x-c)/r);sq=1-out((x-c)/r)}else if(x<c+r+f){y=-h*(1-inQ((x-c-r)/f))}else if(x<c+r+f+l){sq=out((x-c-r-f)/l)}else sq=1-out((x-c-r-f-l)/rc);
+ return{y,sq:sq*.06}}
+function mStyle(h,size){return `transform:translateY(${h.y+h.sq*size/2}px) scaleY(${1-h.sq}) scaleX(${1+h.sq*.6});transform-origin:50% 100%`}
+
+const S=[0,3.3,7.1,12.0,16.4,20.0];
+function render(t){
+ uidN=0;let h='';
+ const sc=S.findIndex((s,i)=>t>=s&&t<S[i+1]);
+ // Přechod: dip přes pozadí (staré ven, nové dovnitř).
+ const fadeIn=(i)=>out(p(t,S[i],S[i]+.25)), fadeOut=(i)=>1-p(t,S[i+1]-.22,S[i+1]);
+ const op=i=>i===0?fadeOut(0):(i===4?fadeIn(4):Math.min(fadeIn(i),fadeOut(i)));
+ if(sc===0){
+  // Osa a kotouč 20 kg padá, tvrdý dopad s otřesem.
+  const drop=.82, k=p(t,.15,drop), y=-900*(1-inQ(k));
+  const sh=t>drop&&t<drop+.3?Math.sin((t-drop)*90)*14*(1-p(t,drop,drop+.3)):0;
+  const flash=t>drop?1-p(t,drop,drop+.35):0;
+  h+=`<div class="abs" style="inset:0;opacity:${op(0)};transform:translate(${sh}px,${sh*.6}px)">
+   <div class="abs" style="left:0;right:0;top:${540-14}px;height:28px;background:linear-gradient(${C.raised},${C.rule});"></div>
+   <div class="abs" style="left:${960-46}px;top:500px;width:92px;height:80px;background:${C.rule};border-radius:2px"></div>
+   <div class="abs" style="left:${960-260}px;top:${540-260+y}px;width:520px;height:520px">${plate(20,'done',out(p(t,drop+.15,drop+.5)))}</div>
+   <div class="abs" style="left:${960-300}px;top:240px;width:600px;height:600px;border-radius:50%;box-shadow:0 0 0 ${4+40*(1-flash)}px rgba(255,107,53,${flash*.6});opacity:${flash}"></div>
+   <div class="abs display" style="left:0;right:0;bottom:70px;text-align:center;font-size:150px;${slam(t,1.3)}">KOTOUČ NA OSE.</div>
+  </div>`;
+ }
+ if(sc===1){
+  const o=op(1), hp=hop(t,4.8,70);
+  h+=`<div class="abs" style="inset:0;opacity:${o}">
+   <div class="abs label" style="left:180px;top:300px;font-size:28px;${rise(t,3.55)}">Duolingo pro kalisteniku</div>
+   <div class="abs display" style="left:170px;top:340px;font-size:300px;${slam(t,3.8,.4)}">OPICE</div>
+   <div class="abs body" style="left:180px;top:640px;font-size:46px;color:${C.text};${rise(t,4.3)}">Kalistenika jako hra.</div>
+   <div class="abs body" style="left:180px;top:710px;font-size:34px;${rise(t,4.6)}">Krátké lekce, mapa kotoučů a&nbsp;opice, která roste s&nbsp;tebou.</div>
+   <div class="abs" style="left:1240px;top:250px;width:560px;height:560px;${rise(t,3.9,.5,80)}"><div style="width:100%;height:100%;${mStyle(hp,560)}">${mascot(1,{happy:out(p(t,4.6,4.9)),eye:t>6.2&&t<6.3?0:1})}</div></div>
+  </div>`;
+ }
+ if(sc===2){
+  const o=op(2);
+  // Mapa: 5 kotoučů, třetí se nacvakne, čtvrtý se odemkne.
+  const snap=9.0, unlock=10.1;
+  const kgs=[5,10,15,20,25], sz=230, gap=90, x0=960-(5*sz+4*gap)/2, yc=640;
+  let row=`<div class="abs" style="left:${x0+sz/2}px;width:${4*(sz+gap)}px;top:${yc-3}px;height:6px;background:${C.rule}"></div>`;
+  const fill=out(p(t,unlock-.3,unlock+.1));
+  row+=`<div class="abs" style="left:${x0+sz/2}px;width:${(2+fill)*(sz+gap)*(t>snap?1:0)+ (t>snap?0:2*(sz+gap))}px;top:${yc-3}px;height:6px;background:${C.accent}"></div>`;
+  kgs.forEach((kg,i)=>{
+   let st=i<2?'done':i===2?(t<snap?'current':'done'):i===3?(t<unlock?'locked':'current'):'locked';
+   let ck=i<2?1:(i===2?out(p(t,snap+.1,snap+.45)):0);
+   let sc2=1;
+   if(i===2&&t>snap-.25&&t<snap+.25){const k=t<snap?out(p(t,snap-.25,snap)):1-out(p(t,snap,snap+.25));sc2=1+.12*k}
+   if(i===2&&t<snap){const k=p(t,snap-.25,snap);sc2=1+.12*out(k)}
+   if(i===3&&t>unlock){sc2=.85+.15*out5(p(t,unlock,unlock+.4))}
+   const enter=rise(t,7.3+i*.08,.45,60);
+   h+='';row+=`<div class="abs" style="left:${x0+i*(sz+gap)}px;top:${yc-sz/2}px;width:${sz}px;height:${sz}px;${enter}"><div style="width:100%;height:100%;transform:scale(${sc2})">${plate(kg,st,ck)}</div></div>`;
+  });
+  const xp=p(t,snap+.2,snap+.6), xpUp=out(xp);
+  row+=`<div class="abs display" style="left:${x0+2*(sz+gap)}px;width:${sz}px;text-align:center;top:${yc-sz/2-120-50*xpUp}px;font-size:96px;color:${C.accent};opacity:${xp>0?Math.min(1,xp*3)*(1-p(t,11.3,11.7)):0}">+20 XP</div>`;
+  h+=`<div class="abs" style="inset:0;opacity:${o}">
+   <div class="abs label" style="left:180px;top:110px;font-size:28px;${rise(t,7.3)}">Mapa lekcí</div>
+   <div class="abs display" style="left:170px;top:175px;font-size:130px;${rise(t,7.45)}">KRÁTKÉ LEKCE.</div>
+   <div class="abs body" style="left:180px;top:300px;font-size:44px;color:${C.text};${rise(t,7.8)}">Každá končí kotoučem na&nbsp;ose.</div>
+   ${row}</div>`;
+ }
+ if(sc===3){
+  const o=op(3);
+  const at=[12.35,13.45,14.55], size=[380,430,480];
+  let row='';
+  [1,2,3].forEach((s,i)=>{
+   if(t<at[i])return;
+   const hp=hop(t,at[i]+.05,50);
+   const x=[360,960,1560][i]-size[i]/2;
+   row+=`<div class="abs" style="left:${x}px;top:${930-size[i]}px;width:${size[i]}px;height:${size[i]}px;${rise(t,at[i],.4,90)}"><div style="width:100%;height:100%;${mStyle(hp,size[i])}">${mascot(s,{happy:i===2?out(p(t,at[2]+.3,at[2]+.6)):.0})}</div></div>
+   <div class="abs label" style="left:${x}px;width:${size[i]}px;text-align:center;top:965px;font-size:26px;${rise(t,at[i]+.1)}">Stage ${s}</div>`;
+  });
+  h+=`<div class="abs" style="inset:0;opacity:${o}">
+   <div class="abs display" style="left:0;right:0;text-align:center;top:90px;font-size:150px;${rise(t,12.15)}">OPICE ROSTE S&nbsp;TEBOU.</div>
+   ${row}</div>`;
+ }
+ if(sc===4){
+  const o=op(4);
+  const arms=out(p(t,16.7,17.0));
+  let hp={y:0,sq:0};for(const a of [17.0,17.95,18.9]){const q=hop(t,a,80);if(q.y||q.sq)hp=q}
+  h+=`<div class="abs" style="inset:0;opacity:${o}">
+   <div class="abs" style="left:1100px;top:190px;width:700px;height:700px;${rise(t,16.45,.45,80)}"><div style="width:100%;height:100%;${mStyle(hp,700)}">${mascot(3,{arms,happy:1})}</div></div>
+   <div class="abs display" style="left:170px;top:300px;font-size:320px;${slam(t,16.8,.4)}">OPICE</div>
+   <div class="abs body" style="left:180px;top:620px;font-size:52px;color:${C.text};${rise(t,17.3)}">Tvůj první kotouč čeká.</div>
+   <div class="abs label" style="left:180px;top:710px;font-size:26px;${rise(t,17.6)}">Kalistenika jako hra</div>
+  </div>`;
+ }
+ document.getElementById('stage').innerHTML=h;
+}
+window.render=render;
+window.ready=document.fonts.ready.then(()=>{render(0);return true});
+</script></body></html>

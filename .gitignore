@@ -22,3 +22,7 @@ yarn-error.*
 *.tsbuildinfo
 /ios
 /android
+brag-output/work/frames/
+brag-output/work/chk/
+brag-output/work/still-*.png
+brag-output/work/*.wav
