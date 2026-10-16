@@ -34,3 +34,7 @@ brag-output/work2/stg/
 brag-output/work2/s-*.png
 brag-output/work2/still-*.png
 brag-output/work2/sheet.png
+brag-output/work3/frames/
+brag-output/work3/still-*.png
+brag-output/work3/*.png
+brag-output/work3/audio.wav

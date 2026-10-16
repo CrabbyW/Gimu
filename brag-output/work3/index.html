@@ -1,0 +1,145 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@700;900&family=Inter:wght@300;400&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0B0B0C}
+#bg{position:absolute;inset:0;background:#0B0B0C;background-image:radial-gradient(circle,#1b1b1e 2px,transparent 2.6px);background-size:36px 36px}
+#s{position:absolute;inset:0;overflow:hidden}
+#fx{position:absolute;inset:0}
+.a{position:absolute}
+.dot{font-family:Doto;font-weight:900;color:#EDEDEF;line-height:1.02;letter-spacing:-.01em}
+.mono{font-family:'JetBrains Mono';font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8A8A90}
+.scr{position:absolute;overflow:hidden;background:#0B0B0C}
+.scr img{width:100%;height:100%;display:block}
+.chip{position:absolute;font-family:'JetBrains Mono';font-weight:500;font-size:30px;letter-spacing:.14em;color:#EDEDEF;
+ background:#141417;border:2px solid #2C2C31;border-radius:999px;padding:18px 30px;white-space:nowrap;text-transform:uppercase;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.chip i{display:inline-block;width:14px;height:14px;border-radius:50%;background:#EDEDEF;margin-right:16px;vertical-align:2px}
+</style></head><body>
+<div id="bg"></div><div id="s"></div><canvas id="fx" width="1080" height="1920"></canvas>
+<div style="position:absolute;opacity:0"><span class="dot">Opice</span><span class="mono">x</span><span style="font-family:Inter;font-weight:300">x</span></div>
+<script>
+const W=1080,H=1920,RATIO=2532/1170;
+const cl=x=>Math.min(1,Math.max(0,x)), p=(t,a,b)=>cl((t-a)/(b-a)), lerp=(a,b,k)=>a+(b-a)*k;
+const out=x=>1-Math.pow(1-x,4), io=x=>x<.5?8*x*x*x*x:1-Math.pow(-2*x+2,4)/2;
+// Pružina pro fyzické prvky (telefon, čipy): tlumený zákmit.
+const spring=x=>x<=0?0:x>=1?1:1-Math.exp(-6*x)*Math.cos(9*x);
+const pad=n=>String(n).padStart(4,'0');
+function enter(t,a,d=.45,dy=40){const k=out(p(t,a,a+d));return `opacity:${k};transform:translateY(${(1-k)*dy}px)`}
+function mask(t,a,d=.5){const k=out(p(t,a,a+d));return `clip-path:inset(-10% ${100-k*100}% -10% 0)`}
+function slam(t,a,d=.28){const k=out(p(t,a,a+d));return `opacity:${cl(k*4)};transform:scale(${1.25-.25*k})`}
+
+// Obrazovka appky: stav {x,y,w,bez} (bez = viditelnost rámečku telefonu), skutečný snímek z dir/f.
+const PHONE={x:240,y:490,w:600,bez:1};
+const zoom=(u,v,w)=>({x:540-u*w,y:960-v*w*RATIO,w,bez:0});
+const mix=(A,B,k)=>({x:lerp(A.x,B.x,k),y:lerp(A.y,B.y,k),w:lerp(A.w,B.w,k),bez:lerp(A.bez,B.bez,k)});
+function screen(dir,f,s,extra=''){
+ const h=s.w*RATIO, r=64*s.w/640*s.bez+0;
+ return `<div class="scr" style="left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${h}px;border-radius:${r}px;
+  box-shadow:0 0 0 ${10*s.bez}px rgba(26,26,29,${s.bez}),0 0 0 ${12*s.bez}px rgba(42,42,46,${s.bez}),0 50px 140px rgba(0,0,0,${.75*s.bez});${extra}">
+  <img src="../work2/${dir}/${pad(f)}.jpg"></div>`;
+}
+// Snímek ze záznamu: 30 fps od začátku scény, s hranicí počtu snímků.
+const fr=(t,a,n,off=1)=>Math.max(1,Math.min(n,off+Math.floor((t-a)*30)));
+
+// Deterministický náhodný generátor (stejné video při každém renderu).
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// Tečkový přechod: mřížka teček roste od středu `o` a zakryje obraz barvou `col`, za střihem se zase stáhne.
+function dotWipe(ctx,t,cut,col,o=[540,960],d=.32){
+ let k=0;
+ if(t>=cut-d&&t<cut)k=io(p(t,cut-d,cut)); else if(t>=cut&&t<cut+d)k=1-io(p(t,cut,cut+d)); else return;
+ const S=48,maxd=Math.hypot(1080,1920)*.62;ctx.fillStyle=col;
+ for(let y=S/2;y<H+S;y+=S)for(let x=S/2;x<W+S;x+=S){
+  const dd=Math.hypot(x-o[0],y-o[1])/maxd, lp=cl(k*1.7-dd*.7), r=lp*S*.74;
+  if(r>.3){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+ }
+}
+
+// Částice pro logo: cíle z bitmapy textu „Opice“ v Doto.
+let TARGETS=null;
+function buildTargets(){
+ const c=document.createElement('canvas');c.width=W;c.height=520;const g=c.getContext('2d');
+ g.fillStyle='#fff';g.font='900 300px Doto';g.textAlign='center';g.textBaseline='middle';g.fillText('Opice',540,260);
+ const d=g.getImageData(0,0,W,520).data,T=[],R=rng(7),S=9;
+ for(let y=0;y<520;y+=S)for(let x=0;x<W;x+=S){if(d[(y*W+x)*4+3]>140){const a=R()*6.283,rr=700+R()*900;
+  T.push({x,y:y+560,sx:540+Math.cos(a)*rr,sy:900+Math.sin(a)*rr*1.3,del:R()*.45})}}
+ TARGETS=T;
+}
+function particles(ctx,t,a){
+ if(!TARGETS)buildTargets();
+ ctx.fillStyle='#EDEDEF';
+ for(const q of TARGETS){const k=out(p(t,a+q.del,a+q.del+.75));if(k<=0)continue;
+  const x=lerp(q.sx,q.x,k),y=lerp(q.sy,q.y,k);ctx.globalAlpha=cl(k*2);ctx.beginPath();ctx.arc(x,y,3.9,0,7);ctx.fill();}
+ ctx.globalAlpha=1;
+}
+
+function render(t){
+ const ctx=document.getElementById('fx').getContext('2d');ctx.clearRect(0,0,W,H);
+ let h='', bg='#0B0B0C', shake=[0,0];
+ // 1) HOOK 0–2.46: kotouč se složí z teček (zpomaleně, dopad na beat 0.82), pak odjezd na telefon.
+ if(t<2.46){
+  const f=t<.82?1+Math.floor(t/.82*7):fr(t,.82,126,8);
+  const Z=zoom(.5,.36,lerp(1950,2150,p(t,0,.82)));
+  const k=io(p(t,1.3,2.15));
+  const s=mix(Z,PHONE,k);
+  if(t>.82&&t<1.15){const a=(1-p(t,.82,1.15))*18;shake=[Math.sin(t*95)*a,Math.cos(t*80)*a*.6]}
+  h+=screen('cel',f,s);
+  h+=`<div class="a mono" style="left:96px;top:170px;font-size:28px;${enter(t,1.55,.4,20)}">Opice · calisthenics app</div>
+      <div class="a dot" style="left:90px;top:220px;font-size:84px;${mask(t,1.65,.5)}">Every lesson ends<br>like this.</div>`;
+  const fl=t>.82?1-p(t,.82,1.0):0; if(fl>0)h+=`<div class="a" style="inset:0;background:#fff;opacity:${fl*.45}"></div>`;
+ }
+ // 2) KINETIC 2.46–4.64: slova na beat.
+ else if(t<4.64){
+  const W4=[[2.46,'SHORT',0],[3.01,'LESSONS.',0],[3.55,'REAL',1],[4.10,'MOVES.',1]];
+  const cur=[...W4].reverse().find(w=>t>=w[0]);
+  if(cur[2]){bg='#EDEDEF'}
+  h+=`<div class="a dot" style="left:0;right:0;top:${960-Math.min(300,Math.floor(940/(cur[1].length*.62)))*.62}px;text-align:center;font-size:${Math.min(300,Math.floor(940/(cur[1].length*.62)))}px;color:${cur[2]?'#0B0B0C':'#EDEDEF'};${slam(t,cur[0])}">${cur[1]}</div>`;
+  h+=`<div class="a mono" style="left:0;right:0;text-align:center;top:1240px;font-size:28px;color:${cur[2]?'#4a4a50':'#8A8A90'};${enter(t,2.6,.3,10)}">Bodyweight training</div>`;
+ }
+ // 3) MAPA 4.64–8.22: telefon přiletí ve 3D, čipy telemetrie na beat.
+ else if(t<8.22){
+  const k=spring(p(t,4.64,5.6)), ry=lerp(28,0,k)+Math.sin((t-4.64)*1.2)*-5, rx=lerp(12,0,k);
+  const y=lerp(1400,PHONE.y,k);
+  h+=`<div class="a" style="inset:0;perspective:2200px"><div class="a" style="inset:0;transform:rotateY(${ry}deg) rotateX(${rx}deg);transform-origin:540px 1100px">
+   ${screen('map',fr(t,4.64,123),{...PHONE,y})}</div></div>`;
+  h+=`<div class="a mono" style="left:96px;top:170px;font-size:28px;${enter(t,4.75,.4,20)}">Section 01 · Balance 101</div>
+      <div class="a dot" style="left:90px;top:220px;font-size:84px;${mask(t,4.85,.5)}">Lessons<br>on a map.</div>`;
+  const chips=[[5.74,60,700,'<i></i>12 days streak'],[6.28,640,1010,'20 kg'],[6.82,90,1330,'+20 XP']];
+  for(const [a,x,yy,txt] of chips){if(t<a)continue;const c=spring(p(t,a,a+.6));
+   h+=`<div class="chip" style="left:${x}px;top:${yy}px;transform:scale(${c});opacity:${cl(c*3)}">${txt}</div>`}
+ }
+ // 4) LEKCE 8.22–11.47: detail na odpočet, pak odjezd na telefon.
+ else if(t<11.47){
+  const Z=zoom(.5,.41,lerp(1900,1750,p(t,8.22,9.83)));
+  const k=io(p(t,9.83,10.5));
+  h+=screen('les',fr(t,8.22,123),mix(Z,PHONE,k));
+  h+=`<div class="a mono" style="left:96px;top:170px;font-size:28px;${enter(t,8.35,.4,20)}">Exercise 01 / 04 · Crow</div>
+      <div class="a dot" style="left:90px;top:220px;font-size:84px;${mask(t,10.0,.5)}">Guided reps<br>and holds.</div>`;
+ }
+ // 5) STAGE-UP 11.47–15.28: zlatá obrazovka přes celé video, opice roste.
+ else if(t<15.28){
+  bg='#C6A15B';
+  const w=lerp(1080,1180,io(p(t,11.47,15.28)))+ (t>13.64?60*out(p(t,13.64,13.9)):0);
+  const s={x:540-w/2,y:960-.5*w*RATIO,w,bez:0};
+  h+=screen('stg',fr(t,11.47,126),s,'background:#C6A15B');
+ }
+ // 6) OUTRO 15.28–20: logo z teček, claim, ember tečka.
+ else{
+  h+=`<div class="a" style="left:0;right:0;text-align:center;top:1180px;font:300 66px Inter;color:#EDEDEF;letter-spacing:-.02em;${enter(t,16.93,.5)}">Train. The monkey grows.</div>
+      <div class="a mono" style="left:0;right:0;text-align:center;top:560px;font-size:30px;${enter(t,16.5,.4,16)}">Calisthenics as a game</div>
+      <div class="a" style="left:${540-13}px;top:1330px;width:26px;height:26px;border-radius:50%;background:#FF6B35;box-shadow:0 0 40px #FF6B35;transform:scale(${spring(p(t,17.47,18.1))})"></div>`;
+ }
+ document.getElementById('bg').style.backgroundColor=bg;
+ document.getElementById('bg').style.backgroundImage=bg==='#0B0B0C'?'':'none';
+ const sEl=document.getElementById('s');sEl.innerHTML=h;sEl.style.transform=`translate(${shake[0]}px,${shake[1]}px)`;
+ if(t>=15.28)particles(ctx,t,15.45);
+ dotWipe(ctx,t,2.46,'#0B0B0C');
+ dotWipe(ctx,t,4.64,'#0B0B0C',[540,1500]);
+ dotWipe(ctx,t,8.22,'#0B0B0C',[540,400]);
+ dotWipe(ctx,t,11.47,'#C6A15B');
+ dotWipe(ctx,t,15.28,'#0B0B0C');
+}
+window.render=render;
+window.ready=document.fonts.load('900 300px Doto').then(()=>document.fonts.ready).then(()=>{render(0);return true});
+</script></body></html>
