@@ -18,7 +18,7 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#0B0B0C}
 .act{position:absolute;width:960px;height:960px;left:60px}
 .act img{width:100%;height:100%;display:block}
 </style></head><body>
-<div id="bg"></div><div id="s"></div><canvas id="fx" width="1080" height="1920"></canvas>
+<div id="bg"></div><div id="s"></div><canvas id="fx" width="1080" height="1920"></canvas><div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 85% 70% at 50% 48%,transparent 55%,rgba(0,0,0,.38) 100%)"></div>
 <div style="position:absolute;opacity:0"><span class="dot">Opice</span><span class="mono">x</span><span style="font-family:Inter;font-weight:300">x</span></div>
 <script>
 const W=1080,H=1920,RATIO=2532/1170;
@@ -59,6 +59,13 @@ function dotWipe(ctx,t,cut,col,o=[540,960],d=.3){
   if(r>.3){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
  }
 }
+function burst(ctx,t,a,x,y,R,col='#EDEDEF',n=28,d=.55,r0=6){
+ const k=p(t,a,a+d); if(k<=0||k>=1)return; const e=out(k);
+ ctx.fillStyle=col; ctx.globalAlpha=1-k;
+ for(let ring=0;ring<2;ring++){const rr=R*e*(ring?0.62:1), m=ring?Math.round(n*.6):n;
+  for(let i=0;i<m;i++){const an=i/m*6.283+ring*.2; ctx.beginPath();ctx.arc(x+Math.cos(an)*rr,y+Math.sin(an)*rr,r0*(1-k*.6),0,7);ctx.fill();}}
+ ctx.globalAlpha=1;
+}
 let TARGETS=null;
 function buildTargets(){
  const c=document.createElement('canvas');c.width=W;c.height=520;const g=c.getContext('2d');
@@ -98,7 +105,7 @@ function render(t){
  else if(t<C.s4){
   sh(C.s3,26,.35);
   h+=`<div class="a dot" style="left:0;right:0;text-align:center;top:${960-260}px;font-size:420px;${slam(t,C.s3)}">YET.</div>`;
-  const fl=1-p(t,C.s3,C.s3+.22); if(fl>0)h+=`<div class="a" style="inset:0;background:#fff;opacity:${fl*.8}"></div>`;
+  const fl=1-p(t,C.s3,C.s3+.14); if(fl>0)h+=`<div class="a" style="inset:0;background:#fff;opacity:${fl*.6}"></div>`;
  }
  // 4) Výběr cesty: telefon ve 3D.
  else if(t<C.s5){
@@ -166,6 +173,13 @@ function render(t){
  const bgEl=document.getElementById('bg');bgEl.style.backgroundColor=bg;bgEl.style.backgroundImage=bg==='#0B0B0C'?'':'none';
  const sEl=document.getElementById('s');sEl.innerHTML=h;sEl.style.transform=`translate(${shake[0]}px,${shake[1]}px)`;
  if(t>=C.s11)particles(ctx,t,C.s11+.1);
+ burst(ctx,t,.55,470,700,420);
+ burst(ctx,t,C.s3,540,960,700,'#EDEDEF',36,.6,9);
+ for(const [n,x,y] of [[17,240,760],[18,760,1060],[19,240,1370]])burst(ctx,t,BEAT(n),x,y,180,'#EDEDEF',18,.45,4);
+ burst(ctx,t,BEAT(30),540,960,760,'#EDEDEF',40,.7,9);
+ burst(ctx,t,BEAT(36),540,820,560,'#131316',30,.6,7);
+ for(let n=40;n<=44;n++)burst(ctx,t,BEAT(n),540,1200,620,n%2?'#C6A15B':'#EDEDEF',30,.45,7);
+ burst(ctx,t,BEAT(52),540,1283,240,'#FF6B35',20,.6,5);
  dotWipe(ctx,t,C.s2,'#0B0B0C');
  dotWipe(ctx,t,C.s4,'#0B0B0C',[540,1500]);
  dotWipe(ctx,t,C.s5,'#0B0B0C',[540,400]);
