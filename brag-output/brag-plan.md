@@ -19,3 +19,17 @@
 | 5 | 16.4–20.0 | Outro: stage 3 slaví s pažemi nahoře, „OPICE“ a „Tvůj první kotouč čeká.“ |
 
 Žádná osobní data ani vymyšlená čísla. XP hodnota v mapě je ze skutečné lekce v `data/`.
+
+## Verze 2 (2026-10-16): nové UI z větve faze1/core-loop
+První verze vycházela ze staré větve `main`. Verze 2 je složená ze skutečných snímků nové appky
+(Expo web export, demo profil, Playwright se zastaveným časem, 1170×2532 na snímek), na výšku 1080×1920.
+
+| # | Čas | Scéna |
+|---|---|---|
+| 1 | 0.0–4.2 | Oslava dokončení „Plate on the bar.“ (kotouč se složí z teček), titulek „Calisthenics as a game.“ |
+| 2 | 4.2–8.3 | Mapa „Balance 101“, „Short lessons on a map.“ |
+| 3 | 8.3–12.4 | Lekce Crow s odpočtem, „Guided reps and holds.“ |
+| 4 | 12.4–16.6 | Stage-up 1 → 2 „Your monkey is growing.“, „Your monkey grows.“ |
+| 5 | 16.6–20.0 | Logo „Opice“, „Train. The monkey grows.“, ember tečka |
+
+Zvuky: `snap`, `swoosh`, `level-up`, `tick` z `assets/sounds` nové appky, hudba ende.app vol. 10. Zdroj: `brag-output/work2/`.

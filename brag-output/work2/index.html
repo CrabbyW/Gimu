@@ -1,0 +1,54 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@700&family=Inter:wght@300;400&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0B0B0C}
+#s{position:absolute;inset:0;overflow:hidden;
+ background-image:radial-gradient(circle,#1c1c1f 2px,transparent 2.5px);background-size:36px 36px}
+.a{position:absolute}
+.dot{font-family:Doto;font-weight:700;color:#EDEDEF;line-height:1.05}
+.mono{font-family:'JetBrains Mono';font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8A8A90}
+.phone{position:absolute;left:190px;width:700px;height:1515px;border-radius:70px;overflow:hidden;
+ box-shadow:0 0 0 10px #1a1a1d,0 0 0 12px #2a2a2e,0 40px 120px rgba(0,0,0,.7)}
+.phone img{width:700px;height:1515px;display:block}
+</style></head><body><div id="s"></div>
+<div style="position:absolute;opacity:0"><span class="dot">x</span><span class="mono">x</span><span style="font-family:Inter;font-weight:300">x</span></div>
+<script>
+// Scény: [start, konec, složka snímků, počet snímků, titulek, telemetrie]
+const SC=[
+ [0,4.2,'cel',126,'Calisthenics<br>as a game.','Opice'],
+ [4.2,8.3,'map',123,'Short lessons<br>on a map.','Section 01 · Balance 101'],
+ [8.3,12.4,'les',123,'Guided reps<br>and holds.','Exercise 01 / 04'],
+ [12.4,16.6,'stg',126,'Your monkey<br>grows.','Stage 02 · Teenager'],
+];
+const END=20;
+const cl=(x)=>Math.min(1,Math.max(0,x)), p=(t,a,b)=>cl((t-a)/(b-a));
+const out=x=>1-Math.pow(1-x,4);
+function enter(t,a,d=.5,dy=40){const k=out(p(t,a,a+d));return `opacity:${k};transform:translateY(${(1-k)*dy}px)`}
+function mask(t,a,d=.5){const k=out(p(t,a,a+d));return `clip-path:inset(0 ${100-k*100}% 0 0)`}
+function render(t){
+ let h='';
+ const i=SC.findIndex(s=>t>=s[0]&&t<s[1]);
+ if(i>=0){
+  const [a,b,dir,n,title,tele]=SC[i];
+  const f=Math.min(n,Math.floor((t-a)*30)+1);
+  const fo=1-p(t,b-.2,b);
+  const ph=i===0?out(p(t,0,.45)):1;
+  h+=`<div class="a" style="inset:0;opacity:${fo}">
+   <div class="a mono" style="left:96px;top:104px;font-size:26px;${enter(t,a+.1,.4,20)}">${tele}</div>
+   <div class="a dot" style="left:90px;top:150px;font-size:92px;${mask(t,a+.15,.55)}">${title}</div>
+   <div class="phone" style="top:${380+(1-ph)*200}px;opacity:${ph}"><img src="${dir}/${String(f).padStart(4,'0')}.jpg"></div></div>`;
+ } else if(t>=16.6){
+  const k=out(p(t,16.6,17.2));
+  h+=`<div class="a" style="inset:0">
+   <div class="a mono" style="left:0;right:0;text-align:center;top:700px;font-size:30px;${enter(t,16.6,.4,20)}">iOS · Android</div>
+   <div class="a dot" style="left:0;right:0;text-align:center;top:760px;font-size:230px;${mask(t,16.75,.6)}">Opice</div>
+   <div class="a" style="left:0;right:0;text-align:center;top:1060px;font:300 64px Inter;color:#EDEDEF;letter-spacing:-.02em;${enter(t,17.3,.5)}">Train. The monkey grows.</div>
+   <div class="a" style="left:${540-11}px;top:1200px;width:22px;height:22px;border-radius:50%;background:#FF6B35;opacity:${p(t,17.8,18.1)};box-shadow:0 0 30px #FF6B35"></div></div>`;
+ }
+ document.getElementById('s').innerHTML=h;
+}
+window.render=render;
+window.ready=document.fonts.ready.then(()=>{render(0);return true});
+</script></body></html>
