@@ -1,0 +1,33 @@
+<title>Opice launch video</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600&display=swap">
+<style>
+/* Jeden sloupec: titulek, video, text ke sdílení. Barvy appky Opice, jen tmavý vzhled. */
+:root{--bg:#0E0D0C;--surface:#171615;--rule:#2C2926;--fg:#EFEDE8;--muted:#8C8780;--accent:#FF6B35;
+ --display:'Bebas Neue',Impact,sans-serif;--body:Inter,system-ui,sans-serif;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);padding-block:40px;
+ padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:960px;margin:0 auto;display:grid;gap:20px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(56px,10vw,104px);line-height:.9;margin:0}
+.eyebrow{color:var(--accent);font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:600}
+video{width:100%;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:8px}
+.copy{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:16px;display:grid;gap:10px}
+.copy p{margin:0;font-size:17px;line-height:1.5}
+.copy span{color:var(--muted);font-size:13px}
+button{justify-self:start;background:var(--accent);color:#131316;border:0;border-radius:999px;padding:10px 18px;font:600 15px var(--body);cursor:pointer}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+</style>
+<main>
+ <div class="eyebrow">Kalistenika jako hra</div>
+ <h1>OPICE</h1>
+ <video controls playsinline preload="metadata" poster="brag.jpg" src="brag.mp4"></video>
+ <div class="copy">
+  <span>Text ke sdílení</span>
+  <p id="share">Kalistenika jako hra. Krátké lekce na mapě kotoučů, každá končí kotoučem na ose, a opice, která roste s tebou. Opice 🐒</p>
+  <button id="cp" type="button">Kopírovat text</button>
+ </div>
+</main>
+<script>
+document.getElementById('cp').addEventListener('click',e=>{const t=document.getElementById('share').textContent;
+ navigator.clipboard.writeText(t).then(()=>e.target.textContent='Zkopírováno',()=>{const r=document.createRange();r.selectNodeContents(document.getElementById('share'));const s=getSelection();s.removeAllRanges();s.addRange(r)})});
+</script>
