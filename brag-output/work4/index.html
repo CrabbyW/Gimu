@@ -1,0 +1,180 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@700;900&family=Inter:wght@300;400&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0B0B0C}
+#bg{position:absolute;inset:0;background:#0B0B0C;background-image:radial-gradient(circle,#1b1b1e 2px,transparent 2.6px);background-size:36px 36px}
+#s{position:absolute;inset:0;overflow:hidden}
+#fx{position:absolute;inset:0}
+.a{position:absolute}
+.dot{font-family:Doto;font-weight:900;color:#EDEDEF;line-height:1.02;letter-spacing:-.01em}
+.mono{font-family:'JetBrains Mono';font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#8A8A90}
+.scr{position:absolute;overflow:hidden;background:#0B0B0C}
+.scr img{width:100%;height:100%;display:block}
+.chip{position:absolute;font-family:'JetBrains Mono';font-weight:500;font-size:30px;letter-spacing:.14em;color:#EDEDEF;text-transform:uppercase;
+ background:#141417;border:2px solid #2C2C31;border-radius:999px;padding:18px 30px;white-space:nowrap;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.chip i{display:inline-block;width:14px;height:14px;border-radius:50%;background:#EDEDEF;margin-right:16px;vertical-align:2px}
+.act{position:absolute;width:960px;height:960px;left:60px}
+.act img{width:100%;height:100%;display:block}
+</style></head><body>
+<div id="bg"></div><div id="s"></div><canvas id="fx" width="1080" height="1920"></canvas>
+<div style="position:absolute;opacity:0"><span class="dot">Opice</span><span class="mono">x</span><span style="font-family:Inter;font-weight:300">x</span></div>
+<script>
+const W=1080,H=1920,RATIO=2532/1170;
+const cl=x=>Math.min(1,Math.max(0,x)), p=(t,a,b)=>cl((t-a)/(b-a)), lerp=(a,b,k)=>a+(b-a)*k;
+const out=x=>1-Math.pow(1-x,4), io=x=>x<.5?8*x*x*x*x:1-Math.pow(-2*x+2,4)/2;
+const spring=x=>x<=0?0:x>=1?1:1-Math.exp(-6*x)*Math.cos(9*x);
+const pad=n=>String(n).padStart(4,'0');
+function enter(t,a,d=.45,dy=40){const k=out(p(t,a,a+d));return `opacity:${k};transform:translateY(${(1-k)*dy}px)`}
+function mask(t,a,d=.45){const k=out(p(t,a,a+d));return `clip-path:inset(-10% ${100-k*100}% -10% 0)`}
+function slam(t,a,d=.25){const k=out(p(t,a,a+d));return `opacity:${cl(k*4)};transform:scale(${1.3-.3*k})`}
+// Beat hudby (110 BPM, první beat 0,27 s).
+const BEAT=n=>0.27+n*0.5455;
+
+// Skutečná obrazovka appky; snímky ve skutečné rychlosti (30 fps), stav {x,y,w,bez}.
+const N={path:35,pathsel:26,birth:134,map:125,lesson:134,cel:194,stg:134,league:74,season:74};
+const PHONE={x:240,y:500,w:600,bez:1};
+const zoom=(u,v,w)=>({x:540-u*w,y:960-v*w*RATIO,w,bez:0});
+const mix=(A,B,k)=>({x:lerp(A.x,B.x,k),y:lerp(A.y,B.y,k),w:lerp(A.w,B.w,k),bez:lerp(A.bez,B.bez,k)});
+function screen(dir,f,s,extra=''){
+ f=Math.max(1,Math.min(N[dir],Math.floor(f)));
+ const h=s.w*RATIO, r=64*s.w/600*s.bez;
+ return `<div class="scr" style="left:${s.x}px;top:${s.y}px;width:${s.w}px;height:${h}px;border-radius:${r}px;
+  box-shadow:0 0 0 ${10*s.bez}px rgba(26,26,29,${s.bez}),0 0 0 ${12*s.bez}px rgba(42,42,46,${s.bez}),0 50px 140px rgba(0,0,0,${.75*s.bez});${extra}">
+  <img src="f/${dir}/${pad(f)}.jpg"></div>`;
+}
+const ACTN=89;
+function act(id,f,style=''){f=Math.max(1,Math.min(ACTN,Math.floor(f)));return `<div class="act" style="${style}"><img src="f/act-${id}/${pad(f)}.jpg"></div>`}
+function title(t,a,html,mono){return `${mono?`<div class="a mono" style="left:96px;top:170px;font-size:28px;${enter(t,a,.35,20)}">${mono}</div>`:''}
+ <div class="a dot" style="left:90px;top:220px;font-size:84px;${mask(t,a+.08,.45)}">${html}</div>`}
+
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function dotWipe(ctx,t,cut,col,o=[540,960],d=.3){
+ let k=0;
+ if(t>=cut-d&&t<cut)k=io(p(t,cut-d,cut)); else if(t>=cut&&t<cut+d)k=1-io(p(t,cut,cut+d)); else return;
+ const S=48,maxd=Math.hypot(1080,1920)*.62;ctx.fillStyle=col;
+ for(let y=S/2;y<H+S;y+=S)for(let x=S/2;x<W+S;x+=S){
+  const dd=Math.hypot(x-o[0],y-o[1])/maxd, lp=cl(k*1.7-dd*.7), r=lp*S*.74;
+  if(r>.3){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();}
+ }
+}
+let TARGETS=null;
+function buildTargets(){
+ const c=document.createElement('canvas');c.width=W;c.height=520;const g=c.getContext('2d');
+ g.fillStyle='#fff';g.font='900 300px Doto';g.textAlign='center';g.textBaseline='middle';g.fillText('Opice',540,260);
+ const d=g.getImageData(0,0,W,520).data,T=[],R=rng(7),S=9;
+ for(let y=0;y<520;y+=S)for(let x=0;x<W;x+=S){if(d[(y*W+x)*4+3]>140){const a=R()*6.283,rr=700+R()*900;
+  T.push({x,y:y+520,sx:540+Math.cos(a)*rr,sy:900+Math.sin(a)*rr*1.3,del:R()*.4})}}
+ TARGETS=T;
+}
+function particles(ctx,t,a){
+ if(!TARGETS)buildTargets();ctx.fillStyle='#EDEDEF';
+ for(const q of TARGETS){const k=out(p(t,a+q.del,a+q.del+.7));if(k<=0)continue;
+  ctx.globalAlpha=cl(k*2);ctx.beginPath();ctx.arc(lerp(q.sx,q.x,k),lerp(q.sy,q.y,k),3.9,0,7);ctx.fill();}
+ ctx.globalAlpha=1;
+}
+
+// Střihy (na beat): viz scenar-30s.md.
+const C={s2:BEAT(4),s3:BEAT(8),s4:BEAT(10),s5:BEAT(15),s6:BEAT(21),s7:BEAT(28),s8:BEAT(34),s9:BEAT(40),s10:BEAT(45),s11:BEAT(49)};
+function render(t){
+ const ctx=document.getElementById('fx').getContext('2d');ctx.clearRect(0,0,W,H);
+ let h='', bg='#0B0B0C', shake=[0,0];
+ const sh=(a,amp=18,d=.3)=>{if(t>=a&&t<a+d){const k=(1-p(t,a,a+d))*amp;shake=[Math.sin(t*95)*k,Math.cos(t*80)*k*.6]}};
+ // 1) HOOK: zrození opice z appky, celá plocha.
+ if(t<C.s2){
+  const w=lerp(1080,1160,p(t,0,C.s2));
+  h+=screen('birth',10+t*30,{x:540-w/2,y:960-.52*w*RATIO,w,bez:0});
+  h+=`<div class="a mono" style="left:96px;top:170px;font-size:28px;${enter(t,.3,.35,20)}">Opice · calisthenics app</div>`;
+ }
+ // 2) Opice se snaží a pokrčí rameny.
+ else if(t<C.s3){
+  const sw=BEAT(6), useShrug=t>=sw, f=useShrug?20+(t-sw)*30:10+(t-C.s2)*30;
+  const k=out(p(t,C.s2,C.s2+.4));
+  h+=act(useShrug?'shrug':'strain',f,`top:${640+(1-k)*120}px;opacity:${k};transform:scale(${lerp(1,1.06,p(t,C.s2,C.s3))})`);
+  h+=`<div class="a dot" style="left:90px;top:220px;font-size:90px;${mask(t,C.s2+.05,.5)}">It can't do<br>a single pull-up.</div>`;
+ }
+ // 3) YET.
+ else if(t<C.s4){
+  sh(C.s3,26,.35);
+  h+=`<div class="a dot" style="left:0;right:0;text-align:center;top:${960-260}px;font-size:420px;${slam(t,C.s3)}">YET.</div>`;
+  const fl=1-p(t,C.s3,C.s3+.22); if(fl>0)h+=`<div class="a" style="inset:0;background:#fff;opacity:${fl*.8}"></div>`;
+ }
+ // 4) Výběr cesty: telefon ve 3D.
+ else if(t<C.s5){
+  const k=spring(p(t,C.s4,C.s4+.9)), ry=lerp(-26,0,k)+Math.sin((t-C.s4)*1.3)*4, y=lerp(1500,PHONE.y,k);
+  const tap=BEAT(12), f=t<tap?['path',10+(t-C.s4)*30]:['pathsel',1+(t-tap)*30];
+  h+=`<div class="a" style="inset:0;perspective:2200px"><div class="a" style="inset:0;transform:rotateY(${ry}deg);transform-origin:540px 1100px">${screen(f[0],f[1],{...PHONE,y})}</div></div>`;
+  h+=title(t,C.s4+.1,'Pick<br>your path.','Step 01 / 02');
+ }
+ // 5) Mapa + štítky.
+ else if(t<C.s6){
+  const k=spring(p(t,C.s5,C.s5+.9)), ry=lerp(26,0,k)-Math.sin((t-C.s5)*1.2)*4, rx=lerp(10,0,k), y=lerp(1400,PHONE.y,k);
+  h+=`<div class="a" style="inset:0;perspective:2200px"><div class="a" style="inset:0;transform:rotateY(${ry}deg) rotateX(${rx}deg);transform-origin:540px 1100px">${screen('map',20+(t-C.s5)*30,{...PHONE,y})}</div></div>`;
+  h+=title(t,C.s5+.1,'Short lessons<br>on a map.','Section 01 · Balance 101');
+  for(const [n,x,yy,txt] of [[17,60,720,'<i></i>12 days streak'],[18,650,1020,'20 kg'],[19,90,1330,'+20 XP']]){const a=BEAT(n);if(t<a)continue;const c=spring(p(t,a,a+.55));
+   h+=`<div class="chip" style="left:${x}px;top:${yy}px;transform:scale(${c});opacity:${cl(c*3)}">${txt}</div>`}
+ }
+ // 6) Lekce: odpočet → telefon → mini opice cvičí s tebou.
+ else if(t<C.s7){
+  const f=1+(t-C.s6)*30, b1=BEAT(24), b2=BEAT(25), b3=BEAT(26);
+  const Zr=zoom(.5,.41,lerp(1800,1650,p(t,C.s6,b1))), Zm=zoom(.84,.56,2300);
+  let s=mix(Zr,PHONE,io(p(t,b1,b1+.5)));
+  if(t>=b3)s=mix(PHONE,Zm,io(p(t,b3,b3+.45)));
+  h+=screen('lesson',f,s);
+  h+= t<b3? title(t,C.s6+.1,'Guided reps<br>and holds.','Exercise 01 / 04 · Crow') : title(t,b3+.05,'It trains<br>with you.','Live in every lesson');
+ }
+ // 7) Oslava: kotouč ve skutečné rychlosti, nacvaknutí na beat.
+ else if(t<C.s8){
+  const snap=BEAT(30), f=2+(t-C.s7)*30;
+  sh(snap,22,.3);
+  const s=mix(zoom(.5,.36,lerp(1700,1850,p(t,C.s7,snap))),PHONE,io(p(t,BEAT(31)+.1,BEAT(32)+.2)));
+  h+=screen('cel',f,s);
+  const fl=t>=snap?1-p(t,snap,snap+.2):0; if(fl>0)h+=`<div class="a" style="inset:0;background:#fff;opacity:${fl*.4}"></div>`;
+  h+=`<div class="a mono" style="left:96px;top:170px;font-size:28px;${enter(t,BEAT(31)+.2,.35,20)}">Lesson complete · +44 XP</div>`;
+ }
+ // 8) Stage-up přes celou plochu.
+ else if(t<C.s9){
+  bg='#C6A15B';
+  const w=lerp(1080,1180,io(p(t,C.s8,C.s9)));
+  h+=screen('stg',15+(t-C.s8)*30,{x:540-w/2,y:960-.47*w*RATIO,w,bez:0},'background:#C6A15B');
+  sh(BEAT(36),10,.25);
+ }
+ // 9) Montáž na beat.
+ else if(t<C.s10){
+  const M=[[40,'liftBarbell',48,'LIFT.'],[41,'handstandPlate',20,'HOLD.'],[42,'flameJump',22,'JUMP.'],[43,'climbPodium',42,'CLIMB.'],[44,'grow',22,'GROW.']];
+  const cur=[...M].reverse().find(m=>t>=BEAT(m[0])), i=M.indexOf(cur), a=BEAT(cur[0]);
+  const gold=i%2===1;
+  h+=act(cur[1],cur[2]+(t-a)*30,`top:720px;${gold?'filter:none;':''}`);
+  h+=`<div class="a dot" style="left:0;right:0;text-align:center;top:250px;font-size:260px;color:${gold?'#C6A15B':'#EDEDEF'};${slam(t,a,.2)}">${cur[3]}</div>`;
+  sh(a,12,.18);
+ }
+ // 10) Liga a sezóna.
+ else if(t<C.s11){
+  const k1=spring(p(t,C.s10,C.s10+.8)), k2=spring(p(t,C.s10+.2,C.s10+1));
+  const w=430;
+  h+=`<div class="a" style="inset:0;transform:translateY(${(1-k1)*900}px) rotate(${lerp(-12,-4,k1)}deg);transform-origin:300px 1100px">${screen('league',15+(t-C.s10)*30,{x:70,y:560,w,bez:1})}</div>`;
+  h+=`<div class="a" style="inset:0;transform:translateY(${(1-k2)*900}px) rotate(${lerp(12,4,k2)}deg);transform-origin:780px 1100px">${screen('season',15+(t-C.s10)*30,{x:580,y:620,w,bez:1})}</div>`;
+  h+=title(t,C.s10+.1,'Weekly leagues.<br>Seasons.','League · Season');
+ }
+ // 11) Outro.
+ else{
+  h+=`<div class="a mono" style="left:0;right:0;text-align:center;top:470px;font-size:30px;${enter(t,BEAT(50),.4,16)}">Calisthenics as a game</div>
+   <div class="a" style="left:0;right:0;text-align:center;top:1120px;font:300 66px Inter;color:#EDEDEF;letter-spacing:-.02em;${enter(t,BEAT(51),.5)}">Train. The monkey grows.</div>
+   <div class="a" style="left:${540-13}px;top:1270px;width:26px;height:26px;border-radius:50%;background:#FF6B35;box-shadow:0 0 40px #FF6B35;transform:scale(${spring(p(t,BEAT(52),BEAT(52)+.6))})"></div>`;
+ }
+ const bgEl=document.getElementById('bg');bgEl.style.backgroundColor=bg;bgEl.style.backgroundImage=bg==='#0B0B0C'?'':'none';
+ const sEl=document.getElementById('s');sEl.innerHTML=h;sEl.style.transform=`translate(${shake[0]}px,${shake[1]}px)`;
+ if(t>=C.s11)particles(ctx,t,C.s11+.1);
+ dotWipe(ctx,t,C.s2,'#0B0B0C');
+ dotWipe(ctx,t,C.s4,'#0B0B0C',[540,1500]);
+ dotWipe(ctx,t,C.s5,'#0B0B0C',[540,400]);
+ dotWipe(ctx,t,C.s6,'#0B0B0C');
+ dotWipe(ctx,t,C.s7,'#0B0B0C',[540,1300]);
+ dotWipe(ctx,t,C.s8,'#C6A15B');
+ dotWipe(ctx,t,C.s10,'#0B0B0C');
+ dotWipe(ctx,t,C.s11,'#0B0B0C');
+}
+window.render=render;
+window.ready=document.fonts.load('900 300px Doto').then(()=>document.fonts.ready).then(()=>{render(0);return true});
+</script></body></html>
