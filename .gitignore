@@ -44,3 +44,8 @@ brag-output/work4/frames/
 brag-output/work4/*.png
 brag-output/work4/audio.wav
 brag-output/work4/sfx-mix.wav
+brag-output/work5/fa/
+brag-output/work5/fb/
+brag-output/work5/*.png
+brag-output/work5/*.wav
+brag-output/work5/*.log

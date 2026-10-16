@@ -1,0 +1,111 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@700;900&family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0B0B0C}
+#s,#fx,#top{position:absolute;inset:0}
+#s{overflow:hidden}
+.a{position:absolute}
+.cap{position:absolute;left:60px;right:60px;text-align:center;font-family:Inter;font-weight:900;font-size:84px;line-height:1.08;letter-spacing:-.02em;
+ color:#fff;-webkit-text-stroke:14px #000;paint-order:stroke fill;text-transform:lowercase}
+.cap .on{color:#FF6B35}
+.emoji{font-family:'Noto Color Emoji';-webkit-text-stroke:0}
+.dot{font-family:Doto;font-weight:900;color:#EDEDEF;line-height:1}
+.sticker{position:absolute;font-family:Inter;font-weight:900;font-size:46px;color:#0B0B0C;background:#EDEDEF;padding:10px 26px;border-radius:14px;text-transform:lowercase;box-shadow:0 12px 0 #000}
+</style></head><body>
+<div id="s"></div><canvas id="fx" width="1080" height="1920"></canvas><div id="top"></div>
+<div style="position:absolute;opacity:0"><span class="dot">x</span><span class="cap">x</span><span class="emoji">🐒💀</span></div>
+<script src="lib.js"></script>
+<script>
+// Reklama B „Gen Z“: 20 s, 140 BPM, jump cuty, karaoke titulky, zoom punche.
+const b=60/140, B=n=>n*b, GOLD='#C6A15B';
+const E=s=>s.replace(/(\p{Extended_Pictographic}+)/gu,'<span class="emoji">$1</span>');
+// Titulky: [začátek v beatech, slova] — slovo svítí, když zrovna „zazní“.
+function karaoke(t,words,y=1180,size=84){
+ const vis=words.filter(w=>t>=B(w[0]));if(!vis.length)return'';
+ const last=vis[vis.length-1];
+ return `<div class="cap" style="top:${y}px;font-size:${size}px">${vis.map(w=>{const k=spring(p(t,B(w[0]),B(w[0])+.25),12,8);
+  return `<span class="${w===last?'on':''}" style="display:inline-block;transform:scale(${lerp(.6,1,k)})">${E(w[1])}</span>`}).join(' ')}</div>`;
+}
+function render(t){
+ const ctx=document.getElementById('fx').getContext('2d');ctx.clearRect(0,0,W,H);
+ let h='',top='',bg='#0B0B0C',zoom=1,shake=[0,0],rgb=0;
+ const beat=t/b, bi=Math.floor(beat), bp=beat-bi;
+ const punch=(n0,n1,amt=.06)=>{if(beat>=n0&&beat<n1)zoom*=1+amt*Math.pow(1-bp,3)};
+ const hit=(n,amp=22,d=.25)=>{const a=B(n);if(t>=a&&t<a+d){const k=(1-p(t,a,a+d))*amp;shake=[Math.sin(t*97)*k,Math.cos(t*83)*k];rgb=Math.max(rgb,1-p(t,a,a+d))}};
+ const cut=n=>{const a=B(n);if(t>=a&&t<a+.12)rgb=Math.max(rgb,1-p(t,a,a+.12))};
+ // 0) pov hook (0–6): opice se snaží, na drop (beat 4) pokrčí rameny + 💀.
+ if(beat<6){
+  const sh=beat>=4, id=sh?'shrug':'strain', f=(sh?20:5)+(t-(sh?B(4):0))*30;
+  h+=`<div class="a" style="left:-60px;top:380px;width:1200px;height:1200px"><img src="../work4/f/act-${id}/${pad(Math.floor(f))}.jpg" style="width:100%;height:100%"></div>`;
+  zoom*=sh?1.08-.08*out(p(t,B(4),B(5))):lerp(1,1.12,p(t,0,B(4)));
+  hit(4,30,.35);
+  top+=karaoke(t,[[0,'pov:'],[.6,'your'],[1,'monkey'],[1.6,"can't"],[2,'do'],[2.4,'a'],[2.7,'single'],[3.1,'pull-up'],[4,'💀']],300,92);
+ }
+ // 1) otevřeš opici (6–10): zrození přes celou plochu.
+ else if(beat<10){
+  cut(6); punch(6,10,.05);
+  h+=bare('birth',20+(t-B(6))*30,{u:.4,v:.36,w:1500});
+  top+=karaoke(t,[[6,'so'],[6.5,'you'],[7,'open'],[7.6,'opice'],[8,'🐒']],1240);
+ }
+ // 2) mapa (10–14): krátké lekce.
+ else if(beat<14){
+  cut(10); punch(10,14,.05);
+  h+=bare('map',30+(t-B(10))*30,{u:.5,v:.33,w:1600});
+  top+=karaoke(t,[[10,'3'],[10.5,'min'],[11,'lessons.'],[12,"that's"],[12.5,'it.']],1240);
+  for(const [n,x,y,txt] of [[11,90,820,'+20 xp'],[12,640,560,'20 kg']]){if(beat<n)continue;const k=spring(p(t,B(n),B(n)+.4),12,7);
+   top+=`<div class="sticker" style="left:${x}px;top:${y}px;transform:scale(${k}) rotate(${n%2?-6:5}deg)">${txt}</div>`}
+ }
+ // 3) pauza v hudbě (14–16): „wait…“ a zoom na mini opici v lekci.
+ else if(beat<16){
+  cut(14);
+  const z=io(p(t,B(14),B(15)));
+  h+=bare('lesson',40+(t-B(14))*30,{u:lerp(.5,.84,z),v:lerp(.45,.56,z),w:lerp(1300,2600,z)});
+  top+=karaoke(t,[[14,'wait.'],[14.8,'he'],[15.1,'trains'],[15.4,'WITH'],[15.7,'you??']],300,92);
+ }
+ // 4) kotouč (16–20): nacvaknutí na beat 17, +44 xp.
+ else if(beat<20){
+  cut(16); hit(17,28,.3);
+  h+=bare('cel',22+(t-B(16))*30,{u:.5,v:.36,w:lerp(1900,1250,io(p(t,B(17.5),B(19))))});
+  const fl=t>=B(17)?1-p(t,B(17),B(17)+.15):0; if(fl>0)top+=`<div class="a" style="inset:0;background:#fff;opacity:${fl*.7}"></div>`;
+  if(beat<17.5)top+=karaoke(t,[[16,'1'],[16.4,'lesson'],[16.8,'later']],300,92); else top+=karaoke(t,[[17.5,'+44'],[18,'xp'],[18.5,'😤']],330,110);
+ }
+ // 5) glow up (20–26): zlatý stage-up, opice vyroste na beat 22.
+ else if(beat<26){
+  bg=GOLD; cut(20); hit(22,18,.25); punch(22,26,.05);
+  h+=bare('stg',22+(t-B(20))*30,{u:.5,v:.3,w:lerp(1400,1550,p(t,B(20),B(26)))});
+  top+=karaoke(t,[[20,'monkey'],[20.6,'glow'],[21.2,'up'],[22,'unlocked'],[23,'✨']],1560);
+ }
+ // 6) montáž (26–34): každý beat jiná animace.
+ else if(beat<34){
+  const M=[['liftBarbell',48,'he lifts'],['handstandPlate',22,'he handstands'],['flameJump',22,'he jumps'],['climbPodium',42,'he climbs'],['flip',10,'he flips'],['giggle',8,'bro is'],['waveRun',20,'locked'],['grow',22,'in 🔒']];
+  const i=Math.min(7,bi-26), [id,off,cap]=M[i]; cut(26+i); punch(26+i,27+i,.1);
+  h+=`<div class="a" style="left:-60px;top:380px;width:1200px;height:1200px;mix-blend-mode:lighten"><img src="../work4/f/act-${id}/${pad(Math.floor(off+(t-B(26+i))*30))}.jpg" style="width:100%;height:100%"></div>`;
+  top+=`<div class="cap" style="top:300px;font-size:${i>=5?150:100}px;color:${i%2?'#C6A15B':'#fff'}">${E(cap)}</div>`;
+ }
+ // 7) streaky, ligy, sezóny (34–40).
+ else if(beat<40){
+  const lg=beat<37; cut(34); cut(37); punch(34,40,.05);
+  h+=bare(lg?'league':'season',20+(t-B(lg?34:37))*30,{u:.5,v:.3,w:1450});
+  top+=karaoke(t,[[34,'streaks.'],[35.5,'leagues.'],[37,'seasons.']],1300);
+ }
+ // 8) konec (40–): logo, claim, ember.
+ else{
+  hit(40,26,.35);
+  const L=['o','p','i','c','e'];
+  top+=`<div class="a" style="left:0;right:0;text-align:center;top:700px">${L.map((c,i)=>{const k=spring(p(t,B(40+i*.5),B(40+i*.5)+.3),12,7);return `<span class="dot" style="display:inline-block;font-size:280px;transform:scale(${k});opacity:${cl(k*3)}">${c}</span>`}).join('')}</div>`;
+  if(beat>=43)top+=`<div class="a" style="left:0;right:0;text-align:center;top:420px;font-size:150px;transform:scale(${spring(p(t,B(43),B(44)),12,7)})"><span class="emoji">🐒</span></div>`;
+  top+=`<div class="cap" style="top:1100px;font-size:64px;-webkit-text-stroke:0;color:#EDEDEF;font-weight:800;opacity:${p(t,B(43.5),B(44.3))}">calisthenics but it's a game</div>`;
+  top+=`<div class="a" style="left:${540-14}px;top:1260px;width:28px;height:28px;border-radius:50%;background:#FF6B35;box-shadow:0 0 40px #FF6B35;transform:scale(${spring(p(t,B(44.5),B(45.5)))})"></div>`;
+  burst(ctx,t,B(40),540,900,600,'#EDEDEF',34,.6,8);
+ }
+ document.body.style.background=bg;
+ const s=document.getElementById('s');s.innerHTML=h;
+ s.style.transform=`translate(${shake[0]}px,${shake[1]}px) scale(${zoom})`;
+ s.style.filter=rgb>0?`drop-shadow(${14*rgb}px 0 0 rgba(255,0,60,.75)) drop-shadow(${-14*rgb}px 0 0 rgba(0,230,255,.75))`:'none';
+ document.getElementById('top').innerHTML=top;
+}
+window.render=render;
+window.ready=document.fonts.load('900 84px Inter').then(()=>document.fonts.load('900 280px Doto')).then(()=>document.fonts.ready).then(()=>{render(0);return true});
+</script></body></html>

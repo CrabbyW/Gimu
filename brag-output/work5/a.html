@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@700;900&family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0B0B0C}
+#bg{position:absolute;inset:0}
+#cam{position:absolute;inset:0;perspective:2400px;perspective-origin:540px 900px}
+#s{position:absolute;inset:0;transform-style:preserve-3d}
+#fx,#top{position:absolute;inset:0}
+.a{position:absolute}
+.h{font-family:Inter;font-weight:600;color:#EDEDEF;letter-spacing:-.045em;line-height:1.02;text-align:center;left:0;right:0}
+.dot{font-family:Doto;font-weight:900;color:#EDEDEF;line-height:1}
+.mono{font-family:'JetBrains Mono';font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#8A8A90}
+.tag{position:absolute;font-family:'JetBrains Mono';font-weight:500;font-size:28px;letter-spacing:.16em;color:#EDEDEF;text-transform:uppercase;
+ background:rgba(20,20,23,.82);border:1.5px solid #34343a;border-radius:999px;padding:16px 28px;white-space:nowrap;box-shadow:0 30px 70px rgba(0,0,0,.55);backdrop-filter:blur(8px)}
+.tag b{font-family:Doto;font-weight:900;font-size:40px;letter-spacing:0;margin-right:14px;vertical-align:-3px}
+</style></head><body>
+<div id="bg"></div><div id="cam"><div id="s"></div></div><canvas id="fx" width="1080" height="1920"></canvas><div id="top"></div>
+<div style="position:absolute;opacity:0"><span class="dot">Opice</span><span class="mono">x</span><span class="h">x</span></div>
+<script src="lib.js"></script>
+<script>
+// Reklama A „Premium“: 30 s, 110 BPM. Jedna myšlenka: všechno je z teček.
+const B=n=>n*60/110;
+const S1=0,S2=B(4),S3=B(10),S4=B(17),S5=B(24),S6=B(30),S7=B(38),S8=B(45),END=30;
+const GOLD='#C6A15B',INK='#0B0B0C';
+const plateT=(()=>{const T=[],R=rng(3);for(let ring=0;ring<9;ring++){const r=130+ring*30,n=Math.round(r*.21);for(let i=0;i<n;i++){const a=i/n*6.283+ring*.3;T.push({x:540+Math.cos(a)*r,y:900+Math.sin(a)*r,del:R()*.25,a0:R()*6.283,r0:300+R()*700})}}return T})();
+function render(t){
+ const ctx=document.getElementById('fx').getContext('2d');ctx.clearRect(0,0,W,H);
+ let h='',top='',bg=INK,cam={x:0,y:0,s:1,r:0};
+ const shake=(a,amp,d=.3)=>{if(t>=a&&t<a+d){const k=(1-p(t,a,a+d))*amp;cam.x+=Math.sin(t*97)*k;cam.y+=Math.cos(t*83)*k*.7}};
+ // 1) Tečka → prstenec → kotouč (skutečná oslava appky, nacvaknutí na beat 4).
+ if(t<S2){
+  const k1=p(t,0,B(1)), pulse=1+Math.sin(t*9)*.08*(1-p(t,B(1),B(2)));
+  if(t<B(2)){ctx.fillStyle='#EDEDEF';ctx.shadowColor='#fff';ctx.shadowBlur=30;ctx.beginPath();ctx.arc(540,900,(10+8*out(k1))*pulse,0,7);ctx.fill();ctx.shadowBlur=0;}
+  // Tečky vyletí ze středu a slétnou se do prstenců kotouče.
+  if(t>=B(1)){for(const q of plateT){const e=p(t,B(1)+q.del,B(3)+q.del*.5),k=io(e);
+    const ang=q.a0+(1-k)*3.5, rr=lerp(q.r0*out(p(t,B(1),B(2))),Math.hypot(q.x-540,q.y-900),k);
+    const x=540+Math.cos(Math.atan2(q.y-900,q.x-540)*k+ang*(1-k))*rr, y=900+Math.sin(Math.atan2(q.y-900,q.x-540)*k+ang*(1-k))*rr;
+    ctx.globalAlpha=cl(p(t,B(1),B(1)+.2))*(1-p(t,B(3)+.2,S2));ctx.fillStyle='#EDEDEF';ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.fill();}ctx.globalAlpha=1;}
+  // Skutečný kotouč z appky přebírá tečky (snímek 35 = nacvaknutí na S2).
+  if(t>=B(3)){const f=35-(S2-t)*30;h+=bare('cel',f,{u:.5,v:.395,w:2050,cy:900,extra:`opacity:${p(t,B(3),B(3)+.35)}`});}
+  top+=`<div class="a mono" style="left:0;right:0;text-align:center;top:300px;font-size:26px;opacity:${p(t,.2,.6)*(1-p(t,B(3),S2))}">Opice</div>`;
+ }
+ // 2) Nacvaknutí → kamera odjede do iPhonu, kotouč vystoupí z displeje, +44 XP.
+ else if(t<S3){
+  shake(S2,24,.35);
+  const f=35+(t-S2)*30, pull=io(p(t,B(5.5),B(7)));
+  if(pull<1) h+=bare('cel',f,{u:.5,v:.395,w:lerp(2050,560,pull),cy:lerp(900,1080,pull),extra:`border-radius:${80*pull}px;overflow:hidden`});
+  if(pull>.92){
+   const ry=lerp(-4,-16,io(p(t,B(7),S3))), rx=lerp(2,7,io(p(t,B(7),S3)));
+   const lift=out(p(t,B(7.5),B(8.5)));
+   // Kotouč vytažený z displeje: stejný snímek, kruhový výřez, vpřed a se stínem.
+   const plate=`<div style="position:absolute;left:${560*.5-150}px;top:${560*.118+560*RATIO*.395-150}px;width:300px;height:300px;border-radius:50%;overflow:hidden;
+     transform:translateZ(${lift*160}px) scale(${1+lift*.12});box-shadow:0 ${40*lift}px ${80*lift}px rgba(0,0,0,${.6*lift})">
+     <img src="${frameSrc('cel',f)}" style="position:absolute;left:${-560*.5+150}px;top:${-560*RATIO*.395+150}px;width:560px;height:${560*RATIO}px"></div>`;
+   h+=iphone('cel',f,{cx:540,cy:1080,sw:560,rx,ry,inner:plate});
+  }
+  const fl=1-p(t,S2,S2+.18); if(fl>0)top+=`<div class="a" style="inset:0;background:#fff;opacity:${fl*.55}"></div>`;
+  top+=`<div class="a h" style="top:150px;font-size:88px">${blurWords(t,S2+.25,'Every lesson')}</div>
+        <div class="a h" style="top:244px;font-size:88px;color:#8A8A90">${blurWords(t,S2+.55,'ends here.')}</div>`;
+  const xk=spring(p(t,B(8),B(9)));
+  if(t>=B(8))top+=`<div class="a dot" style="left:690px;top:1260px;font-size:96px;transform:scale(${xk}) translateZ(0);opacity:${cl(xk*2)};text-shadow:0 0 30px rgba(255,255,255,.35)">+44<span style="font-size:40px"> XP</span></div>`;
+ }
+ // 3) Švih doleva → mapa, štítky v hloubce s paralaxou.
+ else if(t<S4){
+  const whip=io(p(t,S3,S3+.32)), x=lerp(1500,540,whip), ry=lerp(40,-10,whip)+Math.sin((t-S3)*.8)*4, drift=(t-S3);
+  h+=iphone('map',20+(t-S3)*30,{cx:x,cy:1040,sw:580,rx:6,ry,rz:lerp(6,0,whip)});
+  const tags=[[B(12),70,640,'<b>12</b>day streak',90],[B(13),620,960,'<b>20</b>kg',150],[B(14),110,1330,'<b>+20</b>xp',60]];
+  for(const [a,tx,ty,txt,z] of tags){if(t<a)continue;const c=spring(p(t,a,a+.6));
+   top+=`<div class="tag" style="left:${tx-drift*z*.12}px;top:${ty}px;transform:scale(${c});opacity:${cl(c*3)}">${txt}</div>`;}
+  top+=`<div class="a h" style="top:150px;font-size:88px">${blurWords(t,S3+.3,'Short lessons.')}</div>
+        <div class="a h" style="top:244px;font-size:88px;color:#8A8A90">${blurWords(t,B(12.5),'On a map.')}</div>`;
+ }
+ // 4) Lekce: najetí do displeje na odpočet, pak mini opice, která cvičí s tebou.
+ else if(t<S5){
+  const f=1+(t-S4)*30, a1=B(20), a2=B(21.5);
+  const pushIn=io(p(t,S4,S4+.5)), toMonkey=io(p(t,a1,a2));
+  const w=lerp(lerp(560,1700,pushIn),2300,toMonkey), u=lerp(.5,.84,toMonkey), v=lerp(lerp(.47,.41,pushIn),.56,toMonkey);
+  h+=bare('lesson',f,{u,v,w,cy:lerp(1080,980,pushIn),extra:`border-radius:${lerp(90,0,pushIn)}px;overflow:hidden`});
+  top+=t<a1?`<div class="a h" style="top:150px;font-size:88px">${blurWords(t,S4+.35,'Guided reps')}</div><div class="a h" style="top:244px;font-size:88px;color:#8A8A90">${blurWords(t,S4+.65,'and holds.')}</div>`
+          :`<div class="a h" style="top:150px;font-size:88px">${blurWords(t,a1+.2,'It trains')}</div><div class="a h" style="top:244px;font-size:88px;color:#8A8A90">${blurWords(t,a1+.45,'with you.')}</div>`;
+ }
+ // 5) Montáž opice na beat (skutečné animace z appky).
+ else if(t<S6){
+  const M=[['liftBarbell',48],['handstandPlate',22],['flameJump',22],['climbPodium',42],['flip',10],['giggle',8]];
+  const i=Math.min(5,Math.floor((t-S5)/B(1))), a=S5+i*B(1), [id,off]=M[i];
+  const k=out(p(t,a,a+.25)), sc=lerp(1.12,1,k);
+  h+=`<div class="a" style="left:60px;top:560px;width:960px;height:960px;transform:scale(${sc})"><img src="../work4/f/act-${id}/${pad(Math.floor(off+(t-a)*30))}.jpg" style="width:100%;height:100%;mix-blend-mode:lighten"></div>`;
+  top+=`<div class="a dot" style="left:0;right:0;text-align:center;top:300px;font-size:64px;color:#8A8A90">REP <span style="color:#EDEDEF">${String(i+1).padStart(2,'0')}</span></div>`;
+  burst(ctx,t,a,540,1100,560,i%2?GOLD:'#EDEDEF',30,.45,7);
+ }
+ // 6) Zlatý stage-up přes celou plochu, pak odjezd: byla to appka.
+ else if(t<S7){
+  bg=GOLD;
+  const f=15+(t-S6)*30, back=io(p(t,B(35),B(36.5)));
+  if(back<1)h+=bare('stg',f,{u:.5,v:.47,w:lerp(1180,560,back),cy:lerp(960,1080,back),extra:`border-radius:${90*back}px;overflow:hidden;background:${GOLD}`});
+  if(back>.95)h+=iphone('stg',f,{cx:540,cy:1080,sw:560,rx:4,ry:lerp(-6,6,p(t,B(36.5),S7)),bar:'#C29D58',ink:'#131316'});
+  burst(ctx,t,B(32),540,760,560,'#131316',30,.6,7);
+  if(back>.5)top+=`<div class="a h" style="top:150px;font-size:88px;color:#131316">${blurWords(t,B(36),'Your monkey')}</div><div class="a h" style="top:244px;font-size:88px;color:#5E4A22">${blurWords(t,B(36.4),'grows with you.')}</div>`;
+ }
+ // 7) Liga a sezóna: dva iPhony v hloubce.
+ else if(t<S8){
+  const k1=spring(p(t,S7,S7+.8),8,5), k2=spring(p(t,S7+.15,S7+.95),8,5), orb=(t-S7)*3;
+  h+=iphone('league',10+(t-S7)*30,{cx:lerp(-300,330,k1),cy:1060,sw:450,rx:5,ry:18-orb,rz:-3});
+  h+=iphone('season',10+(t-S7)*30,{cx:lerp(1400,760,k2),cy:1110,sw:450,rx:5,ry:-14-orb,rz:3});
+  top+=`<div class="a h" style="top:150px;font-size:88px">${blurWords(t,S7+.3,'Weekly leagues.')}</div><div class="a h" style="top:244px;font-size:88px;color:#8A8A90">${blurWords(t,B(41),'Seasons.')}</div>`;
+ }
+ // 8) Všechno se stáhne do jedné tečky → logo z teček, claim, ember.
+ else{
+  const col=io(p(t,S8,S8+.4));
+  if(col<1){h+=iphone('season',40,{cx:lerp(760,540,col),cy:lerp(1110,900,col),sw:450,ry:-14,s:1-col});}
+  const dk=p(t,S8+.3,B(47));
+  if(t>=S8+.3&&t<B(47)+.1){ctx.fillStyle='#EDEDEF';ctx.shadowColor='#fff';ctx.shadowBlur=30;ctx.beginPath();ctx.arc(540,900,10+Math.sin(t*12)*2,0,7);ctx.fill();ctx.shadowBlur=0;}
+  if(t>=B(47))logoParticles(ctx,t,B(47),logoTargets('Opice',300,900),'#EDEDEF',3.9,.7);
+  top+=`<div class="a mono" style="left:0;right:0;text-align:center;top:620px;font-size:28px;opacity:${p(t,B(48.5),B(49.5))}">Calisthenics as a game</div>
+   <div class="a h" style="top:1110px;font-size:72px;font-weight:400">${blurWords(t,B(49),'Train. The monkey grows.')}</div>
+   <div class="a" style="left:${540-13}px;top:1260px;width:26px;height:26px;border-radius:50%;background:#FF6B35;box-shadow:0 0 40px #FF6B35;transform:scale(${spring(p(t,B(51),B(52)))})"></div>`;
+  burst(ctx,t,B(47),540,900,420,'#EDEDEF',32,.6,5);
+  burst(ctx,t,B(51),540,1273,200,'#FF6B35',18,.6,4);
+ }
+ // Kamera: pomalý drift + otřesy.
+ cam.s*=1+.015*Math.sin(t*.7); cam.r+=.35*Math.sin(t*.45);
+ const bgEl=document.getElementById('bg');bgEl.style.background=bg===INK?`radial-gradient(ellipse 80% 60% at 50% 45%,#16161a 0%,#0B0B0C 70%)`:`radial-gradient(ellipse 80% 60% at 50% 45%,#D4B272 0%,#B8944F 100%)`;
+ const s=document.getElementById('s');s.innerHTML=h;s.style.transform=`translate(${cam.x}px,${cam.y}px) scale(${cam.s}) rotate(${cam.r}deg)`;
+ document.getElementById('top').innerHTML=top+`<div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 90% 75% at 50% 48%,transparent 60%,rgba(0,0,0,.35) 100%)"></div>`;
+ dotWipe(ctx,t,S5,INK); dotWipe(ctx,t,S6,GOLD); dotWipe(ctx,t,S7,INK,[540,400]);
+}
+window.render=render;
+window.ready=document.fonts.load('900 300px Doto').then(()=>document.fonts.load('600 96px Inter')).then(()=>document.fonts.ready).then(()=>{render(0);return true});
+</script></body></html>
