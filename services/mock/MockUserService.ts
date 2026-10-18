@@ -1,3 +1,4 @@
+import { skipDemoSeed } from '@/lib/demo';
 import { applyFeel } from '@/logic/progression';
 import { sanitizeTest } from '@/logic/fitnessTest';
 import { applyGoalsPatch, type GoalsPatch } from '@/logic/goals';
@@ -77,6 +78,6 @@ export class MockUserService implements UserService {
     const event = { id: `${DEV_XP_LESSON_ID}-${now.getTime()}-${p.activity.length}`, at: now.toISOString(), day: toISODate(now), lessonId: DEV_XP_LESSON_ID, xp: amount };
     useDb.getState().setProfile({ ...p, activity: [...p.activity, event] });
   }
-  async reset() { useDb.getState().setProfile(null); }
+  async reset() { skipDemoSeed(); useDb.getState().setProfile(null); }
   async loadDemo(now: Date) { useDb.getState().setProfile(buildDemoProfile(now)); }
 }

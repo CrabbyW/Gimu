@@ -1,3 +1,4 @@
+import type { Ref } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useEffect } from 'react';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
@@ -16,11 +17,13 @@ export interface StatusLineProps {
   liveDotStyle?: StyleProp<ViewStyle>;
   /** Hlasitý popis pravé části (např. „Série 12 dní, dnes čeká“). */
   rightA11y?: string;
+  /** Ref pravého údaje (prohlídka mapy ho měří pro výřez). */
+  rightRef?: Ref<View>;
 }
 
 /** Stavový řádek (spec §2.3, obr. 1 „INTERSTELLAR … ● 00:30“): mono 11 vlevo `muted`, vpravo údaj `text`
  *  s živou tečkou. Žádná barva: tečka je `text`, nese ji pohyb, ne odstín. */
-export function StatusLine({ left, right, live = false, liveDotStyle, rightA11y }: StatusLineProps) {
+export function StatusLine({ left, right, live = false, liveDotStyle, rightA11y, rightRef }: StatusLineProps) {
   const { c, space, size, radius } = useTheme();
   const blink = useLiveBlink(live);
   return (
@@ -28,6 +31,8 @@ export function StatusLine({ left, right, live = false, liveDotStyle, rightA11y 
       <Text variant="telemetry" tone="muted" numberOfLines={1} style={{ flexShrink: 1 }}>{left}</Text>
       {right ? (
         <View
+          ref={rightRef}
+          collapsable={false}
           accessible
           accessibilityLabel={rightA11y ?? right}
           style={{ flexDirection: 'row', alignItems: 'center', gap: space.s }}

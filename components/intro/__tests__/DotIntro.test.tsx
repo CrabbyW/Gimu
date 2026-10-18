@@ -30,12 +30,12 @@ const render = (props: Partial<Parameters<typeof DotIntro>[0]> = {}) => {
 const bg = (n: TestRenderer.ReactTestInstance) => (n.props.style as { backgroundColor: string }).backgroundColor;
 
 describe('DotIntro', () => {
-  it('vykreslí všechny tečky OPICE rozsvícené v `text`', () => {
+  it('vykreslí všechny tečky GIMU rozsvícené v `text`', () => {
     const { r } = render();
     const on = r.root.findAll((n) => n.props.testID === 'intro-dot-on' && typeof n.type === 'string');
-    expect(on).toHaveLength(textDots('OPICE').dots.length);
+    expect(on).toHaveLength(textDots('GIMU').dots.length);
     on.forEach((n) => expect(bg(n)).toBe(theme.c.text));
-    expect(r.root.findAll((n) => typeof n.props.testID === 'string' && n.props.testID.startsWith('intro-col-') && typeof n.type === 'string')).toHaveLength(29);
+    expect(r.root.findAll((n) => typeof n.props.testID === 'string' && n.props.testID.startsWith('intro-col-') && typeof n.type === 'string')).toHaveLength(23);
   });
   it('progress 0 = vše zhasnuté (dotOff)', () => {
     const { r } = render({ progress: 0 });

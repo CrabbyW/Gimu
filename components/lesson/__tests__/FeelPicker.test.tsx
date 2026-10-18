@@ -20,15 +20,18 @@ const render = (onRate: jest.Mock) => {
   return r!;
 };
 
-test('Easy → jedno uložení a potvrzení „harder“; druhé ťuknutí nic', async () => {
+test('Easy → uložení a potvrzení; stejná volba znovu nic; jiná volba hodnocení změní', async () => {
   const onRate = jest.fn().mockResolvedValue(undefined);
   const r = render(onRate);
   expect(texts(r.root)).toContain(t.feelQuestion);
   await act(async () => { radio(r.root, t.feel.easy).props.onPress(); });
-  await act(async () => { radio(r.root, t.feel.hard).props.onPress(); });
+  await act(async () => { radio(r.root, t.feel.easy).props.onPress(); });
   expect(onRate).toHaveBeenCalledTimes(1);
-  expect(onRate).toHaveBeenCalledWith('easy');
   expect(texts(r.root)).toContain(t.feelDone.easy);
+  await act(async () => { radio(r.root, t.feel.hard).props.onPress(); });
+  expect(onRate).toHaveBeenCalledTimes(2);
+  expect(onRate).toHaveBeenLastCalledWith('hard');
+  expect(texts(r.root)).toContain(t.feelDone.hard);
   act(() => r.unmount());
 });
 

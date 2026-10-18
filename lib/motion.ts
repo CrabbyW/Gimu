@@ -555,8 +555,10 @@ export const mascotPose = {
  */
 export const splash = {
   colStepMs: 18, colFade: 2, liveAt: 700, liveMs: 120,
-  blinkMs: 140, blinkLow: 0.15, exitAt: 1080, exitMs: 480, bgFrom: 0.2,
-  reducedFadeMs: 200, totalMs: 1560,
+  blinkMs: 140, blinkLow: 0.15, exitAt: 1080, exitMs: 520, bgFrom: 0.2,
+  /** Předání do loga: mřížka zhasne v prvních `dimOutFrac` letu, barva tečky přechází od `colorFrom` letu. */
+  dimOutFrac: 0.35, colorFrom: 0.3,
+  reducedFadeMs: 200, totalMs: 1600,
 };
 
 /**

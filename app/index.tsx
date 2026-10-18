@@ -5,13 +5,13 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { copy } from '@/data/copy';
 import { useProfile } from '@/hooks/useProfile';
 import { now } from '@/lib/clock';
-import { DEMO_BUILD } from '@/lib/demo';
+import { DEMO_BUILD, demoSeedSkipped } from '@/lib/demo';
 import { services } from '@/services';
 
 /** Vstupní brána: s profilem na mapu, bez něj na onboarding (demo build: bez profilu rovnou demo profil). */
 export default function Index() {
   const profile = useProfile();
-  const seeding = DEMO_BUILD && profile.status === 'ready' && !profile.data;
+  const seeding = DEMO_BUILD && !demoSeedSkipped() && profile.status === 'ready' && !profile.data;
   const started = useRef(false);
   useEffect(() => {
     if (!seeding || started.current) return;

@@ -41,10 +41,10 @@ describe('AnimatedSplash', () => {
     expect(plugin[1].imageWidth).toBe(dots.splash.head);
   });
 
-  it('nápis OPICE z teček: svítící tečky = glyfy, jediná tečka v live (nad I), bez opice', () => {
+  it('nápis GIMU z teček: svítící tečky = glyfy, jediná tečka v live (nad I), bez opice', () => {
     const { r } = render();
     const on = r.root.findAll((n) => n.props.testID === 'splash-dot-on' && typeof n.type === 'string');
-    expect(on).toHaveLength(textDots('OPICE', SPLASH_GLYPHS).dots.length);
+    expect(on).toHaveLength(textDots('GIMU', SPLASH_GLYPHS).dots.length);
     const liveDots = r.root.findAll((n) => typeof n.type === 'string' && StyleSheet.flatten(n.props.style)?.backgroundColor === dark.live);
     expect(liveDots).toHaveLength(1);
     expect(r.root.findAllByProps({ testID: 'splash-head' })).toHaveLength(0);
@@ -76,7 +76,7 @@ describe('AnimatedSplash', () => {
     expect(splash.exitAt + splash.exitMs).toBe(splash.totalMs);
     expect(splash.totalMs).toBeLessThanOrEqual(1800);
     // Pořadí: sken dohraje dřív než živá tečka; rozsvícení + mrknutí před ústupem.
-    const cols = textDots('OPICE', SPLASH_GLYPHS).cols;
+    const cols = textDots('GIMU', SPLASH_GLYPHS).cols;
     expect((cols + splash.colFade) * splash.colStepMs).toBeLessThanOrEqual(splash.liveAt);
     expect(splash.liveAt + splash.liveMs + splash.blinkMs).toBeLessThanOrEqual(splash.exitAt);
   });

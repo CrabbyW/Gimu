@@ -34,7 +34,7 @@ describe('nextGuide', () => {
   const fresh = (seen: GuideId[]): UserProfile =>
     ({ ...buildInitialProfile({ path: 'power', dreamBody: 'x', milestones: [], weightGoal: { kind: 'none' }, setupDone: false }, now), guideSeen: seen });
   it('každá obrazovka má svou bublinu, jen jednou', () => {
-    expect(nextGuide('map', fresh([]))).toBe('mapStart');
+    expect(nextGuide('map', fresh([]))).toBe('mapTour');
     expect(nextGuide('lesson', fresh([]))).toBe('lessonHold');
     expect(nextGuide('celebration', fresh([]))).toBe('celebrationFirst');
     expect(nextGuide('map', fresh(['mapStart']))).toBeNull();

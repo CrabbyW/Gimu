@@ -1,4 +1,4 @@
-# Projekt: gamifikovaná kalistenika s maskotem opice
+# Projekt Gimu: gamifikovaná kalistenika s maskotem opice
 Specifikace produktu je v `docs/SPEC.md` (ulož tam celý původní zadávací prompt, pokud tam ještě není).
 
 ## Tým

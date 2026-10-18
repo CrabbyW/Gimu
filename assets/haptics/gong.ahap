@@ -1,6 +1,6 @@
 {
   "Version": 1.0,
-  "Metadata": { "Project": "Opice", "Created": "2026-10-03", "Description": "Gong (record, first handstand, stage-up): impact, 600 ms silence, strike, long decaying resonance" },
+  "Metadata": { "Project": "Gimu", "Created": "2026-10-03", "Description": "Gong (record, first handstand, stage-up): impact, 600 ms silence, strike, long decaying resonance" },
   "Pattern": [
     { "Event": { "Time": 0.0, "EventType": "HapticTransient",
       "EventParameters": [ { "ParameterID": "HapticIntensity", "ParameterValue": 1.0 }, { "ParameterID": "HapticSharpness", "ParameterValue": 0.5 } ] } },

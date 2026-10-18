@@ -22,7 +22,10 @@ test('first run: reset → path → birth → mapa → lekce → oslava → Set 
 
   await page.waitForURL((u) => u.pathname === '/');
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
-  await expect(visible(page.getByRole('button', { name: 'Tap Start to begin' }))).toBeVisible();
+  // Prohlídka mapy: [SKIP] ji ukončí a zapíše jako viděnou.
+  await expect(page.getByTestId('map-tour')).toBeVisible({ timeout: 10_000 });
+  await page.getByTestId('map-tour-skip').click();
+  await expect(page.getByTestId('map-tour')).toHaveCount(0);
   const tile = page.getByRole('button', { name: /^Finish setup, 4 steps left$/ });
   await expect(visible(tile)).toBeVisible();
 
@@ -68,7 +71,7 @@ test('first run: reset → path → birth → mapa → lekce → oslava → Set 
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
   await expect(tile.filter({ visible: true })).toHaveCount(0);
   // Bublina mapStart už se nevrátí (viděno).
-  await expect(page.getByRole('button', { name: 'Tap Start to begin' }).filter({ visible: true })).toHaveCount(0);
+  await expect(page.getByTestId('map-tour').filter({ visible: true })).toHaveCount(0);
 
   // Persist: po reloadu bez dlaždice i bez bubliny.
   await page.reload();
@@ -85,6 +88,6 @@ test('first run: starý (demo) profil nemá bublinu ani Finish setup', async ({ 
   await page.waitForURL((u) => u.pathname === '/');
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('button', { name: /^Finish setup/ }).filter({ visible: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Tap Start to begin' }).filter({ visible: true })).toHaveCount(0);
+  await expect(page.getByTestId('map-tour').filter({ visible: true })).toHaveCount(0);
   expect(errors).toEqual([]);
 });

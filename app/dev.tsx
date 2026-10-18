@@ -90,7 +90,7 @@ export default function DevScreen() {
             disabled={busy}
             accessibilityRole="button"
             onPress={() => confirm(copy.dev.resetConfirm, () => void run(async () => {
-              await services.user.reset(); resetDev(); router.replace('/');
+              await services.user.reset(); resetDev(); router.dismissAll(); router.replace('/');
             })())}
             style={{ minHeight: size.hit, justifyContent: 'center' }}
           >

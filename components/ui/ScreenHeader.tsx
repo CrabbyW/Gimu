@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { feedback } from '@/lib/feedback';
@@ -25,13 +25,17 @@ interface Props {
   intro?: boolean;
   /** Titulek na jeden řádek (při přetečení se zmenší): obrazovky, kde hlavička nesmí brát výšku obsahu (mapa). */
   singleLine?: boolean;
+  /** Menší řádek pod titulkem (např. název sekce pod názvem appky na mapě). */
+  subtitle?: string;
+  /** Logo místo textového titulku (mapa: tečkové GIMU). */
+  logo?: ReactNode;
 }
 
 const HEADER_IN = { duration: motion.screenIn.durationMs, easing: ease.out };
 
 /** Hlavička obrazovky (spec §2.3, obr. 2): stavový řádek, pod ním Doto titulek vlevo a kulatá tlačítka vpravo.
  *  Titulek je jediný Doto prvek hlavičky; vše ostatní ustupuje (mono, `muted`). */
-export function ScreenHeader({ title, actions, status, insetTop = true, intro = false, singleLine = false }: Props) {
+export function ScreenHeader({ title, actions, status, insetTop = true, intro = false, singleLine = false, subtitle, logo }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
   const insets = useSafeAreaInsets();
   // Web neumí adjustsFontSizeToFit (jen zkrátí výpustkou): jednořádkový titulek tam zmenší podle změřené šířky
@@ -46,7 +50,7 @@ export function ScreenHeader({ title, actions, status, insetTop = true, intro = 
     <Reveal play={intro} delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={HEADER_IN} style={{ paddingTop: (insetTop ? insets.top : 0) + space.s, paddingHorizontal: space.l, paddingBottom: space.m, gap: space.s }}>
       {status ? <StatusLine {...status} /> : null}
       <View onLayout={Platform.OS === 'web' && singleLine ? (e) => setRowW(e.nativeEvent.layout.width) : undefined} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m, minHeight: size.iconButton }}>
-        <Text
+        {logo ?? <Text
           variant="display"
           accessibilityRole="header"
           numberOfLines={singleLine ? 1 : 2}
@@ -56,7 +60,7 @@ export function ScreenHeader({ title, actions, status, insetTop = true, intro = 
           style={[{ flexShrink: 1 }, webSize ? { fontSize: webSize, lineHeight: webSize * (display.lineHeight / display.fontSize) } : null]}
         >
           {title}
-        </Text>
+        </Text>}
         {actions && actions.length > 0 ? (
           <View style={{ flexDirection: 'row', gap: space.s }}>
             {actions.map(({ icon: Icon, label, onPress }) => (
@@ -79,6 +83,7 @@ export function ScreenHeader({ title, actions, status, insetTop = true, intro = 
           </View>
         ) : null}
       </View>
+      {subtitle ? <Text variant="headline" tone="muted" numberOfLines={1}>{subtitle}</Text> : null}
     </Reveal>
   );
 }

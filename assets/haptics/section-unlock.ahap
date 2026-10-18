@@ -1,6 +1,6 @@
 {
   "Version": 1.0,
-  "Metadata": { "Project": "Opice", "Created": "2026-10-03", "Description": "Section unlock: milestone without the two closing hits" },
+  "Metadata": { "Project": "Gimu", "Created": "2026-10-03", "Description": "Section unlock: milestone without the two closing hits" },
   "Pattern": [
     { "Event": { "Time": 0.0, "EventType": "HapticTransient",
       "EventParameters": [ { "ParameterID": "HapticIntensity", "ParameterValue": 1.0 }, { "ParameterID": "HapticSharpness", "ParameterValue": 0.5 } ] } },

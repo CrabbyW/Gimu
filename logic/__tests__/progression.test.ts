@@ -31,3 +31,14 @@ test('combineScale násobí test korekcí; bez korekce beze změny', () => {
   expect(combineScale({ reps: 1.5, hold: 0.5 }, { factor: 1.2, rated: [] })).toEqual({ reps: 1.8, hold: 0.6 });
   expect(combineScale({ reps: 1, hold: 1 }, undefined)).toEqual({ reps: 1, hold: 1 });
 });
+
+test('poslední pokus jde přehodnotit: přepočet od hodnoty před ním, ne další krok', () => {
+  const a = applyFeel(undefined, 'a', 'easy');
+  expect(a.factor).toBe(1.1);
+  expect(applyFeel(a, 'a', 'hard').factor).toBe(0.9);
+  expect(applyFeel(applyFeel(a, 'a', 'hard'), 'a', 'right').factor).toBe(1);
+  expect(applyFeel(a, 'a', 'easy')).toBe(a);
+  // Starší pokus už přehodnotit nejde.
+  const b = applyFeel(a, 'b', 'easy');
+  expect(applyFeel(b, 'a', 'hard')).toBe(b);
+});

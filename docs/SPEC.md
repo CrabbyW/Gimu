@@ -1,6 +1,6 @@
-# Opice — fáze 1: design spec
+# Gimu — fáze 1: design spec
 
-Datum: 2026-09-29 · Stav: čeká na review · Pracovní název appky: **Opice** (slug `opice`, jde změnit v `app.json`)
+Datum: 2026-09-29 · Stav: čeká na review · Název appky: **Gimu** (oficiální, slug `gimu`)
 
 ## 1. Cíl a rozsah
 

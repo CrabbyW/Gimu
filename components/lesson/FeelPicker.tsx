@@ -21,8 +21,8 @@ interface Props {
 /**
  * „How did it feel?“ (UX pass U2): jedno ťuknutí po oslavě, nad [CONTINUE]. Přeskočitelné — nic se neuloží,
  * dokud uživatel nevybere. Tři stejně široké segmenty (`tile` + vlasová hrana), výběr = hrana `text` a popisek
- * v `text` (Nothing Dot: výběr nese kontrast, ne barva). Po výběru se ostatní volby ztlumí a otázka se v témž
- * řádku vymění za potvrzení — výška bloku se nemění, [CONTINUE] neposkočí.
+ * v `text` (Nothing Dot: výběr nese kontrast, ne barva). Po výběru se ostatní volby ztlumí (zůstávají ťukací, volba
+ * jde změnit) a otázka se v témž řádku vymění za potvrzení — výška bloku se nemění, [CONTINUE] neposkočí.
  */
 export function FeelPicker({ onRate, disabled = false }: Props) {
   const { c, space, size, radius, stroke } = useTheme();
@@ -33,8 +33,9 @@ export function FeelPicker({ onRate, disabled = false }: Props) {
   // Výměna otázky za potvrzení: stejný řádek (výška stojí), nový text se prolne. Jen opacity → i s omezeným pohybem.
   const lineIn = useSharedValue(1);
   const lineStyle = useAnimatedStyle(() => ({ opacity: lineIn.value }));
+  // Volbu jde změnit (2026-10-16): jiné ťuknutí hodnocení přepíše (služba přepočítá od hodnoty před pokusem).
   const pick = (feel: Feel) => {
-    if (busy.current || picked) return;
+    if (busy.current || picked === feel) return;
     busy.current = true;
     feedback('feelSelect');
     lineIn.set(withSequence(
@@ -42,7 +43,8 @@ export function FeelPicker({ onRate, disabled = false }: Props) {
       withTiming(1, { duration: feelSwap.swapInMs, easing: easeSafe.out, reduceMotion: ReduceMotion.Never }),
     ));
     setPicked(feel);
-    onRate(feel).catch(() => setFailed(true));
+    setFailed(false);
+    onRate(feel).catch(() => setFailed(true)).finally(() => { busy.current = false; });
   };
   // QA: chyba uložení nabídne [TRY AGAIN] (stejná volba, idempotentní služba). Během pokusu se neopakuje.
   const retry = () => {
@@ -84,10 +86,10 @@ export function FeelPicker({ onRate, disabled = false }: Props) {
             <Pressable
               key={f}
               onPress={() => pick(f)}
-              disabled={disabled || picked !== null}
+              disabled={disabled}
               accessibilityRole="radio"
               accessibilityLabel={t.feel[f]}
-              accessibilityState={{ selected: on, disabled: disabled || picked !== null }}
+              accessibilityState={{ selected: on, disabled }}
               style={({ pressed }) => ({
                 flex: 1, minHeight: size.feelChoice, borderRadius: radius.full,
                 alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xs,

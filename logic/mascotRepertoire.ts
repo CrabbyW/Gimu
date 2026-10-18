@@ -94,7 +94,7 @@ export type RepertoireEvent =
 /** Událost → akce repertoáru (null = nic). Rekord série má přednost před obyčejným dokončením — řeší volající pořadím. */
 export function eventToRepertoire(e: RepertoireEvent): RepertoireId | null {
   switch (e.type) {
-    case 'tapZone': return e.zone === 'head' ? 'headShake' : 'giggle';
+    case 'tapZone': return e.zone === 'head' ? 'headShake' : null; // břicho: bez akce (2026-10-16, chichot zrušen)
     case 'longPressDrag': return 'hangFinger';
     case 'holdRemaining': return e.ms > 0 && e.ms <= STRAIN_LAST_MS ? 'strain' : null;
     case 'rest': return 'wipeSweat';

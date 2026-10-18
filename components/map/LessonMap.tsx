@@ -294,7 +294,7 @@ export function LessonMap({ view, stats, minutesOf, cosmetics, unlockedLessonId 
   }, []);
   // --- Skok k aktuální lekci po splashi (studený start, `lib/introHop`) ---
   // Splash ještě běží (nebo právě skončil): opice je schovaná a po konci splashe vyskočí zpoza hlavičky
-  // (kam odjel nápis OPICE) obloukem na svůj uzel; dopad = propad + `settle` a haptika `monkeyHop`.
+  // (kam odjel nápis GIMU) obloukem na svůj uzel; dopad = propad + `settle` a haptika `monkeyHop`.
   // Jednou za JS kontext, návrat na tab neskáče. Omezený pohyb: jen prolnutí na místě.
   const [awaitHop] = useState(() => !pair && introHopPending());
   const hopIn = useSharedValue(awaitHop ? 0 : 1);

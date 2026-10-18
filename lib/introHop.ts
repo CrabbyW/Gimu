@@ -44,3 +44,30 @@ export function resetIntroHop(): void {
   doneAt = 0;
   listeners.clear();
 }
+
+/**
+ * Předání splash → logo (2026-10-16): logo v hlavičce mapy (`DotWordmark`) tu zaregistruje měření své polohy
+ * v okně. Splash si ho vyžádá na začátku ústupu a doletí přesně na něj; dokud splash běží, logo se neukazuje
+ * (`splashActive`), objeví se ve stejném snímku, kdy splash skončí, takže nic neproblikne.
+ */
+export interface WordmarkRect { x: number; y: number; width: number; height: number }
+type Measure = (cb: (r: WordmarkRect) => void) => void;
+let measureWordmarkFn: Measure | null = null;
+
+export function registerWordmark(m: Measure | null): void {
+  measureWordmarkFn = m;
+}
+
+/** Poloha loga v okně do `cb`; null hned (synchronně), když logo není, nebo po 120 ms bez odpovědi. */
+export function measureWordmark(cb: (r: WordmarkRect | null) => void): void {
+  const m = measureWordmarkFn;
+  if (!m) { cb(null); return; }
+  let done = false;
+  const t = setTimeout(() => { if (!done) { done = true; cb(null); } }, 120);
+  m((r) => { if (done) return; done = true; clearTimeout(t); cb(r.width > 0 && r.height > 0 ? r : null); });
+}
+
+/** Splash právě běží (logo v hlavičce se schová, splash na něj dosedne). */
+export function splashActive(): boolean {
+  return phase === 'showing';
+}

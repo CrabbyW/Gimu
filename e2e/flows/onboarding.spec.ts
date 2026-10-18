@@ -18,8 +18,8 @@ test('onboarding: krátký tok Cesta → Zrození → mapa, pak Finish setup', a
 
   await page.waitForURL((u) => u.pathname === '/');
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
-  // First run: průvodce a jednořádková dlaždice „Finish setup“.
-  await expect(visible(page.getByRole('button', { name: 'Tap Start to begin' }))).toBeVisible();
+  // First run: prohlídka mapy (4 tipy) a jednořádková dlaždice „Finish setup“.
+  await expect(page.getByTestId('map-tour')).toBeVisible({ timeout: 10_000 });
   const tile = page.getByRole('button', { name: /^Finish setup, 4 steps left$/ });
   await expect(visible(tile)).toBeVisible();
 
@@ -28,9 +28,17 @@ test('onboarding: krátký tok Cesta → Zrození → mapa, pak Finish setup', a
   await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
   expect(new URL(page.url()).pathname).toBe('/');
 
-  // Průvodce zmizí na tap a už se nevrátí.
-  await visible(page.getByRole('button', { name: 'Tap Start to begin' })).click();
-  await expect(page.getByRole('button', { name: 'Tap Start to begin' }).filter({ visible: true })).toHaveCount(0);
+  // Prohlídka: ťuknutí kamkoli = další tip (1/4 … 4/4), po posledním zmizí a už se nevrátí.
+  const tour = page.getByTestId('map-tour');
+  for (let i = 1; i <= 4; i++) {
+    await expect(tour).toHaveAccessibleName(new RegExp(`^Tip ${i} of 4\.`), { timeout: 10_000 });
+    await tour.click();
+  }
+  await expect(tour).toHaveCount(0);
+  await page.reload();
+  await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(1_500);
+  await expect(page.getByTestId('map-tour')).toHaveCount(0);
 
   // Finish setup: čtyři kroky s výchozími hodnotami, Done → dlaždice zmizí.
   await visible(tile).click();

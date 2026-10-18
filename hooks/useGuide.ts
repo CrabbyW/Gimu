@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { nextGuide, type GuideId, type GuideScreen } from '@/logic/guide';
+import { TOUR_SEEN_IDS } from '@/logic/mapTour';
 import { services } from '@/services';
 import { useProfile } from './useProfile';
 
@@ -12,7 +13,10 @@ export function useGuide(screen: GuideScreen): { id: GuideId | null; dismiss(): 
   const dismiss = useCallback(() => {
     if (!id) return;
     setHidden(true);
-    services.user.markGuideSeen(id).catch((e: unknown) => console.warn('[guide] zápis selhal', e));
+    // Prohlídka mapy zapíše i starou bublinu mapy, ať se po ní neukáže (postupně: zápis čte a přepisuje profil).
+    const ids: readonly string[] = id === 'mapTour' ? TOUR_SEEN_IDS : [id];
+    ids.reduce((p, x) => p.then(() => services.user.markGuideSeen(x)), Promise.resolve())
+      .catch((e: unknown) => console.warn('[guide] zápis selhal', e));
   }, [id]);
   return { id, dismiss };
 }

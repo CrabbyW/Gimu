@@ -84,6 +84,11 @@ export function measureRect(view: Measurable | null | undefined, maxMs: number):
   });
 }
 
+/** Změří registrovaný kotouč lekce `id` (prohlídka mapy); neznámý kotouč nebo selhání → null. */
+export function measurePlate(id: string, maxMs: number): Promise<Rect | null> {
+  return measureRect(plates.get(id)?.view, maxMs);
+}
+
 /** Změří registrovaný kotouč lekce `id` a odstartuje let. Neznámý kotouč nebo selhání měření = bez letu (false). */
 export async function launchFromPlate(id: string, maxMs: number): Promise<boolean> {
   const e = plates.get(id);

@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Opice",
-    "slug": "opice",
-    "scheme": "opice",
+    "name": "Gimu",
+    "slug": "gimu",
+    "scheme": "gimu",
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.opice"
+      "bundleIdentifier": "app.gimu"
     },
     "android": {
-      "package": "app.opice",
+      "package": "app.gimu",
       "adaptiveIcon": {
         "backgroundColor": "#0B0B0C",
         "foregroundImage": "./assets/android-icon-foreground.png",

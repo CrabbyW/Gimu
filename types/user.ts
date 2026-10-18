@@ -28,7 +28,12 @@ export interface FitnessTest {
 
 /** UX pass U2: hodnocení lekce a osobní korekce dávek (`logic/progression.ts`). */
 export type Feel = 'easy' | 'right' | 'hard';
-export interface Progression { factor: number; rated: string[] }
+export interface Progression {
+  factor: number;
+  rated: string[];
+  /** Poslední hodnocený pokus: jeho hodnocení jde ještě změnit (`base` = násobek před ním). */
+  last?: { id: string; feel: Feel; base: number };
+}
 
 export interface UserProfile {
   path: PathId;

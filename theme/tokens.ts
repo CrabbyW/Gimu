@@ -30,6 +30,8 @@ export const size = {
   edgeFade: 40,
   // UX pass U1: velké [DONE] lekce 64 (zpocené prsty, celá šířka), volba pocitu po lekci 48.
   pillLarge: 64, feelChoice: 48,
+  // Prohlídka mapy: opička průvodce u výřezu (S = 56 je na bublinu malá, M = 120 zakryje mapu).
+  tourMascot: 72,
   hit: 44, hitLarge: 56, control: 48, actionBar: 96, pathCard: 120, topBarBadge: 32,
   // Karta volby v onboardingu (vize těla, R36) a její glyf; glyf cesty je `glyph`.
   choiceCard: 80, choiceGlyph: 40, glyph: 48,
@@ -117,8 +119,10 @@ export const dots = {
   splash: {
     head: 140, widthFrac: 0.84, maxCell: 14, dotFrac: 0.72,
     peekView: [34, 20, 132, 86] as const, peekFrac: 0.32, peekMax: 120, peekSink: 0.6,
-    titleX: 24, titleY: 46, titleH: 30,
+    titleX: 24, titleY: 46, titleH: 42,
   },
+  /** Logo GIMU v hlavičce mapy (2026-10-16): tečkový nápis jako splash, buňka `cell` pt (výška 7 × cell = splash `titleH`), tečka `dotFrac` buňky. */
+  wordmark: { cell: 6, dotFrac: 0.72 },
   /** Tečková činka bosse: rozteč 6 = dva sloupce teček na kotouč šíře 12 (tečka `path.r`). */
   boss: { pitch: 6 },
   /** Tečkový glyf cesty a vize (onboarding, SVG ve viewBoxu 48): rozteč mřížky výplně i obrysu a poloměr tečky.

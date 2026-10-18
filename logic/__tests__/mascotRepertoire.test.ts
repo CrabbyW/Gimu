@@ -44,7 +44,7 @@ describe('pickMapIdle', () => {
 describe('eventToRepertoire', () => {
   it('ťuknutí podle zóny', () => {
     expect(eventToRepertoire({ type: 'tapZone', zone: tapZone(0.2) })).toBe('headShake');
-    expect(eventToRepertoire({ type: 'tapZone', zone: tapZone(0.7) })).toBe('giggle');
+    expect(eventToRepertoire({ type: 'tapZone', zone: tapZone(0.7) })).toBeNull();
   });
   it('zatnutí jen v posledních 3 s výdrže', () => {
     expect(eventToRepertoire({ type: 'holdRemaining', ms: STRAIN_LAST_MS })).toBe('strain');

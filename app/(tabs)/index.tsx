@@ -11,6 +11,7 @@ import { LessonMap } from '@/components/map/LessonMap';
 import { PullIndicator, usePullRefresh } from '@/components/map/PullRefresh';
 import { ReturnLine } from '@/components/map/ReturnLine';
 import { GuideBubble } from '@/components/mascot/GuideBubble';
+import { MapTour, type TourStep } from '@/components/map/MapTour';
 import { useMascotAct, useMascotReactions, useScreenFocused } from '@/components/mascot';
 import { eventToRepertoire } from '@/logic/mascotRepertoire';
 import { useMascotLine } from '@/hooks/useMascotLine';
@@ -22,10 +23,11 @@ import { Reveal, useFirstShow } from '@/components/ui/choreo';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { StartCard } from '@/components/ui/StartCard';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { DotWordmark } from '@/components/ui/DotWordmark';
 import { Text } from '@/components/ui/Text';
 import { copy } from '@/data/copy';
 import { ease, motion, overlayResize, plateFlight, useMotionSafe } from '@/lib/motion';
-import { endStart, launchFromPlate, tryBeginStart } from '@/lib/plateFlight';
+import { endStart, launchFromPlate, measurePlate, measureRect, tryBeginStart } from '@/lib/plateFlight';
 import type { GuideId } from '@/logic/guide';
 import { useFinishSetup } from '@/hooks/useGoals';
 import { useGuide } from '@/hooks/useGuide';
@@ -103,6 +105,11 @@ export default function TrainingScreen() {
   const play = useScrollIntent();
   // First run (elite fáze 1): průvodce „Tap Start to begin“ a řádek „Finish setup“ v hlavičkovém překryvu.
   const guide = useGuide('map');
+  // Prohlídka mapy (nový uživatel): místo bubliny `mapStart`; cíle se měří přes ref (measureInWindow).
+  const touring = guide.id === 'mapTour';
+  const streakRef = useRef<View>(null);
+  const progressRef = useRef<View>(null);
+  const startRef = useRef<View>(null);
   // Odcházející bublina: zápis „viděno“ proběhne hned, bublina se ještě `overlayResize.outMs` prolíná pryč.
   const [ghost, setGhost] = useState<GuideId | null>(null);
   const ghostTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,7 +130,7 @@ export default function TrainingScreen() {
   const short = useShort();
   // Nízký displej v prvním průchodu: mapa sjede o `space.l` níž (opička celá pod bublinou, popisek končí `space.s` nad CTA), ať opička nesahá pod bublinu (šipka plave
   // vedle ní a výšku nezabírá); nadpis sekce pod bublinou zakryje bublina přes celou šířku.
-  const lift = short && (guide.id ?? ghost) && viewData?.currentLessonId ? -space.l : 0;
+  const lift = short && !touring && (guide.id ?? ghost) && viewData?.currentLessonId ? -space.l : 0;
   const inset = overlayH - lift;
   // Změna odsazení mapy (zmizí bublina, dlaždice nebo zdvih): obsah a závoj dojedou timingem z rozdílu
   // starého a nového odsazení k nule (UI vlákno), takže mapa neposkočí. Při mountu (0) bez animace.
@@ -157,7 +164,13 @@ export default function TrainingScreen() {
     const go = () => router.push({ pathname: '/lesson/[id]', params: { id } });
     launchFromPlate(id, plateFlight.measureMaxMs).then(go, go);
   };
-  const bubbleId = guide.id ?? ghost;
+  const bubbleId = touring ? null : guide.id ?? ghost;
+  const tourSteps: TourStep[] = !touring ? [] : [
+    ...(currentNode ? [{ id: 'plate' as const, text: copy.mapTour.plate(currentNode.exerciseCount, minutesOf[currentNode.lesson.id] ?? 0), measure: () => measurePlate(currentNode.lesson.id, plateFlight.measureMaxMs) }] : []),
+    { id: 'streak' as const, text: copy.mapTour.streak, measure: () => measureRect(streakRef.current, plateFlight.measureMaxMs) },
+    ...(section ? [{ id: 'progress' as const, text: copy.mapTour.progress(section.nodes.length), measure: () => measureRect(progressRef.current, plateFlight.measureMaxMs) }] : []),
+    ...(currentNode ? [{ id: 'start' as const, text: copy.mapTour.start, measure: () => measureRect(startRef.current, plateFlight.measureMaxMs) }] : []),
+  ];
   return (
     <MapContent
       unlocked={unlocked ?? null}
@@ -240,19 +253,22 @@ export default function TrainingScreen() {
           <Reveal play={intro} delay={motion.screenIn.headerAt} rise={motion.screenIn.rise} config={HEADER_IN}>
           <ScreenHeader
             singleLine
-            title={section?.title ?? copy.tabs.training}
+            title={copy.app.name}
+            logo={<DotWordmark />}
+            subtitle={section?.title ?? copy.tabs.training}
             status={{
               left: section ? copy.map.sectionKicker(section.index) : copy.tabs.training.toUpperCase(),
               right: copy.status.streak(stats.streak),
               // Tečka bliká, dokud dnes nic nebylo: živý údaj = „série čeká na dnešek“.
               live: !stats.todayDone,
               rightA11y: copy.status.streakA11y(stats.streak, stats.todayDone),
+              rightRef: streakRef,
             }}
           />
           </Reveal>
           {/* Nízký displej v prvním průchodu (svítí bublina): prázdná řada pokroku 0/9 ustoupí, aby aktuální kotouč
               i s opičkou a popiskem zůstal mezi překryvem a CTA. Po startu lekce se vrátí. */}
-          {short && bubbleId && currentId ? null : <SectionHero view={viewData} intro={intro} />}
+          {short && bubbleId && currentId ? null : <View ref={progressRef} collapsable={false}><SectionHero view={viewData} intro={intro} /></View>}
           {/* Důvod se vrátit (U4). Při bublině průvodce mlčí: ta už říká, co udělat, a first run má být řídký. */}
           {returnLine && !bubbleId ? (
             <Reveal play={intro} delay={motion.screenIn.heroAt} rise={motion.screenIn.rise}>
@@ -299,13 +315,18 @@ export default function TrainingScreen() {
                   Plný závoj `base` od spodní hrany pilulky až ke dnu obrazovky (pod tab barem). */}
               {short ? <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: -clearance, height: clearance + space.m, backgroundColor: c.base }} /> : null}
               {currentNode ? (
+                <View ref={startRef} collapsable={false}>
                 <StartCard
                   title={copy.map.startNamed(currentNode.lesson.title)}
                   meta={copy.map.startMeta(currentNode.exerciseCount, currentNode.xp)}
                   onPress={() => open(currentId)}
                 />
+                </View>
               ) : null}
             </View>
+          ) : null}
+          {touring && tourSteps.length > 0 ? (
+            <MapTour steps={tourSteps} stage={stats.stage} cosmetics={data.equipped} mood={stats.mood} onFinish={guide.dismiss} />
           ) : null}
         </View>
         </GestureDetector>

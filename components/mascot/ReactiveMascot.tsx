@@ -40,7 +40,7 @@ export function ReactiveMascot({ reactions, acts, seated = false, onReaction, on
   const px = resolveMascotSize(mascot.size);
   const play = acts?.play;
   // Ťuknutí: série ťuknutí dál dává salto (logic/mascotReactions); jednotlivé ťuknutí s repertoárem = akce zóny
-  // (`tapZone`: hlava → zatřese hlavou, břicho → chichot) místo obyčejného poskoku.
+  // (`tapZone`: hlava → zatřese hlavou, břicho → nic) místo obyčejného poskoku.
   const tapAt = useMemo(() => (y: number): ReactionId | null => {
     if (!play) return tapNow();
     const r = report({ type: 'tap', at: Date.now() }, { quietHop: true });

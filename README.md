@@ -1,6 +1,6 @@
 # Opice
 
-Gamifikovaná kalistenika s maskotem opice. Uživatel plní lekce cviků (opakování i výdrž),
+Gimu: gamifikovaná kalistenika s maskotem opice. Uživatel plní lekce cviků (opakování i výdrž),
 sbírá XP a odemyká uzly na mapě, kterou vede přes ligy a sezónní vzhledy — opice roste
 a mění náladu podle postupu.
 
@@ -62,7 +62,7 @@ npm run lint          # expo lint
   - Lekce: mini opička vpravo dole u čísla cvičí ve fázi siluety, posledních 3 s výdrže se zatne, v pauze si utře pot a napije se, po přeskoku pokrčí rameny. Oslava = činka nad hlavou s nacvaknutím kotouče (rekord série má přednost: výskok s plamenem a flex). Liga: postup = šplh o stupeň. Stage-up: růst s tečkami. Stavy: offline / chyba / prázdno.
   - Reduce Motion: každá akce = statická póza na 1.6 s.
   - Galerie: `/dev` → „Monkey actions“ (tlačítko pro každou akci a „Play all“). Testy: `lib/__tests__/repertoireMotion.test.ts`, `lib/__tests__/mascotAct.test.ts`, `components/mascot/__tests__/repertoire.test.tsx`, `e2e/flows/repertoire.spec.ts` a perf mapy s běžící idle akcí.
-- Intro (do 2026-10-12, nahrazeno splashem): nápis OPICE z teček se rozsvítí zleva, pulz s jemnou haptikou, prolnutí do mapy (~1.2 s, běží souběžně s načítáním). Tap = skip, Reduce Motion = prolnutí 300 ms (`components/intro/DotIntro.tsx`, písmo `logic/dotGlyphs.ts`, hodnoty `motion.dotIntro`). E2E ho vypíná přes `__OPICE_NO_INTRO__`, ověřuje `e2e/flows/intro.spec.ts`.
+- Intro (do 2026-10-12, nahrazeno splashem): nápis GIMU z teček se rozsvítí zleva, pulz s jemnou haptikou, prolnutí do mapy (~1.2 s, běží souběžně s načítáním). Tap = skip, Reduce Motion = prolnutí 300 ms (`components/intro/DotIntro.tsx`, písmo `logic/dotGlyphs.ts`, hodnoty `motion.dotIntro`). E2E ho vypíná přes `__OPICE_NO_INTRO__`, ověřuje `e2e/flows/intro.spec.ts`.
 - UX pass (2026-10-09, spec `docs/superpowers/specs/2026-10-09-ux-pass-design.md`): lekce s pevnou patičkou (název, tip, Next up, DONE 64 pt) a pauzou 30 s mezi cviky (+15 s, Skip rest); po oslavě Easy/Right/Hard → osobní korekce dávek ±10 % v mezích 0.7–1.3 (`logic/progression.ts`); progresivní odhalení Šatník/Liga/Sezóna po 2/3/5 lekcích (`logic/disclosure.ts`, `FeatureLocked`, opakování lekce se počítá); řádek „Next · N min“ a „Streak ends tonight“ na mapě; věty sentence case.
 - Dev menu má sekci **Tečky** se všemi tečkovými komponentami pro vizuální kontrolu.
 - Nastavení: dva nezávislé přepínače **Haptika** a **Zvuky**; tichý režim iOS = ticho.

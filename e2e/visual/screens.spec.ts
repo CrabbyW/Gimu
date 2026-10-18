@@ -87,14 +87,22 @@ test.describe('first run', () => {
     await visible(page.getByRole('button', { name: /Let.s train/ })).click();
     await page.waitForURL((u) => u.pathname === '/');
     await expect(pill(page, 'Start lesson')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('map-tour')).toBeVisible({ timeout: 10_000 });
   });
+  // Prohlídka mapy (Modal přes celou obrazovku) blokuje ťuknutí: ostatní záběry ji nejdřív přeskočí.
+  const skipTour = async (page: import('@playwright/test').Page) => {
+    await page.getByTestId('map-tour-skip').click();
+    await expect(page.getByTestId('map-tour')).toHaveCount(0);
+  };
 
-  test('first-run mapa', async ({ page }) => {
-    await expect(visible(page.getByRole('button', { name: 'Tap Start to begin' }))).toBeVisible();
+  test('first-run mapa (prohlídka, tip 1/4)', async ({ page }) => {
+    await expect(page.getByTestId('map-tour')).toHaveAccessibleName(/^Tip 1 of 4\./);
+    await page.waitForTimeout(1_200);
     await shoot(page, 'first-run-map');
   });
 
   test('first-run lekce (1. cvik s bublinou)', async ({ page }) => {
+    await skipTour(page);
     await pill(page, 'Start lesson').click();
     await page.waitForURL(/\/lesson\//);
     await expect(pill(page, 'Start')).toBeVisible();
@@ -103,6 +111,7 @@ test.describe('first run', () => {
   });
 
   test('first-run setup', async ({ page }) => {
+    await skipTour(page);
     await visible(page.getByRole('button', { name: /^Finish setup/ })).click();
     await page.waitForURL(/\/setup/);
     await expect(visible(page.getByRole('button', { name: /^Done$/ }))).toBeVisible();
@@ -111,6 +120,7 @@ test.describe('first run', () => {
 
   test('first-run oslava', async ({ page }) => {
     test.setTimeout(180_000);
+    await skipTour(page);
     await pill(page, 'Start lesson').click();
     await page.waitForURL(/\/lesson\//);
     const cont = pill(page, 'Continue');

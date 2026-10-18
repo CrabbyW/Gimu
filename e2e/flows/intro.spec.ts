@@ -3,7 +3,7 @@ import { collectErrors, gotoTab, pill, visible, waitForIdle } from '../helpers';
 
 test.use({ intro: true });
 
-test('splash: studený start, tečkový nápis OPICE (bez opice) na w320, ťuknutí přeskočí na mapu', async ({ page }) => {
+test('splash: studený start, tečkový nápis GIMU (bez opice) na w320, ťuknutí přeskočí na mapu', async ({ page }) => {
   const errors = collectErrors(page);
   // Splash drží do ťuknutí (jinak by se sám prolnul dřív, než změříme geometrii).
   await page.addInitScript('globalThis.__OPICE_HOLD_INTRO__ = true;');
@@ -11,10 +11,10 @@ test('splash: studený start, tečkový nápis OPICE (bez opice) na w320, ťuknu
   await page.goto('/dev');
   const intro = page.getByTestId('splash');
   await expect(intro).toBeVisible({ timeout: 30_000 });
-  await expect(intro).toHaveAttribute('aria-label', 'Opice');
+  await expect(intro).toHaveAttribute('aria-label', 'Gimu');
   await expect(intro).toHaveAttribute('role', 'button');
 
-  // Geometrie (03 Tečkový nápis): nápis OPICE vodorovně uprostřed a celý na displeji, svítící tečky bez překryvu,
+  // Geometrie (03 Tečkový nápis): nápis GIMU vodorovně uprostřed a celý na displeji, svítící tečky bez překryvu,
   // jediná živá tečka nad I; opice ve splashi není (skočí pak na mapě).
   const word = page.getByTestId('splash-word');
   await expect(page.getByTestId('splash-head')).toHaveCount(0);

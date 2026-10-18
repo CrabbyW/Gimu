@@ -14,7 +14,8 @@ const days = (n: number) => `${n} ${plural(n, 'day', 'days')}`;
 
 export const copy = {
   // Intro při studeném startu (logo moment): celé jako jeden a11y prvek, ťuknutí přeskočí.
-  intro: { label: 'Opice', hint: 'Tap to skip the intro' },
+  app: { name: 'Gimu' },
+  intro: { label: 'Gimu', hint: 'Tap to skip the intro' },
   common: {
     continue: 'Continue', back: 'Back', done: 'Done', start: 'Start', pause: 'Pause',
     resume: 'Resume', retry: 'Try again', loading: 'Loading',
@@ -581,12 +582,26 @@ export const copy = {
   // Opička průvodce (elite fáze 1): jedna krátká věta na obrazovku při prvním průchodu.
   guide: {
     mapStart: 'Tap Start to begin',
+    // Prohlídka mapy má vlastní věty (copy.mapTour); tohle je jen záložní text typu GuideId.
+    mapTour: 'Here’s your map',
     lessonHold: 'Tap Start and hold the position',
     // Cvik na opakování nemá časovač: stejná bublina, jiná věta (výběr podle `exercise.type`).
     lessonReps: 'Do the reps, then tap Done',
     celebrationFirst: 'That’s your first plate',
     kicker: 'MONKEY',
     dismissA11y: 'Dismiss tip',
+  },
+  // Prohlídka mapy pro nového uživatele (opička ukazuje): jedna krátká věta na krok, čísla ze skutečných dat.
+  mapTour: {
+    plate: (exercises: number, minutes: number) =>
+      keepUnits(`This plate is a lesson: ${exercises} ${plural(exercises, 'exercise', 'exercises')}, about ${minutes} min.`),
+    streak: 'Your streak. One lesson a day keeps it alive.',
+    progress: (total: number) => `Finish all ${total} plates to clear the section.`,
+    start: 'Tap Start for your first lesson.',
+    skip: 'Skip',
+    skipA11y: 'Skip the tour',
+    nextHint: 'Double tap for the next tip',
+    stepA11y: (i: number, n: number, text: string) => `Tip ${i} of ${n}. ${text}`,
   },
   // UX pass U4: progresivní odhalení. Zamčené funkce zůstanou vidět s klidnou pozvánkou (ne skryté).
   disclosure: {

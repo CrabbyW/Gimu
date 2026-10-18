@@ -20,19 +20,19 @@ export interface DotIntroProps {
   onDone: () => void;
   /** Intro je vykreslené (první layout): rodič tu schová nativní splash. */
   onShown?: () => void;
-  /** Text nápisu; výchozí OPICE. */
+  /** Text nápisu; výchozí GIMU. */
   text?: string;
 }
 
 const NEVER = ReduceMotion.Never;
 
 /**
- * Logo moment při studeném startu: mřížka teček s nápisem OPICE uprostřed podkladu.
+ * Logo moment při studeném startu: mřížka teček s nápisem GIMU uprostřed podkladu.
  * RN View, ne Skia: intro se ukáže hned při startu, kdy na webu ještě není načtený CanvasKit (8 MB wasm),
  * a nezabírá žádné z ≤ 12 WebGL pláten. Tečky jsou seskupené po sloupcích (29 View); rozsvícení zleva doprava
  * = 29 animovaných opacit vrstvy rozsvícených teček nad zhasnutými (UI vlákno, žádný re-render po snímcích).
  */
-export function DotIntro({ progress, ready = true, onDone, onShown, text = 'OPICE' }: DotIntroProps) {
+export function DotIntro({ progress, ready = true, onDone, onShown, text = 'GIMU' }: DotIntroProps) {
   const { c } = useTheme();
   const { width } = useWindowDimensions();
   const reduced = useReducedMotion();
